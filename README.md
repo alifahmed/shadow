@@ -1,2 +1,0 @@
-# MemAP
-Memory access profiler
