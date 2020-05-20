@@ -35,10 +35,6 @@ using namespace std;
 KNOB<string> knobFunctionName(KNOB_MODE_WRITEONCE, "pintool", "func", "main",
     "Function to be profiled.");
 
-// Max log items per thread
-KNOB<UINT64> knobMaxLog(KNOB_MODE_WRITEONCE, "pintool", "lim", "1000000",
-    "Max number of read/writes to log per thread.");
-
 // Output file name
 KNOB<string> knobOutFile(KNOB_MODE_WRITEONCE, "pintool", "out", "mem_trace.csv",
     "Output file name.");
@@ -47,16 +43,6 @@ KNOB<string> knobOutFile(KNOB_MODE_WRITEONCE, "pintool", "out", "mem_trace.csv",
 KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",
     "Upper limit of the number of threads that can be used by the program \
         being profiled.");
-
-// Stack based access logging (1: enable, 0: disable)
-KNOB<bool> knobStack(KNOB_MODE_WRITEONCE, "pintool", "stack", "0",
-    "Stack based access logging \
-        [1: enable, 0: disable (default)].");
-
-// Instruction pointer relative access logging (1: enable, 0: disable)
-KNOB<bool> knobIP(KNOB_MODE_WRITEONCE, "pintool", "ip", "1",
-    "IP relative access logging \
-        [1: enable (default), 0: disable].");
 
 // Read logging (1: enable, 0: disable)
 KNOB<bool> knobRead(KNOB_MODE_WRITEONCE, "pintool", "read", "1",
@@ -68,22 +54,45 @@ KNOB<bool> knobWrite(KNOB_MODE_WRITEONCE, "pintool", "write", "1",
     "Write \
         logging [1: enable (default), 0: disable].");
 
+
 /*******************************************************************************
- * Structs
+ * Forward declarations
  ******************************************************************************/
 struct InsBase;
+struct InsNormal;
+struct InsLoop;
+struct InsBlock;
+struct Interval;
 
-typedef struct InstInfo{
+void deriveAccessPattern(const vector<InsNormal*> &insList);
+
+/*******************************************************************************
+ * Data structures
+ ******************************************************************************/
+typedef enum {InsTypeInvalid, InsTypeNormal, InsTypeLoop} InsType;
+typedef enum {AccessTypeInvalid, AccessTypeRead, AccessTypeWrite} AccessType;
+typedef enum {PatTypeInvalid, PatTypeSeq, PatTypeRand} PatType;
+typedef map<ADDRINT, InsNormal*> InfoMap;
+
+typedef struct Interval {
+  ADDRINT s = -1;
+  ADDRINT e = 0;
+} Interval;
+
+typedef struct InsNormal{
+  UINT64 id = -1;
   string dis;
+  AccessType accType = AccessTypeInvalid;
+  UINT64 accSz;
   UINT64 totalSz = 0;
   UINT64 cnt = 0;
   ADDRINT lastEA = -1;
-  INT64 lastStride = -1;
-  UINT64 sameStrideCnt = 0;
-  INT64 totalStride = 0;
-  ADDRINT startAddr = -1;
-  ADDRINT endAddr = 0;
-  ADDRINT instAddr = -1;
+  map<INT64, UINT64>  strideDist;
+  Interval addr;
+  bool isTop = false;
+  InsBlock* block = NULL;
+  PatType pType = PatTypeInvalid;
+  INT64 stride = -1;
 } InstInfo;
 
 typedef struct InsLoop {
@@ -93,211 +102,49 @@ typedef struct InsLoop {
 
 typedef struct InsBlock{
   UINT64 id = -1;
-  bool isTop = false;
   map<InsBlock*, UINT64> outEdges;   //successors and count
-  //map<InsBlock*, UINT64> inEdges;    //predecessors and count
   set<InsBlock*> inEdges;
   vector<InsBase*> ins;
-  //vector<InstInfo*> ins;
 } InsBlock;
-
-typedef enum {InsTypeInvalid, InsTypeNormal, InsTypeLoop} InsType;
 
 typedef struct InsBase{
   InsType type = InsTypeInvalid;
-  //InstInfo* insNormal = NULL;
-  string insNormal = "";
+  InsNormal* insNormal = NULL;
   InsLoop* insLoop = NULL;
 }InsBase;
 
-map<ADDRINT, InsBlock*> insAddrToBlk;
-vector<ADDRINT> insTrace;
-vector<InsLoop*> loops;
-vector<InsBase*> bases;
 
-typedef map<ADDRINT, InstInfo*> InfoMap;
+/*******************************************************************************
+ * Defines
+ ******************************************************************************/
+#define ACCESS_KEEP_PERC    95
+#define MAX_STRIDE_BUCKETS  10
 
-InfoMap rInfo;
-InfoMap wInfo;
 
-// Limit of buffer entry. Maps to knobMaxLog.
-UINT64 buf_log_lim;
-
-// Current count of log entry.
-UINT64 buf_log_cnt;
-
-// Name of the function that is being profiled. Maps to knobFunctionName.
-string rtn_name;
-
-// Lock for synchronizing thread access to 'info' array.
-PIN_LOCK lock;
-
-// Read logging is enabled if true. Maps to knobRead.
-bool read_log_en = true;
-
-// Write logging is enabled if true. Maps to knobWrite.
-bool write_log_en = true;
-
+/*******************************************************************************
+ * Global variables
+ ******************************************************************************/
+static string rtn_name;
+static PIN_LOCK lock;
+static bool read_log_en = true;
+static bool write_log_en = true;
 static UINT64 rtnEntryCnt = 0;
+bool firstLine = true;
+
+static vector<InsNormal*> insNormalList;
+static vector<InsBlock*> blockList;
+static vector<InsBase*> baseList;
+static vector<InsLoop*> loopList;
+
+static vector<InsNormal*> insTrace;
+
+static ADDRINT globalMinAddr = -1;
+static ADDRINT globalMaxAddr = 0;
+
 
 /*******************************************************************************
  * Functions
  ******************************************************************************/
-
-/**
- * Prints usage message. This function is called if any argument is invalid.
- */
-INT32 Usage() {
-  cerr << "This tool profiles a function\'s memory access pattern." << endl;
-  cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
-  return -1;
-}
-
-/**
- * Function for recording read access.
- */
-void record(InstInfo* info, ADDRINT ea, UINT32 sz) {
-  if(rtnEntryCnt <= 0)  return;
-  info->totalSz += sz;
-  if(info->cnt){
-    INT64 stride = (ea - info->lastEA);
-    info->totalStride += stride;
-    if(stride == info->lastStride){
-      info->sameStrideCnt++;
-    }
-    info->lastStride = stride;
-  }
-  if(ea < info->startAddr){
-    info->startAddr = ea;
-  }
-  if(ea > info->endAddr){
-    info->endAddr = ea;
-  }
-  info->lastEA = ea;
-  info->cnt++;
-  insTrace.push_back(info->instAddr);
-}
-
-InstInfo* checkIns(INS &ins, InfoMap &im) {
-  ADDRINT addr = INS_Address(ins);
-  if (im.find(addr) == im.end()) {
-    //does not exists
-    InstInfo* info = new InstInfo();
-    //info->ins = ins;
-    info->dis = INS_Disassemble(ins);
-    info->instAddr = INS_Address(ins);
-    im[addr] = info;
-    if(insAddrToBlk.find(addr) == insAddrToBlk.end()){
-      static UINT64 id = 2;
-      InsBlock* ib = new InsBlock();
-      InsBase* base = new InsBase();
-      ib->id = id++;
-      base->type = InsType::InsTypeNormal;
-      base->insNormal = info->dis;
-      //ib->ins.push_back(base);
-      ib->ins.push_back(base);
-      bases.push_back(base);
-      insAddrToBlk[addr] = ib;
-    }
-  }
-  return im[addr];
-}
-
-static UINT64 memInstCnt = 0;
-
-/**
- * Instruments instructions having read or write accesses.
- */
-VOID Instruction(INS ins, VOID *v) {
-  // Get the memory operand count of the current instruction.
-  UINT32 memOperands = INS_MemoryOperandCount(ins);
-
-  if (memOperands == 0) return;
-  memInstCnt++;
-
-  // Iterate over each memory operand of the instruction.
-  for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
-    if (INS_MemoryOperandIsRead(ins, memOp) && read_log_en) {
-      InstInfo* info = checkIns(ins, rInfo);
-      // Operand is read by this instruction.
-      INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record,
-          IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_UINT32, INS_MemoryOperandSize(ins, memOp), IARG_END);
-    }
-
-    if (INS_MemoryOperandIsWritten(ins, memOp) && write_log_en) {
-      InstInfo* info = checkIns(ins, wInfo);
-      // Operand is written by this instruction.
-      INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record,
-          IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_UINT32, INS_MemoryOperandSize(ins, memOp), IARG_END);
-    }
-  }
-}
-
-/**
- * Keeps track of the function entry.
- */
-VOID RtnEntry(THREADID tid) {
-  //tdata[tid].rtnEntryCnt++;
-  rtnEntryCnt++;
-}
-
-/**
- * Keeps track of the function exit.
- */
-VOID RtnLeave(THREADID tid) {
-  //tdata[tid].rtnEntryCnt--;
-  rtnEntryCnt--;
-}
-
-
-typedef struct BblInfo {
-  UINT64 id = -1;
-  //UINT64 count = 0;
-  bool isUsing = true;
-  bool entered = false;
-  map<BblInfo*, UINT64> outEdges;   //successors and count
-  map<BblInfo*, UINT64> inEdges;    //predecessors and count
-  map<ADDRINT, bool> insMap;
-} BblInfo;
-
-map<ADDRINT, UINT64>  bblAddrIdMap;
-map<UINT64, BblInfo*> bblIdInfoMap;
-vector<UINT64> bblTrace;
-vector<UINT64> bblTraceTop;
-
-VOID BblEntry(UINT64 bi) {
-  if(rtnEntryCnt > 0){
-    bblTrace.push_back(bi);
-  }
-}
-
-UINT64 getBBLId(BBL bbl){
-  static UINT64 id = 1;
-  ADDRINT addr = BBL_Address(bbl);
-  if(bblAddrIdMap.find(addr) == bblAddrIdMap.end()){
-    //create new object
-    BblInfo* bi = new BblInfo();
-    bi->id = id++;
-    bblAddrIdMap[addr] = bi->id;
-    bblIdInfoMap[id] = bi;
-    for(INS ins = BBL_InsHead(bbl); ins != BBL_InsTail(bbl); ins = INS_Next(ins)){
-      if(INS_Valid(ins)){
-        bi->insMap[INS_Address(ins)] = true;
-      }
-    }
-    bi->insMap[INS_Address(BBL_InsTail(bbl))] = true;
-    assert(bi->insMap.size() == BBL_NumIns(bbl));
-  }
-  return bblAddrIdMap[addr];
-}
-
-VOID TrcCallback(TRACE trace, VOID *arg){
-  for( BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl) ){
-    UINT64 bi = getBBLId(bbl);
-    BBL_InsertCall(bbl, IPOINT_BEFORE, (AFUNPTR) BblEntry, IARG_UINT64, bi, IARG_END);
-  }
-}
-
 
 bool compressDCFG(set<InsBlock*> &cfg){
   bool isChanged = false;
@@ -357,9 +204,9 @@ bool compressLoop(set<InsBlock*> &cfg){
         in->inEdges.erase(in->inEdges.begin());
 
         InsLoop* loop = new InsLoop();
-        loops.push_back(loop);
+        loopList.push_back(loop);
         InsBase* base = new InsBase();
-        bases.push_back(base);
+        baseList.push_back(base);
 
         loop->loopCnt = loopCnt;
         loop->ins = in->ins;    //copy
@@ -387,8 +234,6 @@ void mergeAllLoops(set<InsBlock*> &cfg){
   } while(isChanged);
 }
 
-bool firstLine = true;
-
 void printInsLabel(ofstream &out, const vector<InsBase*> &insts, UINT32 indent){
   for(InsBase* it : insts){
     if(!firstLine){
@@ -399,13 +244,11 @@ void printInsLabel(ofstream &out, const vector<InsBase*> &insts, UINT32 indent){
       out << " &nbsp; &nbsp; ";
     }
     if(it->type == InsType::InsTypeNormal){
-      out << it->insNormal;
-      //out << "\\n";
+      out << "Ins id: " << it->insNormal->id;
     }
     else if(it->type == InsType::InsTypeLoop){
       InsLoop* loop = it->insLoop;
       out << "Loop: " << loop->loopCnt;
-      //out << "\\n";
       printInsLabel(out, loop->ins, indent+1);
     }
   }
@@ -466,32 +309,54 @@ void generateCode(set<InsBlock*> &cfg, const char* fname){
 
 }
 
-set<InsBlock*> createDCFGfromInstTrace(vector<ADDRINT> &trace){
-  /*for(auto it : insAddrToBlk){
-    it.second->entered = false;
-    it.second->inEdges.clear();
-    it.second->outEdges.clear();
-  }*/
-
-  //generate edges and edge count for each top instructions
+set<InsBlock*> cfgFromTrace(vector<InsNormal*> &trace){
+  static UINT64 blockId = 2;
   set<InsBlock*> topInsBlocks;
-  InsBlock* prev = NULL;
+
+  InsBlock* prev = new InsBlock();    //begin block
+  prev->id = 0;
+  topInsBlocks.insert(prev);
+
   UINT64 ttCnt = 0;
-  for(ADDRINT addr : trace){
-    InsBlock* ib = insAddrToBlk[addr];
-    if(ib->isTop){
-      topInsBlocks.insert(ib);
-      ttCnt++;
-      if(prev != NULL){
-        //add bi as the successor of prev
-        //ib->inEdges[prev]++;
-        ib->inEdges.insert(prev);
-        prev->outEdges[ib]++;
+  for(InsNormal* ins : trace){
+    if(ins->isTop){
+      InsBlock* ib = ins->block;
+      if(ib == NULL){
+        //create new block
+        ib = new InsBlock();
+        ins->block = ib;
+        blockList.push_back(ib);
+        ib->id = blockId++;
+
+        InsBase* base = new InsBase();
+        baseList.push_back(base);
+        base->type = InsType::InsTypeNormal;
+        base->insNormal = ins;
+
+        ib->ins.push_back(base);
+        topInsBlocks.insert(ib);
       }
+      ttCnt++;
+      //add ib as the successor of prev
+      ib->inEdges.insert(prev);
+      prev->outEdges[ib]++;
       prev = ib;
     }
   }
+
+  //add end block
+  InsBlock* ib = new InsBlock();
+  ib->id = 1;
+  topInsBlocks.insert(ib);
+  ib->inEdges.insert(prev);
+  prev->outEdges[ib]++;
+
   cout << "Top trace size: " << ttCnt << endl;
+  return topInsBlocks;
+}
+
+set<InsBlock*> createDCFGfromInstTrace(vector<InsNormal*> &trace){
+  set<InsBlock*> topInsBlocks = cfgFromTrace(trace);
   printDot(topInsBlocks, "dcfgBC.gv");
 
   compressDCFG(topInsBlocks);
@@ -503,10 +368,215 @@ set<InsBlock*> createDCFGfromInstTrace(vector<ADDRINT> &trace){
   return topInsBlocks;
 }
 
-/**
- * Finds and instruments the requested routine.
- */
-VOID ImgCallback(IMG img, VOID *arg) {
+
+
+
+
+
+
+void printInfo(const vector<InsNormal*> &res){
+  for(InsNormal* i : res){
+    cout << "  " << setw(10) << dec << i->id << ": ";
+    if(i->accType == AccessType::AccessTypeRead){
+      cout << "READ  : ";
+    } else if(i->accType == AccessType::AccessTypeWrite){
+      cout << "WRITE : ";
+    } else{
+      cout << "INVALID: ";
+    }
+    cout << setw(40) << i->dis;
+
+
+    cout << setw(20) << "TotalSz: " << i->totalSz;
+    cout << setw(20) << "Count: " << i->cnt;
+    cout << setw(20) << "Pattern: ";
+    if(i->pType == PatType::PatTypeSeq){
+      cout << "Seq : " << i->stride << "\t";
+    }
+    else if(i->pType == PatType::PatTypeRand){
+      cout << "Rand\t";
+    }
+    else{
+      cout << "Invalid\t";
+    }
+    cout << setw(10) << "[" << setw(10) << i->addr.s << " : " << setw(10) << i->addr.e << "]\t";
+    cout << setw(10);
+    for(auto s : i->strideDist){
+      cout << "{" << s.first << ":" << s.second << "} ";
+    }
+
+    cout << dec << endl;
+  }
+}
+
+
+UINT64 getTotalAccessSz(const vector<InsNormal*> &insList){
+  UINT64 sz = 0;
+  for(InsNormal* it : insList){
+    sz += it->totalSz;
+  }
+  return sz;
+}
+
+
+vector<InsNormal*> keepTop(vector<InsNormal*> &insList, double perc){
+  UINT64 sz = getTotalAccessSz(insList);
+  cout << "Before pruning. NumInst: " << insList.size() << "\t\tAccessSz: " << sz << endl;
+  UINT64 szAfter = sz * perc / 100.0;
+
+  //sort using total accessed size
+  sort(insList.begin(), insList.end(), [](const InsNormal* lhs, const InsNormal* rhs) {
+      return lhs->totalSz > rhs->totalSz;
+  });
+
+  vector<InsNormal*> out;
+  sz = 0;
+  for(InsNormal* it : insList){
+    out.push_back(it);
+    sz += it->totalSz;
+    if(sz > szAfter)  break;
+  }
+
+  sz = 0;
+  for(InsNormal* it: out){
+    sz += it->totalSz;
+  }
+  cout << "After pruning. NumInst: " << out.size() << "\t\tAccessSz: " << sz << endl;
+  return out;
+}
+
+
+vector<InsNormal*> deleteConstAccess(const vector<InsNormal*> &insList){
+  vector<InsNormal*> out;
+  out.reserve(insList.size());
+  for(InsNormal* it : insList){
+    if((it->pType == PatType::PatTypeSeq) && (it->stride == 0)){
+      continue;
+    }
+    out.push_back(it);
+  }
+  return out;
+}
+
+
+vector<InsNormal*> deleteZeroAccesses(const vector<InsNormal*> &insList){
+  vector<InsNormal*> out;
+  out.reserve(insList.size());
+  for(InsNormal* it : insList){
+    if(it->cnt){
+      out.push_back(it);
+    }
+  }
+  return out;
+}
+
+void deriveAccessPattern(const vector<InsNormal*> &insList){
+  for(InsNormal* it : insList){
+    if(it->strideDist.size() >= MAX_STRIDE_BUCKETS){
+      it->pType = PatType::PatTypeRand;
+    }
+    else {
+      double totCnt = 0;
+      double maxCnt = 0;
+      INT64 maxStride = 0;
+      for(auto s : it->strideDist){
+        totCnt += s.second;
+        if(s.second > maxCnt){
+          maxCnt = s.second;
+          maxStride = s.first;
+        }
+      }
+      if(maxCnt / totCnt > 0.9){
+        //sequential
+        it->pType = PatType::PatTypeSeq;
+        it->stride = maxStride;
+      }
+    }
+  }
+}
+
+void markTopAndProcessInfo(vector<InsNormal*> &insList){
+  for(InsNormal* it : insList){
+    it->isTop = true;         //mark as top instruction
+    it->addr.e += it->accSz;  //fix end address
+  }
+
+  //sort using min address
+  sort(insList.begin(), insList.end(), [](const InsNormal* lhs, const InsNormal* rhs) {
+      if(lhs->addr.s == rhs->addr.s){
+        return lhs->addr.e < rhs->addr.e;
+      }
+      return lhs->addr.s < rhs->addr.s;
+  });
+
+  //update address space to remove gaps
+  ADDRINT gmax = 0;
+  ADDRINT gap = 0;
+  for(InsNormal* it : insList){
+    if(it->addr.s > gmax){
+      //found a gap in address space
+      gap += it->addr.s - gmax;
+    }
+    if(it->addr.e > gmax){
+      //update max address if needed
+      gmax = it->addr.e;
+    }
+    it->addr.s -= gap;
+    it->addr.e -= gap;
+
+    //update global min and max addresses
+    if(it->addr.s < globalMinAddr){
+      globalMinAddr = it->addr.s;
+    }
+    if(it->addr.e > globalMaxAddr){
+      globalMaxAddr = it->addr.e;
+    }
+  }
+  cout << "Global min address: " << globalMinAddr << endl;
+  cout << "Global max address: " << globalMaxAddr << endl;
+}
+
+VOID Fini(INT32 code, VOID *v) {
+  // 0. Filter zero  (or very low) cnt instructions
+  vector<InsNormal*> filteredInsList;
+  filteredInsList = deleteZeroAccesses(insNormalList);
+
+  deriveAccessPattern(filteredInsList);   //needed for next step
+  // 1. filter constant access instructions
+  filteredInsList = deleteConstAccess(filteredInsList);
+
+  // 2. Only take instructions that represents ACCESS_KEEP_PERC of reads/writes
+  filteredInsList = keepTop(filteredInsList, ACCESS_KEEP_PERC);
+  markTopAndProcessInfo(filteredInsList);
+
+  printInfo(filteredInsList);
+
+  cout << "Inst Trace size: " << insTrace.size() << endl;
+  set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
+
+  generateCode(cfg, "code.ii");
+
+  for(InsNormal* it : insNormalList){ delete it; }    //delete allocated instructions
+  for(InsBlock* it : blockList){ delete it; }         //delete allocated blocks
+  for(InsBase* it : baseList){ delete it; }           //delete allocated base instructions
+  for(InsLoop* it : loopList){ delete it; }           //delete allocated loops
+}
+
+
+/*******************************************************************************
+ * IMG Instrumentation
+ ******************************************************************************/
+VOID RtnEntry(THREADID tid) {
+  //tdata[tid].rtnEntryCnt++;
+  rtnEntryCnt++;
+}
+
+VOID RtnLeave(THREADID tid) {
+  //tdata[tid].rtnEntryCnt--;
+  rtnEntryCnt--;
+}
+
+void ImgCallback(IMG img, VOID *arg) {
   if (!IMG_IsMainExecutable(img))
     return;
 
@@ -530,10 +600,8 @@ VOID ImgCallback(IMG img, VOID *arg) {
 
           // Instrument function entry and exit
           RTN_Open(rtn);
-          RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR) RtnEntry, IARG_THREAD_ID,
-              IARG_END);
-          RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) RtnLeave, IARG_THREAD_ID,
-              IARG_END);
+          RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR) RtnEntry, IARG_THREAD_ID, IARG_END);
+          RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) RtnLeave, IARG_THREAD_ID, IARG_END);
           RTN_Close(rtn);
         }
       }
@@ -559,10 +627,8 @@ VOID ImgCallback(IMG img, VOID *arg) {
 
           // Instrument function entry and exit
           RTN_Open(rtn);
-          RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR) RtnEntry, IARG_THREAD_ID,
-              IARG_END);
-          RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) RtnLeave, IARG_THREAD_ID,
-              IARG_END);
+          RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR) RtnEntry, IARG_THREAD_ID, IARG_END);
+          RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) RtnLeave, IARG_THREAD_ID, IARG_END);
           RTN_Close(rtn);
         }
       }
@@ -577,242 +643,76 @@ VOID ImgCallback(IMG img, VOID *arg) {
   }
 }
 
-#define CNT_TH    100
 
-void deleteZeroAccesses(InfoMap &mp){
-  for(auto it = mp.begin(); it != mp.end();){
-    if(it->second->cnt == 0){
-      mp.erase(it++);
+/*******************************************************************************
+ * INS Instrumentation
+ ******************************************************************************/
+void record(InsNormal* info, ADDRINT ea) {
+  if(rtnEntryCnt <= 0)  return;
+  info->totalSz += info->accSz;
+  if(info->cnt && (info->strideDist.size() < MAX_STRIDE_BUCKETS)){
+    INT64 stride = ea - info->lastEA;
+    info->strideDist[stride]++;
+  }
+  if(ea < info->addr.s){
+    info->addr.s = ea;
+  }
+  if(ea > info->addr.e){
+    info->addr.e = ea;
+  }
+  info->lastEA = ea;
+  info->cnt++;
+  insTrace.push_back(info);
+}
+
+
+InsNormal* createInsNormal(AccessType type, UINT32 accSz, string dis){
+  static UINT64 id = 0;
+  InsNormal* info = new InsNormal();
+  info->dis = dis;
+  info->id = id++;
+  info->accType = type;
+  info->accSz = accSz;
+  insNormalList.push_back(info);
+  return info;
+}
+
+
+void Instruction(INS ins, VOID *v) {
+  static set<ADDRINT> processedIns;   //set of already processed instructions
+
+  // Get the memory operand count of the current instruction.
+  UINT32 memOperands = INS_MemoryOperandCount(ins);
+
+  // check if memory instruction
+  if (memOperands == 0) return;
+
+  // check if already processed or not
+  ADDRINT addr = INS_Address(ins);
+  if (processedIns.find(addr) != processedIns.end()) return;   //already processed
+  processedIns.insert(addr); //mark as processed
+
+  // Iterate over each memory operand of the instruction.
+  for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
+    if (INS_MemoryOperandIsRead(ins, memOp) && read_log_en) {
+      InsNormal* info = createInsNormal(AccessType::AccessTypeRead, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
+      INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record, IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_END);
     }
-    else{
-      it++;
-    }
-  }
-}
 
-void deleteConstAccess(InfoMap &mp){
-  for(auto it = mp.begin(); it != mp.end();){
-    //double sameStrideCnt = (double)(it->second->sameStrideCnt);
-    double cnt = (double)(it->second->cnt);
-    //double sameStrideRatio = sameStrideCnt / cnt;
-    double AvgStride = (double)(it->second->totalStride) / cnt;
-
-    if(abs(AvgStride) < 0.1){   //over 90% with same stride, and average stride is very low.
-      mp.erase(it++);
-    }
-    else{
-      it++;
-    }
-
-    //bool isSameStride = (sameStrideRatio > 0.9) || (sameStrideCnt == (cnt - 1));
-
-
-  }
-}
-
-UINT64 getTotalAccessSz(InfoMap &mp){
-  UINT64 sz = 0;
-  for(auto ptr : mp){
-    sz += ptr.second->totalSz;
-  }
-  return sz;
-}
-
-void printInfo(const vector<InstInfo*> &res){
-  for(InstInfo* i : res){
-    cout << setw(20) << hex << i->instAddr << dec << "\t";
-    cout << setw(50) << dec << i->dis;
-    //cout << setw(20) << "TotalSz: " << i->totalSz << "\t\t";
-    cout << setw(20) << "Count: " << i->cnt << "\t";
-    cout << setw(20) << "AvgStride: " << (double)(i->totalStride) / (double)(i->cnt) << "\t";
-    cout << setw(20) << "Same Stride Cnt: " << i->sameStrideCnt << "\t";
-    cout << setw(20) << "Start Addr: " << hex << i->startAddr << "\t";
-    cout << setw(20) << "End Addr: " << hex << i->endAddr << "\t";
-    cout << dec << endl;
-    delete i;
-  }
-}
-
-vector<InstInfo*> keepTop(InfoMap &mp, double perc){
-  UINT64 sz = getTotalAccessSz(mp);
-  cout << "Before pruning. NumInst: " << mp.size() << "\t\tAccessSz: " << sz << endl;
-  UINT64 szAfter = sz * perc / 100.0;
-  vector<InstInfo*> top, res;
-  top.reserve(mp.size());
-  top.reserve(mp.size());
-
-  //copy
-  for(auto ptr : mp){
-    top.push_back(ptr.second);
-  }
-
-  //sort
-  sort(top.begin(), top.end(), [](const InstInfo* lhs, const InstInfo* rhs) {
-      return lhs->totalSz > rhs->totalSz;
-  });
-
-  sz = 0;
-  for(InstInfo* it : top){
-    res.push_back(it);
-    insAddrToBlk[it->instAddr]->isTop = true;
-    sz += it->totalSz;
-    if(sz > szAfter)  break;
-  }
-
-  sz = 0;
-  for(InstInfo* it: res){
-    sz += it->totalSz;
-  }
-  cout << "After pruning. NumInst: " << res.size() << "\t\tAccessSz: " << sz << endl;
-  return res;
-}
-
-void deleteInfoMap(InfoMap &mp){
-  for(auto it : mp){
-    delete it.second;
-  }
-}
-
-void deleteBblMap(){
-  for(auto it : bblIdInfoMap){
-    delete it.second;
-  }
-}
-
-void deleteInsBlockMap(){
-  for(auto it : insAddrToBlk){
-    delete it.second;
-  }
-}
-
-void deleteLoops(){
-  for(InsLoop* i : loops){
-    delete i;
-  }
-}
-
-void deleteBases(){
-  for(InsBase* i : bases){
-    delete i;
-  }
-}
-
-void printBblInfo(UINT64 id){
-  BblInfo* bi = bblIdInfoMap[id];
-  cout << "id: " << id;
-  cout << "\tisUsing: " << bi->isUsing;
-  cout << "\tentered: " << bi->entered << endl;
-  for(auto it : bi->insMap){
-    cout << "\t" << hex << it.first << dec << endl;
-    if(rInfo.find(it.first) != rInfo.end()){
-      cout << "\t" << rInfo[it.first]->dis << endl;
-    }
-    if(wInfo.find(it.first) != wInfo.end()){
-      cout << "\t" << wInfo[it.first]->dis << endl;
+    if (INS_MemoryOperandIsWritten(ins, memOp) && write_log_en) {
+      InsNormal* info = createInsNormal(AccessType::AccessTypeWrite, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
+      INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record, IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_END);
     }
   }
 }
 
 
-VOID Fini(INT32 code, VOID *v) {
-  // add finish trace to insTrace
-  InsBlock* end = new InsBlock();
-  end->id = 1;
-  end->isTop = true;
-  insTrace.push_back(1);
-  insAddrToBlk[1] = end;
-
-  // 0. Filter zero  (or very low) cnt instructions
-  deleteZeroAccesses(rInfo);
-  deleteZeroAccesses(wInfo);
-
-  // 1. Delete constant access instructions
-  deleteConstAccess(rInfo);
-  deleteConstAccess(wInfo);
-
-  // 2. Calculate total reads / writes
-  //UINT64 rdSz = getTotalAccessSz(rInfo);
-  //UINT64 wrSz = getTotalAccessSz(wInfo);
-  //cout << "Read size: " << rdSz << endl;
-  //cout << "Write size: " << wrSz << endl;
-
-  //createDCFGfromTrace(bblTrace);
-
-  // 3. Only take instructions that represents 90% of reads/writes
-  auto rRes = keepTop(rInfo, 95);
-  auto wRes = keepTop(wInfo, 95);
-
-  //mark BBL
-  /*for(auto it : bblIdInfoMap){
-    BblInfo* bi = it.second;
-    bi->isUsing = false;
-    for(InstInfo* rr : rRes){
-      ADDRINT addr = rr->instAddr;
-      if(bi->insMap.find(addr) != bi->insMap.end()){
-        bi->isUsing = true;
-        break;
-      }
-    }
-    if(bi->isUsing == false){
-      for(InstInfo* ww : wRes){
-        ADDRINT addr = ww->instAddr;
-        if(bi->insMap.find(addr) != bi->insMap.end()){
-          bi->isUsing = true;
-          break;
-        }
-      }
-    }
-  }*/
-
-  //copy top trace
-  /*bblTraceTop.clear();
-  for(UINT64 id : bblTrace){
-    BblInfo* bi = bblIdInfoMap[id];
-    if(bi->isUsing){
-      bblTraceTop.push_back(id);
-    }
-  }*/
-  //cout << "Orig Trace size: " << bblTrace.size() << endl;
-  //cout << "Top trace size: " << bblTraceTop.size() << endl;
-
-  //createDCFGfromTrace(bblTrace);
-
-  cout << endl << "============================================ READS ==============================================" << endl;
-  //printInfoAndDelete(rInfo);
-  printInfo(rRes);
-
-  cout << endl << "============================================ WRITES =============================================" << endl;
-  //printInfoAndDelete(wInfo);
-  printInfo(wRes);
-
-  cout << "Inst Trace size: " << insTrace.size() << endl;
-  /*vector<ADDRINT> topTrace;
-  topTrace.reserve(insTrace.size());
-  for(ADDRINT addr : insTrace){
-    if(insAddrToBlk[addr]->isTop){
-      topTrace.push_back(addr);
-    }
-  }
-  cout << "Top Trace size: " << topTrace.size() << endl;*/
-
-  set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
-
-  generateCode(cfg, "code.ii");
-
-  deleteInfoMap(rInfo);
-  deleteInfoMap(wInfo);
-  deleteInsBlockMap();
-  deleteLoops();
-  deleteBases();
-  //deleteBblMap();
-}
-
-/**
- * Entry point
- */
+/*******************************************************************************
+ * PIN Entry
+ ******************************************************************************/
 int main(int argc, char *argv[]) {
   if (PIN_Init(argc, argv)) {
-    return Usage();
+    return -1;
   }
 
   // Initializations
@@ -823,25 +723,13 @@ int main(int argc, char *argv[]) {
   read_log_en = knobRead.Value();
   write_log_en = knobWrite.Value();
 
+  insNormalList.reserve(100000);
+  baseList.reserve(100000);
+  loopList.reserve(100000);
   insTrace.reserve(40000000);
-
-  InsBlock* begin = new InsBlock();
-  begin->id = 0;
-  begin->isTop = true;
-  insTrace.push_back(0);
-  insAddrToBlk[0] = begin;
-
-  //bblTrace.reserve(1000000);
-  //BblInfo* begin = new BblInfo();
-  //begin->id = 0;
-  //begin->entered = true;
-  //bblTrace.push_back(0);
-  //bblAddrIdMap[-1] = 0;
-  //bblIdInfoMap[0] = begin;
 
   IMG_AddInstrumentFunction(ImgCallback, NULL);
   INS_AddInstrumentFunction(Instruction, NULL);
-  //TRACE_AddInstrumentFunction(TrcCallback, NULL);
   PIN_AddFiniFunction(Fini, NULL);
 
   // Start the program, never returns
