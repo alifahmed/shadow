@@ -24,6 +24,7 @@
 #include <stack>
 #include <cassert>
 #include <sstream>
+#include <immintrin.h>
 #include "pin.H"
 
 using namespace std;
@@ -58,26 +59,35 @@ KNOB<bool> knobWrite(KNOB_MODE_WRITEONCE, "pintool", "write", "1",
 /*******************************************************************************
  * Forward declarations
  ******************************************************************************/
+typedef enum {InsTypeInvalid, InsTypeNormal, InsTypeLoop} InsType;
+typedef enum {AccessTypeInvalid, AccessTypeRead, AccessTypeWrite} AccessType;
+typedef enum {PatTypeInvalid, PatTypeSeq, PatTypeRand} PatType;
 struct InsBase;
 struct InsNormal;
+struct InsAbnormal;
 struct InsLoop;
 struct InsBlock;
 struct Interval;
 
 void deriveAccessPattern(const vector<InsNormal*> &insList);
+InsNormal* createInsNormal(AccessType type, UINT32 accSz, string dis);
 
 /*******************************************************************************
  * Data structures
  ******************************************************************************/
-typedef enum {InsTypeInvalid, InsTypeNormal, InsTypeLoop} InsType;
-typedef enum {AccessTypeInvalid, AccessTypeRead, AccessTypeWrite} AccessType;
-typedef enum {PatTypeInvalid, PatTypeSeq, PatTypeRand} PatType;
 typedef map<ADDRINT, InsNormal*> InfoMap;
 
 typedef struct Interval {
   ADDRINT s = -1;
   ADDRINT e = 0;
 } Interval;
+
+typedef struct InsAbnormal{
+  string dis;
+  UINT64 accSz;
+  AccessType accType = AccessTypeInvalid;
+  map<ADDRINT, InsNormal*> insMap;
+} InsAbnormal;
 
 typedef struct InsNormal{
   UINT64 id = -1;
@@ -93,9 +103,14 @@ typedef struct InsNormal{
   InsBlock* block = NULL;
   PatType pType = PatTypeInvalid;
   INT64 stride = -1;
+  string strStart;
+  string strEnd;
+  string strCurr;
+  string strType;
 } InstInfo;
 
 typedef struct InsLoop {
+  UINT64 id = -1;
   UINT64 loopCnt = 0;
   vector<InsBase*> ins;
 }InsLoop;
@@ -119,6 +134,9 @@ typedef struct InsBase{
  ******************************************************************************/
 #define ACCESS_KEEP_PERC    95
 #define MAX_STRIDE_BUCKETS  10
+#define MIN_CNT             500
+#define HASH_INIT_VALUE     (0xABCDEF94ED70BA3EULL)
+#define _tab(x)             setw(x*4) << " "
 
 
 /*******************************************************************************
@@ -132,14 +150,21 @@ static UINT64 rtnEntryCnt = 0;
 bool firstLine = true;
 
 static vector<InsNormal*> insNormalList;
+static vector<InsAbnormal*> insAbnormalList;
 static vector<InsBlock*> blockList;
 static vector<InsBase*> baseList;
 static vector<InsLoop*> loopList;
 
 static vector<InsNormal*> insTrace;
+static stack<ADDRINT> callStack;
+static ADDRINT callHash = HASH_INIT_VALUE;
 
 static ADDRINT globalMinAddr = -1;
 static ADDRINT globalMaxAddr = 0;
+
+static map<UINT64, string> accTypeMap;
+static map<UINT64, char> movSuffixMap;
+static map<UINT64, string> regNameMap;
 
 
 /*******************************************************************************
@@ -208,8 +233,10 @@ bool compressLoop(set<InsBlock*> &cfg){
         InsBase* base = new InsBase();
         baseList.push_back(base);
 
+        static UINT64 loopId = 0;
         loop->loopCnt = loopCnt;
         loop->ins = in->ins;    //copy
+        loop->id = loopId++;
         in->ins.clear();
 
         base->type = InsType::InsTypeLoop;
@@ -241,14 +268,28 @@ void printInsLabel(ofstream &out, const vector<InsBase*> &insts, UINT32 indent){
     }
     firstLine = false;
     for(UINT32 i = 0; i < indent; i++){
-      out << " &nbsp; &nbsp; ";
+      out << "  ";
     }
     if(it->type == InsType::InsTypeNormal){
-      out << "Ins id: " << it->insNormal->id;
+      InsNormal* ins = it->insNormal;
+      out << setw(4) << ins->id << ":";
+      if(ins->accType == AccessType::AccessTypeRead){
+        out << "RD ";
+      }
+      else if(ins->accType == AccessType::AccessTypeWrite){
+        out << "WR ";
+      }
+      if(ins->pType == PatType::PatTypeSeq){
+        out << "SEQ S" << ins->stride;
+      }
+      else if(ins->pType == PatType::PatTypeRand){
+        out << "RAND ";
+      }
+      out << " A" << ins->accSz << " [" << ins->addr.s << ":" << ins->addr.e << ")";
     }
     else if(it->type == InsType::InsTypeLoop){
       InsLoop* loop = it->insLoop;
-      out << "Loop: " << loop->loopCnt;
+      out << "loop" << loop->id << ": " << loop->loopCnt;
       printInsLabel(out, loop->ins, indent+1);
     }
   }
@@ -265,7 +306,7 @@ void printDot(const set<InsBlock*> &cfg, const char* fname){
 
   for(InsBlock* ib : cfg){
     if(ib->id >= 2){
-      out << "\tB" << ib->id << " [shape=plain, label=< <table>";
+      out << "\tB" << ib->id << " [shape=plain, fontname=\"Courier\", label=< <table>";
       out << "<TR><TD balign=\"left\" border=\"0\">";
       firstLine = true;
       printInsLabel(out, ib->ins, 0);
@@ -282,11 +323,108 @@ void printDot(const set<InsBlock*> &cfg, const char* fname){
   out << "}\n";
 }
 
-void generateInst(ofstream &out, InsBlock* ins){
+void generateCodeInst(ofstream &out, InsNormal* ins, int indent){
+  if(ins->pType == PatType::PatTypeSeq){
+    out << _tab(indent) << "__asm__ __volatile__ (\"leaq (%1,%2,1), %0\\n\\t\" : \"=r\"(addr) : \"r\"(gm), \"r\"(" << ins->strCurr << ") : );\n";
+    if(ins->accType == AccessType::AccessTypeRead){
+      out << _tab(indent) << "__asm__ __volatile__ (\"mov" << movSuffixMap[ins->accSz] << " (%0), %%" << regNameMap[ins->accSz]
+          << "\" : : \"r\"(addr) : \"" << regNameMap[ins->accSz] << "\" );\n";
+    }
+    else if(ins->accType == AccessType::AccessTypeWrite){
+      out << _tab(indent) << "__asm__ __volatile__ (\"mov" << movSuffixMap[ins->accSz] << " %%" << regNameMap[ins->accSz] << ", (%0)"
+          << "\" : \"=r\"(addr) : : );\n";
+    }
+    out << _tab(indent) << ins->strCurr << " += " << ins->stride << ";\n";
+    out << _tab(indent) << "if(" << ins->strCurr << " >= " << ins->addr.e << ") " << ins->strCurr << " = " << ins->addr.s << ";\n";
+  }
+  else if(ins->pType == PatType::PatTypeRand){
+    //first, generate random address within range, and without accessing memory
+    out << _tab(indent) << "hash = _mm_crc32_u64(hash, " << (((uint64_t)rand() << 32) | rand()) << "ULL);\n";
+    out << _tab(indent) << "offset = (hash % " << ins->addr.e - ins->addr.s << ") + " << ins->addr.s << ";\n";
+    out << _tab(indent) << "addr = gm + (offset & ~7ULL);\n";
 
+    if(ins->accType == AccessType::AccessTypeRead){
+      out << _tab(indent) << "__asm__ __volatile__ (\"mov" << movSuffixMap[ins->accSz] << " (%0), %%" << regNameMap[ins->accSz]
+                << "\" : : \"r\"(addr) : \"" << regNameMap[ins->accSz] << "\" );\n";
+    }
+    else if(ins->accType == AccessType::AccessTypeWrite){
+      out << _tab(indent) << "__asm__ __volatile__ (\"mov" << movSuffixMap[ins->accSz] << " %%" << regNameMap[ins->accSz] << ", (%0)"
+                << "\" : \"=r\"(addr) : : );\n";
+    }
+  }
+  out << "\n";
 }
 
-void generateCode(set<InsBlock*> &cfg, const char* fname){
+void generateCodeLoop(ofstream &out, InsLoop* loop, int indent){
+  out << _tab(indent) << "for(uint64_t loop" << loop->id << " = 0; loop" << loop->id << " < " << loop->loopCnt << "ULL; loop" << loop->id << "++){\n";
+  for(InsBase* base : loop->ins){
+    if(base->type == InsType::InsTypeLoop){
+      generateCodeLoop(out, base->insLoop, indent + 1);
+    }
+    else if(base->type == InsType::InsTypeNormal){
+      generateCodeInst(out, base->insNormal, indent + 1);
+    }
+  }
+  out << _tab(indent) << "}\n";
+}
+
+void generateCodeHeader(ofstream &out, vector<InsNormal*> &insList){
+  out << "#include <cstdlib>\n";
+  out << "#include <cstdint>\n";
+  out << "#include <cstdio>\n";
+  out << "#include \"immintrin.h\"\n";
+  out << "\n";
+  out << "int main(){\n";
+  out << _tab(1) << "volatile uint8_t* addr = NULL;\n";
+  out << _tab(1) << "uint64_t offset;\n";
+  out << _tab(1) << "uint64_t hash = 0xC32ED012FEA8B4D3ULL;\n";
+  out << _tab(1) << "uint64_t allocSize = " << globalMaxAddr - globalMinAddr << "ULL;\n";
+  out << _tab(1) << "volatile uint8_t* gm = (volatile uint8_t*)malloc(allocSize);\n";
+  out << _tab(1) << "if(gm == NULL) {\n";
+  out << _tab(2) << "fprintf(stderr, \"Cannot allocate memory\\n\");\n";
+  out << _tab(2) << "exit(-1);\n";
+  out << _tab(1) << "}\n";
+  out << "\n";
+  for(InsNormal* ins : insList){
+    stringstream ss;
+    ins->strType = accTypeMap[ins->accSz];
+    ss << "ins_" << ins->id;
+    ins->strCurr = ss.str();
+    ss.str("");
+    ss << "ins_" << ins->id << "_start";
+    ins->strStart = ss.str();
+    ss.str("");
+    ss << "ins_" << ins->id << "_end";
+    ins->strEnd = ss.str();
+    ss.str("");
+    if(ins->pType == PatTypeSeq){
+      out << _tab(1) << "uint64_t " << ins->strCurr << " = " << ins->addr.s << ";\n";
+    }
+  }
+  out << "\n";
+}
+
+void generateCodeBlock(ofstream &out, InsBlock* blk, int indent){
+  for(InsBase* base : blk->ins){
+    if(base->type == InsType::InsTypeLoop){
+      generateCodeLoop(out, base->insLoop, indent);
+    }
+    else if(base->type == InsType::InsTypeNormal){
+      generateCodeInst(out, base->insNormal, indent);
+    }
+    else{
+      cerr << "Unable to generate code: Invalid instruction type" << endl;
+      PIN_ExitProcess(11);
+    }
+  }
+}
+
+void generateCodeFooter(ofstream &out){
+  out << _tab(1) << "return 0;\n";
+  out << "}\n";
+}
+
+void generateCode(vector<InsNormal*> &insList, const set<InsBlock*> &cfg, const char* fname){
   //find root node
   InsBlock* root = NULL;
   for(InsBlock* ins : cfg){
@@ -295,17 +433,23 @@ void generateCode(set<InsBlock*> &cfg, const char* fname){
       break;
     }
   }
+  assert(root->outEdges.size() == 1);
+  root = root->outEdges.begin()->first;
   assert(root != NULL);
+
+  cout << "Generating code in: " << fname << "...\n";
 
   //open output file
   ofstream out(fname);
 
   //write headers
+  generateCodeHeader(out, insList);
 
-  //write code blocks
-  generateInst(out, root);
+  //write code blocks: For now, only one block
+  generateCodeBlock(out, root, 1);
 
   //write footer
+  generateCodeFooter(out);
 
 }
 
@@ -367,12 +511,6 @@ set<InsBlock*> createDCFGfromInstTrace(vector<InsNormal*> &trace){
 
   return topInsBlocks;
 }
-
-
-
-
-
-
 
 void printInfo(const vector<InsNormal*> &res){
   for(InsNormal* i : res){
@@ -463,7 +601,7 @@ vector<InsNormal*> deleteZeroAccesses(const vector<InsNormal*> &insList){
   vector<InsNormal*> out;
   out.reserve(insList.size());
   for(InsNormal* it : insList){
-    if(it->cnt){
+    if(it->cnt > MIN_CNT){
       out.push_back(it);
     }
   }
@@ -554,9 +692,12 @@ VOID Fini(INT32 code, VOID *v) {
   cout << "Inst Trace size: " << insTrace.size() << endl;
   set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
 
-  generateCode(cfg, "code.ii");
+  generateCode(filteredInsList, cfg, "genCode.cpp");
 
+  cout << "Call stack size: " << callStack.size() << endl;
+  //assert(callHash == HASH_INIT_VALUE);
   for(InsNormal* it : insNormalList){ delete it; }    //delete allocated instructions
+  for(InsAbnormal* it : insAbnormalList){ delete it; }    //delete allocated instructions
   for(InsBlock* it : blockList){ delete it; }         //delete allocated blocks
   for(InsBase* it : baseList){ delete it; }           //delete allocated base instructions
   for(InsLoop* it : loopList){ delete it; }           //delete allocated loops
@@ -647,8 +788,26 @@ void ImgCallback(IMG img, VOID *arg) {
 /*******************************************************************************
  * INS Instrumentation
  ******************************************************************************/
-void record(InsNormal* info, ADDRINT ea) {
+VOID anyCallEntry(ADDRINT ptr){
+  callStack.push(ptr);
+  callHash ^= ptr;
+}
+
+VOID anyCallRet(){
+  ADDRINT lastAddr = callStack.top();
+  callHash ^= lastAddr;
+  callStack.pop();
+}
+
+void record(InsAbnormal* ins, ADDRINT ea) {
   if(rtnEntryCnt <= 0)  return;
+  InsNormal* info = NULL;
+  if(ins->insMap.find(callHash) == ins->insMap.end()){
+    //Instruction info data not present in the current context. Create new.
+    info = createInsNormal(ins->accType, ins->accSz, ins->dis);
+    ins->insMap[callHash] = info;
+  }
+  info = ins->insMap[callHash];
   info->totalSz += info->accSz;
   if(info->cnt && (info->strideDist.size() < MAX_STRIDE_BUCKETS)){
     INT64 stride = ea - info->lastEA;
@@ -677,9 +836,31 @@ InsNormal* createInsNormal(AccessType type, UINT32 accSz, string dis){
   return info;
 }
 
+InsAbnormal* createInsAbnormal(AccessType type, UINT32 accSz, string dis){
+  InsAbnormal* info = new InsAbnormal();
+  info->dis = dis;
+  info->accType = type;
+  info->accSz = accSz;
+  insAbnormalList.push_back(info);
+  return info;
+}
 
 void Instruction(INS ins, VOID *v) {
   static set<ADDRINT> processedIns;   //set of already processed instructions
+
+  // do some filtering
+  if (INS_IsLea(ins)) return;
+  // Add other instructions if needed
+
+  if(INS_IsCall(ins)){
+    INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallEntry, IARG_INST_PTR, IARG_END);
+    return;
+  }
+
+  if(INS_IsRet(ins)){
+    INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallRet, IARG_END);
+    return;
+  }
 
   // Get the memory operand count of the current instruction.
   UINT32 memOperands = INS_MemoryOperandCount(ins);
@@ -689,18 +870,20 @@ void Instruction(INS ins, VOID *v) {
 
   // check if already processed or not
   ADDRINT addr = INS_Address(ins);
-  if (processedIns.find(addr) != processedIns.end()) return;   //already processed
+  if (processedIns.find(addr) != processedIns.end()) {
+    return;   //already processed
+  }
   processedIns.insert(addr); //mark as processed
 
   // Iterate over each memory operand of the instruction.
   for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
     if (INS_MemoryOperandIsRead(ins, memOp) && read_log_en) {
-      InsNormal* info = createInsNormal(AccessType::AccessTypeRead, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
+      InsAbnormal* info = createInsAbnormal(AccessType::AccessTypeRead, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
       INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record, IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_END);
     }
 
     if (INS_MemoryOperandIsWritten(ins, memOp) && write_log_en) {
-      InsNormal* info = createInsNormal(AccessType::AccessTypeWrite, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
+      InsAbnormal* info = createInsAbnormal(AccessType::AccessTypeWrite, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
       INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record, IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_END);
     }
   }
@@ -727,6 +910,22 @@ int main(int argc, char *argv[]) {
   baseList.reserve(100000);
   loopList.reserve(100000);
   insTrace.reserve(40000000);
+
+  accTypeMap[1] = "uint8_t";
+  accTypeMap[2] = "uint16_t";
+  accTypeMap[4] = "uint32_t";
+  accTypeMap[8] = "uint64_t";
+
+  movSuffixMap[1] = 'b';
+  movSuffixMap[2] = 'w';
+  movSuffixMap[4] = 'l';
+  movSuffixMap[8] = 'q';
+
+  regNameMap[1] = "al";
+  regNameMap[2] = "ax";
+  regNameMap[4] = "eax";
+  regNameMap[8] = "rax";
+
 
   IMG_AddInstrumentFunction(ImgCallback, NULL);
   INS_AddInstrumentFunction(Instruction, NULL);
