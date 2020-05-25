@@ -134,7 +134,7 @@ typedef struct InsBase{
  ******************************************************************************/
 #define ACCESS_KEEP_PERC    95
 #define MAX_STRIDE_BUCKETS  10
-#define MIN_CNT             500
+#define MIN_CNT             1
 #define HASH_INIT_VALUE     (0xABCDEF94ED70BA3EULL)
 #define _tab(x)             setw(x*4) << " "
 
@@ -836,54 +836,53 @@ InsNormal* createInsNormal(AccessType type, UINT32 accSz, string dis){
   return info;
 }
 
-InsAbnormal* createInsAbnormal(AccessType type, UINT32 accSz, string dis){
+InsAbnormal* createInsAbnormal(ADDRINT addr, AccessType type, UINT32 accSz, string dis){
+  //static set<ADDRINT> processedIns;   //set of already processed instructions
+  static map<ADDRINT, InsAbnormal*> processedIns;   //set of already processed instructions
+
+  // check if already processed or not
+  map<ADDRINT, InsAbnormal*>::iterator it = processedIns.find(addr);
+  if (it != processedIns.end()) {
+    return it->second;   //already processed
+  }
+  //processedIns.insert(addr); //mark as processed
+
   InsAbnormal* info = new InsAbnormal();
   info->dis = dis;
   info->accType = type;
   info->accSz = accSz;
   insAbnormalList.push_back(info);
+  processedIns[addr] = info;
   return info;
 }
 
 void Instruction(INS ins, VOID *v) {
-  static set<ADDRINT> processedIns;   //set of already processed instructions
-
   // do some filtering
-  if (INS_IsLea(ins)) return;
+  //if (INS_IsLea(ins)) return;
   // Add other instructions if needed
 
   if(INS_IsCall(ins)){
     INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallEntry, IARG_INST_PTR, IARG_END);
-    return;
+    //return;
   }
 
   if(INS_IsRet(ins)){
     INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallRet, IARG_END);
-    return;
+    //return;
   }
 
   // Get the memory operand count of the current instruction.
   UINT32 memOperands = INS_MemoryOperandCount(ins);
 
-  // check if memory instruction
-  if (memOperands == 0) return;
-
-  // check if already processed or not
-  ADDRINT addr = INS_Address(ins);
-  if (processedIns.find(addr) != processedIns.end()) {
-    return;   //already processed
-  }
-  processedIns.insert(addr); //mark as processed
-
   // Iterate over each memory operand of the instruction.
   for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
     if (INS_MemoryOperandIsRead(ins, memOp) && read_log_en) {
-      InsAbnormal* info = createInsAbnormal(AccessType::AccessTypeRead, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
+      InsAbnormal* info = createInsAbnormal(INS_Address(ins), AccessType::AccessTypeRead, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
       INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record, IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_END);
     }
 
     if (INS_MemoryOperandIsWritten(ins, memOp) && write_log_en) {
-      InsAbnormal* info = createInsAbnormal(AccessType::AccessTypeWrite, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
+      InsAbnormal* info = createInsAbnormal(INS_Address(ins), AccessType::AccessTypeWrite, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
       INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record, IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_END);
     }
   }
@@ -895,6 +894,7 @@ void Instruction(INS ins, VOID *v) {
  ******************************************************************************/
 int main(int argc, char *argv[]) {
   if (PIN_Init(argc, argv)) {
+    cerr << "Wrong arguments. Exiting..." << endl;
     return -1;
   }
 
