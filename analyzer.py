@@ -135,6 +135,7 @@ def comp_addr(curr_addr):
     curr_gap = curr_addr - comp_addr.act
     if(curr_gap > comp_addr.MAX_GAP):
         comp_addr.conv += comp_addr.MAX_GAP
+        print(comp_addr.conv)
     else:
         comp_addr.conv += curr_gap
     comp_addr.act = curr_addr

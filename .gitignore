@@ -1,3 +1,12 @@
+*.gv
+*.ps
+genCode.cpp
+*.log
+.cproject
+.project
+.settings/
+*.txt
+
 obj*
 *.csv
 

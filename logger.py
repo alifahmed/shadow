@@ -98,11 +98,8 @@ pin_cmd = [ args.pin_bin,
             '-t', obj_full_path,
             '-func', args.func,                 
             '-out', args.trace_file,
-            '-lim', str(args.trace_limit),
             '-read', str(args.read),
             '-write', str(args.write),
-            '-stack', str(args.stack_log),
-            '-ip', str(args.ip_log),
             '--', args.cmd] + args.cmd_args
 print("\n================================================================================")
 print(' '.join(pin_cmd))

@@ -78,7 +78,7 @@ InsNormal* createInsNormal(AccessType type, UINT32 accSz, string dis);
 typedef map<ADDRINT, InsNormal*> InfoMap;
 
 typedef struct Interval {
-  ADDRINT s = -1;
+  ADDRINT s = 0xFFFFFFFFFFFFFFFFULL;
   ADDRINT e = 0;
 } Interval;
 
@@ -134,9 +134,9 @@ typedef struct InsBase{
  ******************************************************************************/
 #define ACCESS_KEEP_PERC    95
 #define MAX_STRIDE_BUCKETS  10
-#define MIN_CNT             1
+#define MIN_CNT             100
 #define HASH_INIT_VALUE     (0xABCDEF94ED70BA3EULL)
-#define _tab(x)             setw(x*4) << " "
+#define _tab(x)             setw((x)*4) << " "
 
 
 /*******************************************************************************
@@ -323,6 +323,10 @@ void printDot(const set<InsBlock*> &cfg, const char* fname){
   out << "}\n";
 }
 
+inline void generateRandom(ofstream &out, int indent){
+  out << _tab(indent) << "hash = _mm_crc32_u64(hash, " << (((uint64_t)rand() << 32) | rand()) << "ULL);\n";
+}
+
 void generateCodeInst(ofstream &out, InsNormal* ins, int indent){
   if(ins->pType == PatType::PatTypeSeq){
     out << _tab(indent) << "__asm__ __volatile__ (\"leaq (%1,%2,1), %0\\n\\t\" : \"=r\"(addr) : \"r\"(gm), \"r\"(" << ins->strCurr << ") : );\n";
@@ -339,7 +343,7 @@ void generateCodeInst(ofstream &out, InsNormal* ins, int indent){
   }
   else if(ins->pType == PatType::PatTypeRand){
     //first, generate random address within range, and without accessing memory
-    out << _tab(indent) << "hash = _mm_crc32_u64(hash, " << (((uint64_t)rand() << 32) | rand()) << "ULL);\n";
+    generateRandom(out, indent);
     out << _tab(indent) << "offset = (hash % " << ins->addr.e - ins->addr.s << ") + " << ins->addr.s << ";\n";
     out << _tab(indent) << "addr = gm + (offset & ~7ULL);\n";
 
@@ -402,9 +406,12 @@ void generateCodeHeader(ofstream &out, vector<InsNormal*> &insList){
     }
   }
   out << "\n";
+  out << _tab(1) << "goto block0;\n";
+  out << "\n";
 }
 
 void generateCodeBlock(ofstream &out, InsBlock* blk, int indent){
+  out << "block" << blk->id << ":\n";
   for(InsBase* base : blk->ins){
     if(base->type == InsType::InsTypeLoop){
       generateCodeLoop(out, base->insLoop, indent);
@@ -417,16 +424,36 @@ void generateCodeBlock(ofstream &out, InsBlock* blk, int indent){
       PIN_ExitProcess(11);
     }
   }
+  if(blk->outEdges.size() == 1){
+    //only one out edge
+    out << _tab(indent) << "goto block" << blk->outEdges.begin()->first->id << ";\n";
+  }
+  else{
+    //multiple out edges
+    out << _tab(indent) << "static uint64_t out_" << blk->id << " = 0;\n";
+    out << _tab(indent) << "out_" << blk->id << "++;\n";
+    out << _tab(indent) << "switch(out_" << blk->id << ") {\n";
+    UINT64 total = 1;
+    for(auto it : blk->outEdges){
+      out << _tab(indent) << "case " << total << " ... ";
+      total += it.second;
+      out << (total - 1) << ":\n";
+      out << _tab(indent+1) << "goto block" << it.first->id << ";\n";
+    }
+    out << _tab(indent) << "}\n";
+  }
+  out << "\n";
 }
 
 void generateCodeFooter(ofstream &out){
+  out << "block1:\n";
   out << _tab(1) << "return 0;\n";
   out << "}\n";
 }
 
 void generateCode(vector<InsNormal*> &insList, const set<InsBlock*> &cfg, const char* fname){
   //find root node
-  InsBlock* root = NULL;
+  /*InsBlock* root = NULL;
   for(InsBlock* ins : cfg){
     if(ins->id == 0){
       root = ins;
@@ -435,7 +462,7 @@ void generateCode(vector<InsNormal*> &insList, const set<InsBlock*> &cfg, const 
   }
   assert(root->outEdges.size() == 1);
   root = root->outEdges.begin()->first;
-  assert(root != NULL);
+  assert(root != NULL);*/
 
   cout << "Generating code in: " << fname << "...\n";
 
@@ -446,7 +473,12 @@ void generateCode(vector<InsNormal*> &insList, const set<InsBlock*> &cfg, const 
   generateCodeHeader(out, insList);
 
   //write code blocks: For now, only one block
-  generateCodeBlock(out, root, 1);
+  //generateCodeBlock(out, root, 1);
+  for(InsBlock* blk : cfg){
+    if(blk->id != 1){   //skip end block. Handled in footer
+      generateCodeBlock(out, blk, 1);
+    }
+  }
 
   //write footer
   generateCodeFooter(out);
@@ -677,14 +709,19 @@ void markTopAndProcessInfo(vector<InsNormal*> &insList){
 VOID Fini(INT32 code, VOID *v) {
   // 0. Filter zero  (or very low) cnt instructions
   vector<InsNormal*> filteredInsList;
+  cout << "Static memory instructions: Before any filtering " << insNormalList.size() << endl;
+
   filteredInsList = deleteZeroAccesses(insNormalList);
+  cout << "Static memory instructions: After zero access delete " << filteredInsList.size() << endl;
 
   deriveAccessPattern(filteredInsList);   //needed for next step
   // 1. filter constant access instructions
   filteredInsList = deleteConstAccess(filteredInsList);
+  cout << "Static memory instructions: After const access delete " << filteredInsList.size() << endl;
 
   // 2. Only take instructions that represents ACCESS_KEEP_PERC of reads/writes
   filteredInsList = keepTop(filteredInsList, ACCESS_KEEP_PERC);
+  cout << "Static memory instructions: top " << filteredInsList.size() << endl;
   markTopAndProcessInfo(filteredInsList);
 
   printInfo(filteredInsList);
@@ -858,17 +895,17 @@ InsAbnormal* createInsAbnormal(ADDRINT addr, AccessType type, UINT32 accSz, stri
 
 void Instruction(INS ins, VOID *v) {
   // do some filtering
-  //if (INS_IsLea(ins)) return;
+  if (INS_IsLea(ins)) return;
   // Add other instructions if needed
 
   if(INS_IsCall(ins)){
     INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallEntry, IARG_INST_PTR, IARG_END);
-    //return;
+    return;
   }
 
   if(INS_IsRet(ins)){
     INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallRet, IARG_END);
-    //return;
+    return;
   }
 
   // Get the memory operand count of the current instruction.

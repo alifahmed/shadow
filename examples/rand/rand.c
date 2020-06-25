@@ -10,7 +10,7 @@
  ******************************************************************************/
 #include <stdlib.h>
 
-#define N	8192
+#define N	100000
 
 static volatile int arr[N];
 static volatile int idx[N];
