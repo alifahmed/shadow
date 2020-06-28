@@ -172,7 +172,6 @@ static map<UINT64, string> regNameMap;
  ******************************************************************************/
 
 bool compressDCFG(set<InsBlock*> &cfg){
-  cout << "[INFO] compress dcfg entry" << endl;
   bool isChanged = false;
   bool merged;
   do{
@@ -204,22 +203,16 @@ bool compressDCFG(set<InsBlock*> &cfg){
       }
     }
   } while(merged);
-  cout << "[INFO] compress dcfg exit" << endl;
   return isChanged;
 }
 
 bool compressLoop(set<InsBlock*> &cfg){
-  cout << "[INFO] compress loop entry" << endl;
   bool isChanged = false;
   for(InsBlock* blk : cfg){
-    if(blk->id == 1) continue;
     if(blk->outEdges.size() < 2) continue;
     if(!(blk->outEdges.size() % 2)){
       bool isLoop = true;
-      //only if even
       uint64_t pred_iter = blk->outEdges[0].second;
-      InsBlock* pred_next = blk->outEdges[1].first;
-      uint64_t next_cnt = 0;
       for(uint64_t i = 0; i < blk->outEdges.size(); i++){
         if(!(i % 2)){
           //even index
@@ -230,16 +223,28 @@ bool compressLoop(set<InsBlock*> &cfg){
         }
         else{
           //odd index
-          if((blk->outEdges[i].second != 1) || (blk->outEdges[i].first != pred_next)){
+          if(blk->outEdges[i].second != 1){
             isLoop = false;
             break;
           }
-          next_cnt++;
         }
       }
       if(isLoop){
+        //fix out edges
+        vector< pair<InsBlock*, UINT64> > old_edges = blk->outEdges;
         blk->outEdges.clear();
-        blk->outEdges.push_back({pred_next,next_cnt});
+        blk->outEdges.push_back({old_edges[1].first, 0});
+        for(auto it : old_edges){
+          InsBlock* nextBlk = it.first;
+          if(nextBlk != blk){
+            if(blk->outEdges.back().first == nextBlk){
+              blk->outEdges.back().second++;
+            }
+            else{
+              blk->outEdges.push_back({nextBlk, 1});
+            }
+          }
+        }
 
         InsLoop* loop = new InsLoop();
         loopList.push_back(loop);
@@ -257,15 +262,9 @@ bool compressLoop(set<InsBlock*> &cfg){
         blk->ins.push_back(base);
         blk->inEdges.erase(blk);
         isChanged = true;
-        cout << "[INFO] Found loop on block " << blk->id << ". In-edges: ";
-        for(InsBlock* it : blk->inEdges){
-          cout << it->id << "  ";
-        }
-        cout << endl;
       }
     }
   }
-  cout << "[INFO] compress loop exit" << endl;
   return isChanged;
 }
 
