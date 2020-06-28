@@ -117,7 +117,7 @@ typedef struct InsLoop {
 
 typedef struct InsBlock{
   UINT64 id = -1;
-  map<InsBlock*, UINT64> outEdges;   //successors and count
+  vector< pair<InsBlock*, UINT64> > outEdges;   //successors and count
   set<InsBlock*> inEdges;
   vector<InsBase*> ins;
 } InsBlock;
@@ -132,7 +132,7 @@ typedef struct InsBase{
 /*******************************************************************************
  * Defines
  ******************************************************************************/
-#define ACCESS_KEEP_PERC    95
+#define ACCESS_KEEP_PERC    97
 #define MAX_STRIDE_BUCKETS  10
 #define MIN_CNT             100
 #define HASH_INIT_VALUE     (0xABCDEF94ED70BA3EULL)
@@ -172,6 +172,7 @@ static map<UINT64, string> regNameMap;
  ******************************************************************************/
 
 bool compressDCFG(set<InsBlock*> &cfg){
+  cout << "[INFO] compress dcfg entry" << endl;
   bool isChanged = false;
   bool merged;
   do{
@@ -179,11 +180,14 @@ bool compressDCFG(set<InsBlock*> &cfg){
     for(InsBlock* in : cfg){
       if(in->id == 0) continue;   //skip begin block
       if(in->outEdges.size() == 1){
-        InsBlock* out = in->outEdges.begin()->first;
+        InsBlock* out = in->outEdges[0].first;
         if(out->id == 1) continue;
         if(out->inEdges.size() == 1){
-          //merge in with out
-          //assert(out->inEdges.begin()->first == in);
+          //update the in edges of neighbors
+          for(auto it : out->outEdges){
+            it.first->inEdges.erase(out);
+            it.first->inEdges.insert(in);
+          }
 
           //replace out edges
           in->outEdges = out->outEdges;
@@ -200,33 +204,42 @@ bool compressDCFG(set<InsBlock*> &cfg){
       }
     }
   } while(merged);
+  cout << "[INFO] compress dcfg exit" << endl;
   return isChanged;
 }
 
 bool compressLoop(set<InsBlock*> &cfg){
+  cout << "[INFO] compress loop entry" << endl;
   bool isChanged = false;
-  bool merged;
-  do{
-    merged = false;
-    for(InsBlock* in : cfg){
-      //check conditions for inferring as a loop
-      map<InsBlock*, UINT64>::iterator ed = in->outEdges.find(in);
-      if(ed != in->outEdges.end()){
-        //most probably found a loop
-
-        //get loop count
-        UINT64 m = ed->second;
-        UINT64 total = 0;
-        for(auto e : in->outEdges){
-          total += e.second;
+  for(InsBlock* blk : cfg){
+    if(blk->id == 1) continue;
+    if(blk->outEdges.size() < 2) continue;
+    if(!(blk->outEdges.size() % 2)){
+      bool isLoop = true;
+      //only if even
+      uint64_t pred_iter = blk->outEdges[0].second;
+      InsBlock* pred_next = blk->outEdges[1].first;
+      uint64_t next_cnt = 0;
+      for(uint64_t i = 0; i < blk->outEdges.size(); i++){
+        if(!(i % 2)){
+          //even index
+          if((blk->outEdges[i].second != pred_iter) || (blk->outEdges[i].first != blk)){
+            isLoop = false;
+            break;
+          }
         }
-        UINT64 k = total - m;
-        if(total % k) continue;   //skip if not divisible
-        UINT64 loopCnt = total / k;
-        //remove outgoing loop edge
-        in->outEdges.erase(ed);
-        //remove incoming loop edge (just removing any edge is fine for now, since we are not using exact edges, just counts)
-        in->inEdges.erase(in->inEdges.begin());
+        else{
+          //odd index
+          if((blk->outEdges[i].second != 1) || (blk->outEdges[i].first != pred_next)){
+            isLoop = false;
+            break;
+          }
+          next_cnt++;
+        }
+      }
+      if(isLoop){
+        blk->outEdges.clear();
+        blk->outEdges.push_back({pred_next,next_cnt});
 
         InsLoop* loop = new InsLoop();
         loopList.push_back(loop);
@@ -234,22 +247,25 @@ bool compressLoop(set<InsBlock*> &cfg){
         baseList.push_back(base);
 
         static UINT64 loopId = 0;
-        loop->loopCnt = loopCnt;
-        loop->ins = in->ins;    //copy
+        loop->loopCnt = pred_iter + 1;
+        loop->ins = blk->ins;    //copy
         loop->id = loopId++;
-        in->ins.clear();
+        blk->ins.clear();
 
         base->type = InsType::InsTypeLoop;
         base->insLoop = loop;
-        in->ins.push_back(base);
-
-        //mark
-        merged = true;
+        blk->ins.push_back(base);
+        blk->inEdges.erase(blk);
         isChanged = true;
-        break;
+        cout << "[INFO] Found loop on block " << blk->id << ". In-edges: ";
+        for(InsBlock* it : blk->inEdges){
+          cout << it->id << "  ";
+        }
+        cout << endl;
       }
     }
-  } while(merged);
+  }
+  cout << "[INFO] compress loop exit" << endl;
   return isChanged;
 }
 
@@ -324,7 +340,8 @@ void printDot(const set<InsBlock*> &cfg, const char* fname){
 }
 
 inline void generateRandom(ofstream &out, int indent){
-  out << _tab(indent) << "hash = _mm_crc32_u64(hash, " << (((uint64_t)rand() << 32) | rand()) << "ULL);\n";
+  //out << _tab(indent) << "hash = _mm_crc32_u64(hash, " << (((uint64_t)rand() << 32) | rand()) << "ULL);\n";
+  out << _tab(indent) << "hash = (hash  << 1) ^ (((int64_t)hash < 0) ? 7 : 0);\n";
 }
 
 void generateCodeInst(ofstream &out, InsNormal* ins, int indent){
@@ -426,7 +443,7 @@ void generateCodeBlock(ofstream &out, InsBlock* blk, int indent){
   }
   if(blk->outEdges.size() == 1){
     //only one out edge
-    out << _tab(indent) << "goto block" << blk->outEdges.begin()->first->id << ";\n";
+    out << _tab(indent) << "goto block" << blk->outEdges[0].first->id << ";\n";
   }
   else{
     //multiple out edges
@@ -452,18 +469,6 @@ void generateCodeFooter(ofstream &out){
 }
 
 void generateCode(vector<InsNormal*> &insList, const set<InsBlock*> &cfg, const char* fname){
-  //find root node
-  /*InsBlock* root = NULL;
-  for(InsBlock* ins : cfg){
-    if(ins->id == 0){
-      root = ins;
-      break;
-    }
-  }
-  assert(root->outEdges.size() == 1);
-  root = root->outEdges.begin()->first;
-  assert(root != NULL);*/
-
   cout << "Generating code in: " << fname << "...\n";
 
   //open output file
@@ -472,8 +477,7 @@ void generateCode(vector<InsNormal*> &insList, const set<InsBlock*> &cfg, const 
   //write headers
   generateCodeHeader(out, insList);
 
-  //write code blocks: For now, only one block
-  //generateCodeBlock(out, root, 1);
+  //write code blocks
   for(InsBlock* blk : cfg){
     if(blk->id != 1){   //skip end block. Handled in footer
       generateCodeBlock(out, blk, 1);
@@ -515,7 +519,21 @@ set<InsBlock*> cfgFromTrace(vector<InsNormal*> &trace){
       ttCnt++;
       //add ib as the successor of prev
       ib->inEdges.insert(prev);
-      prev->outEdges[ib]++;
+      if(prev->outEdges.empty()){
+        //no out edge yet. add.
+        prev->outEdges.push_back({ib,1});
+      } else if(prev->outEdges.back().first == ib){
+        //same as last one. increment count.
+        prev->outEdges.back().second++;
+      } else{
+        //not same as last one. add.
+        prev->outEdges.push_back({ib,1});
+//        if(prev->outEdges.size() > 10){
+//          cerr << "[ERROR]: Out edge stack size over 10. Check pattern." << endl;
+//          prev = ib;
+//          break;
+//        }
+      }
       prev = ib;
     }
   }
@@ -525,7 +543,7 @@ set<InsBlock*> cfgFromTrace(vector<InsNormal*> &trace){
   ib->id = 1;
   topInsBlocks.insert(ib);
   ib->inEdges.insert(prev);
-  prev->outEdges[ib]++;
+  prev->outEdges.push_back({ib,1});
 
   cout << "Top trace size: " << ttCnt << endl;
   return topInsBlocks;
@@ -706,6 +724,16 @@ void markTopAndProcessInfo(vector<InsNormal*> &insList){
   cout << "Global max address: " << globalMaxAddr << endl;
 }
 
+void printMaxEdgeStack(const set<InsBlock*> &cfg){
+  uint64_t max = 0;
+  for(InsBlock* blk : cfg){
+    if(blk->outEdges.size() > max){
+      max = blk->outEdges.size();
+    }
+  }
+  cout << "Max edge stack size: " << max << endl;
+}
+
 VOID Fini(INT32 code, VOID *v) {
   // 0. Filter zero  (or very low) cnt instructions
   vector<InsNormal*> filteredInsList;
@@ -728,7 +756,7 @@ VOID Fini(INT32 code, VOID *v) {
 
   cout << "Inst Trace size: " << insTrace.size() << endl;
   set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
-
+  printMaxEdgeStack(cfg);
   generateCode(filteredInsList, cfg, "genCode.cpp");
 
   cout << "Call stack size: " << callStack.size() << endl;
