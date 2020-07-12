@@ -37,8 +37,17 @@ KNOB<string> knobFunctionName(KNOB_MODE_WRITEONCE, "pintool", "func", "main",
     "Function to be profiled.");
 
 // Output file name
-KNOB<string> knobOutFile(KNOB_MODE_WRITEONCE, "pintool", "out", "mem_trace.csv",
+KNOB<string> knobOutFile(KNOB_MODE_WRITEONCE, "pintool", "out", "genCode.cpp",
     "Output file name.");
+
+// Enable Log
+KNOB<bool> knobLogEn(KNOB_MODE_WRITEONCE, "pintool", "log", "0",
+    "Enable logging \
+        [1: enable, 0: disable (default)].");
+
+// Keep percentage
+KNOB<float> knobTopPerc(KNOB_MODE_WRITEONCE, "pintool", "top", "95",
+    "Top instruction percentage.");
 
 // Max threads
 KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",
@@ -70,7 +79,7 @@ struct InsBlock;
 struct Interval;
 
 void deriveAccessPattern(const vector<InsNormal*> &insList);
-InsNormal* createInsNormal(AccessType type, UINT32 accSz, string dis);
+InsNormal* createInsNormal(InsAbnormal* insab);
 
 /*******************************************************************************
  * Data structures
@@ -83,15 +92,20 @@ typedef struct Interval {
 } Interval;
 
 typedef struct InsAbnormal{
+  INT32 srcLine;
+  string srcFile;
   string dis;
   UINT64 accSz;
   AccessType accType = AccessTypeInvalid;
+  UINT32 opCnt;
   map<ADDRINT, InsNormal*> insMap;
 } InsAbnormal;
 
 typedef struct InsNormal{
   UINT64 id = -1;
   string dis;
+  INT32 srcLine;
+  string srcFile;
   AccessType accType = AccessTypeInvalid;
   UINT64 accSz;
   UINT64 totalSz = 0;
@@ -107,6 +121,7 @@ typedef struct InsNormal{
   string strEnd;
   string strCurr;
   string strType;
+  UINT32 opCnt;
 } InstInfo;
 
 typedef struct InsLoop {
@@ -132,7 +147,6 @@ typedef struct InsBase{
 /*******************************************************************************
  * Defines
  ******************************************************************************/
-#define ACCESS_KEEP_PERC    97
 #define MAX_STRIDE_BUCKETS  10
 #define MIN_CNT             100
 #define HASH_INIT_VALUE     (0xABCDEF94ED70BA3EULL)
@@ -146,6 +160,9 @@ static string rtn_name;
 static PIN_LOCK lock;
 static bool read_log_en = true;
 static bool write_log_en = true;
+static bool log_en = false;
+static float top_perc;
+static string out_file_name;
 static UINT64 rtnEntryCnt = 0;
 bool firstLine = true;
 
@@ -156,6 +173,8 @@ static vector<InsBase*> baseList;
 static vector<InsLoop*> loopList;
 
 static vector<InsNormal*> insTrace;
+static vector<ADDRINT> insTraceAddr;
+
 static stack<ADDRINT> callStack;
 static ADDRINT callHash = HASH_INIT_VALUE;
 
@@ -561,18 +580,22 @@ set<InsBlock*> createDCFGfromInstTrace(vector<InsNormal*> &trace){
   return topInsBlocks;
 }
 
-void printInfo(const vector<InsNormal*> &res){
+void printInfo(vector<InsNormal*> &res){
+  //sort using total accessed size
+  sort(res.begin(), res.end(), [](const InsNormal* lhs, const InsNormal* rhs) {
+      return lhs->totalSz > rhs->totalSz;
+  });
+
   for(InsNormal* i : res){
-    cout << "  " << setw(10) << dec << i->id << ": ";
+    cout << "  " << setw(10) << dec << i->id << "(" << i->opCnt << "): ";
     if(i->accType == AccessType::AccessTypeRead){
-      cout << "READ  : ";
+      cout << "READ  : " << i->accSz;
     } else if(i->accType == AccessType::AccessTypeWrite){
-      cout << "WRITE : ";
+      cout << "WRITE : " << i->accSz;
     } else{
       cout << "INVALID: ";
     }
     cout << setw(40) << i->dis;
-
 
     cout << setw(20) << "TotalSz: " << i->totalSz;
     cout << setw(20) << "Count: " << i->cnt;
@@ -591,7 +614,7 @@ void printInfo(const vector<InsNormal*> &res){
     for(auto s : i->strideDist){
       cout << "{" << s.first << ":" << s.second << "} ";
     }
-
+    cout << "\t" << i->srcFile << ":" << i->srcLine;
     cout << dec << endl;
   }
 }
@@ -733,6 +756,18 @@ void printMaxEdgeStack(const set<InsBlock*> &cfg){
   cout << "Max edge stack size: " << max << endl;
 }
 
+void writeLog(const char* logFile){
+  ofstream log(logFile);
+  log << "ins,addr\n";
+  const uint64_t sz = insTraceAddr.size();
+  for(uint64_t i = 0; i < sz; i++){
+    InsNormal* ins = insTrace[i];
+    if(ins->isTop){
+      log << ins->id << ',' << insTraceAddr[i] << '\n';
+    }
+  }
+}
+
 VOID Fini(INT32 code, VOID *v) {
   // 0. Filter zero  (or very low) cnt instructions
   vector<InsNormal*> filteredInsList;
@@ -746,8 +781,8 @@ VOID Fini(INT32 code, VOID *v) {
   filteredInsList = deleteConstAccess(filteredInsList);
   cout << "Static memory instructions: After const access delete " << filteredInsList.size() << endl;
 
-  // 2. Only take instructions that represents ACCESS_KEEP_PERC of reads/writes
-  filteredInsList = keepTop(filteredInsList, ACCESS_KEEP_PERC);
+  // 2. Only take instructions that represents top_perc of reads/writes
+  filteredInsList = keepTop(filteredInsList, top_perc);
   cout << "Static memory instructions: top " << filteredInsList.size() << endl;
   markTopAndProcessInfo(filteredInsList);
 
@@ -756,9 +791,14 @@ VOID Fini(INT32 code, VOID *v) {
   cout << "Inst Trace size: " << insTrace.size() << endl;
   set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
   printMaxEdgeStack(cfg);
-  generateCode(filteredInsList, cfg, "genCode.cpp");
+  generateCode(filteredInsList, cfg, out_file_name.c_str());
 
   cout << "Call stack size: " << callStack.size() << endl;
+
+  if(log_en){
+    writeLog("top_trace.csv");
+  }
+
   //assert(callHash == HASH_INIT_VALUE);
   for(InsNormal* it : insNormalList){ delete it; }    //delete allocated instructions
   for(InsAbnormal* it : insAbnormalList){ delete it; }    //delete allocated instructions
@@ -868,7 +908,7 @@ void record(InsAbnormal* ins, ADDRINT ea) {
   InsNormal* info = NULL;
   if(ins->insMap.find(callHash) == ins->insMap.end()){
     //Instruction info data not present in the current context. Create new.
-    info = createInsNormal(ins->accType, ins->accSz, ins->dis);
+    info = createInsNormal(ins);
     ins->insMap[callHash] = info;
   }
   info = ins->insMap[callHash];
@@ -886,21 +926,27 @@ void record(InsAbnormal* ins, ADDRINT ea) {
   info->lastEA = ea;
   info->cnt++;
   insTrace.push_back(info);
+  if(log_en){
+    insTraceAddr.push_back(ea);
+  }
 }
 
 
-InsNormal* createInsNormal(AccessType type, UINT32 accSz, string dis){
+InsNormal* createInsNormal(InsAbnormal* insab){
   static UINT64 id = 0;
   InsNormal* info = new InsNormal();
-  info->dis = dis;
+  info->srcLine = insab->srcLine;
+  info->srcFile = insab->srcFile;
+  info->dis = insab->dis;
   info->id = id++;
-  info->accType = type;
-  info->accSz = accSz;
+  info->accType = insab->accType;
+  info->accSz = insab->accSz;
+  info->opCnt = insab->opCnt;
   insNormalList.push_back(info);
   return info;
 }
 
-InsAbnormal* createInsAbnormal(ADDRINT addr, AccessType type, UINT32 accSz, string dis){
+InsAbnormal* createInsAbnormal(ADDRINT addr, AccessType type, UINT32 accSz, string dis, UINT32 opCnt){
   //static set<ADDRINT> processedIns;   //set of already processed instructions
   static map<ADDRINT, InsAbnormal*> processedIns;   //set of already processed instructions
 
@@ -912,9 +958,11 @@ InsAbnormal* createInsAbnormal(ADDRINT addr, AccessType type, UINT32 accSz, stri
   //processedIns.insert(addr); //mark as processed
 
   InsAbnormal* info = new InsAbnormal();
+  PIN_GetSourceLocation(addr, NULL, &info->srcLine, &info->srcFile);
   info->dis = dis;
   info->accType = type;
   info->accSz = accSz;
+  info->opCnt = opCnt;
   insAbnormalList.push_back(info);
   processedIns[addr] = info;
   return info;
@@ -941,12 +989,12 @@ void Instruction(INS ins, VOID *v) {
   // Iterate over each memory operand of the instruction.
   for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
     if (INS_MemoryOperandIsRead(ins, memOp) && read_log_en) {
-      InsAbnormal* info = createInsAbnormal(INS_Address(ins), AccessType::AccessTypeRead, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
+      InsAbnormal* info = createInsAbnormal(INS_Address(ins), AccessType::AccessTypeRead, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins), memOperands);
       INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record, IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_END);
     }
 
     if (INS_MemoryOperandIsWritten(ins, memOp) && write_log_en) {
-      InsAbnormal* info = createInsAbnormal(INS_Address(ins), AccessType::AccessTypeWrite, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins));
+      InsAbnormal* info = createInsAbnormal(INS_Address(ins), AccessType::AccessTypeWrite, INS_MemoryOperandSize(ins, memOp), INS_Disassemble(ins), memOperands);
       INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record, IARG_PTR, info, IARG_MEMORYOP_EA, memOp, IARG_END);
     }
   }
@@ -969,11 +1017,17 @@ int main(int argc, char *argv[]) {
   rtn_name = knobFunctionName.Value();
   read_log_en = knobRead.Value();
   write_log_en = knobWrite.Value();
+  log_en = knobLogEn.Value();
+  top_perc = knobTopPerc.Value();
+  out_file_name = knobOutFile.Value();
 
   insNormalList.reserve(100000);
   baseList.reserve(100000);
   loopList.reserve(100000);
   insTrace.reserve(40000000);
+  if(log_en){
+    insTraceAddr.reserve(40000000);
+  }
 
   accTypeMap[1] = "uint8_t";
   accTypeMap[2] = "uint16_t";

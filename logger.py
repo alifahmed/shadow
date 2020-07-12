@@ -39,6 +39,9 @@ parser.add_argument('--pin-bin', metavar='<path-to-pin-binary>',
                           PIN_ROOT environment variable instead. If PIN_ROOT is \
                           also not given, then uses 'pin' (assumes pin is in PATH).")
 
+parser.add_argument('--log', type=int, choices=[0,1], default='0',
+                    help='Enable trace logging in file. 0: disabled (default), 1: enabled.')
+
 parser.add_argument('--read', type=int, choices=[0,1], default='1',
                     help='Controls read operation tracing. 0: disabled, 1: enabled \
                           (defalut).')
@@ -47,24 +50,15 @@ parser.add_argument('--write', type=int, choices=[0,1], default='1',
                     help='Controls write operation tracing. 0: disabled, 1: enabled \
                           (defalut).')
 
-parser.add_argument('--stack-log', type=int, choices=[0,1], default='0',
-                    help='Controls stack based access logging. 0: disabled (default), \
-                          1: enabled.')
-
-parser.add_argument('--ip-log', type=int, choices=[0,1], default='1',
-                    help='Controls instruction pointer relative access logging. 0: disabled, 1: enabled \
-                          (default).')
-
-parser.add_argument('--trace-file', default='mem_trace.csv', metavar='<trace-file>',
-                    help='Memory trace will be written to this file by Pin. The \
-                          file is in simple human readable csv format. (default: %(default)s)')
-
-parser.add_argument('--trace-limit', type=int, default='1000000', metavar='<limit>',
-                    help='Maximum number of accesses to trace. (default: %(default)s)')
+parser.add_argument('--out-file', default='genCode.cpp', metavar='<out-file>',
+                    help='Generated code will be written to this file. (default: %(default)s)')
 
 parser.add_argument('--max-threads', type=int, default='10000', metavar='<limit>',
                     help='Upper limit of threads for the program being profiled. \
                           (default: %(default)s)')
+
+parser.add_argument('--top', type=float, default='95', metavar='<top-prec>',
+                    help='Top percentage to keep. (default: %(default)s)')
 
 parser.add_argument('--func', default='main', metavar='<func-to-trace>',
                     help='Function to trace. Fully qualified name should be used for \
@@ -97,7 +91,9 @@ obj_full_path = script_dir + '/' + obj_file
 pin_cmd = [ args.pin_bin,
             '-t', obj_full_path,
             '-func', args.func,                 
-            '-out', args.trace_file,
+            '-out', args.out_file,
+			'-top', str(args.top),
+			'-log', str(args.log),
             '-read', str(args.read),
             '-write', str(args.write),
             '--', args.cmd] + args.cmd_args
