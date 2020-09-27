@@ -30,6 +30,10 @@ parser.add_argument('--version', action='version', version=version_string)
 parser.add_argument('trace_file', metavar='<trace-file>',
                     help='Trace file to plot.')
 
+parser.add_argument('--inst', type=int, default='-1', metavar='<inst_id>',
+                    help='Instruction to plot. -1 to plot all. \
+                          (default: %(default)s)')
+
 parser.add_argument('--min-x', type=int, default='-1', metavar='<min-x>',
                     help='Minimum value for x-axis range. Use -1 to ignore. \
                           (default: %(default)s)')
@@ -70,8 +74,9 @@ args = parser.parse_args()
 df = pd.read_csv(args.trace_file)
 
 #convert to numpy array
-addr = df.Addr.to_numpy()
-rw_type = df.R0_W1.to_numpy()
+ins = df.ins.to_numpy()
+addr = df.addr.to_numpy()
+rw_type = df.r0w1.to_numpy()
 num_rows = len(addr)
 if (num_rows == 0):
     print("Nothing to plot... Quitting...")
@@ -93,6 +98,7 @@ curr_idx = args.min_x
 last_type = -1
 last_addr = -1
 while curr_idx < args.max_x:
+    curr_ins = ins[curr_idx]
     curr_addr = addr[curr_idx]
     curr_type = rw_type[curr_idx]
     curr_idx += 1
@@ -108,6 +114,10 @@ while curr_idx < args.max_x:
     # apply --const filter
     if (args.const == 0) and (last_type == curr_type) and (last_addr == curr_addr):
         continue
+
+	# apply --inst filter
+    if (args.inst != -1) and (args.inst != curr_ins):
+        continue;
 
     # apply --rmw filter
     if (args.rmw == 1) and (last_addr == curr_addr) and  \
@@ -126,27 +136,28 @@ while curr_idx < args.max_x:
 
 # create a new DataFrame object with filtered entries
 df = pd.DataFrame(data=entries)
+print(df.shape)
 
 # sort by address (required by the next step of address compression)
-df.sort_values("Addr", kind='mergesort', inplace=True)
+#df.sort_values("Addr", kind='mergesort', inplace=True)
 
 # function for reducing the gap between addresses
-def comp_addr(curr_addr):
-    curr_gap = curr_addr - comp_addr.act
-    if(curr_gap > comp_addr.MAX_GAP):
-        comp_addr.conv += comp_addr.MAX_GAP
-    else:
-        comp_addr.conv += curr_gap
-    comp_addr.act = curr_addr
-    return comp_addr.conv
+#def comp_addr(curr_addr):
+#    curr_gap = curr_addr - comp_addr.act
+#    if(curr_gap > comp_addr.MAX_GAP):
+#        comp_addr.conv += comp_addr.MAX_GAP
+#    else:
+#        comp_addr.conv += curr_gap
+#    comp_addr.act = curr_addr
+#    return comp_addr.conv
 
 # static initial values for the comp_addr function 
-comp_addr.act = 0
-comp_addr.conv = 0
-comp_addr.MAX_GAP = 512
+#comp_addr.act = 0
+#comp_addr.conv = 0
+#comp_addr.MAX_GAP = 512
 
 # replace previous addresses with compressed addresses
-df.Addr = df.Addr.apply(comp_addr)
+#df.Addr = df.Addr.apply(comp_addr)
 
 
 ###############################################################################

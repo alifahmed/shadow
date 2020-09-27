@@ -55,13 +55,14 @@ double roundDouble(double value){
 * @param dimY The y dimension of the frame
 * @param dimZ The number of frames
 */
-void setIf(int testValue, int newValue, int * array3D, int * dimX, int * dimY, int * dimZ){
+void setIf(int testValue, int newValue, int * array3D, int dimX, int dimY, int dimZ){
 	int x, y, z;
-	for(x = 0; x < *dimX; x++){
-		for(y = 0; y < *dimY; y++){
-			for(z = 0; z < *dimZ; z++){
-				if(array3D[x * *dimY * *dimZ+y * *dimZ + z] == testValue)
-				array3D[x * *dimY * *dimZ + y * *dimZ + z] = newValue;
+	for(x = 0; x < dimX; x++){
+		for(y = 0; y < dimY; y++){
+			for(z = 0; z < dimZ; z++){
+				const int idx = x * dimY * dimZ + y * dimZ + z;
+				if(array3D[idx] == testValue)
+					array3D[idx] = newValue;
 			}
 		}
 	}
@@ -255,8 +256,8 @@ void videoSequence(int * I, int IszX, int IszY, int Nfr, int * seed){
 	free(newMatrix);
 	
 	/*define background, add noise*/
-	setIf(0, 100, I, &IszX, &IszY, &Nfr);
-	setIf(1, 228, I, &IszX, &IszY, &Nfr);
+	setIf(0, 100, I, IszX, IszY, Nfr);
+	setIf(1, 228, I, IszX, IszY, Nfr);
 	/*add noise*/
 	addNoise(I, &IszX, &IszY, &Nfr, seed);
 }

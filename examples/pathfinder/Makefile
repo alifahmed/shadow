@@ -1,7 +1,7 @@
 CC = g++
 SRC = pathfinder.cpp
 EXE = pathfinder
-FLAGS = 
+FLAGS = -g -O0
 
 release:
 	$(CC) $(SRC) $(FLAGS) -o $(EXE)

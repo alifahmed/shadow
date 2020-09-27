@@ -42,13 +42,8 @@ parser.add_argument('--pin-bin', metavar='<path-to-pin-binary>',
 parser.add_argument('--log', type=int, choices=[0,1], default='0',
                     help='Enable trace logging in file. 0: disabled (default), 1: enabled.')
 
-parser.add_argument('--read', type=int, choices=[0,1], default='1',
-                    help='Controls read operation tracing. 0: disabled, 1: enabled \
-                          (defalut).')
-
-parser.add_argument('--write', type=int, choices=[0,1], default='1',
-                    help='Controls write operation tracing. 0: disabled, 1: enabled \
-                          (defalut).')
+parser.add_argument('--debug', type=int, default='0',
+                    help='Enable wait for gdb attach. (default: %(default)s)')
 
 parser.add_argument('--out-file', default='genCode.cpp', metavar='<out-file>',
                     help='Generated code will be written to this file. (default: %(default)s)')
@@ -89,13 +84,12 @@ obj_full_path = script_dir + '/' + obj_file
 # Generate Pin command
 ###############################################################################
 pin_cmd = [ args.pin_bin,
+			'-pause_tool', str(args.debug),
             '-t', obj_full_path,
             '-func', args.func,                 
             '-out', args.out_file,
 			'-top', str(args.top),
 			'-log', str(args.log),
-            '-read', str(args.read),
-            '-write', str(args.write),
             '--', args.cmd] + args.cmd_args
 print("\n================================================================================")
 print(' '.join(pin_cmd))
