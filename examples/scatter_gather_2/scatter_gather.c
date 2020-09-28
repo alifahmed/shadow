@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 #define N  100000
-#define ITER	4
+#define ITER	2
 
 static int a[N];
 static int b[N];
