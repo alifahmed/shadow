@@ -103,6 +103,11 @@ typedef struct OpInfo{
   UINT32 accSz;
 } OpInfo;
 
+typedef struct {
+  InsLoop* lp;
+  INT64 m;
+} LoopInfo;
+
 typedef struct PatternInfo{
   vector<ADDRINT> addr;
   UINT64 totalSz = 0;
@@ -112,11 +117,7 @@ typedef struct PatternInfo{
   map<INT64, set<ADDRINT>> strideRef;
   map<INT64, UINT64> strideDist;
   PatternBase* pat;
-  INT64 rep = -1;
-  //string strStart;
-  //string strEnd;
-  //string strCurr;
-  //string strType;
+  vector<LoopInfo> loops;
 } Pattern;
 
 class InsBase{
@@ -171,6 +172,7 @@ public:
   UINT64 loopCnt = 0;
   vector<InsBase*> ins;
   vector<InsNormal*> insAddrReset;
+  vector<string> extraStr;
 };
 
 typedef struct InsBlock{
@@ -241,6 +243,36 @@ bool isRepeat(const vector<ADDRINT> &addr, size_t sz, size_t rep, INT64 &m){
   return true;
 }
 
+void deriveLoopInfo(InsNormal* ins){
+  stack<InsLoop*> loops;
+  InsLoop* lp = ins->parentLoop;
+  while(lp){
+    loops.push(lp);
+    lp = lp->parentLoop;
+  }
+  if(loops.size() == 0){
+    return; //not inside any loops
+  }
+
+  vector<LoopInfo> _info;
+  size_t sz = ins->patInfo->addr.size();
+  while(loops.size()){
+    lp = loops.top();
+    loops.pop();
+    INT64 m;
+    if(isRepeat(ins->patInfo->addr, sz, lp->loopCnt, m)){
+      sz = sz / lp->loopCnt;
+      _info.push_back({lp, m});
+    }
+    else{
+      _info.push_back({nullptr, 0});
+    }
+  }
+
+  ins->patInfo->loops = _info;
+}
+
+
 /*class PatternFactory;
 class PatternBase;
 class PatternInvalid;
@@ -303,7 +335,7 @@ public:
   const InsNormal* ins;
 
   virtual ~PatternBase(){};
-  virtual void shiftAddress(INT64 offset) {}
+  //virtual void shiftAddress(INT64 offset) {}
   virtual string genHeader(UINT32 indent) {return ""; }
   virtual string genBody(UINT32 indent) {
     stringstream ss;
@@ -332,53 +364,29 @@ public:
  * Pattern Loop Indexed
  ******************************************************************************/
 class PatternLoopIndexed : public PatternBase{
-  typedef struct {
-    InsLoop* lp;
-    INT64 m;
-  } LoopInfo;
-
 private:
-  vector<LoopInfo> info;
   PatternLoopIndexed();
-  PatternLoopIndexed(const InsNormal* _ins, vector<LoopInfo> _info) : PatternBase(_ins, PatType::PatLoopIndexed) {
-    info = _info;
-  }
+  PatternLoopIndexed(const InsNormal* _ins) : PatternBase(_ins, PatType::PatLoopIndexed) {}
 
 public:
   static PatternLoopIndexed* create(const InsNormal* ins){
-    stack<InsLoop*> loops;
-    InsLoop* lp = ins->parentLoop;
-    while(lp){
-      loops.push(lp);
-      lp = lp->parentLoop;
-    }
-    if(loops.size() == 0){
-      return nullptr; //not inside any loops
+    if(ins->patInfo->loops.size() == 0){ //no loops
+      return nullptr;
     }
 
-    vector<LoopInfo> _info;
-    size_t sz = ins->patInfo->addr.size();
-    while(loops.size()){
-      lp = loops.top();
-      loops.pop();
-      INT64 m;
-      if(isRepeat(ins->patInfo->addr, sz, lp->loopCnt, m)){
-        sz = sz / lp->loopCnt;
-        _info.push_back({lp, m});
-      }
-      else{
-        return nullptr;
+    for(const auto &li : ins->patInfo->loops){
+      if(li.lp == nullptr){
+        return nullptr;   // not simple loop indexed
       }
     }
 
-    //can be loop indexed
-    return new PatternLoopIndexed(ins, _info);
+    return new PatternLoopIndexed(ins);
   }
 
   string genBody(UINT32 indent){
     stringstream ss;
     ss << _tab(indent) << "addr = " << ins->patInfo->addrRange.s;
-    for(auto it : info){
+    for(const auto &it : ins->patInfo->loops){
       if(it.m){
         ss << " + (" << it.m << " * loop" << it.lp->id << ")";
       }
@@ -447,23 +455,73 @@ PatternInvalid PatternInvalid::pat;
  ******************************************************************************/
 class PatternDominant : public PatternBase{
 private:
-  PatternDominant(const InsNormal* ins, INT64 _domStride) : PatternBase(ins, PatType::PatTypeDominant), domStride(_domStride) {}
+  PatternDominant(const InsNormal* ins, INT64 _domStride, string _patStr) :
+    PatternBase(ins, PatType::PatTypeDominant), domStride(_domStride), patStr(_patStr) {}
   INT64 domStride = 0;
+  string patStr;
 
 public:
   static PatternDominant* create(const InsNormal* ins){
     for(const auto &it : ins->patInfo->strideDist){
       if(it.second * ins->accSz > ins->patInfo->totalSz * 0.8){
         //found dominant stride
-        return new PatternDominant(ins, it.first);
+        int cnt = 0;
+        for(const auto &li : ins->patInfo->loops){
+          if(li.lp){
+            cnt++;
+          }
+          else{
+            break;
+          }
+        }
+
+        if(cnt == 0){ //no repeats
+          return new PatternDominant(ins, it.first, "Dom");
+        }
+
+        //has repeat
+        stringstream ss;
+        ss << "addr_" << ins->id << " = " << ins->patInfo->addr[0];   //base address
+        for(const auto &li : ins->patInfo->loops){
+          if(li.lp){
+            if(li.m){
+              ss << " + (loop" << li.lp->id << "*" << li.m << ")";
+            }
+          }
+          else{
+            break;
+          }
+        }
+        ss << ";\n";
+        ins->patInfo->loops[cnt-1].lp->extraStr.push_back(ss.str());
+        return new PatternDominant(ins, it.first, "DomRep");
       }
     }
     return nullptr;
   }
 
+  string genHeader(UINT32 indent) {
+    stringstream ss;
+    ss << _tab(indent) << "uint64_t addr_" << ins->id << " = " << ins->patInfo->addr[0] << ";\n";
+    return ss.str();
+  }
+
+  string genBody(UINT32 indent){
+    if(domStride <= 0){
+      cerr << "[ERROR] Non positive dominant stride, check." << endl;
+      exit(-1);
+    }
+    stringstream ss;
+    ss << genReadWriteInst(ins, indent, true);
+    ss << _tab(indent) << "addr_" << ins->id << " += " << domStride << ";\n";   // increment by stride
+    ss << _tab(indent) << "if(addr_" << ins->id << " >= " << ins->patInfo->addrRange.e <<
+        ") addr_" << ins->id << " = " << ins->patInfo->addrRange.s << ";\n";    // enforce address range
+    return ss.str();
+  }
+
   string printPattern(){
     stringstream ss;
-    ss << "Dom: " << domStride;
+    ss << patStr << ":" << domStride;
     return ss.str();
   }
 };
@@ -499,7 +557,7 @@ PatternConst PatternConst::pat;
 /*******************************************************************************
  * Pattern Refs
  ******************************************************************************/
-class PatternRefs : public PatternBase{
+/*class PatternRefs : public PatternBase{
   typedef struct {
     INT64 stride;
     ADDRINT offset;
@@ -540,25 +598,6 @@ public:
       if(maxHop > 20){
         return nullptr;
       }
-
-      /*auto it = refs.begin();
-      ADDRINT first = *it;
-      it++;
-      ADDRINT prev = *it;
-      const UINT64 diff = prev - first;   //assumed difference
-      it++;
-      for( ; it != refs.end(); it++){
-        ADDRINT curr = *it;
-        if(diff != (curr - prev)){
-          return nullptr;
-        }
-        prev = curr;
-      }
-      StrideInfo info;
-      info.stride = stride;
-      info.mod = diff;
-      info.offset = first;
-      infoList.push_back(info);*/
     }
     return new PatternRefs(ins, infoList, maxHop);
   }
@@ -574,7 +613,7 @@ public:
     ss << "Refs: " << maxHop;
     return ss.str();
   }
-};
+};*/
 
 
 
@@ -647,7 +686,7 @@ public:
 /*******************************************************************************
  * Pattern Tile
  ******************************************************************************/
-class PatternTile : public PatternBase{
+/*class PatternTile : public PatternBase{
   typedef struct {
     INT64 stride;
     ADDRINT offset;
@@ -698,24 +737,6 @@ public:
       if(maxHop > 20){
         return nullptr;
       }
-      /*auto it = addr.begin();
-      ADDRINT first = *it;
-      it++;
-      ADDRINT prev = *it;
-      const UINT64 diff = prev - first;   //assumed difference
-      it++;
-      for( ; it != addr.end(); it++){
-        ADDRINT curr = *it;
-        if(diff != (curr - prev)){
-          return nullptr;
-        }
-        prev = curr;
-      }
-      StrideInfo info;
-      info.stride = stride;
-      info.mod = diff;
-      info.offset = first;
-      infoList.push_back(info);*/
     }
     return new PatternTile(ins, infoList, maxHop);
   }
@@ -731,7 +752,7 @@ public:
     ss << "Tile: " << maxHop;
     return ss.str();
   }
-};
+};*/
 
 
 /*******************************************************************************
@@ -970,6 +991,9 @@ void generateCodeInst(ofstream &out, InsNormal* ins, int indent){
 
 void generateCodeLoop(ofstream &out, InsLoop* loop, int indent){
   out << _tab(indent) << "for(uint64_t loop" << loop->id << " = 0; loop" << loop->id << " < " << loop->loopCnt << "ULL; loop" << loop->id << "++){\n";
+  for(const auto &str : loop->extraStr){
+    out << _tab(indent+1) << str;
+  }
   for(InsBase* base : loop->ins){
     if(base->type == InsType::InsTypeLoop){
       generateCodeLoop(out, (InsLoop*)base, indent + 1);
@@ -1106,23 +1130,14 @@ void generateCodeBlock(ofstream &out, InsBlock* blk, int indent){
     return;
   }
 
-  /*if(int numOut = numOutBlocks(blk) == 2){
-    auto outEdges = blk->outEdges;
 
-
-    // two outblocks
-    if(numOut % 2){
-      // case ABABAB....A
-
-    }
-    else{
-      // case ABABAB....AB
-
-    }
-    return;
-  }*/
-
-
+  //too many edges.. for now, skip...
+  out << _tab(indent) << "//Many edges... print first few...\n";
+  for (int i = 0; i < 10; i++){
+    out << _tab(indent) << "blk_" << blk->outEdges[i].first->id << " : " << blk->outEdges[i].second << "\n";
+  }
+  out << endl;
+  return;
 
   //remove last edge
   InsBlock* endBlock = blk->outEdges.back().first;
@@ -1202,37 +1217,6 @@ void generateCodeBlock(ofstream &out, InsBlock* blk, int indent){
   }
   out << _tab(indent) << "goto block" << endBlock->id << "\n\n";
 
-
-
-  /*// check if regular pattern
-  map<InsBlock*, vector<Interval>> blkSeq;
-
-  //get access intervals for each block
-  UINT64 cnt = 1;
-  for(auto it : blk->outEdges){
-    UINT64 sz = it.second;
-    Interval itv;
-    itv.s = cnt;
-    itv.e = cnt + sz - 1;
-    blkSeq[it.first].push_back(itv);
-    cnt = cnt + sz;
-  }
-
-  cnt = 0;
-  for(auto &it : blkSeq){
-    if(isRegularSeq(it.second)){
-      cnt++;
-    }
-  }
-
-  if(cnt >= blkSeq.size()){
-    out << _tab(indent) << "//Regular out block pattern\n\n";
-
-  }
-  else{
-    out << _tab(indent) << "//Irregular out block pattern\n\n";
-
-  }*/
 }
 
 void generateCodeFooter(ofstream &out){
@@ -1461,7 +1445,7 @@ void shiftAddressSpace(InsNormal* ins, INT64 offset){
   for(UINT64 i = 0; i < cnt; i++){
     pat->addr[i] += offset;
   }
-  pat->pat->shiftAddress(offset);
+  //pat->pat->shiftAddress(offset);
   for(auto &it : pat->strideAddr){
     for(ADDRINT ea : it.second){
       it.second.erase(ea);
@@ -1520,10 +1504,6 @@ void derivePatternInitial(const vector<InsNormal*> &insList){
     pat->addrRange.s = min;
     pat->addrRange.e = max + it->accSz;
 
-    if(it->id == 430200101){
-      cout << "dev pat" << endl;
-    }
-
     //only go further if pattern type is not random
     if(isRandom){
       //create random
@@ -1540,9 +1520,13 @@ void derivePatternInitial(const vector<InsNormal*> &insList){
 
 void derivePattern(const vector<InsNormal*> &insList){
   for(InsNormal* it : insList){
+    //check if already assigned a pattern
     if(it->patInfo->pat){
       continue;
     }
+
+    //check for repeats in loops
+    deriveLoopInfo(it);
 
     //check if loop indexed
     if((it->patInfo->pat = PatternLoopIndexed::create(it))){
@@ -1724,12 +1708,13 @@ VOID Fini(INT32 code, VOID *v) {
   filteredInsList = keepTop(filteredInsList, top_perc);
   cout << "Static memory instructions: top " << filteredInsList.size() << endl;
   markTopAndProcessInfo(filteredInsList);
+  updateAddressSpace(filteredInsList);
 
   cout << "Inst Trace size: " << insTrace.size() << endl;
   set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
   printMaxEdgeStack(cfg);
   derivePattern(filteredInsList);
-  updateAddressSpace(filteredInsList);
+
   generateCode(filteredInsList, cfg, out_file_name.c_str());
 
   printInfo(filteredInsList);

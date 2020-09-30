@@ -99,7 +99,9 @@ print("=========================================================================
 # Invoke Pin
 ###############################################################################
 subprocess.run(pin_cmd)
-
+os.system("dot -Tps dcfgAC.gv -o dcfgAC.ps")
+os.system("dot -Tps dcfgBC.gv -o dcfgBC.ps")
+os.system("dot -Tps dcfgLC.gv -o dcfgLC.ps")
 
 
 
