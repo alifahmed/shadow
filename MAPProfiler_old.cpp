@@ -81,17 +81,13 @@ struct InsHashedRoot;
 struct OpInfo;
 struct PatternInfo;
 class PatternBase;
-class CFG;
 
 //void deriveAccessPattern(const vector<InsNormal*> &insList);
 void derivePattern(const vector<InsNormal*> &insList);
 void shiftAddressSpace(InsNormal* ins, INT64 offset);
 bool isRepeat(const vector<ADDRINT> &addr, size_t sz, size_t rep, INT64 &m);
 string genReadWriteInst(const InsNormal* ins, int indent, bool useId);
-//bool isConvLoop(InsBlock* root, InsBlock* sb, InsBlock* eb);
-void compressCFG(set<InsBlock*> &cfg);
-void generateCodeBlock(ofstream &out, InsBlock* blk, int indent);
-void printDotCFG(ofstream &out, const set<InsBlock*> &cfg);
+bool isConvLoop(InsBlock* root, InsBlock* sb, InsBlock* eb);
 
 /*******************************************************************************
  * Data structures
@@ -175,8 +171,8 @@ public:
   InsLoop() : InsBase(InsTypeLoop) {}
   UINT64 id = -1;
   UINT64 loopCnt = 0;
-  //vector<InsBase*> ins;
-  set<InsBlock*> cfg;
+  vector<InsBase*> ins;
+  vector<InsNormal*> insAddrReset;
   vector<string> extraStr;
 };
 
@@ -186,21 +182,9 @@ typedef struct InsBlock{
   set<InsBlock*> outEdges;
   set<InsBlock*> inEdges;
   vector<InsBase*> ins;
+  bool isLoopStart = false;
+  bool isLoopEnd = false;
 } InsBlock;
-
-/*class CFG {
-private:
-  CFG();
-public:
-  InsBlock* s;
-  InsBlock* e;
-  set<InsBlock*> cfg;
-
-  CFG(set<InsBlock*>){
-
-  }
-
-};*/
 
 
 /*******************************************************************************
@@ -213,8 +197,6 @@ static float top_perc;
 static string out_file_name;
 static UINT64 rtnEntryCnt = 0;
 static bool firstLine = true;
-static UINT64 __blockId = 2;
-static UINT64 __loopId = 0;
 
 static vector<InsRoot*> insRootList;
 static vector<InsHashedRoot*> insHashedRootList;
@@ -780,26 +762,6 @@ public:
 /*******************************************************************************
  * Functions
  ******************************************************************************/
-bool findCFGStartEnd(const set<InsBlock*> &cfg, InsBlock** s, InsBlock** e){
-  *s = nullptr;
-  *e = nullptr;
-  for(InsBlock* blk : cfg){
-    if(blk->inEdges.size() == 0){
-      if(*s){ //already assigned
-        return false;
-      }
-      *s = blk;
-    }
-    if(blk->outEdges.size() == 0){
-      if(*e){ //already assigned
-        return false;
-      }
-      *e = blk;
-    }
-  }
-  return true;
-}
-
 void colorCFG(InsBlock* blk, set<InsBlock*> &visited){
   if(visited.find(blk) == visited.end()){
     visited.insert(blk);
@@ -809,99 +771,24 @@ void colorCFG(InsBlock* blk, set<InsBlock*> &visited){
   }
 }
 
+void createLoop(InsBlock* a, InsBlock* b){
+
+}
+
 //check if a=>b can form a loop
-bool isConvLoop(set<InsBlock*> &cfg, InsBlock* root, InsBlock* a, InsBlock* b){
+bool isConvLoop(InsBlock* root, InsBlock* a, InsBlock* b){
   //do some trivial checks
   if(a->inEdges.size() != 2) return false;
   if(b->outEdges.size() != 2) return false;
   if(a->inEdges.find(b) == a->inEdges.end()) return false;
   if(b->outEdges.find(a) == b->outEdges.end()) return false;
 
-  InsBlock* s = nullptr;
-  InsBlock* e = nullptr;
-  for(InsBlock* aa : a->inEdges){
-    if(aa != b){
-      s = aa;
-    }
-  }
-  for(InsBlock* bb : b->outEdges){
-    if(bb != a){
-      e = bb;
-    }
-  }
-
-  if(a == b){
-    //determine loop count
-    UINT64 k = 0;
-    UINT64 m = 0;
-    for(auto it : b->outEdgesStack){
-      if(it.first == a){
-        m += it.second;
-      }
-      else{
-        k += it.second;
-      }
-    }
-    m += k;
-    if(m % k) {
-      return false;   //not divisable
-    }
-    m = m / k;  //m is now loop count
-
-    //create replacement block
-    InsBlock* r = new InsBlock();
-    blockList.push_back(r);
-    r->id = __blockId++;
-    r->outEdges.insert(e);
-    r->outEdgesStack.push_back({e,k});
-    r->inEdges.insert(s);
-
-    //create loop instruction
-    InsLoop* lp = new InsLoop();
-    baseList.push_back(lp);
-    lp->id = __loopId++;
-    lp->loopCnt = m;
-    lp->cfg.insert(a);
-
-    //add lp to r
-    r->ins.push_back(lp);
-
-    //at this point, r and lp are done
-
-    //fix s
-    s->outEdges.erase(a);
-    s->outEdges.insert(r);
-    for(auto &it : s->outEdgesStack){
-      if(it.first == a){
-        it.first = r;
-      }
-    }
-
-    //fix e
-    e->inEdges.erase(b);
-    e->inEdges.insert(r);
-
-    //fix a & b
-    a->inEdges.clear();
-    b->outEdges.clear();
-    b->outEdgesStack.clear();
-
-    //fix incoming cfg
-    cfg.erase(a);
-    cfg.insert(r);
-
-    return true;
-  }
-
-  //a and b are different
   set<InsBlock*> visitedByRoot;
   set<InsBlock*> visitedByA;
 
-  s->outEdges.erase(a);
+  visitedByRoot.insert(a);
   colorCFG(root, visitedByRoot);
-  colorCFG(e, visitedByRoot);
-  s->outEdges.insert(a);
-
+  visitedByRoot.erase(a);
 
   visitedByA.insert(b);
   colorCFG(a, visitedByA);
@@ -914,72 +801,70 @@ bool isConvLoop(set<InsBlock*> &cfg, InsBlock* root, InsBlock* a, InsBlock* b){
     return false;
   }
 
-  //determine loop count
-  UINT64 k = 0;
-  UINT64 m = 0;
-  for(auto it : b->outEdgesStack){
-    if(it.first == a){
-      m += it.second;
-    }
-    else{
-      k += it.second;
-    }
-  }
-  m += k;
-  if(m % k) {
-    return false;   //not divisable
-  }
-  m = m / k;  //m is now loop count
 
-  //create replacement block
-  InsBlock* r = new InsBlock();
-  blockList.push_back(r);
-  r->id = __blockId++;
-  r->outEdges.insert(e);
-  r->outEdgesStack.push_back({e,k});
-  r->inEdges.insert(s);
-
-  //create loop instruction
-  InsLoop* lp = new InsLoop();
-  baseList.push_back(lp);
-  lp->id = __loopId++;
-  lp->loopCnt = m;
-  lp->cfg = visitedByA;
-
-  //add lp to r
-  r->ins.push_back(lp);
-
-  //at this point, r and lp are done
-
-  //fix s
-  s->outEdges.erase(a);
-  s->outEdges.insert(r);
-  for(auto &it : s->outEdgesStack){
-    if(it.first == a){
-      it.first = r;
-    }
-  }
-
-  //fix e
-  e->inEdges.erase(b);
-  e->inEdges.insert(r);
-
-  //fix a & b
-  a->inEdges.clear();
-  b->outEdges.clear();
-  b->outEdgesStack.clear();
-
-  //fix incoming cfg
-  cfg = visitedByRoot;
-  cfg.insert(r);
-
-  //compress new CFG
-  compressCFG(lp->cfg);
 
   return true;
 }
 
-/*
+void markAllConvLoops(const set<InsBlock*> &cfg){
+  //find root and possible start blocks
+  InsBlock* root = nullptr;
+  set<InsBlock*> startBlks;
+  for(InsBlock* blk : cfg){
+    if(blk->id == 0){
+      root = blk;
+    }
+    if(blk->inEdges.size() == 2){
+      startBlks.insert(blk);
+    }
+  }
+
+  for(InsBlock* a : startBlks){
+    for(InsBlock* b : a->inEdges){
+      if(isConvLoop(root, a, b)){
+        a->isLoopStart = true;
+        b->isLoopEnd = true;
+      }
+    }
+  }
+}
+
+bool compressDCFG(set<InsBlock*> &cfg){
+  bool isChanged = false;
+  bool merged;
+  do{
+    merged = false;
+    for(InsBlock* in : cfg){
+      if(in->id == 0) continue;   //skip begin block
+      if(in->outEdgesStack.size() == 1){
+        InsBlock* out = in->outEdgesStack[0].first;
+        if(out->id == 1) continue;
+        if(out->inEdges.size() == 1){
+          //update the in edges of neighbors
+          for(auto it : out->outEdges){
+            it->inEdges.erase(out);
+            it->inEdges.insert(in);
+          }
+
+          //replace out edges
+          in->outEdgesStack = out->outEdgesStack;
+          in->outEdges = out->outEdges;
+
+          //copy instructions
+          in->ins.insert(in->ins.end(), out->ins.begin(), out->ins.end());
+
+          //mark to be deleted
+          merged = true;
+          isChanged = true;
+          cfg.erase(out);
+          break;
+        }
+      }
+    }
+  } while(merged);
+  return isChanged;
+}
+
 bool compressLoop(set<InsBlock*> &cfg){
   bool isChanged = false;
   for(InsBlock* blk : cfg){
@@ -1040,81 +925,17 @@ bool compressLoop(set<InsBlock*> &cfg){
     }
   }
   return isChanged;
-}*/
-
-void mergeLoops(set<InsBlock*> &cfg){
-  InsBlock* root = nullptr;
-  set<InsBlock*> startBlks;
-  for(InsBlock* blk : cfg){
-    if(blk->inEdges.size() == 0){
-      root = blk;
-    }
-    else if(blk->inEdges.size() == 2){
-      startBlks.insert(blk);
-    }
-  }
-  if(root == nullptr){
-    cerr << "Cannot find CFG root" << endl;
-    exit(-1);
-  }
-
-  bool isChanged = false;
-  for(InsBlock* a : startBlks){
-    for(InsBlock* b : a->inEdges){
-      if(isConvLoop(cfg, root, a, b)){
-        isChanged = true;
-        break;
-      }
-    }
-    if(isChanged){
-      break;
-    }
-  }
-
-  if(isChanged){
-    compressCFG(cfg);
-  }
 }
 
-void mergeBlocks(set<InsBlock*> &cfg){
-  bool isChanged = false;
-  for(InsBlock* in : cfg){
-    if(in->id == 0) continue;   //skip begin block
-    if(in->outEdgesStack.size() == 1){
-      InsBlock* out = in->outEdgesStack[0].first;
-      if(out->id == 1) continue;
-      if(out->inEdges.size() == 1){
-        //update the in edges of neighbors
-        for(auto it : out->outEdges){
-          it->inEdges.erase(out);
-          it->inEdges.insert(in);
-        }
-
-        //replace out edges
-        in->outEdgesStack = out->outEdgesStack;
-        in->outEdges = out->outEdges;
-
-        //copy instructions
-        in->ins.insert(in->ins.end(), out->ins.begin(), out->ins.end());
-
-        isChanged = true;
-        cfg.erase(out);
-        break;
-      }
-    }
-  }
-
-  if(isChanged){
-    compressCFG(cfg);
-  }
+void mergeAllLoops(set<InsBlock*> &cfg){
+  bool isChanged;
+  do{
+    compressDCFG(cfg);
+    isChanged = compressLoop(cfg);
+  } while(isChanged);
 }
 
-void compressCFG(set<InsBlock*> &cfg){
-  mergeBlocks(cfg);
-  mergeLoops(cfg);
-}
-
-void printInsLabel(ofstream &out, const vector<InsBase*> &insts, UINT32 indent, stack<set<InsBlock*>> &cfgStack){
+void printInsLabel(ofstream &out, const vector<InsBase*> &insts, UINT32 indent){
   for(InsBase* it : insts){
     //if(!firstLine){
       out << "<br />";
@@ -1140,30 +961,34 @@ void printInsLabel(ofstream &out, const vector<InsBase*> &insts, UINT32 indent, 
     }
     else if(it->type == InsType::InsTypeLoop){
       InsLoop* loop = static_cast<InsLoop*>(it);
-      InsBlock* s;
-      InsBlock* e;
-      findCFGStartEnd(loop->cfg, &s, &e);
-      out << "loop" << loop->id << ": " << loop->loopCnt << " Block: " << s->id;
-      cfgStack.push(loop->cfg);
-      //printInsLabel(out, loop->ins, indent+1);
+      out << "loop" << loop->id << ": " << loop->loopCnt;
+      printInsLabel(out, loop->ins, indent+1);
     }
   }
 }
 
-void printDotCFG(ofstream &out, const set<InsBlock*> &cfg, stack<set<InsBlock*>> &cfgStack){
+void printDot(const set<InsBlock*> &cfg, const char* fname){
+  ofstream out(fname);
+  cout << "Printing " << fname << "...\n";
+
+  out << "digraph DCFG {\n";
+
+  out << "\tB0 [label=\"START\",fillcolor=yellow,style=filled];\n";
+  out << "\tB1 [label=\"END\",fillcolor=yellow,style=filled];\n";
+
   for(InsBlock* ib : cfg){
-    if(ib->id == 0) {
-      out << "\tB0 [label=\"START\",fillcolor=yellow,style=filled];\n";
-    }
-    else if(ib->id == 1) {
-      out << "\tB1 [label=\"END\",fillcolor=yellow,style=filled];\n";
-    }
-    else {
+    if(ib->id >= 2){
       out << "\tB" << ib->id << " [shape=plain, fontname=\"Courier\", label=< <table>";
       out << "<TR><TD balign=\"left\" border=\"0\">";
       firstLine = true;
       out << "Block: " << ib->id;
-      printInsLabel(out, ib->ins, 0, cfgStack);
+      if(ib->isLoopStart){
+        out << " S";
+      }
+      if(ib->isLoopEnd){
+        out << " E";
+      }
+      printInsLabel(out, ib->ins, 0);
       out << "</TD></TR> </table> >];\n";
     }
     map<InsBlock*, UINT64> outBlocks;
@@ -1177,21 +1002,6 @@ void printDotCFG(ofstream &out, const set<InsBlock*> &cfg, stack<set<InsBlock*>>
       out << " -> B" << o->id;// << ":i";
       out << " [label=\"" << it.second << "\"];\n";
     }
-  }
-}
-
-void printDot(const set<InsBlock*> &cfg, const char* fname){
-  ofstream out(fname);
-  cout << "Printing " << fname << "...\n";
-
-  out << "digraph DCFG {\n";
-  stack<set<InsBlock*>> cfgStack;
-  cfgStack.push(cfg);
-
-  while(!cfgStack.empty()){
-    const set<InsBlock*> cc = cfgStack.top();
-    cfgStack.pop();
-    printDotCFG(out, cc, cfgStack);
   }
 
   out << "}\n";
@@ -1262,28 +1072,14 @@ void generateCodeLoop(ofstream &out, InsLoop* loop, int indent){
   for(const auto &str : loop->extraStr){
     out << _tab(indent+1) << str;
   }
-  InsBlock* s;
-  InsBlock* e;
-  if(!findCFGStartEnd(loop->cfg, &s, &e)){
-    cerr << "Cannot find start/end node" << endl;
-    exit(-1);
-  }
-  generateCodeBlock(out, s, indent+1);
-  for(InsBlock* it : loop->cfg){
-    if((it == s) || (it == e)) continue;
-    generateCodeBlock(out, s, indent+1);
-  }
-  if(s != e){
-    generateCodeBlock(out, e, indent+1);
-  }
-  /*for(InsBase* base : loop->ins){
+  for(InsBase* base : loop->ins){
     if(base->type == InsType::InsTypeLoop){
       generateCodeLoop(out, (InsLoop*)base, indent + 1);
     }
     else if(base->type == InsType::InsTypeNormal){
       generateCodeInst(out, (InsNormal*)base, indent + 1);
     }
-  }*/
+  }
   out << _tab(indent) << "}\n";
 }
 
@@ -1372,10 +1168,6 @@ void generateCodeBlock(ofstream &out, InsBlock* blk, int indent){
       cerr << "Unable to generate code: Invalid instruction type" << endl;
       PIN_ExitProcess(11);
     }
-  }
-
-  if(blk->outEdges.size() == 0){
-    return;
   }
 
   // simple if just one edge
@@ -1526,6 +1318,7 @@ void generateCode(vector<InsNormal*> &insList, const set<InsBlock*> &cfg, const 
 }
 
 set<InsBlock*> cfgFromTrace(vector<InsNormal*> &trace){
+  static UINT64 blockId = 2;
   set<InsBlock*> topInsBlocks;
 
   InsBlock* prev = new InsBlock();    //begin block
@@ -1541,7 +1334,7 @@ set<InsBlock*> cfgFromTrace(vector<InsNormal*> &trace){
         ib = new InsBlock();
         ins->block = ib;
         blockList.push_back(ib);
-        ib->id = __blockId++;
+        ib->id = blockId++;
 
         //InsBase* base = new InsBase();
         //baseList.push_back(base);
@@ -1590,12 +1383,11 @@ set<InsBlock*> createDCFGfromInstTrace(vector<InsNormal*> &trace){
   set<InsBlock*> topInsBlocks = cfgFromTrace(trace);
   printDot(topInsBlocks, "dcfgBC.gv");
 
-  //compressDCFG(topInsBlocks);
-  //printDot(topInsBlocks, "dcfgAC.gv");
+  compressDCFG(topInsBlocks);
+  printDot(topInsBlocks, "dcfgAC.gv");
 
   //mergeAllLoops(topInsBlocks);
-  //markAllConvLoops(topInsBlocks);
-  compressCFG(topInsBlocks);
+  markAllConvLoops(topInsBlocks);
   printDot(topInsBlocks, "dcfgLC.gv");
 
   return topInsBlocks;
@@ -2236,6 +2028,10 @@ int main(int argc, char *argv[]) {
   insHashedRootList.reserve(100000);
   baseList.reserve(100000);
   insTrace.reserve(40000000);
+
+  //if(log_en){
+  //  addrTrace.reserve(40000000);
+  //}
 
   accTypeMap[1] = "uint8_t";
   accTypeMap[2] = "uint16_t";
