@@ -68,13 +68,13 @@ KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",
 /*******************************************************************************
  * Forward declarations
  ******************************************************************************/
-typedef enum {InsTypeInvalid, InsTypeNormal, InsTypeLoop} InsType;
+typedef enum {InsTypeInvalid, InsTypeNormal, InsTypeSingleLoop, InsTypeMultiLoop} InsType;
 typedef enum {AccessTypeInvalid, AccessTypeRead, AccessTypeWrite, AccessTypeRMW} AccessType;
 typedef enum {PatTypeInvalid, PatTypeConst, PatTypeSmallTile, PatTypeTile, PatTypeRefs, PatTypeDominant, PatTypeRandom, PatLoopIndexed} PatType;
 class InsBase;
 class InsNormal;
-class InsLoop;
-struct InsBlock;
+//class InsLoop;
+class InsBlock;
 struct Interval;
 struct InsRoot;
 struct InsHashedRoot;
@@ -82,6 +82,9 @@ struct OpInfo;
 struct PatternInfo;
 class PatternBase;
 class CFG;
+class InsLoopBase;
+class InsSingleLoop;
+class InsMultiLoop;
 
 //void deriveAccessPattern(const vector<InsNormal*> &insList);
 void derivePattern(const vector<InsNormal*> &insList);
@@ -109,7 +112,7 @@ typedef struct OpInfo{
 } OpInfo;
 
 typedef struct {
-  InsLoop* lp;
+  InsLoopBase* lp;
   INT64 m;
 } LoopInfo;
 
@@ -125,39 +128,10 @@ typedef struct PatternInfo{
   vector<LoopInfo> loops;
 } Pattern;
 
-class InsBase{
-private:
-  InsBase();
-public:
-  InsType type = InsTypeInvalid;
-  InsLoop* parentLoop = nullptr;
-  InsBase(InsType _type) : type(_type){}
-};
-
-class InsNormal : public InsBase {
-public:
-  InsNormal() : InsBase(InsTypeNormal){};
-  PatternInfo *patInfo;
-  size_t cnt = 0;
-  InsHashedRoot* hashedRoot;
-  UINT64 id = -1;
-  UINT32 accSz;
-  AccessType accType = AccessTypeInvalid;
-  bool isTop = false;
-  InsBlock* block = NULL;
-};
-
 typedef struct InsHashedRoot {
   UINT64 id;
   InsRoot* root;
   vector<InsNormal*> children;
-  UINT64 getSize() const {
-    UINT64 tot = 0;
-    for(InsNormal* it : children){
-      tot += it->patInfo->totalSz;
-    }
-    return tot;
-  }
 } InsHashedRoot;
 
 typedef struct InsRoot{
@@ -170,23 +144,180 @@ typedef struct InsRoot{
   map<ADDRINT, InsHashedRoot*> childMap;
 } InsRoot;
 
-class InsLoop : public InsBase {
+class InsBase{
+private:
+  InsBase(){};
+
 public:
-  InsLoop() : InsBase(InsTypeLoop) {}
-  UINT64 id = -1;
-  UINT64 loopCnt = 0;
-  //vector<InsBase*> ins;
-  set<InsBlock*> cfg;
-  vector<string> extraStr;
+  static vector<InsBase*> insList;
+  UINT64 id = 0;
+  InsType type = InsTypeInvalid;
+  InsLoopBase* parentLoop = nullptr;
+
+  virtual ~InsBase(){};
+
+  InsBase(InsType type, UINT64 id){
+    this->type = type;
+    this->id = id;
+    insList.push_back(this);
+  }
+
+  static void deleteAllInst(){
+    for(InsBase* ins : insList){
+      delete ins;
+    }
+  }
+
+  virtual string printDot(UINT32 indent) {return "";};
+  virtual string printCodeBody(UINT32 indent) = 0;
+};
+vector<InsBase*> InsBase::insList;
+
+
+class InsNormal : public InsBase {
+public:
+  PatternInfo *patInfo = nullptr;
+  size_t cnt = 0;
+  InsHashedRoot* hashedRoot = nullptr;
+  UINT32 accSz = 0;
+  AccessType accType = AccessTypeInvalid;
+  bool isTop = false;
+  InsBlock* block = nullptr;
+
+  InsNormal(UINT64 id) : InsBase(InsTypeNormal, id){};
+  string printDot(UINT32 indent) {
+    stringstream out;
+    out << "<br />" << _tab(indent) << id << ": ";
+    out << hashedRoot->root->srcLine;// << ", " << ins->patInfo->pat->printPattern();
+    return out.str();
+  }
+
+  string printCodeBody(UINT32 indent) {
+    stringstream ss;
+    //ss << patInfo->pat->genBody(indent) << "\n";
+    return ss.str();
+  }
 };
 
-typedef struct InsBlock{
+class InsLoopBase : public InsBase{
+private:
+  static UINT64 _idCnt;
+
+public:
+  UINT64 loopCnt = 1;
+  vector<string> extraStr;
+
+  virtual ~InsLoopBase(){};
+  InsLoopBase(InsType type) : InsBase(type, _idCnt++) {};
+};
+
+UINT64 InsLoopBase::_idCnt = 0;
+
+
+class InsSingleLoop : public InsLoopBase {
+public:
+  vector<InsBase*> ins;
+
+  InsSingleLoop() : InsLoopBase(InsTypeSingleLoop) {}
+  string printDot(UINT32 indent) {
+    stringstream out;
+    out << "<br />" << _tab(indent) << "loop" << id << ": " << loopCnt;
+    for(InsBase* it :ins){
+      out << it->printDot(indent+1);
+    }
+    return out.str();
+  }
+
+  string printCodeBody(UINT32 indent) {
+    stringstream out;
+    out << _tab(indent) << "for(uint64_t loop" << id << " = 0; loop" << id << " < " << loopCnt << "ULL; loop" << id << "++){\n";
+    for(const auto &str : extraStr){
+      out << _tab(indent+1) << str;
+    }
+    for(InsBase* base : ins){
+      out << base->printCodeBody(indent+1);
+    }
+    out << _tab(indent) << "}\n";
+    return out.str();
+  }
+};
+
+
+
+
+class InsBlock{
+public:
   UINT64 id = -1;
   vector< pair<InsBlock*, UINT64> > outEdgesStack;   //run count compression
   set<InsBlock*> outEdges;
   set<InsBlock*> inEdges;
   vector<InsBase*> ins;
-} InsBlock;
+  bool isUsed = true;
+
+  string printDot(UINT32 indent){
+    if(isUsed){
+      stringstream ss;
+
+      if(id == 0) {   //special case: start block
+        ss << "\tB0 [label=\"START\",fillcolor=yellow,style=filled];\n";
+      }
+      else if(id == 1) {   //special case: end block
+        ss << "\tB1 [label=\"END\",fillcolor=yellow,style=filled];\n";
+      }
+      else{
+        //draw table start
+        ss << "\tB" << id << " [shape=plain, fontname=\"Courier\", label=< <table>";
+        ss << "<TR><TD balign=\"left\" border=\"0\">";
+        ss << "Block: " << id;
+
+        //draw instructions
+        for(InsBase* it : ins){
+          ss << it->printDot(indent);
+        }
+
+        //draw table end
+        ss << "</TD></TR> </table> >];\n";
+      }
+
+      //draw outgoing edges
+      map<InsBlock*, UINT64> outBlocks;
+      for(auto it : outEdgesStack){
+        outBlocks[it.first] += it.second;
+      }
+
+      for(auto it : outBlocks){
+        InsBlock* o = it.first;
+        ss << "\tB" << id;// << ":o" << cnt;
+        ss << " -> B" << o->id;// << ":i";
+        ss << " [label=\"" << it.second << "\"];\n";
+      }
+
+      return ss.str();
+    }
+    return "";
+  }
+};
+
+
+class InsMultiLoop : public InsLoopBase {
+public:
+  set<InsBlock*> cfg;
+  InsBlock* sBlk = nullptr;
+  InsBlock* eBlk = nullptr;
+
+  InsMultiLoop() : InsLoopBase(InsTypeMultiLoop) {}
+  string printDot(UINT32 indent) {
+    stringstream out;
+    out << "<br />" << _tab(indent) << "loop" << id << ": " << loopCnt << "  Block " << sBlk->id;
+    return out.str();
+  }
+
+  string printCodeBody(UINT32 indent) {
+    return "Multi Loop\n";
+  }
+};
+
+
 
 /*class CFG {
 private:
@@ -212,9 +343,7 @@ static bool log_en = false;
 static float top_perc;
 static string out_file_name;
 static UINT64 rtnEntryCnt = 0;
-static bool firstLine = true;
 static UINT64 __blockId = 2;
-static UINT64 __loopId = 0;
 
 static vector<InsRoot*> insRootList;
 static vector<InsHashedRoot*> insHashedRootList;
@@ -223,7 +352,7 @@ static vector<InsHashedRoot*> insHashedRootList;
 //static vector<InsNormal*> insNormalList;
 static vector<PatternInfo*> patternList;
 static vector<InsBlock*> blockList;
-static vector<InsBase*> baseList;
+//static vector<InsBase*> baseList;
 //static vector<InsLoop*> loopList;
 
 static vector<InsNormal*> insTrace;   //td
@@ -266,8 +395,8 @@ bool isRepeat(const vector<ADDRINT> &addr, size_t sz, size_t rep, INT64 &m){
 }
 
 void deriveLoopInfo(InsNormal* ins){
-  stack<InsLoop*> loops;
-  InsLoop* lp = ins->parentLoop;
+  stack<InsLoopBase*> loops;
+  InsLoopBase* lp = ins->parentLoop;
   while(lp){
     loops.push(lp);
     lp = lp->parentLoop;
@@ -810,7 +939,10 @@ void colorCFG(InsBlock* blk, set<InsBlock*> &visited){
 }
 
 //check if a=>b can form a loop
-bool isConvLoop(set<InsBlock*> &cfg, InsBlock* root, InsBlock* a, InsBlock* b){
+/*bool isConvLoop(set<InsBlock*> &cfg, InsBlock* root, InsBlock* a, InsBlock* b){
+
+
+
   //do some trivial checks
   if(a->inEdges.size() != 2) return false;
   if(b->outEdges.size() != 2) return false;
@@ -977,7 +1109,7 @@ bool isConvLoop(set<InsBlock*> &cfg, InsBlock* root, InsBlock* a, InsBlock* b){
   compressCFG(lp->cfg);
 
   return true;
-}
+}*/
 
 /*
 bool compressLoop(set<InsBlock*> &cfg){
@@ -1042,8 +1174,220 @@ bool compressLoop(set<InsBlock*> &cfg){
   return isChanged;
 }*/
 
+vector< pair<InsBlock*, UINT64> > mergeEdgeStack(vector< pair<InsBlock*, UINT64> > in){
+  vector< pair<InsBlock*, UINT64> > out;
+  for(auto it : in){
+    if(out.empty()){
+      out.push_back(it);
+    }
+    else{ //not the first element
+      auto last = out.back();
+      if(last.first == it.first){
+        //same, just change count
+        out.back().second += it.second;
+      }
+      else{
+        //different, insert
+        out.push_back(it);
+      }
+    }
+  }
+  return out;
+}
+
+//check if one block creates a loop
+bool isSelfLoop(InsBlock* blk){
+  if(blk->outEdges.find(blk) == blk->outEdges.end()){
+    return false;   //does not have any self edge
+  }
+
+  //Has self edge
+  //Find potential loop count
+  UINT64 loopCnt = 0;
+  for(auto it : blk->outEdgesStack){
+    if(it.first == blk){
+      loopCnt = it.second;
+      break;
+    }
+  }
+  assert(loopCnt);
+
+  for(auto it : blk->outEdgesStack){
+    if(it.first == blk){
+      if(loopCnt != it.second){
+        return false;
+      }
+    }
+  }
+
+  loopCnt++;
+
+  // Found a loop
+  // 1. Create loop inst
+  InsSingleLoop* lp = new InsSingleLoop();
+  lp->loopCnt = loopCnt;
+  lp->ins = blk->ins;
+
+  // 2. Fix current block
+  blk->inEdges.erase(blk);
+  blk->outEdges.erase(blk);
+  vector< pair<InsBlock*, UINT64> > newOutEdgeStack;
+  for(auto it : blk->outEdgesStack){
+    if(it.first != blk){
+      //only include non-self edges
+      newOutEdgeStack.push_back({it.first, it.second});
+    }
+  }
+  newOutEdgeStack = mergeEdgeStack(newOutEdgeStack);
+  blk->outEdgesStack = newOutEdgeStack;
+  blk->ins.clear(); //remove current instructions
+  blk->ins.push_back(lp); //insert loop instruction
+
+  return true;
+}
+
+bool isMultiLoop(set<InsBlock*> &cfg, InsBlock* root, InsBlock* a, InsBlock* b){
+  if(a == b){
+    return false;
+  }
+
+  if(b->outEdges.find(a) == b->outEdges.end()){
+    return false;
+  }
+
+  //check if consistent loopCnt
+  UINT64 loopCnt = 0;
+  for(auto it : b->outEdgesStack){
+    if(it.first == a){
+      loopCnt = it.second;
+      break;
+    }
+  }
+  assert(loopCnt);
+
+  for(auto it : b->outEdgesStack){
+    if(it.first == a){
+      if(loopCnt != it.second){
+        return false;
+      }
+    }
+  }
+
+  //a --> b => a
+  //check if Loop CFG is exclusive
+  set<InsBlock*> visitedByRoot;
+  set<InsBlock*> visitedByA;
+
+  //color from root
+  visitedByRoot.insert(a);
+  colorCFG(root, visitedByRoot);
+  colorCFG(b, visitedByRoot);
+  visitedByRoot.erase(a);
+  visitedByRoot.erase(b);
+
+  //color from a
+  visitedByA.insert(b);
+  colorCFG(a, visitedByA);
+
+  vector<InsBlock*> overlap;
+  overlap.reserve(max(visitedByA.size(), visitedByRoot.size()));
+  vector<InsBlock*>::iterator oit;
+  oit = set_intersection(visitedByA.begin(), visitedByA.end(), visitedByRoot.begin(), visitedByRoot.end(), overlap.begin());
+  if(oit != overlap.begin()){ //has overlap
+    return false;
+  }
+
+  //create a loop inst
+  InsMultiLoop* lp = new InsMultiLoop();
+  lp->loopCnt = loopCnt+1;
+  lp->cfg = visitedByA;
+  lp->sBlk = a;
+  lp->eBlk = b;
+
+  //passed all checks! congrats!!
+  //create replacement node
+  InsBlock* r = new InsBlock();
+  blockList.push_back(r);
+  r->id = __blockId++;
+  r->outEdgesStack = b->outEdgesStack;
+  r->outEdges = b->outEdges;
+  r->inEdges = a->inEdges;
+  r->ins.push_back(lp);
+
+  //fix edges of r
+  r->inEdges.erase(b);
+  r->outEdges.erase(a);
+
+  vector< pair<InsBlock*, UINT64> > newOutEdgeStack;
+  for(auto it : r->outEdgesStack){
+    if(it.first != a){
+      //only include non-self edges
+      newOutEdgeStack.push_back({it.first, it.second});
+    }
+  }
+  newOutEdgeStack = mergeEdgeStack(newOutEdgeStack);
+  r->outEdgesStack = newOutEdgeStack;
+  for(InsBlock* blk : r->outEdges){
+    blk->inEdges.erase(b);
+    blk->inEdges.insert(r);
+  }
+  for(InsBlock* blk : r->inEdges){
+    blk->outEdges.erase(a);
+    blk->outEdges.insert(r);
+    for(size_t i = 0; i < blk->outEdgesStack.size(); i++){
+      if(blk->outEdgesStack[i].first == a){
+        blk->outEdgesStack[i].first = r;
+      }
+    }
+  }
+
+
+  a->inEdges.clear();
+  b->outEdges.clear();
+  b->outEdgesStack.clear();
+
+  cfg = visitedByRoot;
+  cfg.insert(r);
+
+  compressCFG(lp->cfg);
+
+  return true;
+}
+
 void mergeLoops(set<InsBlock*> &cfg){
-  InsBlock* root = nullptr;
+  bool isChanged = false;
+
+  //first, check for self loops
+  for(InsBlock* blk : cfg){
+    if(isSelfLoop(blk)){
+      isChanged = true;
+      break;
+    }
+  }
+
+  InsBlock* s;
+  InsBlock* e;
+  if(!findCFGStartEnd(cfg, &s, &e)){
+    cerr << "Cannot detect start/end block of a CFG" << endl;
+    assert(0);
+  }
+
+  for(InsBlock* a : cfg){
+    set<InsBlock*> vis;
+    colorCFG(a, vis);   //visit all nodes reachable starting from a
+    vis.erase(a);
+    for(InsBlock* b : vis){
+      if(isMultiLoop(cfg, s, a, b)){
+        isChanged = true;
+        break;
+      }
+    }
+    if(isChanged){
+      break;
+    }
+  }
+
+  /*InsBlock* root = nullptr;
   set<InsBlock*> startBlks;
   for(InsBlock* blk : cfg){
     if(blk->inEdges.size() == 0){
@@ -1069,7 +1413,7 @@ void mergeLoops(set<InsBlock*> &cfg){
     if(isChanged){
       break;
     }
-  }
+  }*/
 
   if(isChanged){
     compressCFG(cfg);
@@ -1099,6 +1443,7 @@ void mergeBlocks(set<InsBlock*> &cfg){
 
         isChanged = true;
         cfg.erase(out);
+        out->isUsed = false;
         break;
       }
     }
@@ -1114,43 +1459,44 @@ void compressCFG(set<InsBlock*> &cfg){
   mergeLoops(cfg);
 }
 
-void printInsLabel(ofstream &out, const vector<InsBase*> &insts, UINT32 indent, stack<set<InsBlock*>> &cfgStack){
-  for(InsBase* it : insts){
-    //if(!firstLine){
-      out << "<br />";
-    //}
-    firstLine = false;
-    for(UINT32 i = 0; i < indent; i++){
-      out << "  ";
-    }
-    if(it->type == InsType::InsTypeNormal){
-      /*InsNormal* ins = it->insNormal;
-      out << setw(4) << ins->id << ":";
-      if(ins->accType == AccessType::AccessTypeRead){
-        out << "RD ";
-      }
-      else if(ins->accType == AccessType::AccessTypeWrite){
-        out << "WR ";
-      }
-      out << ins->patInfo->pat->printPattern();
-      out << " A" << ins->accSz << " [" << ins->patInfo->addrRange.s << ":" << ins->patInfo->addrRange.e << ")";*/
-      InsNormal* ins = static_cast<InsNormal*>(it);
-      out << ins->id << ": ";
-      out << ins->hashedRoot->root->srcLine;// << ", " << ins->patInfo->pat->printPattern();
-    }
-    else if(it->type == InsType::InsTypeLoop){
-      InsLoop* loop = static_cast<InsLoop*>(it);
-      InsBlock* s;
-      InsBlock* e;
-      findCFGStartEnd(loop->cfg, &s, &e);
-      out << "loop" << loop->id << ": " << loop->loopCnt << " Block: " << s->id;
-      cfgStack.push(loop->cfg);
-      //printInsLabel(out, loop->ins, indent+1);
-    }
-  }
-}
+//void printInsLabel(ofstream &out, const vector<InsBase*> &insts, UINT32 indent, stack<set<InsBlock*>> &cfgStack){
+//  for(InsBase* it : insts){
+//    //if(!firstLine){
+//      out << "<br />";
+//    //}
+//    firstLine = false;
+//    for(UINT32 i = 0; i < indent; i++){
+//      out << "  ";
+//    }
+//    it->printDot(out, indent);
+//    if(it->type == InsType::InsTypeNormal){
+//      /*InsNormal* ins = it->insNormal;
+//      out << setw(4) << ins->id << ":";
+//      if(ins->accType == AccessType::AccessTypeRead){
+//        out << "RD ";
+//      }
+//      else if(ins->accType == AccessType::AccessTypeWrite){
+//        out << "WR ";
+//      }
+//      out << ins->patInfo->pat->printPattern();
+//      out << " A" << ins->accSz << " [" << ins->patInfo->addrRange.s << ":" << ins->patInfo->addrRange.e << ")";*/
+//      InsNormal* ins = static_cast<InsNormal*>(it);
+//      out << ins->id << ": ";
+//      out << ins->hashedRoot->root->srcLine;// << ", " << ins->patInfo->pat->printPattern();
+//    }
+//    else if(it->type == InsType::InsTypeLoop){
+//      InsLoop* loop = static_cast<InsLoop*>(it);
+//      InsBlock* s;
+//      InsBlock* e;
+//      findCFGStartEnd(loop->cfg, &s, &e);
+//      out << "loop" << loop->id << ": " << loop->loopCnt << " Block: " << s->id;
+//      cfgStack.push(loop->cfg);
+//      //printInsLabel(out, loop->ins, indent+1);
+//    }
+//  }
+//}
 
-void printDotCFG(ofstream &out, const set<InsBlock*> &cfg, stack<set<InsBlock*>> &cfgStack){
+/*void printDotCFG(ofstream &out, const set<InsBlock*> &cfg, stack<set<InsBlock*>> &cfgStack){
   for(InsBlock* ib : cfg){
     if(ib->id == 0) {
       out << "\tB0 [label=\"START\",fillcolor=yellow,style=filled];\n";
@@ -1178,20 +1524,19 @@ void printDotCFG(ofstream &out, const set<InsBlock*> &cfg, stack<set<InsBlock*>>
       out << " [label=\"" << it.second << "\"];\n";
     }
   }
-}
+}*/
 
-void printDot(const set<InsBlock*> &cfg, const char* fname){
+
+void printDotFile(const char* fname){
   ofstream out(fname);
   cout << "Printing " << fname << "...\n";
 
-  out << "digraph DCFG {\n";
-  stack<set<InsBlock*>> cfgStack;
-  cfgStack.push(cfg);
 
-  while(!cfgStack.empty()){
-    const set<InsBlock*> cc = cfgStack.top();
-    cfgStack.pop();
-    printDotCFG(out, cc, cfgStack);
+  out << "digraph DCFG {\n";
+  for(InsBlock* blk : blockList){
+    if(blk->isUsed){
+      out << blk->printDot(0);
+    }
   }
 
   out << "}\n";
@@ -1221,70 +1566,6 @@ string genReadWriteInst(const InsNormal* ins, int indent, bool useId){
     return "";
   }
   return ss.str();
-}
-
-void generateCodeInst(ofstream &out, InsNormal* ins, int indent){
-  out << ins->patInfo->pat->genBody(indent);
-  out << "\n";
-  /*if(ins->pType == PatType::PatTypeSeq){
-    out << _tab(indent) << "__asm__ __volatile__ (\"leaq (%1,%2,1), %0\\n\\t\" : \"=r\"(addr) : \"r\"(gm), \"r\"(" << ins->strCurr << ") : );\n";
-    if(ins->accType == AccessType::AccessTypeRead){
-      out << _tab(indent) << "__asm__ __volatile__ (\"mov" << movSuffixMap[ins->accSz] << " (%0), %%" << regNameMap[ins->accSz]
-          << "\" : : \"r\"(addr) : \"" << regNameMap[ins->accSz] << "\" );\n";
-    }
-    else if(ins->accType == AccessType::AccessTypeWrite){
-      out << _tab(indent) << "__asm__ __volatile__ (\"mov" << movSuffixMap[ins->accSz] << " %%" << regNameMap[ins->accSz] << ", (%0)"
-          << "\" : \"=r\"(addr) : : );\n";
-    }
-    out << _tab(indent) << ins->strCurr << " += " << ins->stride << ";\n";
-    out << _tab(indent) << "if(" << ins->strCurr << " >= " << ins->addr.e << ") " << ins->strCurr << " = " << ins->addr.s << ";\n";
-  }
-  else if(ins->pType == PatType::PatTypeRand){
-    //first, generate random address within range, and without accessing memory
-    generateRandom(out, indent);
-    out << _tab(indent) << "offset = (hash % " << ins->addr.e - ins->addr.s << ") + " << ins->addr.s << ";\n";
-    out << _tab(indent) << "addr = gm + (offset & ~7ULL);\n";
-
-    if(ins->accType == AccessType::AccessTypeRead){
-      out << _tab(indent) << "__asm__ __volatile__ (\"mov" << movSuffixMap[ins->accSz] << " (%0), %%" << regNameMap[ins->accSz]
-                << "\" : : \"r\"(addr) : \"" << regNameMap[ins->accSz] << "\" );\n";
-    }
-    else if(ins->accType == AccessType::AccessTypeWrite){
-      out << _tab(indent) << "__asm__ __volatile__ (\"mov" << movSuffixMap[ins->accSz] << " %%" << regNameMap[ins->accSz] << ", (%0)"
-                << "\" : \"=r\"(addr) : : );\n";
-    }
-  }
-  out << "\n";*/
-}
-
-void generateCodeLoop(ofstream &out, InsLoop* loop, int indent){
-  out << _tab(indent) << "for(uint64_t loop" << loop->id << " = 0; loop" << loop->id << " < " << loop->loopCnt << "ULL; loop" << loop->id << "++){\n";
-  for(const auto &str : loop->extraStr){
-    out << _tab(indent+1) << str;
-  }
-  InsBlock* s;
-  InsBlock* e;
-  if(!findCFGStartEnd(loop->cfg, &s, &e)){
-    cerr << "Cannot find start/end node" << endl;
-    exit(-1);
-  }
-  generateCodeBlock(out, s, indent+1);
-  for(InsBlock* it : loop->cfg){
-    if((it == s) || (it == e)) continue;
-    generateCodeBlock(out, s, indent+1);
-  }
-  if(s != e){
-    generateCodeBlock(out, e, indent+1);
-  }
-  /*for(InsBase* base : loop->ins){
-    if(base->type == InsType::InsTypeLoop){
-      generateCodeLoop(out, (InsLoop*)base, indent + 1);
-    }
-    else if(base->type == InsType::InsTypeNormal){
-      generateCodeInst(out, (InsNormal*)base, indent + 1);
-    }
-  }*/
-  out << _tab(indent) << "}\n";
 }
 
 void generateCodeHeader(ofstream &out, vector<InsNormal*> &insList){
@@ -1362,16 +1643,7 @@ bool isRegularSeq(const vector<Interval> &seq){
 void generateCodeBlock(ofstream &out, InsBlock* blk, int indent){
   out << "block" << blk->id << ":\n";
   for(InsBase* base : blk->ins){
-    if(base->type == InsType::InsTypeLoop){
-      generateCodeLoop(out, (InsLoop*)base, indent);
-    }
-    else if(base->type == InsType::InsTypeNormal){
-      generateCodeInst(out, (InsNormal*)base, indent);
-    }
-    else{
-      cerr << "Unable to generate code: Invalid instruction type" << endl;
-      PIN_ExitProcess(11);
-    }
+    out << base->printCodeBody(indent);
   }
 
   if(blk->outEdges.size() == 0){
@@ -1529,6 +1801,7 @@ set<InsBlock*> cfgFromTrace(vector<InsNormal*> &trace){
   set<InsBlock*> topInsBlocks;
 
   InsBlock* prev = new InsBlock();    //begin block
+  blockList.push_back(prev);
   prev->id = 0;
   topInsBlocks.insert(prev);
 
@@ -1576,6 +1849,7 @@ set<InsBlock*> cfgFromTrace(vector<InsNormal*> &trace){
 
   //add end block
   InsBlock* ib = new InsBlock();
+  blockList.push_back(ib);
   ib->id = 1;
   topInsBlocks.insert(ib);
   ib->inEdges.insert(prev);
@@ -1588,7 +1862,7 @@ set<InsBlock*> cfgFromTrace(vector<InsNormal*> &trace){
 
 set<InsBlock*> createDCFGfromInstTrace(vector<InsNormal*> &trace){
   set<InsBlock*> topInsBlocks = cfgFromTrace(trace);
-  printDot(topInsBlocks, "dcfgBC.gv");
+  printDotFile("dcfgBC.gv");
 
   //compressDCFG(topInsBlocks);
   //printDot(topInsBlocks, "dcfgAC.gv");
@@ -1596,7 +1870,7 @@ set<InsBlock*> createDCFGfromInstTrace(vector<InsNormal*> &trace){
   //mergeAllLoops(topInsBlocks);
   //markAllConvLoops(topInsBlocks);
   compressCFG(topInsBlocks);
-  printDot(topInsBlocks, "dcfgLC.gv");
+  printDotFile("dcfgLC.gv");
 
   return topInsBlocks;
 }
@@ -1636,7 +1910,7 @@ void printInfo(vector<InsNormal*> &res){
       cout << "{" << s.first << ":" << s.second << "} ";
     }
     cout << "\t" << i->hashedRoot->root->srcLine << "\t\t" << i->patInfo->addr.size() <<"\t";
-    InsLoop* lp = i->parentLoop;
+    InsLoopBase* lp = i->parentLoop;
     //InsLoop* ol = nullptr;
     while(lp){
       //ol = lp;
@@ -1971,9 +2245,10 @@ VOID Fini(INT32 code, VOID *v) {
   cout << "AT FINI" << endl;
   // 0. Filter zero  (or very low) cnt instructions
   vector<InsNormal*> filteredInsList;
-  cout << "Static memory instructions: Before any filtering " << baseList.size() << endl;
+  cout << "Static memory instructions: Before any filtering " << InsBase::insList.size() << endl;
 
-  filteredInsList = deleteZeroAccesses(baseList);
+ 
+  filteredInsList = deleteZeroAccesses(InsBase::insList);
   cout << "Static memory instructions: After zero access delete " << filteredInsList.size() << endl;
 
   derivePatternInitial(filteredInsList);   //needed for next step
@@ -2010,8 +2285,7 @@ VOID Fini(INT32 code, VOID *v) {
   for(InsRoot* it : insRootList){ delete it; }
   for(InsHashedRoot* it : insHashedRootList){ delete it; }
   for(InsBlock* it : blockList){ delete it; }
-  for(InsBase* it : baseList){ delete it; }
-  //for(InsLoop* it : loopList){ delete it; }
+  InsBase::deleteAllInst();
 
   cout << "DONE" << endl;
 }
@@ -2121,12 +2395,10 @@ InsNormal* getInsLeaf(InsRoot* root, UINT32 op){
     root->childMap[callHash] = tmp;
     tmp->id = root->id * 1000 + root->childMap.size();
     for(UINT32 i = 0; i < root->opCnt; i++){
-      InsNormal* ins = new InsNormal();
-      baseList.push_back(ins);
+      InsNormal* ins = new InsNormal(tmp->id * 100 + i + 1);
       ins->accSz = root->opInfo[i].accSz;
       ins->accType = root->opInfo[i].accType;
       ins->hashedRoot = tmp;
-      ins->id = tmp->id * 100 + i + 1;
       tmp->children.push_back(ins);
       ins->patInfo = new PatternInfo();
       patternList.push_back(ins->patInfo);
@@ -2234,7 +2506,6 @@ int main(int argc, char *argv[]) {
 
   insRootList.reserve(100000);
   insHashedRootList.reserve(100000);
-  baseList.reserve(100000);
   insTrace.reserve(40000000);
 
   accTypeMap[1] = "uint8_t";

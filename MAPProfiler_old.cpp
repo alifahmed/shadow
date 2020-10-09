@@ -205,7 +205,7 @@ static vector<InsHashedRoot*> insHashedRootList;
 //static vector<InsNormal*> insNormalList;
 static vector<PatternInfo*> patternList;
 static vector<InsBlock*> blockList;
-static vector<InsBase*> baseList;
+//static vector<InsBase*> baseList;
 //static vector<InsLoop*> loopList;
 
 static vector<InsNormal*> insTrace;   //td
@@ -967,7 +967,7 @@ void printInsLabel(ofstream &out, const vector<InsBase*> &insts, UINT32 indent){
   }
 }
 
-void printDot(const set<InsBlock*> &cfg, const char* fname){
+void printDotFile(const set<InsBlock*> &cfg, const char* fname){
   ofstream out(fname);
   cout << "Printing " << fname << "...\n";
 
@@ -1381,14 +1381,14 @@ set<InsBlock*> cfgFromTrace(vector<InsNormal*> &trace){
 
 set<InsBlock*> createDCFGfromInstTrace(vector<InsNormal*> &trace){
   set<InsBlock*> topInsBlocks = cfgFromTrace(trace);
-  printDot(topInsBlocks, "dcfgBC.gv");
+  printDotFile(topInsBlocks, "dcfgBC.gv");
 
   compressDCFG(topInsBlocks);
-  printDot(topInsBlocks, "dcfgAC.gv");
+  printDotFile(topInsBlocks, "dcfgAC.gv");
 
   //mergeAllLoops(topInsBlocks);
   markAllConvLoops(topInsBlocks);
-  printDot(topInsBlocks, "dcfgLC.gv");
+  printDotFile(topInsBlocks, "dcfgLC.gv");
 
   return topInsBlocks;
 }

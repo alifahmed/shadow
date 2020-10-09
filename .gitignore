@@ -42,3 +42,5 @@ obj*
 *.exe
 *.out
 *.app
+
+nbproject/
