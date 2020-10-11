@@ -53,3 +53,8 @@ string InsNormal::printReadWrite(UINT32 indent, bool useId) const {
   }
   return ss.str();
 }
+
+void InsNormal::setParentLoop(InsLoopBase* pl){
+    parentLoop = pl;
+}
+

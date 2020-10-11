@@ -4,6 +4,7 @@
 
 #include <string>
 #include <sstream>
+#include <vector>
 #include "InsBase.h"
 
 class PatternInfo;
@@ -18,7 +19,7 @@ public:
   UINT32 accSz = 0;
   AccessType accType = AccessTypeInvalid;
   bool isTop = false;
-  InsBlock* block = nullptr;
+  //InsBlock* block = nullptr;
 
   InsNormal(UINT64 id) : InsBase(InsTypeNormal, id){};
 
@@ -27,5 +28,5 @@ public:
   std::string printDot(UINT32 indent) const;
   std::string printCodeBody(UINT32 indent) const ;
   std::string printReadWrite(UINT32 indent, bool useId) const ;
-
+  void setParentLoop(InsLoopBase* pl);
 };

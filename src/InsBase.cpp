@@ -3,16 +3,14 @@
 
 using namespace std;
 
-InsBase::InsBase(InsType type, UINT64 id){
-  this->type = type;
-  this->id = id;
+std::vector<InsBase*> InsBase::insList;
+
+InsBase::InsBase(InsType _type, UINT64 _id) : id(_id), type(_type){
   insList.push_back(this);
 }
 
-void InsBase::deleteAllInst(){
+void InsBase::deleteAll(){
   for(InsBase* ins : insList){
     delete ins;
   }
 }
-
-vector<InsBase*> InsBase::insList;

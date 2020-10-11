@@ -15,4 +15,5 @@ public:
 
   std::string printDot(UINT32 indent) const;
   std::string printCodeBody(UINT32 indent) const;
+  void setParentLoop(InsLoopBase* pl);
 };
