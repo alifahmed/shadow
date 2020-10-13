@@ -1,0 +1,25 @@
+digraph DCFG {
+	B0 [label="START",fillcolor=yellow,style=filled];
+	B0 -> B2 [label="1"];
+	B2 [shape=plain, fontname="Courier", label=< <table><TR><TD balign="left" border="0">Block: 2<br /> loop0: 300000<br />    340200101: 0<br />    341000101: 0<br />    341900101: 0<br />    342900101: 0</TD></TR> </table> >];
+	B2 -> B6 [label="1"];
+	B6 [shape=plain, fontname="Courier", label=< <table><TR><TD balign="left" border="0">Block: 6<br /> 343800101: 0</TD></TR> </table> >];
+	B6 -> B10 [label="289971"];
+	B6 -> B7 [label="29"];
+	B7 [shape=plain, fontname="Courier", label=< <table><TR><TD balign="left" border="0">Block: 7<br /> 345000101: 0</TD></TR> </table> >];
+	B7 -> B12 [label="88570"];
+	B7 -> B8 [label="201383"];
+	B8 [shape=plain, fontname="Courier", label=< <table><TR><TD balign="left" border="0">Block: 8<br /> 347200101: 0<br /> 347800101: 0</TD></TR> </table> >];
+	B8 -> B1 [label="1"];
+	B8 -> B6 [label="289999"];
+	B10 [shape=plain, fontname="Courier", label=< <table><TR><TD balign="left" border="0">Block: 10<br /> 348800101: 0</TD></TR> </table> >];
+	B10 -> B11 [label="132580"];
+	B10 -> B8 [label="9"];
+	B10 -> B7 [label="157382"];
+	B11 [shape=plain, fontname="Courier", label=< <table><TR><TD balign="left" border="0">Block: 11<br /> 351600101: 0</TD></TR> </table> >];
+	B11 -> B8 [label="38"];
+	B11 -> B7 [label="132542"];
+	B12 [shape=plain, fontname="Courier", label=< <table><TR><TD balign="left" border="0">Block: 12<br /> 353100101: 0</TD></TR> </table> >];
+	B12 -> B8 [label="88570"];
+	B1 [label="END",fillcolor=yellow,style=filled];
+}

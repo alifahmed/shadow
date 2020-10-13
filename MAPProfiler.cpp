@@ -209,23 +209,25 @@ bool isSelfLoop(InsBlock* blk){
   if(blk->outEdges.find(blk) == blk->outEdges.end()){
     return false;   //does not have any self edge
   }
-
-  //Has self edge
-  //Find potential loop count
-  UINT64 loopCnt = 0;
-  for(auto it : blk->outEdgesStack){
-    if(it.first == blk){
-      loopCnt = it.second;
-      break;
-    }
+  if(blk->outEdgesStack.size() == 0){
+    return false; //no out edges
   }
-  assert(loopCnt);
 
-  for(auto it : blk->outEdgesStack){
-    if(it.first == blk){
-      if(loopCnt != it.second){
-        return false;
-      }
+  if(blk->outEdgesStack[0].first != blk){
+    return false; // pattern does not match
+  }
+
+  UINT64 loopCnt = blk->outEdgesStack[0].second;
+
+  for(size_t i = 0; i < blk->outEdgesStack.size(); i++){
+    if(i & 1){    //odd
+      //out edge count should be 1 (loop exit)
+      if(blk->outEdgesStack[i].second != 1)         return false;
+    }
+    else{         //even
+      //should be same block, and same loop count
+      if(blk->outEdgesStack[i].first != blk)        return false;
+      if(blk->outEdgesStack[i].second != loopCnt)   return false;
     }
   }
 
@@ -362,7 +364,7 @@ bool isMultiLoop(set<InsBlock*> &cfg, InsBlock* root, InsBlock* a, InsBlock* b){
 }
 
 bool mergeMultiLoops(set<InsBlock*> &cfg){
-  InsBlock* s;
+  /*InsBlock* s;
   InsBlock* e;
   if(!findCFGStartEnd(cfg, &s, &e)){
     printDotFile("dcfgErr.gv");
@@ -386,7 +388,8 @@ bool mergeMultiLoops(set<InsBlock*> &cfg){
     }
   }
 
-  return isChanged;
+  return isChanged;*/
+  return false;
 }
 
 
@@ -437,14 +440,20 @@ bool mergeBlocks(set<InsBlock*> &cfg){
 }
 
 void compressCFG(set<InsBlock*> &cfg){
+  static UINT32 dfCounter = 0;
+  static char dfName[32];
   while(true){
     while(mergeBlocks(cfg));      // First, merge all blocks
     if(mergeSingleLoops(cfg)){    // Try to merge a self loop
       continue;                   // Found a self loop, start from beginning
     }
+    sprintf(dfName, "dots/gv/dot%dp", dfCounter++);
+    printDotFile(dfName);
     if(!mergeMultiLoops(cfg)){    // Last resort, try to merge multi block loops
       break;                      // Not found anything, quit
     }
+    sprintf(dfName, "dots/gv/dot%dq", dfCounter++);
+    printDotFile(dfName);
   }
 }
 

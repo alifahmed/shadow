@@ -1,6 +1,7 @@
 #pragma once
 
-#include <vector>
+#include <map>
+#include <set>
 #include <cln_types.h>
 #include "InsBase.h"
 
@@ -10,6 +11,19 @@ private:
   static std::vector<InsBlock*> blockList;
   static UINT64 _idCnt;
   UINT64 id = -1;
+
+  //checks if out edges are entered in same order every time
+  bool isOutOrderConst(std::vector<InsBlock*> &order) const;
+
+  typedef struct {
+    UINT64 totCnt = 0;
+    UINT64 avgCnt = 0;    //average iter per entry
+    UINT64 remCnt = 0;    //remaining count
+    UINT64 entryCnt = 0;
+  } EdgeStat;
+
+  //returns 0 if corresponding block does not have constant entry count
+  std::map<InsBlock*, EdgeStat> calcEdgeStats() const;
 
 public:
   std::vector< std::pair<InsBlock*, UINT64> > outEdgesStack;   //run count compression

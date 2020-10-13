@@ -3,6 +3,8 @@
 #include "InsNormal.h"
 #include "InsHashedRoot.h"
 #include "InsRoot.h"
+#include "PatternBase.h"
+#include "PatternInfo.h"
 
 using namespace std;
 
@@ -25,7 +27,7 @@ string InsNormal::printDot(UINT32 indent) const {
 
 string InsNormal::printCodeBody(UINT32 indent) const {
   stringstream ss;
-  //ss << patInfo->pat->genBody(indent) << "\n";
+  ss << patInfo->pat->genBody(indent) << "\n";
   return ss.str();
 }
 

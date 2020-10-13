@@ -98,6 +98,9 @@ print("=========================================================================
 ###############################################################################
 # Invoke Pin
 ###############################################################################
+#delete old dot files
+os.system("rm -rf dots/gv/*")
+
 subprocess.run(pin_cmd)
 #os.system("dot -Tps dcfgAC.gv -o dcfgAC.ps")
 os.system("dot -Tps dcfgErr.gv -o dcfgErr.ps")

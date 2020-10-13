@@ -1,5 +1,7 @@
+#include <map>
 #include "InsBlock.h"
 #include "InsBase.h"
+#include "cln_utils.h"
 
 using namespace std;
 
@@ -15,6 +17,43 @@ InsBlock::InsBlock(UINT64 id){
   blockList.push_back(this);
   this->id = id;
 }
+
+bool InsBlock::isOutOrderConst(std::vector<InsBlock*> &order) const {
+  size_t outBlockCnt = outEdges.size();
+  if(outEdgesStack.size() % outBlockCnt) return false;    //total elements in the out stack is not a multiple of out blocks
+
+  order.clear();
+  order.resize(outBlockCnt, nullptr);
+
+  size_t idx = 0;
+  for(auto it : outEdgesStack){
+    if(order[idx] == nullptr){
+      order[idx] = it.first;
+    }
+    else if(order[idx] != it.first){
+      return false;
+    }
+    idx++;
+    idx %= outBlockCnt;
+  }
+  return true;
+}
+
+
+map<InsBlock*, InsBlock::EdgeStat> InsBlock::calcEdgeStats() const {
+  map<InsBlock*, EdgeStat> aa;
+  for(auto it : outEdgesStack){
+    aa[it.first].totCnt += it.second;
+    aa[it.first].entryCnt++;
+  }
+  for(auto &it : aa) {
+    UINT64 tot = it.second.totCnt;
+    it.second.avgCnt = tot / it.second.entryCnt;
+    it.second.remCnt = tot % it.second.entryCnt;
+  }
+  return aa;
+}
+
 
 string InsBlock::printDot(UINT32 indent) const {
     if(isUsed){
@@ -125,91 +164,139 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
   }
 
 
+  //check order
+  vector<InsBlock*> blkOrder;
+  bool isOrdered = isOutOrderConst(blkOrder);
+  if(isOrdered){
+    out << _tab(indent) << "//Ordered...\n";
+  }
+
+  //print edge stats
+  map<InsBlock*, EdgeStat> estat = calcEdgeStats();
+
+  //check if remainder is zero for all
+  bool isRemZero = true;
+  for(auto it : estat){
+    if(it.second.remCnt){
+      isRemZero = false;
+      break;
+    }
+  }
+
+  //ordered, no remainder edges
+  if(isOrdered && isRemZero){
+    assert(estat.size() == blkOrder.size());
+    UINT64 tot_cnt = 0;
+    for(auto it : estat) {
+      tot_cnt += it.second.avgCnt;
+    }
+    out << _tab(indent) <<  "static uint64_t out_" << id << " = 0;\n";
+    out << _tab(indent) <<  "out_" << id << " = (out_" << id << " == " << (tot_cnt+1) << ") ? 1 : (out_" << id << " + 1);\n";
+    UINT64 sz = estat.size();
+    tot_cnt = 0;
+    for(UINT64 i = 0; i < sz; i++){
+      //get next block following the order
+      InsBlock* nb = blkOrder[i];
+      EdgeStat es = estat[nb];
+
+      tot_cnt += es.avgCnt;
+      out << _tab(indent);
+      if(i){
+        out << "else ";
+      }
+      if(i != (sz - 1)){
+        out << "if (out_" << id << " <= " << tot_cnt << ") ";
+      }
+      out << "goto block" << nb->id << ";\n";
+    }
+    out << "\n\n";
+    return out.str();
+  }
+
+
   //too many edges.. for now, skip...
   out << _tab(indent) << "//Many edges... print first few...\n";
-  for (int i = 0; i < 10; i++){
-    out << _tab(indent) << "blk_" << outEdgesStack[i].first->id << " : " << outEdgesStack[i].second << "\n";
+  const size_t lst_cnt = 6;
+  for (size_t i = 0; i < lst_cnt; i++){
+    out << _tab(indent) << "//blk_" << outEdgesStack[i].first->id << " : " << outEdgesStack[i].second << "\n";
   }
-  out << endl;
+  out << _tab(indent) << "//...\n";
+  out << _tab(indent) << "//...\n";
+  size_t sz = outEdgesStack.size();
+  for (size_t i = 0; i < lst_cnt; i++){
+    out << _tab(indent) << "//blk_" << outEdgesStack[sz - lst_cnt + i].first->id << " : " << outEdgesStack[sz - lst_cnt + i].second << "\n";
+  }
+  //out << endl << endl;
 
-  //remove last edge
-//  InsBlock* endBlock = outEdgesStack.back().first;
-//  outEdgesStack.pop_back();
-//
-//
-//
-//  typedef struct{
-//    float total = 0;
-//    float cnt = 0;
-//    vector< pair<const InsBlock*, UINT64> > nextBlks;
-//  } BlkInfo;
-//
-//  vector<const InsBlock*> jumpSeq;
-//  set<const InsBlock*> seenOut;
-//
-//  //get count of each out block
-//  //also, get jump sequence
-//  const InsBlock* lastBlock = NULL;
-//  map<const InsBlock*,  BlkInfo> outInfo;
-//  for(const auto it : outEdgesStack){
-//    const InsBlock* ob = it.first;
-//    outInfo[ob].total += it.second;
-//    outInfo[ob].cnt++;
-//
-//    if(lastBlock){
-//      if(outInfo[lastBlock].nextBlks.size() == 0){
-//        outInfo[lastBlock].nextBlks.push_back({ob, it.second});
-//      }
-//      else if(outInfo[lastBlock].nextBlks.back().first != ob){
-//        outInfo[lastBlock].nextBlks.push_back({ob, it.second});
-//      }
-//      else{
-//        outInfo[lastBlock].nextBlks.back().second += it.second;
-//      }
-//    }
-//    lastBlock = ob;
-//
-//    if(seenOut.find(ob) == seenOut.end()){
-//      jumpSeq.push_back(ob);
-//      seenOut.insert(ob);
-//    }
-//
-//  }
-//
-//
-//  for(const InsBlock* it : jumpSeq){
-//    BlkInfo tmp = outInfo[it];
-//    out << _tab(indent) << "//block" << it->id << " tol: " << tmp.total << "   cnt: " << tmp.cnt << "    avg: " << tmp.total / tmp.cnt << "  ";
-//    for(auto s : tmp.nextBlks){
-//      out << ", {" << s.first->id << ": " << s.second << "}";
-//    }
-//    out << "\n";
-//  }
-//
-//  if (jumpSeq.size() == 2){
-//    //special case
-//
-//  }
-//
-//
-//
-//  out << _tab(indent) << "static uint64_t out_" << id << " = 0;\n";
-//  out << _tab(indent) << "out_" << id << "++;\n";
-//  UINT64 total = 0;
-//  UINT64 sz = outEdgesStack.size();
-//  for(UINT64 i = 0; i < sz; i++){
-//    total += outEdgesStack[i].second;
-//    out << _tab(indent);
-//    if(i){
-//      out << "else ";
-//    }
-//    if(i != (sz - 1)){
-//      out << "if (out_" << id << " <= " << total << ") ";
-//    }
-//    out << "goto block" << outEdgesStack[i].first->id << ";\n";
-//  }
-//  out << _tab(indent) << "goto block" << endBlock->id << "\n\n";
 
+  //Generic case. Use probability to jump to one of the out blocks.
+
+  //get last entry from edge stack
+  auto lastEntry = outEdgesStack[outEdgesStack.size()-1];
+
+  //update estat to exclude last entry
+  estat[lastEntry.first].totCnt -= lastEntry.second;
+
+  //remove lastEntry block from estat if count becomes zero
+  if(estat[lastEntry.first].totCnt == 0){
+    estat.erase(lastEntry.first);
+  }
+
+  vector<InsBlock*> tmpBlks;
+  for(auto it : estat){
+    out << _tab(indent) << "static uint64_t out_" << id << "_" << it.first->id << " = " << it.second.totCnt << ";\n";
+    tmpBlks.push_back(it.first);
+  }
+
+  //calculate total
+  UINT64 cc = 0;
+  out << _tab(indent) << "tmpRnd = ";
+  for(auto it : estat){
+    if(cc++){
+      out << " + ";
+    }
+    out << "out_" << id << "_" << it.first->id;
+  }
+  out << ";\n";
+
+  //check if total is not zero
+  out << _tab(indent) << "if (tmpRnd) {\n";
+
+  //calc hash
+  out << _tab(indent+1) << cln_utils::printHash();
+  out << _tab(indent+1) << "tmpRnd = hash % tmpRnd;\n";
+
+  //add if conditions
+  for(UINT64 i = 0; i < tmpBlks.size(); i++){
+      out << _tab(indent+1);
+      if(i){
+        out << "else ";
+      }
+      if(i != (tmpBlks.size() -1)){
+        out << "if (tmpRnd < (";
+        for(UINT64 j = 0; j <= i; j++){
+          if(j){
+            out << " + ";
+          }
+          out << "out_" << id << "_" << tmpBlks[j]->id;
+        }
+        out << "))";
+      }
+
+      out << "{\n";
+      out << _tab(indent+2) << "out_" << id << "_" << tmpBlks[i]->id << "--;\n";
+      out << _tab(indent+2) << "goto block" << tmpBlks[i]->id << ";\n";
+      out << _tab(indent+1) << "}\n";
+    }
+
+  //close tmpRnd != 0 check
+  out << _tab(indent) << "}\n";
+
+  //add default jump (last edge)
+  out << _tab(indent) << "goto block" << lastEntry.first->id << ";\n";
+
+
+  out << endl << endl;
   return out.str();
 }
 
