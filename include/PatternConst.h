@@ -9,7 +9,7 @@ private:
   static PatternConst pat;
 
 public:
-  static PatternConst* create(const InsNormal* ins);
+  static PatternConst* create(const InsMem* ins);
 
   std::string printPattern() const {
     return "Const";

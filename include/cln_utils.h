@@ -4,6 +4,6 @@
 
 namespace cln_utils{
 
-  std::string printHash();
+  //std::string printHash();
 
 }

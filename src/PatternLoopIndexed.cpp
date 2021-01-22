@@ -1,12 +1,12 @@
+#include <InsMem.h>
 #include "PatternLoopIndexed.h"
-#include "InsNormal.h"
 #include "PatternInfo.h"
 #include "InsLoopBase.h"
 #include "cln_utils.h"
 
 using namespace std;
 
-PatternLoopIndexed* PatternLoopIndexed::create(const InsNormal* ins){
+PatternLoopIndexed* PatternLoopIndexed::create(const InsMem* ins){
     if(ins->patInfo->loops.size() == 0){ //no loops
       return nullptr;
     }
@@ -22,6 +22,7 @@ PatternLoopIndexed* PatternLoopIndexed::create(const InsNormal* ins){
 
 string PatternLoopIndexed::genBody(UINT32 indent) const {
   stringstream ss;
+  ss << _tab(indent) << "//Loop Indexed\n";
   ss << _tab(indent) << "addr = " << ins->patInfo->addrRange.s;
   for(const auto &it : ins->patInfo->loops){
     if(it.m){

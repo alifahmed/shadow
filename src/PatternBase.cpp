@@ -1,5 +1,5 @@
+#include <InsMem.h>
 #include "PatternBase.h"
-#include "InsNormal.h"
 #include "InsHashedRoot.h"
 #include "PatternInfo.h"
 #include "InsRoot.h"

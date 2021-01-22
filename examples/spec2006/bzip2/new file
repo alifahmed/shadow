@@ -1,0 +1,19 @@
+
+#define READ_1b(X)	__asm__ __volatile__ ("movb (%1,%2), %0" : "=r"(tmpb) : "r"(gm), "r"(X) : "memory")
+#define READ_2b(X)	__asm__ __volatile__ ("movw (%1,%2), %0" : "=r"(tmpw) : "r"(gm), "r"(X) : "memory")
+#define READ_4b(X)	__asm__ __volatile__ ("movl (%1,%2), %0" : "=r"(tmpl) : "r"(gm), "r"(X) : "memory")
+#define READ_8b(X)	__asm__ __volatile__ ("movq (%1,%2), %0" : "=r"(tmpq) : "r"(gm), "r"(X) : "memory")
+
+#define READ_16b(X)	__asm__ __volatile__ ("movdqa (%1,%2), %0" : "=r"(tmp16) : "r"(gm), "r"(X) : "memory")
+
+
+#define WRITE_1b(X) __asm__ __volatile__ ("movb %2, (%0,%1)" : : "r"(gm), "r"(X), "r"(tmpb) : "memory")
+
+#define RMW_1b(X) __asm__ __volatile__ ("addb $1, (%0,%1)" : : "r"(gm), "r"(X) : "memory")
+
+
+
+__asm__ __volatile__ ("movZ (%1,%2), %0" : "=r"(tmpZ) : "r"(gm), "r"(addr_601100201) : "memory");  //READ
+__asm__ __volatile__ ("movZ %2, (%0,%1)" : : "r"(gm), "r"(addr_601200201), "r"(tmpZ) : "memory");  //WRITE
+
+

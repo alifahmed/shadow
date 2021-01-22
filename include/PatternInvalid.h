@@ -9,7 +9,7 @@ private:
   static PatternInvalid pat;
 
 public:
-  static PatternInvalid* create(const InsNormal* _ins){
+  static PatternInvalid* create(const InsMem* _ins){
     return &pat;
   }
 

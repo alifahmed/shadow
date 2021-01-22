@@ -6,10 +6,10 @@
 class PatternLoopIndexed : public PatternBase{
 private:
   PatternLoopIndexed();
-  PatternLoopIndexed(const InsNormal* _ins) : PatternBase(_ins, PatType::PatLoopIndexed) {}
+  PatternLoopIndexed(const InsMem* _ins) : PatternBase(_ins, PatType::PatLoopIndexed) {}
 
 public:
-  static PatternLoopIndexed* create(const InsNormal* ins);
+  static PatternLoopIndexed* create(const InsMem* ins);
   std::string genBody(UINT32 indent) const;
   std::string printPattern() const;
 };

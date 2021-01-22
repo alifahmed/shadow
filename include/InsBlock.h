@@ -8,12 +8,14 @@
 
 class InsBlock {
 private:
-  static std::vector<InsBlock*> blockList;
   static UINT64 _idCnt;
   UINT64 id = -1;
 
   //checks if out edges are entered in same order every time
   bool isOutOrderConst(std::vector<InsBlock*> &order) const;
+
+  //merges run count of consecutive same blocks
+  void updateOutEdgesStack();
 
   typedef struct {
     UINT64 totCnt = 0;
@@ -26,6 +28,7 @@ private:
   std::map<InsBlock*, EdgeStat> calcEdgeStats() const;
 
 public:
+  static std::vector<InsBlock*> blockList;
   std::vector< std::pair<InsBlock*, UINT64> > outEdgesStack;   //run count compression
   std::set<InsBlock*> outEdges;
   std::set<InsBlock*> inEdges;
@@ -42,6 +45,9 @@ public:
   std::string printCodeBody(UINT32 indent) const;
   void setParentLoop(InsLoopBase* pl);
 
+  //replaces all occurrences of old with nw on the outEdges
+  void replaceOutEdge(InsBlock* old, InsBlock* nw);
+  void removeOutEdge(InsBlock* out);
 
   //operate on all registered blocks
   static std::string printDotAll(UINT32 indent);

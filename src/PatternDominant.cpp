@@ -1,11 +1,11 @@
+#include <InsMem.h>
 #include "PatternDominant.h"
-#include "InsNormal.h"
 #include "PatternInfo.h"
 #include "InsLoopBase.h"
 
 using namespace std;
 
-PatternDominant* PatternDominant::create(const InsNormal* ins){
+PatternDominant* PatternDominant::create(const InsMem* ins){
   for(const auto &it : ins->patInfo->strideDist){
     if(it.second * ins->accSz > ins->patInfo->totalSz * 0.8){
       //found dominant stride
@@ -25,7 +25,7 @@ PatternDominant* PatternDominant::create(const InsNormal* ins){
 
       //has repeat
       stringstream ss;
-      ss << "addr_" << ins->id << " = " << ins->patInfo->addr[0];   //base address
+      ss << "addr_" << ins->id << " = " << ins->patInfo->addr[0] - ins->patInfo->gap;   //base address
       for(const auto &li : ins->patInfo->loops){
         if(li.lp){
           if(li.m){
@@ -46,20 +46,29 @@ PatternDominant* PatternDominant::create(const InsNormal* ins){
 
 string PatternDominant::genHeader(UINT32 indent) const {
   stringstream ss;
-  ss << _tab(indent) << "uint64_t addr_" << ins->id << " = " << ins->patInfo->addr[0] << ";\n";
+  if(domStride > 0){
+    ss << _tab(indent) << "int64_t addr_" << ins->id << " = " << ins->patInfo->addrRange.s << ";\n";
+  }
+  else if(domStride < 0){
+    ss << _tab(indent) << "int64_t addr_" << ins->id << " = " << ins->patInfo->addrRange.e - ins->accSz << ";\n";
+  }
   return ss.str();
 }
 
 string PatternDominant::genBody(UINT32 indent) const {
-  if(domStride <= 0){
-    cerr << "[ERROR] Non positive dominant stride, check." << endl;
-    exit(-1);
-  }
   stringstream ss;
+  ss << _tab(indent) << "//Dominant stride\n";
   ss << ins->printReadWrite(indent, true);
   ss << _tab(indent) << "addr_" << ins->id << " += " << domStride << ";\n";   // increment by stride
-  ss << _tab(indent) << "if(addr_" << ins->id << " >= " << ins->patInfo->addrRange.e <<
-      ") addr_" << ins->id << " = " << ins->patInfo->addrRange.s << ";\n";    // enforce address range
+  // enforce address range
+  if(domStride > 0){
+    ss << _tab(indent) << "if(addr_" << ins->id << " >= " << ins->patInfo->addrRange.e <<
+          ") addr_" << ins->id << " = " << ins->patInfo->addrRange.s << ";\n";
+  }
+  else if(domStride < 0){
+    ss << _tab(indent) << "if(addr_" << ins->id << " < " << ins->patInfo->addrRange.s <<
+          ") addr_" << ins->id << " = " << ins->patInfo->addrRange.e - ins->accSz << ";\n";
+  }
   return ss.str();
 }
 

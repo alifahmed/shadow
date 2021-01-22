@@ -4,10 +4,10 @@
 
 class PatternRandom : public PatternBase{
 private:
-  PatternRandom(const InsNormal* _ins) : PatternBase(_ins, PatType::PatTypeRandom) {}
+  PatternRandom(const InsMem* _ins) : PatternBase(_ins, PatType::PatTypeRandom) {}
 
 public:
-  static PatternRandom* create(const InsNormal* _ins){
+  static PatternRandom* create(const InsMem* _ins){
     return new PatternRandom(_ins);
   }
 

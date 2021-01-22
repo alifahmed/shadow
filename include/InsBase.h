@@ -6,6 +6,7 @@
 #include <string>
 
 class InsLoopBase;
+class InsBlock;
 
 class InsBase{
 private:
@@ -16,7 +17,8 @@ public:
   const UINT64 id = 0;
   const InsType type = InsTypeInvalid;
   InsLoopBase* parentLoop = nullptr;
-
+  bool isTop = false;
+  InsBlock* parentBlock = nullptr;
 
   InsBase(InsType type, UINT64 id);
   virtual ~InsBase(){};

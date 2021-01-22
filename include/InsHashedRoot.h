@@ -5,11 +5,13 @@
 #include <vector>
 
 class InsRoot;
-class InsNormal;
+class InsMem;
+class InsBase;
 
 class InsHashedRoot {
 public:
   UINT64 id;
   InsRoot* root;
-  std::vector<InsNormal*> children;
+  std::vector<InsMem*> children;
+  InsBase* onlyChild;
 };

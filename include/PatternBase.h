@@ -2,21 +2,21 @@
 
 #include <cln_types.h>
 
-class InsNormal;
+class InsMem;
 
 class PatternBase{
 private:
   PatternBase(){};
 
 protected:
-  PatternBase(const InsNormal* _ins, PatType _type) {
+  PatternBase(const InsMem* _ins, PatType _type) {
     this->ins = _ins;
     this->type = _type;
   }
 
 public:
   PatType type;
-  const InsNormal* ins;
+  const InsMem* ins;
 
   virtual ~PatternBase(){};
   virtual std::string genHeader(UINT32 indent) const {return ""; }
