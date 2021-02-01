@@ -393,6 +393,7 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
 	
 	printf("TIME TO SET ARRAYS TOOK: %f\n", elapsed_time(get_weights, get_time()));
 	int indX, indY;
+	printf("Nfr: %d, Nparticles: %d, countOnes: %d\n", Nfr, Nparticles, countOnes);
 	for(k = 1; k < Nfr; k++){
 		long long set_arrays = get_time();
 		//apply motion model

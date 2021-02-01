@@ -1,9 +1,12 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace cln_utils{
 
-  //std::string printHash();
+bool isRepeat(const std::vector<ADDRINT> &addr, size_t sz, size_t rep, INT64 &m);
+
+//std::string printHash();
 
 }

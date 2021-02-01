@@ -2,6 +2,7 @@
 #include "InsBlock.h"
 #include "InsBase.h"
 #include "cln_utils.h"
+#include <iomanip>
 
 using namespace std;
 
@@ -20,8 +21,8 @@ InsBlock::InsBlock(UINT64 id) {
 
 bool InsBlock::isOutOrderConst(std::vector<InsBlock*> &order) const {
   size_t outBlockCnt = outEdges.size();
-  if (outEdgesStack.size() % outBlockCnt)
-    return false; //total elements in the out stack is not a multiple of out blocks
+  //if (outEdgesStack.size() % outBlockCnt)
+  //  return false; //total elements in the out stack is not a multiple of out blocks
 
   order.clear();
   order.resize(outBlockCnt, nullptr);
@@ -53,7 +54,7 @@ map<InsBlock*, InsBlock::EdgeStat> InsBlock::calcEdgeStats() const {
   return aa;
 }
 
-string InsBlock::printDot(UINT32 indent) const {
+std::string InsBlock::printDot(UINT32 indent) const {
   if (isUsed) {
     stringstream ss;
     if (id == 0) {   //special case: start block
@@ -104,7 +105,7 @@ void InsBlock::deleteAll() {
   }
 }
 
-string InsBlock::printDotAll(UINT32 indent) {
+std::string InsBlock::printDotAll(UINT32 indent) {
   stringstream ss;
   for (InsBlock *blk : blockList) {
     if (blk->isUsed) {
@@ -116,6 +117,26 @@ string InsBlock::printDotAll(UINT32 indent) {
 
 UINT64 InsBlock::getNumBlocks() {
   return blockList.size();
+}
+
+
+std::string InsBlock::printEdgeInfo(UINT32 indent) const {
+  stringstream ss;
+  //too many edges.. for now, skip...
+  ss << _tab(indent) << "//" << outEdgesStack.size() << " edges... print first few...\n";
+  const size_t lst_cnt = 6;
+  for (size_t i = 0; i < lst_cnt; i++) {
+    ss << _tab(indent) << "//blk_" << outEdgesStack[i].first->id << " : "
+        << outEdgesStack[i].second << "\n";
+  }
+  ss << _tab(indent) << "//...\n";
+  ss << _tab(indent) << "//...\n";
+  size_t sz = outEdgesStack.size();
+  for (size_t i = 0; i < lst_cnt; i++) {
+    ss << _tab(indent) << "//blk_" << outEdgesStack[sz - lst_cnt + i].first->id
+        << " : " << outEdgesStack[sz - lst_cnt + i].second << "\n";
+  }
+  return ss.str();
 }
 
 std::string InsBlock::printCodeBody(UINT32 indent) const {
@@ -138,7 +159,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
   }
 
   // small number number of transitions. No need to find patterns
-  if (outEdgesStack.size() < 10) {
+  if (outEdgesStack.size() < 13) {
     out << _tab(indent) << "//Few edges. Don't bother optimizing\n";
 
     out << _tab(indent) << "static uint64_t out_" << id << " = 0;\n";
@@ -152,7 +173,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
         out << "else ";
       }
       if (i != (sz - 1)) {
-        out << "if (out_" << id << " <= " << total << ") ";
+        out << "if (out_" << id << " <= " << total << "LL) ";
       }
       out << "goto block" << outEdgesStack[i].first->id << ";\n";
     }
@@ -179,8 +200,9 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
     }
   }
 
-  //ordered, no remainder edges
+  //ordered, no remainder edges (use integer)
   if (isOrdered && isRemZero) {
+    out << _tab(indent) << "//Remainder zero for all out blocks...\n";
     assert(estat.size() == blkOrder.size());
     UINT64 tot_cnt = 0;
     for (auto it : estat) {
@@ -188,7 +210,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
     }
     out << _tab(indent) << "static uint64_t out_" << id << " = 0;\n";
     out << _tab(indent) << "out_" << id << " = (out_" << id << " == "
-        << (tot_cnt) << ") ? 1 : (out_" << id << " + 1);\n";
+        << (tot_cnt) << "LL) ? 1 : (out_" << id << " + 1);\n";
     UINT64 sz = estat.size();
     tot_cnt = 0;
     for (UINT64 i = 0; i < sz; i++) {
@@ -202,7 +224,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
         out << "else ";
       }
       if (i != (sz - 1)) {
-        out << "if (out_" << id << " <= " << tot_cnt << ") ";
+        out << "if (out_" << id << " <= " << tot_cnt << "LL) ";
       }
       out << "goto block" << nb->id << ";\n";
     }
@@ -210,23 +232,44 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
     return out.str();
   }
 
-  //too many edges.. for now, skip...
-  out << _tab(indent) << "//Many edges... print first few...\n";
-  const size_t lst_cnt = 6;
-  for (size_t i = 0; i < lst_cnt; i++) {
-    out << _tab(indent) << "//blk_" << outEdgesStack[i].first->id << " : "
-        << outEdgesStack[i].second << "\n";
-  }
-  out << _tab(indent) << "//...\n";
-  out << _tab(indent) << "//...\n";
-  size_t sz = outEdgesStack.size();
-  for (size_t i = 0; i < lst_cnt; i++) {
-    out << _tab(indent) << "//blk_" << outEdgesStack[sz - lst_cnt + i].first->id
-        << " : " << outEdgesStack[sz - lst_cnt + i].second << "\n";
-  }
-  //out << endl << endl;
+  //ordered, with remainder edges (use float)
+  if (isOrdered) {
+    assert(estat.size() == blkOrder.size());
+    float tot_cnt = 0.0f;
+    for (auto it : estat) {
+      tot_cnt += (float)(it.second.totCnt) / it.second.entryCnt;
+    }
+    out << _tab(indent) << "static float out_" << id << " = 0.0f;\n";
+    out.setf(ios::fixed, ios::floatfield);
+    out.precision(8);
+    out << _tab(indent) << "out_" << id << " = (out_" << id << " > "
+        << (tot_cnt) << "f) ? out_" << id << " - " << tot_cnt << " : (out_" << id << " + 1.0f);\n";
+    UINT64 sz = estat.size();
+    tot_cnt = 0;
+    for (UINT64 i = 0; i < sz; i++) {
+      //get next block following the order
+      InsBlock *nb = blkOrder[i];
+      EdgeStat es = estat[nb];
 
+      tot_cnt += (float)(es.totCnt) / (float)es.entryCnt;
+      out << _tab(indent);
+      if (i) {
+        out << "else ";
+      }
+      if (i != (sz - 1)) {
+        out << "if (out_" << id << " <= " << tot_cnt << "f) ";
+      }
+      out << "goto block" << nb->id << ";\n";
+    }
+    out << "\n\n";
+    return out.str();
+  }
+
+
+  //unordered
   //Generic case. Use probability to jump to one of the out blocks.
+  out << _tab(indent) << "//Unordered\n";
+  out << printEdgeInfo(indent);
 
   //get last entry from edge stack
   auto lastEntry = outEdgesStack[outEdgesStack.size() - 1];
@@ -242,7 +285,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
   vector<InsBlock*> tmpBlks;
   for (auto it : estat) {
     out << _tab(indent) << "static uint64_t out_" << id << "_" << it.first->id
-        << " = " << it.second.totCnt << ";\n";
+        << " = " << it.second.totCnt << "LL;\n";
     tmpBlks.push_back(it.first);
   }
 

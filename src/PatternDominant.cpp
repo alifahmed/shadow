@@ -1,16 +1,15 @@
 #include <InsMem.h>
 #include "PatternDominant.h"
-#include "PatternInfo.h"
 #include "InsLoopBase.h"
 
 using namespace std;
 
 PatternDominant* PatternDominant::create(const InsMem* ins){
-  for(const auto &it : ins->patInfo->strideDist){
-    if(it.second * ins->accSz > ins->patInfo->totalSz * 0.8){
+  for(const auto &it : ins->strideDist){
+    if(it.second * ins->accSz > ins->totalSz * 0.8){
       //found dominant stride
       int cnt = 0;
-      for(const auto &li : ins->patInfo->loops){
+      for(const auto &li : ins->loops){
         if(li.lp){
           cnt++;
         }
@@ -25,11 +24,11 @@ PatternDominant* PatternDominant::create(const InsMem* ins){
 
       //has repeat
       stringstream ss;
-      ss << "addr_" << ins->id << " = " << ins->patInfo->addr[0] - ins->patInfo->gap;   //base address
-      for(const auto &li : ins->patInfo->loops){
+      ss << "addr_" << ins->id << " = " << ins->addr[0] << "LL";   //base address
+      for(const auto &li : ins->loops){
         if(li.lp){
           if(li.m){
-            ss << " + (loop" << li.lp->id << "*" << li.m << ")";
+            ss << " + (loop" << li.lp->id << "*" << li.m << "LL)";
           }
         }
         else{
@@ -37,7 +36,7 @@ PatternDominant* PatternDominant::create(const InsMem* ins){
         }
       }
       ss << ";\n";
-      ins->patInfo->loops[cnt-1].lp->extraStr.push_back(ss.str());
+      ins->loops[cnt-1].lp->extraStr.push_back(ss.str());
       return new PatternDominant(ins, it.first, "DomRep");
     }
   }
@@ -46,12 +45,7 @@ PatternDominant* PatternDominant::create(const InsMem* ins){
 
 string PatternDominant::genHeader(UINT32 indent) const {
   stringstream ss;
-  if(domStride > 0){
-    ss << _tab(indent) << "int64_t addr_" << ins->id << " = " << ins->patInfo->addrRange.s << ";\n";
-  }
-  else if(domStride < 0){
-    ss << _tab(indent) << "int64_t addr_" << ins->id << " = " << ins->patInfo->addrRange.e - ins->accSz << ";\n";
-  }
+  ss << _tab(indent) << "int64_t addr_" << ins->id << " = " << ins->addr[0] << "LL;\n";
   return ss.str();
 }
 
@@ -59,15 +53,15 @@ string PatternDominant::genBody(UINT32 indent) const {
   stringstream ss;
   ss << _tab(indent) << "//Dominant stride\n";
   ss << ins->printReadWrite(indent, true);
-  ss << _tab(indent) << "addr_" << ins->id << " += " << domStride << ";\n";   // increment by stride
+  ss << _tab(indent) << "addr_" << ins->id << " += " << domStride << "LL;\n";   // increment by stride
   // enforce address range
   if(domStride > 0){
-    ss << _tab(indent) << "if(addr_" << ins->id << " >= " << ins->patInfo->addrRange.e <<
-          ") addr_" << ins->id << " = " << ins->patInfo->addrRange.s << ";\n";
+    ss << _tab(indent) << "if(addr_" << ins->id << " >= " << ins->maxAddr <<
+          "LL) addr_" << ins->id << " = " << ins->minAddr << "LL;\n";
   }
   else if(domStride < 0){
-    ss << _tab(indent) << "if(addr_" << ins->id << " < " << ins->patInfo->addrRange.s <<
-          ") addr_" << ins->id << " = " << ins->patInfo->addrRange.e - ins->accSz << ";\n";
+    ss << _tab(indent) << "if(addr_" << ins->id << " < " << ins->minAddr <<
+          "LL) addr_" << ins->id << " = " << (ins->maxAddr - ins->accSz) << "LL;\n";
   }
   return ss.str();
 }

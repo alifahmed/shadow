@@ -1,7 +1,6 @@
 #include <InsMem.h>
 #include "PatternBase.h"
 #include "InsHashedRoot.h"
-#include "PatternInfo.h"
 #include "InsRoot.h"
 
 
@@ -17,11 +16,11 @@ string PatternBase::genBody(UINT32 indent) const {
   else                                                  ss << "Invalid\n";
   ss << _tab(indent) << "Code Line: " << ins->hashedRoot->root->srcLine << "\n";
   ss << _tab(indent);
-  for(auto s : ins->patInfo->strideDist){
+  for(auto s : ins->strideDist){
     ss << "{" << s.first << ":" << s.second << "} ";
   }
   ss << "\n";
-  ss << _tab(indent) << ins->patInfo->pat->printPattern() << "\n";
-  ss << _tab(indent) << ins->patInfo->addrRange.e - ins->patInfo->addrRange.s << " [ " << ins->patInfo->addrRange.s << " : " << ins->patInfo->addrRange.e << " ]\n";
+  ss << _tab(indent) << ins->pat->printPattern() << "\n";
+  ss << _tab(indent) << ins->maxAddr - ins->minAddr << " [ " << ins->minAddr << " : " << ins->maxAddr << " ]\n";
   return ss.str();
 }

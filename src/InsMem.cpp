@@ -4,24 +4,8 @@
 #include "InsHashedRoot.h"
 #include "InsRoot.h"
 #include "PatternBase.h"
-#include "PatternInfo.h"
 
 using namespace std;
-
-char InsMem::getMovSuffix() const {
-  switch (accSz) {
-  case 1:
-    return 'b';
-  case 2:
-    return 'w';
-  case 4:
-    return 'l';
-  case 8:
-    return 'q';
-  default:
-    return 'Z';    //invalid access size
-  }
-}
 
 string InsMem::printDot(UINT32 indent) const {
   if (isTop) {
@@ -37,7 +21,7 @@ string InsMem::printDot(UINT32 indent) const {
 string InsMem::printCodeBody(UINT32 indent) const {
   if (isTop) {
     stringstream ss;
-    ss << patInfo->pat->genBody(indent) << "\n";
+    ss << pat->genBody(indent) << "\n";
     return ss.str();
   } else {
     return "";

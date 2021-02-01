@@ -5,24 +5,34 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <unordered_map>
 #include "InsBase.h"
+#include "LoopInfo.h"
 
-class PatternInfo;
 class InsHashedRoot;
 class InsBlock;
+class PatternBase;
 
 class InsMem : public InsBase {
 public:
-  PatternInfo *patInfo = nullptr;
+  std::vector<ADDRINT> addr;
+  UINT64 totalSz = 0;
+  UINT64 minAddr = 0xFFFFFFFFFFFFFFFFULL;
+  UINT64 maxAddr = 0;
+
+  std::unordered_map<ADDRINT, INT64> addrStrideMap;
+  std::unordered_map<INT64, UINT64> strideDist;
+
+  std::vector<LoopInfo> loops;
+
+  PatternBase* pat = nullptr;
+
   size_t cnt = 0;
   InsHashedRoot* hashedRoot = nullptr;
   UINT32 accSz = 0;
   AccessType accType = AccessTypeInvalid;
-  //InsBlock* block = nullptr;
 
   InsMem(UINT64 id) : InsBase(InsTypeNormal, id){};
-
-  char getMovSuffix() const;
 
   std::string printDot(UINT32 indent) const;
   std::string printCodeBody(UINT32 indent) const ;

@@ -17,6 +17,9 @@ private:
   //merges run count of consecutive same blocks
   void updateOutEdgesStack();
 
+  //print edge info
+  std::string printEdgeInfo(UINT32 indent) const;
+
   typedef struct {
     UINT64 totCnt = 0;
     UINT64 avgCnt = 0;    //average iter per entry

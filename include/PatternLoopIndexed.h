@@ -9,7 +9,7 @@ private:
   PatternLoopIndexed(const InsMem* _ins) : PatternBase(_ins, PatType::PatLoopIndexed) {}
 
 public:
-  static PatternLoopIndexed* create(const InsMem* ins);
+  static PatternLoopIndexed* create(InsMem* ins);
   std::string genBody(UINT32 indent) const;
   std::string printPattern() const;
 };

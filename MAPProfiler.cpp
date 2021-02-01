@@ -9,6 +9,7 @@
  *
  ******************************************************************************/
 #include "types.h"
+#include "cln_utils.h"
 #include "InsBase.h"
 #include "InsHashedRoot.h"
 #include "InsRoot.h"
@@ -16,7 +17,6 @@
 #include "InsCondJump.h"
 #include "InsLoopBase.h"
 #include "InsSingleLoop.h"
-#include "PatternInfo.h"
 #include "InsBlock.h"
 #include "InsMultiLoop.h"
 #include "InsBlock.h"
@@ -61,7 +61,6 @@ KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",
 //void deriveAccessPattern(const vector<InsNormal*> &insList);
 void derivePattern(const vector<InsMem*> &insList);
 void shiftAddressSpace(InsMem *ins, INT64 offset);
-bool isRepeat(const vector<ADDRINT> &addr, size_t sz, size_t rep, INT64 &m);
 void compressCFG(set<InsBlock*> &cfg);
 void printDotCFG(ofstream &out, const set<InsBlock*> &cfg);
 void printDotFile(const char *fname);
@@ -79,76 +78,75 @@ static INT64 rtnEntryCnt = 0;
 static vector<InsRoot*> insRootList;
 static vector<InsHashedRoot*> insHashedRootList;
 
-static vector<PatternInfo*> patternList;
-
 //static vector<InsNormal*> insTrace;   //td
 static vector<InsBase*> insTrace;   //td
-static vector<ADDRINT> addrTrace;
+//static vector<ADDRINT> addrTrace;
 
 static stack<ADDRINT> callStack;
 static ADDRINT callHash = HASH_INIT_VALUE;
 
 static ADDRINT globalMaxAddr = 0;
 
-static map<UINT64, string> accTypeMap;
-static map<UINT64, string> regNameMap;
+//static map<UINT64, string> accTypeMap;
+//static map<UINT64, string> regNameMap;
 
 /*******************************************************************************
  * Pattern Classes
  ******************************************************************************/
-bool isRepeat(const vector<ADDRINT> &addr, size_t sz, size_t rep, INT64 &m) {
-	if (sz == 0)
-		return false;
-	if (rep == 0)
-		return false;
-	if (rep == 1)
-		return false;
-	if (sz % rep)
-		return false;
-
-	size_t elems = sz / rep;
-	m = addr[elems] - addr[0];
-
-	for (size_t i = 0; i < elems; i++) {
-		ADDRINT ref = addr[i];
-		for (size_t j = 1; j < rep; j++) {
-			size_t idx = elems * j + i;
-			if (addr[idx] != (ref + j * m)) {
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
-
 void deriveLoopInfo(InsMem *ins) {
-	stack<InsLoopBase*> loops;
-	InsLoopBase *lp = ins->parentLoop;
-	while (lp) {
-		loops.push(lp);
-		lp = lp->parentLoop;
-	}
-	if (loops.size() == 0) {
-		return; //not inside any loops
-	}
 
-	vector<LoopInfo> _info;
-	size_t sz = ins->patInfo->addr.size();
-	while (loops.size()) {
-		lp = loops.top();
-		loops.pop();
-		INT64 m;
-		if (isRepeat(ins->patInfo->addr, sz, lp->iters, m)) {
-			sz = sz / lp->iters;
-			_info.push_back( { lp, m });
-		} else {
-			_info.push_back( { nullptr, 0 });
-		}
-	}
+  typedef struct{
+    InsLoopBase* lp = nullptr;
+    UINT64 cumProd = 1;
+  } LInfo;
 
-	ins->patInfo->loops = _info;
+  stack<LInfo> loops;
+  InsLoopBase *lp = ins->parentLoop;
+  UINT64 prod = 1;
+  while (lp) {
+    loops.push({lp, prod});
+    prod *= lp->iters;
+    lp = lp->parentLoop;
+  }
+  if (loops.size() == 0) {
+    return; //not inside any loops
+  }
+
+
+  size_t sz = ins->addr.size();
+  //check outermost loop
+  if(sz % prod){
+    return;
+  }
+  INT64 m;
+  if(cln_utils::isRepeat(ins->addr, sz, sz / prod, m)){
+    if(m){
+      return;
+    }
+  }
+
+  vector<LoopInfo> _info;
+  sz = prod;
+  while (loops.size()) {
+    auto linfo = loops.top();
+    loops.pop();
+    if(sz % linfo.cumProd){
+      _info.push_back( { nullptr, 0 });
+      break;
+    }
+
+    if (cln_utils::isRepeat(ins->addr, sz, sz / linfo.cumProd, m)) {
+      sz = linfo.cumProd;
+      _info.push_back( { linfo.lp, m });
+    } else {
+      _info.push_back( { nullptr, 0 });
+      break;
+    }
+  }
+
+  ins->loops = _info;
 }
+
 
 /*******************************************************************************
  * Functions
@@ -203,11 +201,11 @@ vector<pair<InsBlock*, UINT64> > mergeEdgeStack(vector<pair<InsBlock*, UINT64> >
 
 //check if one block creates a loop
 bool isSelfLoop(InsBlock *blk) {
-	if (blk->outEdges.find(blk) == blk->outEdges.end()) {
+  if (blk->outEdgesStack.size() == 0) {
+    return false; //no out edges
+  }
+  if (blk->outEdges.find(blk) == blk->outEdges.end()) {
 		return false;   //does not have any self edge
-	}
-	if (blk->outEdgesStack.size() == 0) {
-		return false; //no out edges
 	}
 
 	if (blk->ins.size() == 0) { //jmp block with loop, just remove the edge
@@ -586,7 +584,7 @@ void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
   //out << "#define RMW_32b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
   //out << "#define RMW_64b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
 	out << "\n";
-	out << "volatile uint8_t* gm;\n\n";
+	out << "volatile uint8_t gm[" << globalMaxAddr << "ULL];\n\n";
   out << "#ifdef __SSE2__\n";
   out << _tab(1) << "volatile __m128i tmp16;\n";
   out << "#endif\n";
@@ -605,12 +603,12 @@ void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
 	out << _tab(1) << "uint16_t tmp2;\n";
 	out << _tab(1) << "uint32_t tmp4;\n";
 	out << _tab(1) << "uint64_t tmp8;\n";
-	out << _tab(1) << "uint64_t allocSize = " << globalMaxAddr << "ULL;\n";
-	out << _tab(1) << "gm = (volatile uint8_t*)malloc(allocSize);\n";
-	out << _tab(1) << "if(gm == NULL) {\n";
-	out << _tab(2) << "fprintf(stderr, \"Cannot allocate memory\\n\");\n";
-	out << _tab(2) << "exit(-1);\n";
-	out << _tab(1) << "}\n";
+	//out << _tab(1) << "uint64_t allocSize = " << globalMaxAddr << "ULL;\n";
+	//out << _tab(1) << "gm = (volatile uint8_t*)malloc(allocSize);\n";
+	//out << _tab(1) << "if(gm == NULL) {\n";
+	//out << _tab(2) << "fprintf(stderr, \"Cannot allocate memory\\n\");\n";
+	//out << _tab(2) << "exit(-1);\n";
+	//out << _tab(1) << "}\n";
 	out << "\n";
 
 	/*for(InsNormal* ins : insList){
@@ -631,7 +629,7 @@ void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
 	 }*/
 	for (InsMem *ins : insList) {
 		if (ins->isTop) {
-			out << ins->patInfo->pat->genHeader(1);
+			out << ins->pat->genHeader(1);
 		}
 	}
 	out << "\n";
@@ -639,33 +637,9 @@ void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
 	out << "\n";
 }
 
-bool isRegularSeq(const vector<Interval> &seq) {
-	if (seq.size() < 3) {
-		return true;
-	}
-
-	UINT64 range = seq[0].e - seq[0].s;
-
-	//check if all intervals have same range
-	for (const Interval &it : seq) {
-		if ((it.e - it.s) != range)
-			return false;
-	}
-
-	//check if two consecutive intervals have same difference
-	UINT64 diff = seq[1].s - seq[0].s;
-	for (UINT64 i = 1; i < seq.size(); i++) {
-		if ((seq[i].s - seq[i - 1].s) != diff) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
 void generateCodeFooter(ofstream &out) {
 	out << "block1:\n";
-	out << _tab(1) << "free((void*)gm);\n";
+	//out << _tab(1) << "free((void*)gm);\n";
 	out << _tab(1) << "return 0;\n";
 	out << "}\n";
 }
@@ -735,15 +709,41 @@ set<InsBlock*> cfgFromTrace(vector<InsBase*> &trace) {
 	return topInsBlocks;
 }
 
+void writeLog(const char *logFile) {
+  cout << "Writing log file..." << endl;
+  ofstream log(logFile);
+  log << "ins,addr,r0w1\n";
+  for (size_t i = 0; i < insTrace.size(); i++) {
+    if (insTrace[i]->type == InsTypeNormal) {
+      InsMem *ins = (InsMem*) (insTrace[i]);
+      if (ins->isTop) {
+        ADDRINT ea = ins->addr[ins->cnt];
+        ins->cnt++;
+        log << ins->id << "," << ea << ",";
+        if (ins->accType == AccessTypeRead) {
+          log << "0\n";
+        } else if (ins->accType == AccessTypeWrite) {
+          log << "1\n";
+        }
+      }
+    }
+  }
+}
+
 set<InsBlock*> createDCFGfromInstTrace(vector<InsBase*> &trace) {
 	cout << "Creating DCFG from trace..." << endl;
 	set<InsBlock*> topInsBlocks = cfgFromTrace(trace);
+
+	if(log_en){
+    writeLog("top_trace.csv");
+  }
+
 	vector<InsBase*>().swap(trace);  //free trace memory
 	cout << "Created initial CFG with " << topInsBlocks.size() << " blocks." << endl;
 	//printDotFile("dcfgBC.gv");
 
 	compressCFG(topInsBlocks);
-	//printDotFile("dcfgLC.gv");
+	printDotFile("dcfgLC.gv");
 	cout << "Compressed CFG with " << topInsBlocks.size() << " blocks." << endl;
 
 	return topInsBlocks;
@@ -775,20 +775,28 @@ void printInfo(vector<InsMem*> &res) {
 		} else {
 			cout << "INVALID: ";
 		}
-		cout << setw(40) << i->hashedRoot->root->dis;
+		//cout << setw(40) << i->hashedRoot->root->dis;
 
-		cout << setw(20) << "TotalSz: " << i->patInfo->totalSz;
-		cout << setw(20) << i->patInfo->pat->printPattern();
-		cout << setw(10) << "[" << setw(10) << i->patInfo->addrRange.s << " : " << setw(10) << i->patInfo->addrRange.e
-				<< "]\t";
-		cout << setw(10);
+		cout << setw(20) << "TotalSz: " << i->totalSz;
+		cout << setw(20) << i->pat->printPattern();
+		cout << setw(10) << "[" << setw(10) << i->minAddr << " : " << setw(10) << i->maxAddr
+				<< "]   ";
+		//cout << setw(10);
 		int pCnt = 0;
-		for (auto s : i->patInfo->strideDist) {
+		for (auto s : i->strideDist) {
 			if (pCnt++ == 6)
 				break;
 			cout << "{" << s.first << ":" << s.second << "} ";
 		}
-		cout << "\t" << i->hashedRoot->root->srcLine << "\t\t" << i->patInfo->addr.size() << "\t";
+		auto idx = i->hashedRoot->root->srcFile.find_last_of('/');
+		string srcFile;
+		if(idx == string::npos){
+		  srcFile = i->hashedRoot->root->srcFile;
+		}
+		else{
+		  srcFile = i->hashedRoot->root->srcFile.substr(idx+1);
+		}
+		cout << "\t" << srcFile << ":" << i->hashedRoot->root->srcLine << "\t\t" << i->addr.size() << "\t";
 		/*InsLoopBase* lp = i->parentLoop;
 		 //InsLoop* ol = nullptr;
 		 while(lp){
@@ -808,7 +816,7 @@ void printInfo(vector<InsMem*> &res) {
 UINT64 getTotalAccessSz(const vector<InsMem*> &insList) {
 	UINT64 sz = 0;
 	for (InsMem *it : insList) {
-		sz += it->patInfo->totalSz;
+		sz += it->totalSz;
 	}
 	return sz;
 }
@@ -820,14 +828,14 @@ vector<InsMem*> keepTop(vector<InsMem*> &insList, double perc) {
 
 	//sort using total accessed size
 	sort(insList.begin(), insList.end(), [](const InsMem *lhs, const InsMem *rhs) {
-		return lhs->patInfo->totalSz > rhs->patInfo->totalSz;
+		return lhs->totalSz > rhs->totalSz;
 	});
 
 	vector<InsMem*> out;
 	sz = 0;
 	for (InsMem *it : insList) {
 		out.push_back(it);
-		sz += it->patInfo->totalSz;
+		sz += it->totalSz;
 		if (sz > szAfter)
 			break;
 	}
@@ -841,7 +849,7 @@ vector<InsMem*> deleteConstAccess2(const vector<InsMem*> &insList) {
 	for (InsMem *it : insList) {
 		ADDRINT lastAddr = 0;
 		UINT64 zeroCnt = 0;
-		for(ADDRINT addr : it->patInfo->addr){
+		for(ADDRINT addr : it->addr){
 			if(lastAddr - addr == 0){
 				zeroCnt++;
 			}
@@ -849,11 +857,11 @@ vector<InsMem*> deleteConstAccess2(const vector<InsMem*> &insList) {
 		}
 
 		//consider only if less than 20% is zero stride access
-		if(zeroCnt < it->patInfo->addr.size() * 0.2){
-			it->patInfo->totalSz = it->patInfo->addr.size() * it->accSz;
+		if(zeroCnt < it->addr.size() * 0.2){
+			it->totalSz = it->addr.size() * it->accSz;
 			out.push_back(it);
 		} else {
-			vector<ADDRINT>().swap(it->patInfo->addr);
+			vector<ADDRINT>().swap(it->addr);
 		}
 	}
 	return out;
@@ -863,8 +871,8 @@ vector<InsMem*> deleteConstAccess(const vector<InsMem*> &insList) {
 	vector<InsMem*> out;
 	out.reserve(insList.size());
 	for (InsMem *it : insList) {
-		if (it->patInfo->pat) {
-			if (it->patInfo->pat->type == PatType::PatTypeConst) {
+		if (it->pat) {
+			if (it->pat->type == PatType::PatTypeConst) {
 				continue;
 			}
 		}
@@ -878,12 +886,11 @@ vector<InsMem*> deleteZeroAccesses(const vector<InsBase*> &insList) {
 	for (InsBase *it : insList) {
 		if (it->type == InsTypeNormal) {
 			InsMem *ins = static_cast<InsMem*>(it);
-			PatternInfo *pat = ins->patInfo;
-			pat->totalSz = ins->accSz * pat->addr.size();
-			if (pat->totalSz >= MIN_SZ) {
+			ins->totalSz = ins->accSz * ins->addr.size();
+			if (ins->totalSz >= MIN_SZ) {
 				out.push_back(ins);
 			} else {
-				vector<ADDRINT>().swap(pat->addr);
+				vector<ADDRINT>().swap(ins->addr);
 			}
 		}
 	}
@@ -971,52 +978,88 @@ void derivePatternInitial(const vector<InsMem*> &insList) {
 	}*/
 }
 
-void updateStrideInfo(vector<InsMem*> instList){
-	cout << "Updating stride info..." << endl;
-	for (InsMem *it : instList) {
-		PatternInfo *pat = it->patInfo;
-		UINT64 cnt = pat->addr.size();
-		INT64 lastStride = 0xDEADBEEF;
-		bool isRandom = false;
-		bool isValidAddrMap = true;
-		for (UINT64 i = 0; i < (cnt - 1); i++) {
-			ADDRINT currAddr = pat->addr[i];
-			ADDRINT nextAddr = pat->addr[i + 1];
+void updateAddrInfo(vector<InsMem*> &insList){
+	cout << "Updating address related info..." << endl;
 
-			INT64 stride = nextAddr - currAddr;
-			pat->strideDist[stride]++;
-			if(pat->strideDist.size() > 30){
-				isRandom = true;
-				break;
-			}
-			if (stride != lastStride && isValidAddrMap) {
-				//stride change point!
-				auto iter = pat->addrStrideMap.find(currAddr);
-				if(iter == pat->addrStrideMap.end()){
-					//not found, insert
-					pat->addrStrideMap[currAddr] = stride;
-				}
-				else if(iter->second != stride){
-					//found, but different stride. Invalidate...
-					iter->second = -1;
-					isValidAddrMap = false;
-				}
-				if(pat->addrStrideMap.size() > MAX_SMALL_TILES){
-					isValidAddrMap = false;
-				}
-			}
-			lastStride = stride;
-		}
-		if(isRandom){
-			it->patInfo->pat = PatternRandom::create(it);
-		}
-	}
+	//sort using min address
+  sort(insList.begin(), insList.end(), [](const InsMem *lhs, const InsMem *rhs) {
+    if (lhs->minAddr == rhs->minAddr) {
+      return lhs->maxAddr < rhs->maxAddr;
+    }
+    return lhs->minAddr < rhs->minAddr;
+  });
+
+  //update address space to remove gaps
+  ADDRINT gmax = 0;
+  ADDRINT gap = 0;
+
+  for (InsMem *it : insList) {
+    if (it->minAddr > gmax) {
+      //found a gap in the address space
+      gap = gap + it->minAddr - gmax;
+
+      //align to access size
+      gap &= ~(it->accSz - 1ULL);
+    }
+    if (it->maxAddr > gmax) {
+      //update max address if needed
+      gmax = it->maxAddr;
+    }
+
+    it->minAddr -= gap;
+    it->maxAddr -= gap;
+
+    //update global max addresses
+    if (it->maxAddr > globalMaxAddr) {
+      globalMaxAddr = it->maxAddr;
+    }
+
+    UINT64 cnt = it->addr.size();
+    INT64 lastStride = 0xDEADBEEF;
+    //bool isRandom = false;
+    bool isValidAddrMap = true;
+    it->addr[0] -= gap;
+    for (UINT64 i = 0; i < (cnt - 1); i++) {
+      it->addr[i + 1] -= gap;
+      //if(isRandom == false){
+        ADDRINT currAddr = it->addr[i];
+        ADDRINT nextAddr = it->addr[i + 1];
+
+        INT64 stride = nextAddr - currAddr;
+        it->strideDist[stride]++;
+        //if(it->strideDist.size() > 30){
+        //  isRandom = true;
+        //}
+        if (stride != lastStride && isValidAddrMap) {
+          //stride change point!
+          auto iter = it->addrStrideMap.find(currAddr);
+          if(iter == it->addrStrideMap.end()){
+            //not found, insert
+            it->addrStrideMap[currAddr] = stride;
+          }
+          else if(iter->second != stride){
+            //found, but different stride. Invalidate...
+            iter->second = 0xDEADBEAF;
+            isValidAddrMap = false;
+          }
+          if(it->addrStrideMap.size() > MAX_SMALL_TILES){
+            isValidAddrMap = false;
+          }
+        }
+        lastStride = stride;
+      //}
+    }
+    //if(isRandom){
+    //  it->pat = PatternRandom::create(it);
+    //}
+  }
+  cout << "Global max address: " << globalMaxAddr << endl;
 }
 
 void derivePattern(const vector<InsMem*> &insList) {
 	for (InsMem *it : insList) {
 		//check if already assigned a pattern
-		if (it->patInfo->pat) {
+		if (it->pat) {
 			continue;
 		}
 
@@ -1024,12 +1067,12 @@ void derivePattern(const vector<InsMem*> &insList) {
 		deriveLoopInfo(it);
 
 		//check if loop indexed
-		if ((it->patInfo->pat = PatternLoopIndexed::create(it))) {
+		if ((it->pat = PatternLoopIndexed::create(it))) {
 			continue;
 		}
 
 		//check if small tiled access
-		if ((it->patInfo->pat = PatternSmallTile::create(it))) {
+		if ((it->pat = PatternSmallTile::create(it))) {
 			continue;
 		}
 
@@ -1044,7 +1087,7 @@ void derivePattern(const vector<InsMem*> &insList) {
 		//}
 
 		//check if irregular dominant stride access
-		if ((it->patInfo->pat = PatternDominant::create(it))) {
+		if ((it->pat = PatternDominant::create(it))) {
 			continue;
 		}
 
@@ -1062,7 +1105,7 @@ void derivePattern(const vector<InsMem*> &insList) {
 		//it->patInfo->pat = PatternInvalid::create(it);
 
 		//nothing matches, assign random
-		it->patInfo->pat = PatternRandom::create(it);
+		it->pat = PatternRandom::create(it);
 	}
 }
 
@@ -1075,66 +1118,19 @@ ADDRINT getMask(ADDRINT addr) {
 	return ~((1ULL << cnt) - 1);
 }
 
-void markTopAndProcessInfo(vector<InsMem*> &insList) {
+vector<InsMem*> markTopAndProcessInfo(const vector<InsMem*> &insList) {
+  vector<InsMem*> out;
 	for (InsMem *it : insList) {
-		it->isTop = true;         //mark as top instruction
-		//update address start and end
-		ADDRINT min = 0xFFFFFFFFFFFFFFFFULL;
-		ADDRINT max = 0;
-		for(ADDRINT addr : it->patInfo->addr){
-			if(addr > max){
-				max = addr;
-			}
-			if(addr < min){
-				min = addr;
-			}
+		it->maxAddr += it->accSz;
+		if((it->maxAddr - it->minAddr) > MAX_ADDRESS_RANGE){
+		  cerr << "[WARN] dropping inst for going over range" << endl;
 		}
-		it->patInfo->addrRange.s = min;
-		it->patInfo->addrRange.e = max + it->accSz;
-	}
-}
-
-void updateAddressSpace(vector<InsMem*> &insList) {
-	cout << "Updating address space..." << endl;
-	//sort using min address
-	sort(insList.begin(), insList.end(), [](const InsMem *lhs, const InsMem *rhs) {
-		if (lhs->patInfo->addrRange.s == rhs->patInfo->addrRange.s) {
-			return lhs->patInfo->addrRange.e < rhs->patInfo->addrRange.e;
-		}
-		return lhs->patInfo->addrRange.s < rhs->patInfo->addrRange.s;
-	});
-
-	//update address space to remove gaps
-	ADDRINT gmax = 0;
-	ADDRINT gap = 0;
-	for (InsMem *it : insList) {
-		Interval &range = it->patInfo->addrRange;
-		if (range.s > gmax) {
-			//found a gap in the address space
-			gap = gap + range.s - gmax;
-
-			//ensure alignment of the original address
-			//gap &= getMask(range.s);
-
-			//align to access size
-			gap &= ~(it->accSz - 1ULL);
-		}
-		if (range.e > gmax) {
-			//update max address if needed
-			gmax = range.e;
-		}
-
-		range.s -= gap;
-		range.e -= gap;
-		it->patInfo->gap = gap;
-		//cout << gap << endl;
-
-		//update global max addresses
-		if (range.e > globalMaxAddr) {
-			globalMaxAddr = range.e;
+		else{
+		  it->isTop = true;
+		  out.push_back(it);
 		}
 	}
-	cout << "Global max address: " << globalMaxAddr << endl;
+	return out;
 }
 
 void printMaxEdgeStack(const set<InsBlock*> &cfg) {
@@ -1150,26 +1146,6 @@ void printMaxEdgeStack(const set<InsBlock*> &cfg) {
 	}
 	cout << "Max edge stack size: " << maxEdgeStack << endl;
 	cout << "Max outgoing blocks: " << maxOutBlocks << endl;
-}
-
-void writeLog(const char *logFile) {
-	ofstream log(logFile);
-	log << "ins,addr,r0w1\n";
-	for (size_t i = 0; i < insTrace.size(); i++) {
-		if (insTrace[i]->type == InsTypeNormal) {
-			InsMem *ins = (InsMem*) (insTrace[i]);
-			if (ins->isTop) {
-				ADDRINT ea = ins->patInfo->addr[ins->cnt];
-				ins->cnt++;
-				log << ins->id << "," << ea << ",";
-				if (ins->accType == AccessTypeRead) {
-					log << "0\n";
-				} else if (ins->accType == AccessTypeWrite) {
-					log << "1\n";
-				}
-			}
-		}
-	}
 }
 
 /*void printStrideAddr(const vector<InsMem*> &insList, UINT64 id) {
@@ -1215,8 +1191,8 @@ void replaceRand(vector<InsBase*> &insList) {
 			replaceRand(ins->ins);
 		} else if (insList[i]->type == InsTypeNormal) {
 			InsMem *ins = (InsMem*) insList[i];
-			if (ins->patInfo->pat->type == PatTypeSmallTile) {
-				if ((ins->patInfo->addrRange.e - ins->patInfo->addrRange.s) == 124) {
+			if (ins->pat->type == PatTypeSmallTile) {
+				if ((ins->maxAddr - ins->minAddr) == 124) {
 					state++;
 					tmp.push_back(ins);
 					if (state == 3) {
@@ -1261,11 +1237,9 @@ VOID Fini(INT32 code, VOID *v) {
 	// 2. Only take instructions that represents top_perc of reads/writes
 	filteredInsList = keepTop(filteredInsList, top_perc);
 	//cout << "Static memory instructions: top " << filteredInsList.size() << endl;
-	markTopAndProcessInfo(filteredInsList);
-	//updateAddressSpace(filteredInsList);
+	filteredInsList = markTopAndProcessInfo(filteredInsList);
 
-	updateStrideInfo(filteredInsList);
-	updateAddressSpace(filteredInsList);
+  updateAddrInfo(filteredInsList);
 
 	cout << "Inst Trace size: " << insTrace.size() << endl;
 	set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
@@ -1278,18 +1252,11 @@ VOID Fini(INT32 code, VOID *v) {
 	generateCode(filteredInsList, cfg, out_file_name.c_str());
 
 
-	//if(log_en){
-	//  writeLog("top_trace.csv");
-	//}
-
 	//printStrideAddr(filteredInsList, 394900101);
 	//printStrideRef(filteredInsList, 394900101);
 
 	//assert(callHash == HASH_INIT_VALUE);
 	//for(InsNormal* it : insNormalList){ delete it; }
-	for (PatternInfo *it : patternList) {
-		delete it;
-	}
 	for (InsRoot *it : insRootList) {
 		delete it;
 	}
@@ -1406,8 +1373,6 @@ InsMem* getInsLeaf(InsRoot *root, UINT32 op) {
 			ins->accType = root->opInfo[i].accType;
 			ins->hashedRoot = tmp;
 			tmp->children.push_back(ins);
-			ins->patInfo = new PatternInfo();
-			patternList.push_back(ins->patInfo);
 		}
 	}
 	InsHashedRoot *hrt = root->childMap[callHash];
@@ -1419,10 +1384,13 @@ void record(InsRoot *root, ADDRINT ea, UINT32 op) {
 		return;
 	InsMem *ins = getInsLeaf(root, op);
 	insTrace.push_back(ins);
-	ins->patInfo->addr.push_back(ea);
-	//if(log_en){
-	//  addrTrace.push_back(ea);
-	//}
+	if(ea > ins->maxAddr){
+	  ins->maxAddr = ea;
+	}
+	if(ea < ins->minAddr){
+	  ins->minAddr = ea;
+	}
+	ins->addr.push_back(ea);
 }
 
 InsRoot* createInsRoot(INS &ins) {
