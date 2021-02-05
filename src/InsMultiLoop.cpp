@@ -13,7 +13,7 @@ string InsMultiLoop::printCodeBody(UINT32 indent) const {
   return "Multi Loop\n";
 }
 
-void InsMultiLoop::setParentLoop(InsLoopBase* pl) {
+void InsMultiLoop::setParentLoop(InsLoop* pl) {
   parentLoop = pl;
   for(InsBlock* blk : cfg){
     blk->setParentLoop(this);

@@ -46,7 +46,7 @@ public:
   std::string printDot(UINT32 indent) const;
   UINT64 getId() const;
   std::string printCodeBody(UINT32 indent) const;
-  void setParentLoop(InsLoopBase* pl);
+  void setParentLoop(InsLoop* pl);
 
   //replaces all occurrences of old with nw on the outEdges
   void replaceOutEdge(InsBlock* old, InsBlock* nw);

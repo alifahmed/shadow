@@ -14,6 +14,6 @@ string InsRand::printCodeBody(UINT32 indent) const{
   return ss.str();
 }
 
-void InsRand::setParentLoop(InsLoopBase* pl){
+void InsRand::setParentLoop(InsLoop* pl){
 
 }

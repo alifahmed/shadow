@@ -1,6 +1,6 @@
+#include <InsLoop.h>
 #include <InsMem.h>
 #include "PatternLoopIndexed.h"
-#include "InsLoopBase.h"
 #include "cln_utils.h"
 
 using namespace std;

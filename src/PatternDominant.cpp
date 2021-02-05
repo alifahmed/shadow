@@ -1,6 +1,6 @@
+#include <InsLoop.h>
 #include <InsMem.h>
 #include "PatternDominant.h"
-#include "InsLoopBase.h"
 
 using namespace std;
 
@@ -36,7 +36,7 @@ PatternDominant* PatternDominant::create(const InsMem* ins){
         }
       }
       ss << ";\n";
-      ins->loops[cnt-1].lp->extraStr.push_back(ss.str());
+      ins->loops[cnt-1].lp->postfix.push_back(ss.str());
       return new PatternDominant(ins, it.first, "DomRep");
     }
   }

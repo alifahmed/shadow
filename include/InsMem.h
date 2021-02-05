@@ -29,7 +29,7 @@ public:
 
   size_t cnt = 0;
   InsHashedRoot* hashedRoot = nullptr;
-  UINT32 accSz = 0;
+  UINT64 accSz = 0;
   AccessType accType = AccessTypeInvalid;
 
   InsMem(UINT64 id) : InsBase(InsTypeNormal, id){};
@@ -37,5 +37,5 @@ public:
   std::string printDot(UINT32 indent) const;
   std::string printCodeBody(UINT32 indent) const ;
   std::string printReadWrite(UINT32 indent, bool useId) const ;
-  void setParentLoop(InsLoopBase* pl);
+  void setParentLoop(InsLoop* pl);
 };

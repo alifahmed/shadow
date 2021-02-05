@@ -21,7 +21,7 @@ public:
     return "";
   }
 
-  void setParentLoop(InsLoopBase* pl) {
+  void setParentLoop(InsLoop* pl) {
     parentLoop = pl;
   }
 };

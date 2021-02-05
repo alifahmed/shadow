@@ -2,10 +2,10 @@
 
 #include <cln_types.h>
 
-class InsLoopBase;
+class InsLoop;
 
 class LoopInfo{
 public:
-  InsLoopBase* lp;
+  InsLoop* lp;
   INT64 m;
 };

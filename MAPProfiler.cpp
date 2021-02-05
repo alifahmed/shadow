@@ -8,6 +8,7 @@
  * Updated: Oct 09, 2020
  *
  ******************************************************************************/
+#include <InsLoop.h>
 #include "types.h"
 #include "cln_utils.h"
 #include "InsBase.h"
@@ -15,8 +16,7 @@
 #include "InsRoot.h"
 #include "InsMem.h"
 #include "InsCondJump.h"
-#include "InsLoopBase.h"
-#include "InsSingleLoop.h"
+#include "InsLoop.h"
 #include "InsBlock.h"
 #include "InsMultiLoop.h"
 #include "InsBlock.h"
@@ -96,12 +96,12 @@ static ADDRINT globalMaxAddr = 0;
 void deriveLoopInfo(InsMem *ins) {
 
   typedef struct{
-    InsLoopBase* lp = nullptr;
+    InsLoop* lp = nullptr;
     UINT64 cumProd = 1;
   } LInfo;
 
   stack<LInfo> loops;
-  InsLoopBase *lp = ins->parentLoop;
+  InsLoop *lp = ins->parentLoop;
   UINT64 prod = 1;
   while (lp) {
     loops.push({lp, prod});
@@ -199,6 +199,73 @@ vector<pair<InsBlock*, UINT64> > mergeEdgeStack(vector<pair<InsBlock*, UINT64> >
 	return out;
 }
 
+bool isCommonLoop(set<InsBlock*> &cfg, InsBlock *blk) {
+  if (blk->ins.size() || (blk->outEdges.size() == 0)) {
+    return false;     //for now, only supports empty origin blocks
+  }
+  InsBlock *target = blk->outEdgesStack[0].first;
+  if ((target->inEdges.size() != 1) || (target->outEdges.size() != 1) || (target->outEdgesStack[0].first != blk)){
+    return false;
+  }
+
+  //potential target found. Check edge stack
+  //UINT64 loopCnt = blk->outEdgesStack[0].second;
+  UINT64 totalCnt = 0;
+  UINT64 entryCnt = 0;
+
+  for (size_t i = 0; i < blk->outEdgesStack.size(); i++) {
+    if (i & 1) {    //odd
+      //out edge count should be 1 (loop exit)
+      if (blk->outEdgesStack[i].second != 1)
+        return false;
+      //totalCnt++;
+      entryCnt++;
+    } else {         //even
+      //should be same block, and same loop count
+      if (blk->outEdgesStack[i].first != target)
+        return false;
+      //if (blk->outEdgesStack[i].second != loopCnt)
+      //  return false;
+      totalCnt += blk->outEdgesStack[i].second;
+    }
+  }
+
+  UINT64 loopCnt  = totalCnt / entryCnt;
+  UINT64 rem = totalCnt % entryCnt;
+  if(rem){
+    loopCnt++;
+  }
+
+  // Found a loop
+  // 1. Create loop inst
+  InsLoop *lp = new InsLoop(InsTypeSingleLoop);
+  lp->iters = loopCnt;
+  lp->ins = target->ins;
+
+  // 2. Fix current block
+  blk->removeOutEdge(target);
+  blk->inEdges.erase(target);
+  blk->ins.push_back(lp); //insert loop instruction
+
+  // 3. Invalidate target block
+  cfg.erase(target);
+  target->isUsed = false;
+
+  //take care of remaining counts (if any)
+  if(rem){
+    stringstream ss;
+    ss << "static int64_t loop" << lp->id << "_break = " << totalCnt << "ULL;\n";
+    lp->prefix.push_back(ss.str());
+
+    ss.str("");
+    ss.clear();
+    ss << "if(loop" << lp->id << "_break-- <= 0) break;\n";
+    lp->postfix.push_back(ss.str());
+  }
+  return true;
+  //return false;
+}
+
 //check if one block creates a loop
 bool isSelfLoop(InsBlock *blk) {
   if (blk->outEdgesStack.size() == 0) {
@@ -218,27 +285,36 @@ bool isSelfLoop(InsBlock *blk) {
 		return false; // pattern does not match
 	}
 
-	UINT64 loopCnt = blk->outEdgesStack[0].second;
+	//UINT64 loopCnt = blk->outEdgesStack[0].second;
+	UINT64 totalCnt = 0;
+	UINT64 entryCnt = 0;
 
 	for (size_t i = 0; i < blk->outEdgesStack.size(); i++) {
-		if (i & 1) {    //odd
+	  if (i & 1) {    //odd
 			//out edge count should be 1 (loop exit)
 			if (blk->outEdgesStack[i].second != 1)
 				return false;
+			totalCnt++;
+      entryCnt++;
 		} else {         //even
 			//should be same block, and same loop count
 			if (blk->outEdgesStack[i].first != blk)
 				return false;
-			if (blk->outEdgesStack[i].second != loopCnt)
-				return false;
+			//if (blk->outEdgesStack[i].second != loopCnt)
+			//	return false;
+			totalCnt += blk->outEdgesStack[i].second;
 		}
 	}
 
-	loopCnt++;
+	UINT64 loopCnt  = totalCnt / entryCnt;
+	UINT64 rem = totalCnt % entryCnt;
+	if(rem){
+	  loopCnt++;
+	}
 
 	// Found a loop
 	// 1. Create loop inst
-	InsSingleLoop *lp = new InsSingleLoop();
+	InsLoop *lp = new InsLoop(InsTypeSingleLoop);
 	lp->iters = loopCnt;
 	lp->ins = blk->ins;
 
@@ -257,10 +333,22 @@ bool isSelfLoop(InsBlock *blk) {
 	blk->ins.clear(); //remove current instructions
 	blk->ins.push_back(lp); //insert loop instruction
 
+	//take care of remaining counts (if any)
+	if(rem){
+	  stringstream ss;
+	  ss << "static int64_t loop" << lp->id << "_break = " << totalCnt << "ULL;\n";
+	  lp->prefix.push_back(ss.str());
+
+	  ss.str("");
+	  ss.clear();
+	  ss << "if(loop" << lp->id << "_break-- <= 0) break;\n";
+	  lp->postfix.push_back(ss.str());
+  }
+
 	return true;
 }
 
-bool isMultiLoop(set<InsBlock*> &cfg, InsBlock *root, InsBlock *a, InsBlock *b) {
+/*bool isMultiLoop(set<InsBlock*> &cfg, InsBlock *root, InsBlock *a, InsBlock *b) {
 	if (a == b) {
 		return false;
 	}
@@ -364,7 +452,7 @@ bool isMultiLoop(set<InsBlock*> &cfg, InsBlock *root, InsBlock *a, InsBlock *b) 
 	compressCFG(lp->cfg);
 
 	return true;
-}
+}*/
 
 bool mergeMultiLoops(set<InsBlock*> &cfg) {
 	/*InsBlock* s;
@@ -393,57 +481,6 @@ bool mergeMultiLoops(set<InsBlock*> &cfg) {
 
 	 return isChanged;*/
 	return false;
-}
-
-bool isCommonLoop(set<InsBlock*> &cfg, InsBlock *blk) {
-	if (blk->ins.size()) {
-		return false;     //for now, only supports empty origin blocks
-	}
-	InsBlock *target = nullptr;
-	for (InsBlock *t : blk->outEdges) {
-		if ((t->inEdges.size() == 1) && (t->outEdges.size() == 1)) {
-			if (t->outEdges.find(blk) != t->outEdges.end()) {
-				target = t;
-				break;
-			}
-		}
-	}
-	if (target == nullptr) {
-		return false;       //not found
-	}
-
-	//potential target found. Check edge stack
-	UINT64 loopCnt = blk->outEdgesStack[0].second;
-
-	for (size_t i = 0; i < blk->outEdgesStack.size(); i++) {
-		if (i & 1) {    //odd
-			//out edge count should be 1 (loop exit)
-			if (blk->outEdgesStack[i].second != 1)
-				return false;
-		} else {         //even
-			//should be same block, and same loop count
-			if (blk->outEdgesStack[i].first != target)
-				return false;
-			if (blk->outEdgesStack[i].second != loopCnt)
-				return false;
-		}
-	}
-
-	// Found a loop
-	// 1. Create loop inst
-	InsSingleLoop *lp = new InsSingleLoop();
-	lp->iters = loopCnt;
-	lp->ins = target->ins;
-
-	// 2. Fix current block
-	blk->removeOutEdge(target);
-	blk->inEdges.erase(target);
-	blk->ins.push_back(lp); //insert loop instruction
-
-	// 3. Invalidate target block
-	cfg.erase(target);
-	target->isUsed = false;
-	return true;
 }
 
 bool mergeCommonLoop(set<InsBlock*> &cfg) {
@@ -584,7 +621,7 @@ void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
   //out << "#define RMW_32b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
   //out << "#define RMW_64b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
 	out << "\n";
-	out << "volatile uint8_t gm[" << globalMaxAddr << "ULL];\n\n";
+	out << "volatile uint8_t* gm;\n";//[" << globalMaxAddr << "ULL];\n\n";
   out << "#ifdef __SSE2__\n";
   out << _tab(1) << "volatile __m128i tmp16;\n";
   out << "#endif\n";
@@ -603,8 +640,8 @@ void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
 	out << _tab(1) << "uint16_t tmp2;\n";
 	out << _tab(1) << "uint32_t tmp4;\n";
 	out << _tab(1) << "uint64_t tmp8;\n";
-	//out << _tab(1) << "uint64_t allocSize = " << globalMaxAddr << "ULL;\n";
-	//out << _tab(1) << "gm = (volatile uint8_t*)malloc(allocSize);\n";
+	out << _tab(1) << "uint64_t allocSize = " << globalMaxAddr << "ULL;\n";
+	out << _tab(1) << "gm = (volatile uint8_t*)aligned_alloc(4096, allocSize);\n";
 	//out << _tab(1) << "if(gm == NULL) {\n";
 	//out << _tab(2) << "fprintf(stderr, \"Cannot allocate memory\\n\");\n";
 	//out << _tab(2) << "exit(-1);\n";
@@ -639,7 +676,7 @@ void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
 
 void generateCodeFooter(ofstream &out) {
 	out << "block1:\n";
-	//out << _tab(1) << "free((void*)gm);\n";
+	out << _tab(1) << "free((void*)gm);\n";
 	out << _tab(1) << "return 0;\n";
 	out << "}\n";
 }
@@ -994,12 +1031,25 @@ void updateAddrInfo(vector<InsMem*> &insList){
   ADDRINT gap = 0;
 
   for (InsMem *it : insList) {
+    //if(it->minAddr & (it->accSz-1)){
+    //  cout << "unaligned access: " << it->accSz << "  " << it->minAddr << endl;
+    //  exit(-1);
+    //}
+    //if(it->maxAddr & (it->accSz-1)){
+    //  cout << "unaligned access: " << it->accSz << "  " << it->maxAddr << endl;
+    //  exit(-1);
+    //}
     if (it->minAddr > gmax) {
       //found a gap in the address space
       gap = gap + it->minAddr - gmax;
 
       //align to access size
-      gap &= ~(it->accSz - 1ULL);
+      //gap &= ~(it->accSz - 1ULL);
+      //if(gap & (it->accSz - 1ULL)){
+      //  //not aligned. align the gap.
+      //  gap = (gap & ~(it->accSz - 1ULL)) + it->accSz;
+      //}
+      gap = (gap & ~(MIN_ALIGNMENT - 1ULL));
     }
     if (it->maxAddr > gmax) {
       //update max address if needed
@@ -1187,7 +1237,7 @@ void replaceRand(vector<InsBase*> &insList) {
 	vector<InsMem*> tmp;
 	for (size_t i = 0; i < insList.size(); i++) {
 		if (insList[i]->type == InsTypeSingleLoop) {
-			InsSingleLoop *ins = (InsSingleLoop*) insList[i];
+			InsLoop *ins = (InsLoop*) insList[i];
 			replaceRand(ins->ins);
 		} else if (insList[i]->type == InsTypeNormal) {
 			InsMem *ins = (InsMem*) insList[i];
@@ -1471,8 +1521,8 @@ void Instruction(INS ins, VOID *v) {
 	}
 
 	if (INS_Category(ins) == XED_CATEGORY_COND_BR) {
-		InsRoot *root = createInsRoot(ins);
-		INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) jmpInst, IARG_PTR, root, IARG_END);
+	//	InsRoot *root = createInsRoot(ins);
+	//	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) jmpInst, IARG_PTR, root, IARG_END);
 		return;
 	}
 

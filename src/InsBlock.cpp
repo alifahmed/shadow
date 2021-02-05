@@ -232,44 +232,103 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
     return out.str();
   }
 
+  if (isOrdered) {
+      out << _tab(indent) << "//Remainder NOT zero\n";
+      assert(estat.size() == blkOrder.size());
+      UINT64 tot_cnt = 0;
+      UINT64 cov_cnt = 0;
+      for (auto it : estat) {
+        tot_cnt += it.second.avgCnt;
+        cov_cnt += it.second.avgCnt * it.second.entryCnt;
+      }
+      out << _tab(indent) << "static uint64_t cov_" << id << " = 0;\n";
+      out << _tab(indent) << "cov_" << id << "++;\n";
+      out << _tab(indent) << "if(cov_" << id << " <= " << cov_cnt << "ULL) {\n";
+
+      out << _tab(indent+1) << "static uint64_t out_" << id << " = 0;\n";
+      out << _tab(indent+1) << "out_" << id << " = (out_" << id << " == "
+          << (tot_cnt) << "LL) ? 1 : (out_" << id << " + 1);\n";
+      UINT64 sz = estat.size();
+      tot_cnt = 0;
+      for (UINT64 i = 0; i < sz; i++) {
+        //get next block following the order
+        InsBlock *nb = blkOrder[i];
+        EdgeStat es = estat[nb];
+
+        tot_cnt += es.avgCnt;
+        out << _tab(indent+1);
+        if (i) {
+          out << "else ";
+        }
+        if (i != (sz - 1)) {
+          out << "if (out_" << id << " <= " << tot_cnt << "LL) ";
+        }
+        out << "goto block" << nb->id << ";\n";
+      }
+      out << _tab(indent) << "}\n";
+
+      vector<pair<InsBlock*, uint64_t>> remBlocks;
+
+      for(uint64_t i = outEdgesStack.size() - estat.size(); i < outEdgesStack.size(); i++){
+        InsBlock* blk = outEdgesStack[i].first;
+        EdgeStat ee = estat[blk];
+        if(ee.remCnt){
+          cov_cnt += ee.remCnt;
+          remBlocks.push_back({blk, cov_cnt});
+        }
+      }
+
+      sz = remBlocks.size();
+      for (UINT64 i = 0; i < sz; i++) {
+        //get next block following the order
+        out << _tab(indent) << "else ";
+        if (i != (sz - 1)) {
+          out << "if (cov_" << id << " <= " << remBlocks[i].second << "ULL) ";
+        }
+        out << "goto block" << remBlocks[i].first->id << ";\n";
+      }
+      out << "\n";
+      return out.str();
+    }
+
   //ordered, with remainder edges (use float)
+  /*out << printEdgeInfo(indent);
   if (isOrdered) {
     assert(estat.size() == blkOrder.size());
-    float tot_cnt = 0.0f;
+    double tot_cnt = 0.0;
     for (auto it : estat) {
-      tot_cnt += (float)(it.second.totCnt) / it.second.entryCnt;
+      tot_cnt = tot_cnt + 1.0 * it.second.totCnt / it.second.entryCnt;
     }
-    out << _tab(indent) << "static float out_" << id << " = 0.0f;\n";
+    out << _tab(indent) << "static double out_" << id << " = 0.0;\n";
     out.setf(ios::fixed, ios::floatfield);
-    out.precision(8);
+    out.precision(17);
     out << _tab(indent) << "out_" << id << " = (out_" << id << " > "
-        << (tot_cnt) << "f) ? out_" << id << " - " << tot_cnt << " : (out_" << id << " + 1.0f);\n";
+        << (tot_cnt) << ") ? out_" << id << " - " << tot_cnt << " : (out_" << id << " + 1.0);\n";
     UINT64 sz = estat.size();
-    tot_cnt = 0;
+    tot_cnt = 0.0;
     for (UINT64 i = 0; i < sz; i++) {
       //get next block following the order
       InsBlock *nb = blkOrder[i];
       EdgeStat es = estat[nb];
 
-      tot_cnt += (float)(es.totCnt) / (float)es.entryCnt;
+      tot_cnt = tot_cnt + 1.0 * es.totCnt / es.entryCnt;
       out << _tab(indent);
       if (i) {
         out << "else ";
       }
       if (i != (sz - 1)) {
-        out << "if (out_" << id << " <= " << tot_cnt << "f) ";
+        out << "if (out_" << id << " <= " << tot_cnt << ") ";
       }
       out << "goto block" << nb->id << ";\n";
     }
     out << "\n\n";
     return out.str();
-  }
+  }*/
 
 
   //unordered
   //Generic case. Use probability to jump to one of the out blocks.
   out << _tab(indent) << "//Unordered\n";
-  out << printEdgeInfo(indent);
 
   //get last entry from edge stack
   auto lastEntry = outEdgesStack[outEdgesStack.size() - 1];
@@ -340,7 +399,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
   return out.str();
 }
 
-void InsBlock::setParentLoop(InsLoopBase *pl) {
+void InsBlock::setParentLoop(InsLoop *pl) {
   for (InsBase *i : ins) {
     i->setParentLoop(pl);
   }

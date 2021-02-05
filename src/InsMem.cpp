@@ -54,7 +54,7 @@ string InsMem::printReadWrite(UINT32 indent, bool useId) const {
   }
 }
 
-void InsMem::setParentLoop(InsLoopBase *pl) {
+void InsMem::setParentLoop(InsLoop *pl) {
   parentLoop = pl;
 }
 
