@@ -1,1 +1,1 @@
-./bfs 8 ../../data/bfs/graph1MW_6.txt 
+./bfs 400000

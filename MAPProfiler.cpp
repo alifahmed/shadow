@@ -90,6 +90,13 @@ static ADDRINT globalMaxAddr = 0;
 //static map<UINT64, string> accTypeMap;
 //static map<UINT64, string> regNameMap;
 
+uint64_t statDirect = 0;
+uint64_t statOrdered = 0;
+uint64_t statRandom = 0;
+uint64_t dynDirect = 0;
+uint64_t dynOrdered = 0;
+uint64_t dynRandom = 0;
+
 /*******************************************************************************
  * Pattern Classes
  ******************************************************************************/
@@ -904,32 +911,14 @@ vector<InsMem*> deleteConstAccess2(const vector<InsMem*> &insList) {
 	return out;
 }
 
-vector<InsMem*> deleteConstAccess(const vector<InsMem*> &insList) {
+vector<InsMem*> deleteZeroAccesses(const vector<InsMem*> &insList) {
 	vector<InsMem*> out;
-	out.reserve(insList.size());
-	for (InsMem *it : insList) {
-		if (it->pat) {
-			if (it->pat->type == PatType::PatTypeConst) {
-				continue;
-			}
-		}
-		out.push_back(it);
-	}
-	return out;
-}
-
-vector<InsMem*> deleteZeroAccesses(const vector<InsBase*> &insList) {
-	vector<InsMem*> out;
-	for (InsBase *it : insList) {
-		if (it->type == InsTypeNormal) {
-			InsMem *ins = static_cast<InsMem*>(it);
-			ins->totalSz = ins->accSz * ins->addr.size();
-			if (ins->totalSz >= MIN_SZ) {
-				out.push_back(ins);
-			} else {
-				vector<ADDRINT>().swap(ins->addr);
-			}
-		}
+	for (InsMem *ins : insList) {
+    if (ins->totalSz >= MIN_SZ) {
+      out.push_back(ins);
+    } else {
+      vector<ADDRINT>().swap(ins->addr);
+    }
 	}
 	return out;
 }
@@ -1019,13 +1008,89 @@ void updateAddrInfo(vector<InsMem*> &insList){
 	cout << "Updating address related info..." << endl;
 
 	//sort using min address
-  sort(insList.begin(), insList.end(), [](const InsMem *lhs, const InsMem *rhs) {
-    if (lhs->minAddr == rhs->minAddr) {
-      return lhs->maxAddr < rhs->maxAddr;
-    }
-    return lhs->minAddr < rhs->minAddr;
-  });
+  //sort(insList.begin(), insList.end(), [](const InsMem *lhs, const InsMem *rhs) {
+  //  if (lhs->minAddr == rhs->minAddr) {
+  //    return lhs->maxAddr < rhs->maxAddr;
+  //  }
+  //  return lhs->minAddr < rhs->minAddr;
+  //});
 
+	cout << "\tBuild VNP list..." << endl;
+  set<UINT64> vpnSet;
+  for(InsMem* it : insList){
+    for(UINT64 addr : it->addr){
+      UINT64 vpn = addr & 0xFFFFFFFFFFFFF000ULL;
+      vpnSet.insert(vpn);
+    }
+  }
+
+  cout << "\tTotal VPN count: " << vpnSet.size() << endl;
+  globalMaxAddr = vpnSet.size() * 4096ULL;
+  cout << "\tGlobal max address (or memory footprint): " << globalMaxAddr << endl;
+
+  map<UINT64, UINT64> vpnMap;
+  uint64_t ppn = 0;
+  for(UINT64 vpn : vpnSet){
+    vpnMap[vpn] = (ppn << 12);
+    //cout << vpn << " : " << ppn << "\n";
+    ppn++;
+  }
+
+  cout << "\tUpdate addr..." << endl;
+  for(InsMem* it : insList){
+    assert(it->maxAddr > it->minAddr);
+    it->minAddr = vpnMap[it->minAddr & 0xFFFFFFFFFFFFF000ULL] | (it->minAddr & 0xFFFULL);
+    it->maxAddr = vpnMap[it->maxAddr & 0xFFFFFFFFFFFFF000ULL] | (it->maxAddr & 0xFFFULL);
+    it->maxAddr += it->accSz;
+    assert(it->maxAddr > it->minAddr);
+
+    //update global max addresses
+    //if (it->maxAddr > globalMaxAddr) {
+    //  globalMaxAddr = it->maxAddr;
+    //}
+
+    UINT64 cnt = it->addr.size();
+    INT64 lastStride = 0xDEADBEEF;
+    //bool isRandom = false;
+    bool isValidAddrMap = true;
+    it->addr[0] = vpnMap[it->addr[0] & 0xFFFFFFFFFFFFF000ULL] | (it->addr[0] & 0xFFFULL);
+    for (UINT64 i = 0; i < (cnt - 1); i++) {
+      it->addr[i + 1] = vpnMap[it->addr[i+1] & 0xFFFFFFFFFFFFF000ULL] | (it->addr[i+1] & 0xFFFULL);
+      //if(isRandom == false){
+        ADDRINT currAddr = it->addr[i];
+        ADDRINT nextAddr = it->addr[i + 1];
+
+        INT64 stride = nextAddr - currAddr;
+        it->strideDist[stride]++;
+        //if(it->strideDist.size() > 30){
+        //  isRandom = true;
+        //}
+        if (stride != lastStride && isValidAddrMap) {
+          //stride change point!
+          auto iter = it->addrStrideMap.find(currAddr);
+          if(iter == it->addrStrideMap.end()){
+            //not found, insert
+            it->addrStrideMap[currAddr] = stride;
+          }
+          else if(iter->second != stride){
+            //found, but different stride. Invalidate...
+            iter->second = 0xDEADBEAF;
+            isValidAddrMap = false;
+          }
+          if(it->addrStrideMap.size() > MAX_SMALL_TILES){
+            isValidAddrMap = false;
+          }
+        }
+        lastStride = stride;
+      //}
+    }
+    //if(isRandom){
+    //  it->pat = PatternRandom::create(it);
+    //}
+  }
+
+
+  /*
   //update address space to remove gaps
   ADDRINT gmax = 0;
   ADDRINT gap = 0;
@@ -1103,7 +1168,8 @@ void updateAddrInfo(vector<InsMem*> &insList){
     //  it->pat = PatternRandom::create(it);
     //}
   }
-  cout << "Global max address: " << globalMaxAddr << endl;
+  */
+  //cout << "Global max address: " << globalMaxAddr << endl;
 }
 
 void derivePattern(const vector<InsMem*> &insList) {
@@ -1171,14 +1237,14 @@ ADDRINT getMask(ADDRINT addr) {
 vector<InsMem*> markTopAndProcessInfo(const vector<InsMem*> &insList) {
   vector<InsMem*> out;
 	for (InsMem *it : insList) {
-		it->maxAddr += it->accSz;
-		if((it->maxAddr - it->minAddr) > MAX_ADDRESS_RANGE){
-		  cerr << "[WARN] dropping inst for going over range" << endl;
-		}
-		else{
+		//it->maxAddr += it->accSz;
+		//if((it->maxAddr - it->minAddr) > MAX_ADDRESS_RANGE){
+		//  cerr << "[WARN] dropping inst for going over range" << endl;
+		//}
+		//else{
 		  it->isTop = true;
 		  out.push_back(it);
-		}
+		//}
 	}
 	return out;
 }
@@ -1270,35 +1336,104 @@ void detectRandFunction() {
 	}
 }
 
+void print_pat_dist(vector<InsMem*> &insList){
+  uint64_t dom = 0;
+  uint64_t loopedIndex = 0;
+  uint64_t random = 0;
+  uint64_t dynDom = 0;
+  uint64_t dynLoopedIndex = 0;
+  uint64_t dynRandom = 0;
+  for(InsMem* ins : insList){
+    if((ins->pat->type == PatType::PatLoopIndexed) || (ins->pat->type == PatType::PatTypeSmallTile)){
+      loopedIndex++;
+      dynLoopedIndex += ins->addr.size();
+    }
+    else if(ins->pat->type == PatType::PatTypeDominant){
+      dom++;
+      dynDom += ins->addr.size();
+    }
+    else if(ins->pat->type == PatType::PatTypeRandom){
+      random++;
+      dynRandom += ins->addr.size();
+    }
+    else{
+      cout << "[ERROR] unknown pattern" <<  endl;
+    }
+  }
+  cout << "Dynamic #dom: " << dynDom << endl;
+  cout << "Dynamic #rand: " << dynRandom << endl;
+  cout << "Dynamic #loopedIndex: " << dynLoopedIndex << endl;
+  cout << "Static #dom: " << dom << endl;
+  cout << "Static #rand: " << random << endl;
+  cout << "Static #loopedIndex: " << loopedIndex << endl;
+}
+
+void print_edge_dist(){
+  cout << "Dynamic #direct: " << dynDirect << endl;
+  cout << "Dynamic #ordered: " << dynOrdered << endl;
+  cout << "Dynamic #random: " << dynRandom << endl;
+  cout << "Static #direct: " << statDirect << endl;
+  cout << "Static #ordered: " << statOrdered << endl;
+  cout << "Static #random: " << statRandom << endl;
+}
+
+void print_filtering(const vector<InsMem*> &insList, string msg, bool top){
+  cout << msg << endl;
+
+  uint64_t mem_acc_sz = 0;
+  uint64_t dyn_inst = 0;
+  uint64_t stat_inst = 0;
+  for (InsMem *ins : insList) {
+    if(ins->isTop == top){
+      mem_acc_sz += ins->totalSz;
+      dyn_inst += ins->addr.size();
+      stat_inst++;
+    }
+  }
+
+  cout << "\tDynamic memory instructions: " << dyn_inst << endl;
+  cout << "\tStatic memory instructions: " << stat_inst << endl;
+  cout << "\tMemory access size: " << mem_acc_sz << endl;
+}
+
 VOID Fini(INT32 code, VOID *v) {
 	cout << "AT FINI" << endl;
 	// 0. Filter zero  (or very low) cnt instructions
 	vector<InsMem*> filteredInsList;
-	//cout << "Static memory instructions: Before any filtering " << InsBase::insList.size() << endl;
+	for (InsBase *it : InsBase::insList) {
+    if (it->type == InsTypeNormal) {
+      InsMem *ins = static_cast<InsMem*>(it);
+      ins->totalSz = ins->accSz * ins->addr.size();
+      filteredInsList.push_back(ins);
+    }
+  }
+	print_filtering(filteredInsList, "Before filtering...", false);
 
-	filteredInsList = deleteZeroAccesses(InsBase::insList);
-	cout << "Static memory instructions: After zero access delete " << filteredInsList.size() << endl;
+	filteredInsList = deleteZeroAccesses(filteredInsList);
 
 	//derivePatternInitial(filteredInsList);   //needed for next step
 	// 1. filter constant access instructions
 	filteredInsList = deleteConstAccess2(filteredInsList);
-	cout << "Static memory instructions: After const access delete " << filteredInsList.size() << endl;
+
+	print_filtering(filteredInsList, "After const access filtering...", false);
 
 	// 2. Only take instructions that represents top_perc of reads/writes
 	filteredInsList = keepTop(filteredInsList, top_perc);
 	//cout << "Static memory instructions: top " << filteredInsList.size() << endl;
 	filteredInsList = markTopAndProcessInfo(filteredInsList);
 
+	print_filtering(filteredInsList, "After filtering...", true);
+
   updateAddrInfo(filteredInsList);
 
 	cout << "Inst Trace size: " << insTrace.size() << endl;
 	set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
 	updateParentLoops(cfg);
-	printMaxEdgeStack(cfg);
+	//printMaxEdgeStack(cfg);
 	derivePattern(filteredInsList);
 	//detectRandFunction();
 
-	printInfo(filteredInsList);
+	//printInfo(filteredInsList);
 	generateCode(filteredInsList, cfg, out_file_name.c_str());
 
 
@@ -1307,6 +1442,8 @@ VOID Fini(INT32 code, VOID *v) {
 
 	//assert(callHash == HASH_INIT_VALUE);
 	//for(InsNormal* it : insNormalList){ delete it; }
+	print_pat_dist(filteredInsList);
+	print_edge_dist();
 	for (InsRoot *it : insRootList) {
 		delete it;
 	}

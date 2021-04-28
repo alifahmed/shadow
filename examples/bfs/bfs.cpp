@@ -1,28 +1,46 @@
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
-#include <omp.h>
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <cstdlib>
+//#include <omp.h>
 //#define NUM_THREAD 4
 //#define OPEN
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <random>
+#include <cstdlib>
+#include <ctime>
+#include <climits>
+
+
+#define MIN_EDGES 2
+#define MAX_INIT_EDGES 4 // Nodes will have, on average, 2*MAX_INIT_EDGES edges
+#define MIN_WEIGHT 1
+#define MAX_WEIGHT 10
+
+using namespace std;
 
 FILE *fp;
+
+typedef unsigned int uint;
+typedef unsigned long ulong;
 
 //Structure to hold a node information
 struct Node
 {
-	int starting;
-	int no_of_edges;
+	ulong starting;
+	ulong no_of_edges;
 };
+
+struct edge; // forward declaration
+typedef vector<ulong> node;
 
 void BFSGraph(int argc, char** argv);
 
-void Usage(int argc, char**argv){
-
-fprintf(stderr,"Usage: %s <num_threads> <input_file>\n", argv[0]);
-
-}
 ////////////////////////////////////////////////////////////////////////////////
 // Main Program
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,31 +56,16 @@ int main( int argc, char** argv)
 ////////////////////////////////////////////////////////////////////////////////
 void BFSGraph( int argc, char** argv) 
 {
-        int no_of_nodes = 0;
-        int edge_list_size = 0;
-        char *input_f;
-	int	 num_omp_threads;
+	ulong no_of_nodes = 0;
 	
-	if(argc!=3){
-	Usage(argc, argv);
-	exit(0);
+	if(argc!=2){
+		cout << "usage: no_of_nodes" << endl;
+		exit(-1);
 	}
-    
-	num_omp_threads = atoi(argv[1]);
-	input_f = argv[2];
 	
-	printf("Reading File\n");
-	//Read in Graph from a file
-	fp = fopen(input_f,"r");
-	if(!fp)
-	{
-		printf("Error Reading graph file\n");
-		return;
-	}
+	ulong source = 0;
 
-	int source = 0;
-
-	fscanf(fp,"%d",&no_of_nodes);
+	no_of_nodes = atol(argv[1]);
    
 	// allocate host memory
 	Node* h_graph_nodes = (Node*) malloc(sizeof(Node)*no_of_nodes);
@@ -70,48 +73,59 @@ void BFSGraph( int argc, char** argv)
 	bool *h_updating_graph_mask = (bool*) malloc(sizeof(bool)*no_of_nodes);
 	bool *h_graph_visited = (bool*) malloc(sizeof(bool)*no_of_nodes);
 
-	int start, edgeno;   
-	// initalize the memory
-	for( unsigned int i = 0; i < no_of_nodes; i++) 
+
+	node * graph = new node[no_of_nodes];
+	
+	for (int i = 0; i < no_of_nodes; i++ ) {
+		int numEdges = rand() % ( MAX_INIT_EDGES - MIN_EDGES + 1 ) + MIN_EDGES;
+		for (int j = 0; j < numEdges; j++ ) {
+			ulong nodeID = rand() % no_of_nodes;
+			//int weight = rand() % ( MAX_WEIGHT - MIN_WEIGHT + 1 ) + MIN_WEIGHT;
+			//graph[i].push_back( {nodeID, weight} );
+			//graph[nodeID].push_back( {i, weight} );
+			graph[i].push_back(nodeID);
+			graph[nodeID].push_back(i);
+		}
+	}
+
+	ulong edge_list_size = 0;
+	for ( ulong i = 0; i < no_of_nodes; i++ )
 	{
-		fscanf(fp,"%d %d",&start,&edgeno);
-		h_graph_nodes[i].starting = start;
-		h_graph_nodes[i].no_of_edges = edgeno;
+		int numEdges = graph[i].size();
+		h_graph_nodes[i].starting = edge_list_size;
+		h_graph_nodes[i].no_of_edges = numEdges;
 		h_graph_mask[i]=false;
 		h_updating_graph_mask[i]=false;
 		h_graph_visited[i]=false;
+		edge_list_size += numEdges;
 	}
 
-	//read the source node from the file
-	fscanf(fp,"%d",&source);
-	// source=0; //tesing code line
+	cout << edge_list_size << endl;
 
+	source = 0;
 	//set the source node as true in the mask
 	h_graph_mask[source]=true;
 	h_graph_visited[source]=true;
 
-	fscanf(fp,"%d",&edge_list_size);
 
 	int id,cost;
 	int* h_graph_edges = (int*) malloc(sizeof(int)*edge_list_size);
-	for(int i=0; i < edge_list_size ; i++)
-	{
-		fscanf(fp,"%d",&id);
-		fscanf(fp,"%d",&cost);
-		h_graph_edges[i] = id;
-	}
 
-	if(fp)
-		fclose(fp);    
+	ulong cnt = 0;
+	for ( ulong i = 0; i < no_of_nodes; i++ ) {
+		for ( uint j = 0; j < graph[i].size(); j++ ) {
+			//outf << graph[i][j].dest << " " << graph[i][j].weight << "\n";
+			h_graph_edges[cnt++] = graph[i][j];
+		}
+	}
 
 
 	// allocate mem for the result on host side
 	int* h_cost = (int*) malloc( sizeof(int)*no_of_nodes);
-	for(int i=0;i<no_of_nodes;i++)
+	for(int i=0;i<no_of_nodes;i++){
 		h_cost[i]=-1;
+	}
 	h_cost[source]=0;
-	
-	printf("Start traversing the tree\n");
 	
 	int k=0;
 #ifdef OPEN
@@ -175,14 +189,14 @@ void BFSGraph( int argc, char** argv)
         }
 #endif
 #endif
+
 	//Store the result into a file
-	FILE *fpo = fopen("result.txt","w");
-	for(int i=0;i<no_of_nodes;i++)
-		fprintf(fpo,"%d) cost:%d\n",i,h_cost[i]);
-	fclose(fpo);
-	printf("Result stored in result.txt\n");
+	ulong total_cost = 0;
+	for(int i=0;i<no_of_nodes;i++){
+		total_cost += h_cost[i];
+	}
 
-
+	cout << total_cost << endl;
 	// cleanup memory
 	free( h_graph_nodes);
 	free( h_graph_edges);
@@ -190,6 +204,6 @@ void BFSGraph( int argc, char** argv)
 	free( h_updating_graph_mask);
 	free( h_graph_visited);
 	free( h_cost);
-
+	delete [] graph;
 }
 

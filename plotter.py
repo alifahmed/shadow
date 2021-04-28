@@ -175,7 +175,7 @@ plt.xlabel("Reference #")
 plt.ylabel("Relative Address")
 plt.plot(dfR.index, dfR.Addr, 'r^', alpha=args.alpha_read, label='Read')
 plt.plot(dfW.index, dfW.Addr, 'b.', alpha=args.alpha_write, label='Write')
-plt.plot(dfRMW.index, dfRMW.Addr, 'gs', alpha=args.alpha_rmw, label='Read-modify-write')
+plt.plot(dfRMW.index, dfRMW.Addr, 'gs', alpha=args.alpha_rmw, label='RMW')
 plt.legend(loc='upper left')
 plt.show()
 
