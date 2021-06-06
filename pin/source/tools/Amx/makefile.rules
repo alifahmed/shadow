@@ -1,0 +1,230 @@
+##############################################################
+#
+# This file includes all the test targets as well as all the
+# non-default build rules and test recipes.
+#
+##############################################################
+
+###### Additional includes that are specific to this directory ######
+
+# Placeholder for additional include files.
+
+
+##############################################################
+#
+# Test targets
+#
+##############################################################
+
+###### Place all generic definitions here ######
+
+# This defines tests which run tools of the same name.  This is simply for convenience to avoid
+# defining the test name twice (once in TOOL_ROOTS and again in TEST_ROOTS).
+# Tests defined here should not be defined in TOOL_ROOTS and TEST_ROOTS.
+TEST_TOOL_ROOTS :=
+
+# This defines the tests to be run that were not already defined in TEST_TOOL_ROOTS.
+TEST_ROOTS :=
+
+# This defines the tools which will be run during the the tests, and were not already defined in
+# TEST_TOOL_ROOTS.
+TOOL_ROOTS :=
+
+# This defines the static analysis tools which will be run during the the tests. They should not
+# be defined in TEST_TOOL_ROOTS. If a test with the same name exists, it should be defined in
+# TEST_ROOTS.
+# Note: Static analysis tools are in fact executables linked with the Pin Static Analysis Library.
+# This library provides a subset of the Pin APIs which allows the tool to perform static analysis
+# of an application or dll. Pin itself is not used when this tool runs.
+SA_TOOL_ROOTS :=
+
+# This defines all the applications that will be run during the tests.
+APP_ROOTS :=
+
+# This defines any additional object files that need to be compiled.
+OBJECT_ROOTS :=
+
+# This defines any additional dlls (shared objects), other than the pintools, that need to be compiled.
+DLL_ROOTS :=
+
+# This defines any static libraries (archives), that need to be built.
+LIB_ROOTS :=
+
+###### Place architecture-specific definitions here ######
+
+
+# Place intel64-specific definitions here if they apply to all supported operating systems.
+ifeq ($(TARGET),intel64)
+    TEST_TOOL_ROOTS +=
+    TEST_ROOTS +=
+    TOOL_ROOTS +=
+    SA_TOOL_ROOTS +=
+    APP_ROOTS +=
+    OBJECT_ROOTS +=
+    DLL_ROOTS +=
+    LIB_ROOTS +=
+endif
+
+###### Place OS-specific definitions here ######
+
+# Linux
+ifeq ($(TARGET_OS),linux)
+    ifeq ($(TARGET),intel64)
+    # AMX only relevent in 64 bit
+        TEST_TOOL_ROOTS += amx
+        TEST_ROOTS += amx_modify amx_modify_tilecfg1 amx_modify_tilecfg2
+        TOOL_ROOTS +=
+        SA_TOOL_ROOTS +=
+        APP_ROOTS += amx_asm_app
+        OBJECT_ROOTS += amx_asm
+        DLL_ROOTS +=
+        LIB_ROOTS +=
+    endif
+endif
+
+# macOS*
+ifeq ($(TARGET_OS),mac)
+    ifeq ($(TARGET),intel64)
+    # AMX only relevent in 64 bit
+    # Nothing at the moment
+    endif
+endif
+
+# Windows
+ifeq ($(TARGET_OS),windows)
+    ifeq ($(TARGET),intel64)
+    # AMX only relevent in 64 bit
+    # Nothing at the moment
+    endif
+
+endif
+
+###### Handle exceptions here (OS/arch related) ######
+
+# If the host machine does not support amx instructions there's almost nothing to test.
+# In order to check that, the amx_check program must exist.
+
+# First, see if the specified targets require amx support. "clean" for example does not,
+# so there is no need for making that check.
+ifeq ($(MAKECMDGOALS),) # If no target was specified, "all" is assumed.
+    AMX_DEPENDENTS := all
+else
+    AMX_DEPENDENTS := $(filter test sanity install all objects libs dlls apps tools %.test %.wrap $(OBJDIR)%, \
+                                $(MAKECMDGOALS))
+endif
+
+ifeq ($(TARGET),ia32)
+    AMX_DEPENDENTS :=
+endif
+
+ifeq ($(TARGET_OS),windows)
+    AMX_DEPENDENTS :=
+endif
+
+# Now, if there are amx-dependent targets, make sure that the amx_check program exists.
+ifneq ($(AMX_DEPENDENTS),)
+    ifeq ($(wildcard $(CHECKAMX)),)
+        $(error Unable to proceed. Run "make amxcheck", then try again)
+    else
+        MACHINE_SUPPORTS_AMX_INSTRUCTIONS := $(shell $(CHECKAMX) | $(GREP) Yes)
+    endif
+endif
+
+# Finally, if the machine does not support amx, disable all the irrelevant tests.
+ifneq ($(MACHINE_SUPPORTS_AMX_INSTRUCTIONS),Yes)
+    TEST_TOOL_ROOTS :=
+    TEST_ROOTS :=
+    TOOL_ROOTS :=
+    SA_TOOL_ROOTS :=
+    APP_ROOTS :=
+    OBJECT_ROOTS :=
+    DLL_ROOTS :=
+    LIB_ROOTS :=
+endif
+
+# This defines the full list of tests prior to applying any bug related filters.
+# It is being used to generate a report about filtered tests.
+RUNNABLE_TESTS := 
+
+###### Handle exceptions here (bugs related) ######
+
+# If some tests need to be disabled because of known failures, do this here
+
+###### Define the sanity subset ######
+
+# This defines the list of tests that should run in sanity. It should include all the tests listed in
+# TEST_TOOL_ROOTS and TEST_ROOTS excluding only unstable tests.
+SANITY_SUBSET := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
+
+
+##############################################################
+#
+# Test recipes
+#
+##############################################################
+
+###### Finalize sanity here ######
+
+# This section contains recipes for tests other than the default.
+# See makefile.default.rules for the default test rules.
+# All tests in this section should adhere to the naming convention: <testname>.test
+
+
+##############################################################
+#
+# Build rules
+#
+##############################################################
+
+# This section contains the build rules for all binaries that have special build rules.
+# See makefile.default.rules for the default build rules.
+
+# Checking tile registers API (TMM0-TMM7, TILE_CONFIG): ARG_REG_REFERENCE and IARG_REG_CONST_REFERENCE IARGs and so on.  
+amx.test: $(OBJDIR)amx$(PINTOOL_SUFFIX) $(OBJDIR)amx_asm_app$(EXE_SUFFIX)
+	$(PIN)  -t $(OBJDIR)amx$(PINTOOL_SUFFIX) -o $(OBJDIR)amx.out -- $(OBJDIR)amx_asm_app$(EXE_SUFFIX)
+	$(RM) $(OBJDIR)amx.out
+
+# Modify tile registers from analysis routine. Checks modification occur and correct result is calculted.
+# Application get another paramater to fix the result based on expeted changes by the tool  
+amx_modify.test: $(OBJDIR)amx$(PINTOOL_SUFFIX) $(OBJDIR)amx_asm_app$(EXE_SUFFIX)
+	$(PIN)  -t $(OBJDIR)amx$(PINTOOL_SUFFIX) -mode modify -o $(OBJDIR)amx_modify.out -- $(OBJDIR)amx_asm_app$(EXE_SUFFIX) 2
+	$(RM) $(OBJDIR)amx_modify.out
+
+# Modify tile config register to a valid configuration. application should fail with "max errors found"
+amx_modify_tilecfg1.test: $(OBJDIR)amx$(PINTOOL_SUFFIX) $(OBJDIR)amx_asm_app$(EXE_SUFFIX)
+	! $(PIN)  -t $(OBJDIR)amx$(PINTOOL_SUFFIX) -mode modify_tilecfg1 -o $(OBJDIR)amx_modify_tilecfg1_tool.out \
+	-- $(OBJDIR)amx_asm_app$(EXE_SUFFIX) > $(OBJDIR)amx_modify_tilecfg1.out 2>&1
+	$(QGREP) "max errors found" $(OBJDIR)amx_modify_tilecfg1.out
+	$(RM) $(OBJDIR)amx_modify_tilecfg1_tool.out $(OBJDIR)amx_modify_tilecfg1.out
+
+# Modify tile config register to a non valid configuration. application should crash with Illegal instruction
+amx_modify_tilecfg2.test: $(OBJDIR)amx$(PINTOOL_SUFFIX) $(OBJDIR)amx_asm_app$(EXE_SUFFIX)
+	! $(PIN)  -t $(OBJDIR)amx$(PINTOOL_SUFFIX) -mode modify_tilecfg2 -o $(OBJDIR)amx_modify_tilecfg2_tool.out \
+	-- $(OBJDIR)amx_asm_app$(EXE_SUFFIX) > $(OBJDIR)amx_modify_tilecfg2.out 2>&1
+	$(QGREP) "Illegal instruction" $(OBJDIR)amx_modify_tilecfg2.out
+	$(RM) $(OBJDIR)amx_modify_tilecfg2.out $(OBJDIR)amx_modify_tilecfg2_tool.out
+
+
+###### Special tools' build rules ######
+
+# placeholder for special tools' build rules
+
+###### Special applications' build rules ######
+
+# $(DBG_INFO_CXX_ALWAYS) and $(DBG_INFO_LD_ALWAYS) only needed in Windows (for symbols). On other OS's symbol exists regardless. 
+# (for finding assembly functions in order to instrument it)  
+$(OBJDIR)amx_asm_app$(EXE_SUFFIX): tdpbssd.c $(OBJDIR)amx_asm$(OBJ_SUFFIX)
+	$(APP_CC) $(APP_CXXFLAGS) $(DBG_INFO_CXX_ALWAYS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(DBG_INFO_LD_ALWAYS)
+
+
+###### Special objects' build rules ######
+
+# placeholder for special objects' build rules
+
+###### Special dlls' build rules ######
+
+# placeholder for special dlls' build rules
+
+###### Special libs' build rules ######
+
+# placeholder for special libs' build rules
