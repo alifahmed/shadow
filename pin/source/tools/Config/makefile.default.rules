@@ -43,6 +43,7 @@ print_filtered_sanity_tests:
 
 obj-%:
 	mkdir -p $@
+	mkdir -p $@/src
 
 # Add the output directory as an order-only dependency to all the binaries and tests.
 # Order-only dependencies are all the dependencies that follow the "|" character.
@@ -221,8 +222,8 @@ $(OBJDIR)%$(OBJ_SUFFIX): %.c
 	$(CC) $(TOOL_CFLAGS) $(COMP_OBJ)$@ $<
 
 # Build the tool as a dll (shared object).
-$(OBJDIR)%$(PINTOOL_SUFFIX): $(OBJDIR)%$(OBJ_SUFFIX)
-	$(LINKER) $(TOOL_LDFLAGS) $(LINK_EXE)$@ $< $(TOOL_LPATHS) $(TOOL_LIBS)
+$(OBJDIR)%$(PINTOOL_SUFFIX): $(OBJDIR)%$(OBJ_SUFFIX) $(ALIF_OBJS)
+	$(LINKER) $(TOOL_LDFLAGS) $(LINK_EXE)$@ $< $(TOOL_LPATHS) $(TOOL_LIBS) $(ALIF_OBJS)
 
 # Build the static analysis tools.
 $(SA_TOOLS): %$(SATOOL_SUFFIX): %$(OBJ_SUFFIX)

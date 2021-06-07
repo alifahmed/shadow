@@ -14,7 +14,7 @@ if [[ $dist_name == 'centos' ]]; then
 fi
 
 if [ -z "$dist_ver" ]; then
-    dist_ver="`cat /etc/*-release | grep VERSION_ID | cut -d '=' -f 2 | sed 's/[ "=]//g' | head -1`"
+    dist_ver="`cat /etc/os-release | grep VERSION_ID | cut -d '=' -f 2 | sed 's/[ "=]//g' | head -1`"
 fi
 
 if [ -z "$dist_ver" ]; then
