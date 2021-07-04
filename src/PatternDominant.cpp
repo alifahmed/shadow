@@ -1,8 +1,10 @@
 #include <InsLoop.h>
 #include <InsMem.h>
 #include "PatternDominant.h"
+#include "cln_utils.h"
 
 using namespace std;
+using namespace cln_utils;
 
 PatternDominant* PatternDominant::create(const InsMem* ins){
   for(const auto &it : ins->strideDist){
@@ -45,7 +47,7 @@ PatternDominant* PatternDominant::create(const InsMem* ins){
 
 string PatternDominant::genHeader(UINT32 indent) const {
   stringstream ss;
-  ss << _tab(indent) << "int64_t addr_" << ins->id << " = " << ins->addr[0] << "LL;\n";
+  ss << _tab(indent) << "int64_t addr_" << ins->id << " = " << encodeVAddr(ins->addr[0]) << ";\n";
   return ss.str();
 }
 
@@ -56,12 +58,12 @@ string PatternDominant::genBody(UINT32 indent) const {
   ss << _tab(indent) << "addr_" << ins->id << " += " << domStride << "LL;\n";   // increment by stride
   // enforce address range
   if(domStride > 0){
-    ss << _tab(indent) << "if(addr_" << ins->id << " >= " << ins->maxAddr <<
-          "LL) addr_" << ins->id << " = " << ins->minAddr << "LL;\n";
+    ss << _tab(indent) << "if(addr_" << ins->id << " >= " << encodeVAddr(ins->maxAddr) <<
+          ") addr_" << ins->id << " = " << encodeVAddr(ins->minAddr) << ";\n";
   }
   else if(domStride < 0){
-    ss << _tab(indent) << "if(addr_" << ins->id << " < " << ins->minAddr <<
-          "LL) addr_" << ins->id << " = " << (ins->maxAddr - ins->accSz) << "LL;\n";
+    ss << _tab(indent) << "if(addr_" << ins->id << " < " << encodeVAddr(ins->minAddr) <<
+          ") addr_" << ins->id << " = " << encodeVAddr(ins->maxAddr - ins->accSz) << ";\n";
   }
   return ss.str();
 }

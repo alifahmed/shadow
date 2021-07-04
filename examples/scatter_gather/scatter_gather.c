@@ -11,7 +11,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define N	100000
+#define N  10000
+#define ITER	3
 
 static int a[N];
 static int b[N];
@@ -45,14 +46,16 @@ int getSum(const int* arr){
 
 
 int main(int argc, const char** argv) {
-	// initialize
-	init();
+	for(int i = 0; i < ITER; i++){
+		// initialize
+		init();
 
-	// call gather kernel
-	scatter_gather();
+		// call gather kernel
+		scatter_gather();
 
-	// print result
-	printf("%d\n", getSum(a));
+		// print result
+		printf("%d\n", getSum(a));
+	}
 
 	return 0;
 }

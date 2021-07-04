@@ -4,6 +4,7 @@
 #include "cln_utils.h"
 
 using namespace std;
+using namespace cln_utils;
 
 PatternLoopIndexed* PatternLoopIndexed::create(InsMem *ins) {
   if (ins->loops.size() == 0) { //no loops
@@ -22,7 +23,7 @@ PatternLoopIndexed* PatternLoopIndexed::create(InsMem *ins) {
 string PatternLoopIndexed::genBody(UINT32 indent) const {
   stringstream ss;
   ss << _tab(indent) << "//Loop Indexed\n";
-  ss << _tab(indent) << "addr = " << ins->addr[0] << "LL";
+  ss << _tab(indent) << "addr = " << encodeVAddr(ins->addr[0]);
   for (const auto &it : ins->loops) {
     if (it.m) {
       ss << " + (" << it.m << " * loop" << it.lp->id << ")";

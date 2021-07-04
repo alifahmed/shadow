@@ -7,7 +7,7 @@
 using namespace std;
 
 std::vector<InsBlock*> InsBlock::blockList;
-UINT64 InsBlock::_idCnt = 2;
+UINT64 InsBlock::_idCnt = 0;
 
 extern uint64_t statDirect;
 extern uint64_t statOrdered;
@@ -21,10 +21,10 @@ InsBlock::InsBlock() {
   this->id = _idCnt++;
 }
 
-InsBlock::InsBlock(UINT64 id) {
-  blockList.push_back(this);
-  this->id = id;
-}
+//InsBlock::InsBlock(UINT64 id) {
+//  blockList.push_back(this);
+//  this->id = id;
+//}
 
 bool InsBlock::isOutOrderConst(std::vector<InsBlock*> &order) const {
   size_t outBlockCnt = outEdges.size();
@@ -110,6 +110,7 @@ void InsBlock::deleteAll() {
   for (InsBlock *blk : blockList) {
     delete blk;
   }
+  blockList.clear();
 }
 
 std::string InsBlock::printDotAll(UINT32 indent) {

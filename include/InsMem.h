@@ -27,7 +27,7 @@ public:
 
   PatternBase* pat = nullptr;
 
-  size_t cnt = 0;
+  //size_t cnt = 0;
   InsHashedRoot* hashedRoot = nullptr;
   UINT64 accSz = 0;
   AccessType accType = AccessTypeInvalid;
@@ -38,4 +38,5 @@ public:
   std::string printCodeBody(UINT32 indent) const ;
   std::string printReadWrite(UINT32 indent, bool useId) const ;
   void setParentLoop(InsLoop* pl);
+  void reset();
 };

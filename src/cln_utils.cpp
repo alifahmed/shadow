@@ -34,4 +34,10 @@ bool isRepeat(const std::vector<ADDRINT> &addr, size_t sz, size_t rep, INT64 &m)
   return true;
 }
 
+std::string encodeVAddr(ADDRINT vAddr){
+	std::stringstream ss;
+	ss << "@{" << vAddr << "}";
+	return ss.str();
+}
+
 }

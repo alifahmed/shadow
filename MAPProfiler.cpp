@@ -29,6 +29,7 @@
 #include "PatternDominant.h"
 #include "InsRand.h"
 #include <unordered_map>
+#include <algorithm>
 
 using namespace std;
 
@@ -36,10 +37,12 @@ using namespace std;
  * Knobs for configuring the instrumentation
  ******************************************************************************/
 // Name of the function to profile
-KNOB<string> knobFunctionName(KNOB_MODE_WRITEONCE, "pintool", "func", "main", "Function to be profiled.");
+KNOB<string> knobFunctionName(KNOB_MODE_WRITEONCE, "pintool", "func", "main",
+		"Function to be profiled.");
 
 // Output file name
-KNOB<string> knobOutFile(KNOB_MODE_WRITEONCE, "pintool", "out", "genCode.cpp", "Output file name.");
+KNOB<string> knobOutFile(KNOB_MODE_WRITEONCE, "pintool", "out", "genCode.cpp",
+		"Output file name.");
 
 // Enable Log
 KNOB<bool> knobLogEn(KNOB_MODE_WRITEONCE, "pintool", "log", "0",
@@ -47,12 +50,15 @@ KNOB<bool> knobLogEn(KNOB_MODE_WRITEONCE, "pintool", "log", "0",
         [1: enable, 0: disable (default)].");
 
 // Keep percentage
-KNOB<float> knobTopPerc(KNOB_MODE_WRITEONCE, "pintool", "top", "95", "Top instruction percentage.");
+KNOB<float> knobTopPerc(KNOB_MODE_WRITEONCE, "pintool", "top", "95",
+		"Top instruction percentage.");
+KNOB<INT64> knobInterval(KNOB_MODE_WRITEONCE, "pintool", "step", "-1",
+		"Interval in number of memory instructions executed");
+KNOB<INT64> knobStart(KNOB_MODE_WRITEONCE, "pintool", "start", "0",
+		"Profiling starts after this many number of memory instructions executed");
 
 // Max threads
-KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",
-		"Upper limit of the number of threads that can be used by the program \
-        being profiled.");
+//KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",	"Upper limit of the number of threads that can be used by the program being profiled.");
 
 /*******************************************************************************
  * Forward declarations
@@ -69,23 +75,32 @@ void printDotFile(const char *fname);
  * Global variables
  ******************************************************************************/
 static string rtn_name;
-static PIN_LOCK lock;
+//static PIN_LOCK lock;
 static bool log_en = false;
 static float top_perc;
 static string out_file_name;
 static INT64 rtnEntryCnt = 0;
+static INT64 interval = 0;
+static INT64 startCnt = 0;
 
 static vector<InsRoot*> insRootList;
 static vector<InsHashedRoot*> insHashedRootList;
 
 //static vector<InsNormal*> insTrace;   //td
-static vector<InsBase*> insTrace;   //td
+//static vector<InsBase*> insTrace;   //td
+static vector<InsMem*> insTrace;   //td
 //static vector<ADDRINT> addrTrace;
 
 static stack<ADDRINT> callStack;
 static ADDRINT callHash = HASH_INIT_VALUE;
 
 static ADDRINT globalMaxAddr = 0;
+static set<ADDRINT> vpnSet;
+static map<ADDRINT, ADDRINT> vpnToPpnMap;
+static vector<string> codeFragments;
+
+static InsBlock* beginBlock = nullptr;
+static InsBlock* endBlock = nullptr;
 
 //static map<UINT64, string> accTypeMap;
 //static map<UINT64, string> regNameMap;
@@ -100,60 +115,74 @@ uint64_t dynRandom = 0;
 /*******************************************************************************
  * Pattern Classes
  ******************************************************************************/
-void deriveLoopInfo(InsMem *ins) {
-
-  typedef struct{
-    InsLoop* lp = nullptr;
-    UINT64 cumProd = 1;
-  } LInfo;
-
-  stack<LInfo> loops;
-  InsLoop *lp = ins->parentLoop;
-  UINT64 prod = 1;
-  while (lp) {
-    loops.push({lp, prod});
-    prod *= lp->iters;
-    lp = lp->parentLoop;
-  }
-  if (loops.size() == 0) {
-    return; //not inside any loops
-  }
-
-
-  size_t sz = ins->addr.size();
-  //check outermost loop
-  if(sz % prod){
-    return;
-  }
-  INT64 m;
-  if(cln_utils::isRepeat(ins->addr, sz, sz / prod, m)){
-    if(m){
-      return;
-    }
-  }
-
-  vector<LoopInfo> _info;
-  sz = prod;
-  while (loops.size()) {
-    auto linfo = loops.top();
-    loops.pop();
-    if(sz % linfo.cumProd){
-      _info.push_back( { nullptr, 0 });
-      break;
-    }
-
-    if (cln_utils::isRepeat(ins->addr, sz, sz / linfo.cumProd, m)) {
-      sz = linfo.cumProd;
-      _info.push_back( { linfo.lp, m });
-    } else {
-      _info.push_back( { nullptr, 0 });
-      break;
-    }
-  }
-
-  ins->loops = _info;
+static inline ADDRINT getPageNum(ADDRINT addr){
+	return addr & 0xFFFFFFFFFFFFF000UL;
 }
 
+//static void genVpnToPpnMap(){
+//	uint64_t ppn = 0;
+//	for (UINT64 vpn : vpnSet) {
+//		vpnToPpnMap[vpn] = ppn << 12;
+//		ppn++;
+//	}
+//}
+
+static inline ADDRINT virtToPhyConvert(ADDRINT vAddr){
+	return vpnToPpnMap[getPageNum(vAddr)] + (vAddr & 0xFFFUL);
+}
+
+void deriveLoopInfo(InsMem *ins) {
+
+	typedef struct {
+		InsLoop *lp = nullptr;
+		UINT64 cumProd = 1;
+	} LInfo;
+
+	stack<LInfo> loops;
+	InsLoop *lp = ins->parentLoop;
+	UINT64 prod = 1;
+	while (lp) {
+		loops.push( { lp, prod });
+		prod *= lp->iters;
+		lp = lp->parentLoop;
+	}
+	if (loops.size() == 0) {
+		return; //not inside any loops
+	}
+
+	size_t sz = ins->addr.size();
+	//check outermost loop
+	if (sz % prod) {
+		return;
+	}
+	INT64 m;
+	if (cln_utils::isRepeat(ins->addr, sz, sz / prod, m)) {
+		if (m) {
+			return;
+		}
+	}
+
+	vector<LoopInfo> _info;
+	sz = prod;
+	while (loops.size()) {
+		auto linfo = loops.top();
+		loops.pop();
+		if (sz % linfo.cumProd) {
+			_info.push_back( { nullptr, 0 });
+			break;
+		}
+
+		if (cln_utils::isRepeat(ins->addr, sz, sz / linfo.cumProd, m)) {
+			sz = linfo.cumProd;
+			_info.push_back( { linfo.lp, m });
+		} else {
+			_info.push_back( { nullptr, 0 });
+			break;
+		}
+	}
+
+	ins->loops = _info;
+}
 
 /*******************************************************************************
  * Functions
@@ -187,7 +216,8 @@ void colorCFG(InsBlock *blk, set<InsBlock*> &visited) {
 	}
 }
 
-vector<pair<InsBlock*, UINT64> > mergeEdgeStack(vector<pair<InsBlock*, UINT64> > in) {
+vector<pair<InsBlock*, UINT64> > mergeEdgeStack(
+		vector<pair<InsBlock*, UINT64> > in) {
 	vector<pair<InsBlock*, UINT64> > out;
 	for (auto it : in) {
 		if (out.empty()) {
@@ -207,78 +237,80 @@ vector<pair<InsBlock*, UINT64> > mergeEdgeStack(vector<pair<InsBlock*, UINT64> >
 }
 
 bool isCommonLoop(set<InsBlock*> &cfg, InsBlock *blk) {
-  if (blk->ins.size() || (blk->outEdges.size() == 0)) {
-    return false;     //for now, only supports empty origin blocks
-  }
-  InsBlock *target = blk->outEdgesStack[0].first;
-  if ((target->inEdges.size() != 1) || (target->outEdges.size() != 1) || (target->outEdgesStack[0].first != blk)){
-    return false;
-  }
+	if (blk->ins.size() || (blk->outEdges.size() == 0)) {
+		return false;     //for now, only supports empty origin blocks
+	}
+	InsBlock *target = blk->outEdgesStack[0].first;
+	if ((target->inEdges.size() != 1) || (target->outEdges.size() != 1)
+			|| (target->outEdgesStack[0].first != blk)) {
+		return false;
+	}
 
-  //potential target found. Check edge stack
-  //UINT64 loopCnt = blk->outEdgesStack[0].second;
-  UINT64 totalCnt = 0;
-  UINT64 entryCnt = 0;
+	//potential target found. Check edge stack
+	//UINT64 loopCnt = blk->outEdgesStack[0].second;
+	UINT64 totalCnt = 0;
+	UINT64 entryCnt = 0;
 
-  for (size_t i = 0; i < blk->outEdgesStack.size(); i++) {
-    if (i & 1) {    //odd
-      //out edge count should be 1 (loop exit)
-      if (blk->outEdgesStack[i].second != 1)
-        return false;
-      //totalCnt++;
-      entryCnt++;
-    } else {         //even
-      //should be same block, and same loop count
-      if (blk->outEdgesStack[i].first != target)
-        return false;
-      //if (blk->outEdgesStack[i].second != loopCnt)
-      //  return false;
-      totalCnt += blk->outEdgesStack[i].second;
-    }
-  }
+	for (size_t i = 0; i < blk->outEdgesStack.size(); i++) {
+		if (i & 1) {    //odd
+			//out edge count should be 1 (loop exit)
+			if (blk->outEdgesStack[i].second != 1)
+				return false;
+			//totalCnt++;
+			entryCnt++;
+		} else {         //even
+			//should be same block, and same loop count
+			if (blk->outEdgesStack[i].first != target)
+				return false;
+			//if (blk->outEdgesStack[i].second != loopCnt)
+			//  return false;
+			totalCnt += blk->outEdgesStack[i].second;
+		}
+	}
 
-  UINT64 loopCnt  = totalCnt / entryCnt;
-  UINT64 rem = totalCnt % entryCnt;
-  if(rem){
-    loopCnt++;
-  }
+	UINT64 loopCnt = totalCnt / entryCnt;
+	UINT64 rem = totalCnt % entryCnt;
+	if (rem) {
+		loopCnt++;
+	}
 
-  // Found a loop
-  // 1. Create loop inst
-  InsLoop *lp = new InsLoop(InsTypeSingleLoop);
-  lp->iters = loopCnt;
-  lp->ins = target->ins;
+	// Found a loop
+	// 1. Create loop inst
+	InsLoop *lp = new InsLoop(InsTypeSingleLoop);
+	lp->iters = loopCnt;
+	lp->ins = target->ins;
 
-  // 2. Fix current block
-  blk->removeOutEdge(target);
-  blk->inEdges.erase(target);
-  blk->ins.push_back(lp); //insert loop instruction
+	// 2. Fix current block
+	blk->removeOutEdge(target);
+	blk->inEdges.erase(target);
+	blk->ins.push_back(lp); //insert loop instruction
 
-  // 3. Invalidate target block
-  cfg.erase(target);
-  target->isUsed = false;
+	// 3. Invalidate target block
+	cfg.erase(target);
+	target->isUsed = false;
 
-  //take care of remaining counts (if any)
-  if(rem){
-    stringstream ss;
-    ss << "static int64_t loop" << lp->id << "_break = " << totalCnt << "ULL;\n";
-    lp->prefix.push_back(ss.str());
+	//take care of remaining counts (if any)
+	if (rem) {
+		stringstream ss;
+		ss << "static int64_t loop" << lp->id << "_break = " << totalCnt
+				<< "ULL;\n";
+		lp->prefix.push_back(ss.str());
 
-    ss.str("");
-    ss.clear();
-    ss << "if(loop" << lp->id << "_break-- <= 0) break;\n";
-    lp->postfix.push_back(ss.str());
-  }
-  return true;
-  //return false;
+		ss.str("");
+		ss.clear();
+		ss << "if(loop" << lp->id << "_break-- <= 0) break;\n";
+		lp->postfix.push_back(ss.str());
+	}
+	return true;
+	//return false;
 }
 
 //check if one block creates a loop
 bool isSelfLoop(InsBlock *blk) {
-  if (blk->outEdgesStack.size() == 0) {
-    return false; //no out edges
-  }
-  if (blk->outEdges.find(blk) == blk->outEdges.end()) {
+	if (blk->outEdgesStack.size() == 0) {
+		return false; //no out edges
+	}
+	if (blk->outEdges.find(blk) == blk->outEdges.end()) {
 		return false;   //does not have any self edge
 	}
 
@@ -297,12 +329,12 @@ bool isSelfLoop(InsBlock *blk) {
 	UINT64 entryCnt = 0;
 
 	for (size_t i = 0; i < blk->outEdgesStack.size(); i++) {
-	  if (i & 1) {    //odd
+		if (i & 1) {    //odd
 			//out edge count should be 1 (loop exit)
 			if (blk->outEdgesStack[i].second != 1)
 				return false;
 			totalCnt++;
-      entryCnt++;
+			entryCnt++;
 		} else {         //even
 			//should be same block, and same loop count
 			if (blk->outEdgesStack[i].first != blk)
@@ -313,10 +345,10 @@ bool isSelfLoop(InsBlock *blk) {
 		}
 	}
 
-	UINT64 loopCnt  = totalCnt / entryCnt;
+	UINT64 loopCnt = totalCnt / entryCnt;
 	UINT64 rem = totalCnt % entryCnt;
-	if(rem){
-	  loopCnt++;
+	if (rem) {
+		loopCnt++;
 	}
 
 	// Found a loop
@@ -341,125 +373,126 @@ bool isSelfLoop(InsBlock *blk) {
 	blk->ins.push_back(lp); //insert loop instruction
 
 	//take care of remaining counts (if any)
-	if(rem){
-	  stringstream ss;
-	  ss << "static int64_t loop" << lp->id << "_break = " << totalCnt << "ULL;\n";
-	  lp->prefix.push_back(ss.str());
+	if (rem) {
+		stringstream ss;
+		ss << "static int64_t loop" << lp->id << "_break = " << totalCnt
+				<< "ULL;\n";
+		lp->prefix.push_back(ss.str());
 
-	  ss.str("");
-	  ss.clear();
-	  ss << "if(loop" << lp->id << "_break-- <= 0) break;\n";
-	  lp->postfix.push_back(ss.str());
-  }
+		ss.str("");
+		ss.clear();
+		ss << "if(loop" << lp->id << "_break-- <= 0) break;\n";
+		lp->postfix.push_back(ss.str());
+	}
 
 	return true;
 }
 
 /*bool isMultiLoop(set<InsBlock*> &cfg, InsBlock *root, InsBlock *a, InsBlock *b) {
-	if (a == b) {
-		return false;
-	}
+ if (a == b) {
+ return false;
+ }
 
-	if (b->outEdges.find(a) == b->outEdges.end()) {
-		return false;
-	}
+ if (b->outEdges.find(a) == b->outEdges.end()) {
+ return false;
+ }
 
-	//check if consistent loopCnt
-	UINT64 loopCnt = 0;
-	for (auto it : b->outEdgesStack) {
-		if (it.first == a) {
-			loopCnt = it.second;
-			break;
-		}
-	}
-	assert(loopCnt);
+ //check if consistent loopCnt
+ UINT64 loopCnt = 0;
+ for (auto it : b->outEdgesStack) {
+ if (it.first == a) {
+ loopCnt = it.second;
+ break;
+ }
+ }
+ assert(loopCnt);
 
-	for (auto it : b->outEdgesStack) {
-		if (it.first == a) {
-			if (loopCnt != it.second) {
-				return false;
-			}
-		}
-	}
+ for (auto it : b->outEdgesStack) {
+ if (it.first == a) {
+ if (loopCnt != it.second) {
+ return false;
+ }
+ }
+ }
 
-	//a --> b => a
-	//check if Loop CFG is exclusive
-	set<InsBlock*> visitedByRoot;
-	set<InsBlock*> visitedByA;
+ //a --> b => a
+ //check if Loop CFG is exclusive
+ set<InsBlock*> visitedByRoot;
+ set<InsBlock*> visitedByA;
 
-	//color from root
-	visitedByRoot.insert(a);
-	colorCFG(root, visitedByRoot);
-	colorCFG(b, visitedByRoot);
-	visitedByRoot.erase(a);
-	visitedByRoot.erase(b);
+ //color from root
+ visitedByRoot.insert(a);
+ colorCFG(root, visitedByRoot);
+ colorCFG(b, visitedByRoot);
+ visitedByRoot.erase(a);
+ visitedByRoot.erase(b);
 
-	//color from a
-	visitedByA.insert(b);
-	colorCFG(a, visitedByA);
+ //color from a
+ visitedByA.insert(b);
+ colorCFG(a, visitedByA);
 
-	vector<InsBlock*> overlap;
-	overlap.reserve(max(visitedByA.size(), visitedByRoot.size()));
-	vector<InsBlock*>::iterator oit;
-	oit = set_intersection(visitedByA.begin(), visitedByA.end(), visitedByRoot.begin(), visitedByRoot.end(),
-			overlap.begin());
-	if (oit != overlap.begin()) { //has overlap
-		return false;
-	}
+ vector<InsBlock*> overlap;
+ overlap.reserve(max(visitedByA.size(), visitedByRoot.size()));
+ vector<InsBlock*>::iterator oit;
+ oit = set_intersection(visitedByA.begin(), visitedByA.end(), visitedByRoot.begin(), visitedByRoot.end(),
+ overlap.begin());
+ if (oit != overlap.begin()) { //has overlap
+ return false;
+ }
 
-	//create a loop inst
-	InsMultiLoop *lp = new InsMultiLoop();
-	lp->iters = loopCnt + 1;
-	lp->cfg = visitedByA;
-	lp->sBlk = a;
-	lp->eBlk = b;
+ //create a loop inst
+ InsMultiLoop *lp = new InsMultiLoop();
+ lp->iters = loopCnt + 1;
+ lp->cfg = visitedByA;
+ lp->sBlk = a;
+ lp->eBlk = b;
 
-	//passed all checks! congrats!!
-	//create replacement node
-	InsBlock *r = new InsBlock();
-	r->outEdgesStack = b->outEdgesStack;
-	r->outEdges = b->outEdges;
-	r->inEdges = a->inEdges;
-	r->ins.push_back(lp);
+ //passed all checks! congrats!!
+ //create replacement node
+ InsBlock *r = new InsBlock();
+ r->outEdgesStack = b->outEdgesStack;
+ r->outEdges = b->outEdges;
+ r->inEdges = a->inEdges;
+ r->ins.push_back(lp);
 
-	//fix edges of r
-	r->inEdges.erase(b);
-	r->outEdges.erase(a);
+ //fix edges of r
+ r->inEdges.erase(b);
+ r->outEdges.erase(a);
 
-	vector<pair<InsBlock*, UINT64> > newOutEdgeStack;
-	for (auto it : r->outEdgesStack) {
-		if (it.first != a) {
-			//only include non-self edges
-			newOutEdgeStack.push_back( { it.first, it.second });
-		}
-	}
-	newOutEdgeStack = mergeEdgeStack(newOutEdgeStack);
-	r->outEdgesStack = newOutEdgeStack;
-	for (InsBlock *blk : r->outEdges) {
-		blk->inEdges.erase(b);
-		blk->inEdges.insert(r);
-	}
-	for (InsBlock *blk : r->inEdges) {
-		blk->outEdges.erase(a);
-		blk->outEdges.insert(r);
-		for (size_t i = 0; i < blk->outEdgesStack.size(); i++) {
-			if (blk->outEdgesStack[i].first == a) {
-				blk->outEdgesStack[i].first = r;
-			}
-		}
-	}
+ vector<pair<InsBlock*, UINT64> > newOutEdgeStack;
+ for (auto it : r->outEdgesStack) {
+ if (it.first != a) {
+ //only include non-self edges
+ newOutEdgeStack.push_back( { it.first, it.second });
+ }
+ }
+ newOutEdgeStack = mergeEdgeStack(newOutEdgeStack);
+ r->outEdgesStack = newOutEdgeStack;
+ for (InsBlock *blk : r->outEdges) {
+ blk->inEdges.erase(b);
+ blk->inEdges.insert(r);
+ }
+ for (InsBlock *blk : r->inEdges) {
+ blk->outEdges.erase(a);
+ blk->outEdges.insert(r);
+ for (size_t i = 0; i < blk->outEdgesStack.size(); i++) {
+ if (blk->outEdgesStack[i].first == a) {
+ blk->outEdgesStack[i].first = r;
+ }
+ }
+ }
 
-	a->inEdges.clear();
-	b->outEdges.clear();
-	b->outEdgesStack.clear();
+ a->inEdges.clear();
+ b->outEdges.clear();
+ b->outEdgesStack.clear();
 
-	cfg = visitedByRoot;
-	cfg.insert(r);
+ cfg = visitedByRoot;
+ cfg.insert(r);
 
-	compressCFG(lp->cfg);
+ compressCFG(lp->cfg);
 
-	return true;
-}*/
+ return true;
+ }*/
 
 bool mergeMultiLoops(set<InsBlock*> &cfg) {
 	/*InsBlock* s;
@@ -521,11 +554,11 @@ bool mergeSingleLoops(set<InsBlock*> &cfg) {
 bool mergeBlocks(set<InsBlock*> &cfg) {
 	bool isChanged = false;
 	for (InsBlock *in : cfg) {
-		if (in->getId() == 0)
+		if (in == beginBlock)
 			continue;   //skip begin block
 		if (in->outEdgesStack.size() == 1) {
 			InsBlock *out = in->outEdgesStack[0].first;
-			if (out->getId() == 1)
+			if (out == endBlock)	//skip end block
 				continue;
 			if ((out->inEdges.size() == 1) || (in->ins.size() == 0)) {
 				//fix incoming neighbors
@@ -558,12 +591,12 @@ void compressCFG(set<InsBlock*> &cfg) {
 		while (mergeBlocks(cfg))
 			;      // First, merge all blocks
 		if (mergeSingleLoops(cfg)) {    // Try to merge a self loop
-			continue;                   // Found a self loop, start from beginning
+			continue;                 // Found a self loop, start from beginning
 		}
 		if (mergeCommonLoop(cfg)) {    // Try to merge a common loop
 			continue;
 		}
-		if (!mergeMultiLoops(cfg)) {    // Last resort, try to merge multi block loops
+		if (!mergeMultiLoops(cfg)) { // Last resort, try to merge multi block loops
 			break;                      // Not found anything, quit
 		}
 		//sprintf(dfName, "dots/gv/dot%dq", dfCounter++);
@@ -586,58 +619,77 @@ void printDotFile(const char *fname) {
 	out << "}\n";
 }
 
-void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
+void generateCodeHeader(ofstream &out) {
 	out << "#include <cstdlib>\n";
 	out << "#include <cstdint>\n";
 	out << "#include <cstdio>\n";
 	out << "#include \"immintrin.h\"\n";
 	out << "\n";
-	out << "__attribute__((always_inline)) static inline uint64_t bounded_rnd(uint64_t bound) {\n";
+	out
+			<< "__attribute__((always_inline)) static inline uint64_t bounded_rnd(uint64_t bound) {\n";
 	out << _tab(1) << "static uint64_t hash = 0xC32ED012FEA8B4D3ULL;\n";
 	out << _tab(1) << "hash = (hash  << 1) ^ (((int64_t)hash < 0) ? 7 : 0);\n";
 	out << _tab(1) << "return (hash * (__uint128_t)bound) >> 64;\n";
 	out << "}\n";
 	out << "\n";
-	out << "#define READ_1b(X)  __asm__ __volatile__ (\"movb       (\%1,\%2), \%0\" : \"=r\"(tmp1)  : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-	out << "#define READ_2b(X)  __asm__ __volatile__ (\"movw       (\%1,\%2), \%0\" : \"=r\"(tmp2)  : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-	out << "#define READ_4b(X)  __asm__ __volatile__ (\"movl       (\%1,\%2), \%0\" : \"=r\"(tmp4)  : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-	out << "#define READ_8b(X)  __asm__ __volatile__ (\"movq       (\%1,\%2), \%0\" : \"=r\"(tmp8)  : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	out
+			<< "#define READ_1b(X)  __asm__ __volatile__ (\"movb       (\%1,\%2), \%0\" : \"=r\"(tmp1)  : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	out
+			<< "#define READ_2b(X)  __asm__ __volatile__ (\"movw       (\%1,\%2), \%0\" : \"=r\"(tmp2)  : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	out
+			<< "#define READ_4b(X)  __asm__ __volatile__ (\"movl       (\%1,\%2), \%0\" : \"=r\"(tmp4)  : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	out
+			<< "#define READ_8b(X)  __asm__ __volatile__ (\"movq       (\%1,\%2), \%0\" : \"=r\"(tmp8)  : \"r\"(gm), \"r\"(X) : \"memory\")\n";
 	//out << "#define READ_16b(X) __asm__ __volatile__ (\"movdqa     (\%1,\%2), \%0\" : \"=r\"(tmp16) : \"r\"(gm), \"r\"(X) : \"memory\")\n";
 	//out << "#define READ_32b(X) __asm__ __volatile__ (\"vmovdqa    (\%1,\%2), \%0\" : \"=r\"(tmp32) : \"r\"(gm), \"r\"(X) : \"memory\")\n";
 	//out << "#define READ_64b(X) __asm__ __volatile__ (\"vmovdqa32  (\%1,\%2), \%0\" : \"=r\"(tmp64) : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-  out << "#define READ_16b(X) tmp16 = _mm_load_si128((__m128i const*)(gm + (X)))\n";
-  out << "#define READ_32b(X) tmp32 = _mm256_load_si256((__m256i const*)(gm + (X)))\n";
-  out << "#define READ_64b(X) tmp64 = _mm512_load_si512((__m512i const*)(gm + (X)))\n";
+	out
+			<< "#define READ_16b(X) tmp16 = _mm_load_si128((__m128i const*)(gm + (X)))\n";
+	out
+			<< "#define READ_32b(X) tmp32 = _mm256_load_si256((__m256i const*)(gm + (X)))\n";
+	out
+			<< "#define READ_64b(X) tmp64 = _mm512_load_si512((__m512i const*)(gm + (X)))\n";
 	out << "\n";
-	out << "#define WRITE_1b(X)  __asm__ __volatile__ (\"movb      \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp1)  : \"memory\")\n";
-	out << "#define WRITE_2b(X)  __asm__ __volatile__ (\"movw      \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp2)  : \"memory\")\n";
-	out << "#define WRITE_4b(X)  __asm__ __volatile__ (\"movl      \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp4)  : \"memory\")\n";
-	out << "#define WRITE_8b(X)  __asm__ __volatile__ (\"movq      \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp8)  : \"memory\")\n";
+	out
+			<< "#define WRITE_1b(X)  __asm__ __volatile__ (\"movb      \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp1)  : \"memory\")\n";
+	out
+			<< "#define WRITE_2b(X)  __asm__ __volatile__ (\"movw      \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp2)  : \"memory\")\n";
+	out
+			<< "#define WRITE_4b(X)  __asm__ __volatile__ (\"movl      \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp4)  : \"memory\")\n";
+	out
+			<< "#define WRITE_8b(X)  __asm__ __volatile__ (\"movq      \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp8)  : \"memory\")\n";
 	//out << "#define WRITE_16b(X) __asm__ __volatile__ (\"movdqa    \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp16) : \"memory\")\n";
 	//out << "#define WRITE_32b(X) __asm__ __volatile__ (\"vmovdqa   \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp32) : \"memory\")\n";
 	//out << "#define WRITE_64b(X) __asm__ __volatile__ (\"vmovdqa32 \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp64) : \"memory\")\n";
-  out << "#define WRITE_16b(X) _mm_store_si128((__m128i*)(gm + (X)), tmp16)\n";
-  out << "#define WRITE_32b(X) _mm256_store_si256((__m256i*)(gm + (X)), tmp32)\n";
-  out << "#define WRITE_64b(X) _mm512_store_si512((__m512i*)(gm + (X)), tmp64)\n";
-  out << "\n";
-  out << "#define RMW_1b(X)  __asm__ __volatile__ (\"addb $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-  out << "#define RMW_2b(X)  __asm__ __volatile__ (\"addw $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-  out << "#define RMW_4b(X)  __asm__ __volatile__ (\"addl $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-  out << "#define RMW_8b(X)  __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-  //out << "#define RMW_16b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-  //out << "#define RMW_32b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
-  //out << "#define RMW_64b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	out
+			<< "#define WRITE_16b(X) _mm_store_si128((__m128i*)(gm + (X)), tmp16)\n";
+	out
+			<< "#define WRITE_32b(X) _mm256_store_si256((__m256i*)(gm + (X)), tmp32)\n";
+	out
+			<< "#define WRITE_64b(X) _mm512_store_si512((__m512i*)(gm + (X)), tmp64)\n";
 	out << "\n";
-	out << "volatile uint8_t* gm;\n";//[" << globalMaxAddr << "ULL];\n\n";
-  out << "#ifdef __SSE2__\n";
-  out << _tab(1) << "volatile __m128i tmp16;\n";
-  out << "#endif\n";
-  out << "#ifdef __AVX__\n";
-  out << _tab(1) << "volatile __m256i tmp32;\n";
-  out << "#endif\n";
-  out << "#ifdef __AVX512F__\n";
-  out << _tab(1) << "volatile __m512i tmp64;\n";
-  out << "#endif\n\n";
+	out
+			<< "#define RMW_1b(X)  __asm__ __volatile__ (\"addb $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	out
+			<< "#define RMW_2b(X)  __asm__ __volatile__ (\"addw $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	out
+			<< "#define RMW_4b(X)  __asm__ __volatile__ (\"addl $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	out
+			<< "#define RMW_8b(X)  __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	//out << "#define RMW_16b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	//out << "#define RMW_32b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	//out << "#define RMW_64b(X) __asm__ __volatile__ (\"addq $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";
+	out << "\n";
+	out << "volatile uint8_t* gm;\n";  //[" << globalMaxAddr << "ULL];\n\n";
+	out << "#ifdef __SSE2__\n";
+	out << _tab(1) << "volatile __m128i tmp16;\n";
+	out << "#endif\n";
+	out << "#ifdef __AVX__\n";
+	out << _tab(1) << "volatile __m256i tmp32;\n";
+	out << "#endif\n";
+	out << "#ifdef __AVX512F__\n";
+	out << _tab(1) << "volatile __m512i tmp64;\n";
+	out << "#endif\n\n";
 	out << "int main(){\n";
 	//out << _tab(1) << "volatile uint8_t* addr = NULL;\n";
 	out << _tab(1) << "int64_t addr;\n";
@@ -648,7 +700,8 @@ void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
 	out << _tab(1) << "uint32_t tmp4;\n";
 	out << _tab(1) << "uint64_t tmp8;\n";
 	out << _tab(1) << "uint64_t allocSize = " << globalMaxAddr << "ULL;\n";
-	out << _tab(1) << "gm = (volatile uint8_t*)aligned_alloc(4096, allocSize);\n";
+	out << _tab(1)
+			<< "gm = (volatile uint8_t*)aligned_alloc(4096, allocSize);\n";
 	//out << _tab(1) << "if(gm == NULL) {\n";
 	//out << _tab(2) << "fprintf(stderr, \"Cannot allocate memory\\n\");\n";
 	//out << _tab(2) << "exit(-1);\n";
@@ -671,37 +724,39 @@ void generateCodeHeader(ofstream &out, const vector<InsMem*> &insList) {
 	 out << _tab(1) << "uint64_t " << ins->strCurr << " = " << ins->addr.s << ";\n";
 	 }
 	 }*/
+}
+
+string generateCodeHeaderFragment(int indent, const vector<InsMem*> &insList){
+	stringstream ss;
 	for (InsMem *ins : insList) {
 		if (ins->isTop) {
-			out << ins->pat->genHeader(1);
+			ss << ins->pat->genHeader(indent);
 		}
 	}
-	out << "\n";
-	out << _tab(1) << "goto block0;\n";
-	out << "\n";
+	//ss << "\n";
+	//ss << _tab(1) << "goto block0;\n";
+	//ss << "\n";
+	return ss.str();
 }
 
 void generateCodeFooter(ofstream &out) {
-	out << "block1:\n";
+	//out << "block1:\n";
 	out << _tab(1) << "free((void*)gm);\n";
 	out << _tab(1) << "return 0;\n";
 	out << "}\n";
 }
 
-void generateCode(const vector<InsMem*> &insList, const set<InsBlock*> &cfg, const char *fname) {
+void generateCode(const char *fname) {
 	cout << "Generating code in: " << fname << "...\n";
 
 	//open output file
 	ofstream out(fname);
 
 	//write headers
-	generateCodeHeader(out, insList);
+	generateCodeHeader(out);
 
-	//write code blocks
-	for (InsBlock *blk : cfg) {
-		if (blk->getId() != 1) {   //skip end block. Handled in footer
-			out << blk->printCodeBody(1);
-		}
+	for(string& s : codeFragments){
+		out << s;
 	}
 
 	//write footer
@@ -709,22 +764,43 @@ void generateCode(const vector<InsMem*> &insList, const set<InsBlock*> &cfg, con
 
 }
 
-set<InsBlock*> cfgFromTrace(vector<InsBase*> &trace) {
+void generateCodeFragment(int indent, const vector<InsMem*> &insList, const set<InsBlock*> &cfg){
+	stringstream ss;
+	ss << _tab(indent) << "{\n";
+	ss << generateCodeHeaderFragment(indent + 1, insList);
+
+	ss << beginBlock->printCodeBody(indent + 1);	//dump begin block
+
+	//write code blocks
+	for (InsBlock *blk : cfg) {
+		if ((blk != beginBlock) && (blk != endBlock)) {   //skip end block. Handled in footer
+			ss << blk->printCodeBody(indent + 1);
+		}
+	}
+
+	ss << endBlock->printCodeBody(indent + 1);
+	ss << _tab(indent) << "}\n\n";
+	codeFragments.push_back(ss.str());
+}
+
+set<InsBlock*> cfgFromTrace(vector<InsMem*> &trace) {
 	set<InsBlock*> topInsBlocks;
 
-	InsBlock *prev = new InsBlock(0);    //begin block
+	beginBlock = new InsBlock();
+	//InsBlock *prev = new InsBlock(0);    //begin block
+	InsBlock *prev = beginBlock;
 	topInsBlocks.insert(prev);
 
 	for (InsBase *ins : trace) {
-		if(ins->isTop){
-			InsBlock* ib = ins->parentBlock;
-			if(ib == nullptr){
+		if (ins->isTop) {
+			InsBlock *ib = ins->parentBlock;
+			if (ib == nullptr) {
 				ib = new InsBlock();
 				topInsBlocks.insert(ib);
 				ins->parentBlock = ib;
-				if(ins->type == InsTypeNormal){
+				//if (ins->type == InsTypeNormal) {
 					ib->ins.push_back(ins);
-				}
+				//}
 			}
 			//add ib as the successor of prev
 			ib->inEdges.insert(prev);
@@ -744,7 +820,8 @@ set<InsBlock*> cfgFromTrace(vector<InsBase*> &trace) {
 	}
 
 	//add end block
-	InsBlock *ib = new InsBlock(1);
+	endBlock = new InsBlock();
+	InsBlock *ib = endBlock;
 	topInsBlocks.insert(ib);
 	ib->inEdges.insert(prev);
 	prev->outEdges.insert(ib);
@@ -754,41 +831,41 @@ set<InsBlock*> cfgFromTrace(vector<InsBase*> &trace) {
 }
 
 void writeLog(const char *logFile) {
-  cout << "Writing log file..." << endl;
-  ofstream log(logFile);
-  log << "ins,addr,r0w1\n";
-  for (size_t i = 0; i < insTrace.size(); i++) {
-    if (insTrace[i]->type == InsTypeNormal) {
-      InsMem *ins = (InsMem*) (insTrace[i]);
-      if (ins->isTop) {
-        ADDRINT ea = ins->addr[ins->cnt];
-        ins->cnt++;
-        log << ins->id << "," << ea << ",";
-        if (ins->accType == AccessTypeRead) {
-          log << "0\n";
-        } else if (ins->accType == AccessTypeWrite) {
-          log << "1\n";
-        }
-      }
-    }
-  }
+//	cout << "Writing log file..." << endl;
+//	ofstream log(logFile);
+//	log << "ins,addr,r0w1\n";
+//	for (size_t i = 0; i < insTrace.size(); i++) {
+//		if (insTrace[i]->type == InsTypeNormal) {
+//			InsMem *ins = (InsMem*) (insTrace[i]);
+//			if (ins->isTop) {
+//				ADDRINT ea = ins->addr[ins->cnt];
+//				ins->cnt++;
+//				log << ins->id << "," << ea << ",";
+//				if (ins->accType == AccessTypeRead) {
+//					log << "0\n";
+//				} else if (ins->accType == AccessTypeWrite) {
+//					log << "1\n";
+//				}
+//			}
+//		}
+//	}
 }
 
-set<InsBlock*> createDCFGfromInstTrace(vector<InsBase*> &trace) {
-	cout << "Creating DCFG from trace..." << endl;
+set<InsBlock*> createDCFGfromInstTrace(vector<InsMem*> &trace) {
+	//cout << "Creating DCFG from trace..." << endl;
 	set<InsBlock*> topInsBlocks = cfgFromTrace(trace);
 
-	if(log_en){
-    writeLog("top_trace.csv");
-  }
+	//if (log_en) {
+	//	writeLog("top_trace.csv");
+	//}
 
-	vector<InsBase*>().swap(trace);  //free trace memory
-	cout << "Created initial CFG with " << topInsBlocks.size() << " blocks." << endl;
+	vector<InsMem*>().swap(trace);  //free trace memory
+	//cout << "Created initial CFG with " << topInsBlocks.size() << " blocks." << endl;
 	//printDotFile("dcfgBC.gv");
 
 	compressCFG(topInsBlocks);
-	printDotFile("dcfgLC.gv");
-	cout << "Compressed CFG with " << topInsBlocks.size() << " blocks." << endl;
+	//printDotFile("dcfgLC.gv");
+	//cout << "Compressed CFG with " << topInsBlocks.size() << " blocks." << endl;
 
 	return topInsBlocks;
 }
@@ -823,8 +900,8 @@ void printInfo(vector<InsMem*> &res) {
 
 		cout << setw(20) << "TotalSz: " << i->totalSz;
 		cout << setw(20) << i->pat->printPattern();
-		cout << setw(10) << "[" << setw(10) << i->minAddr << " : " << setw(10) << i->maxAddr
-				<< "]   ";
+		cout << setw(10) << "[" << setw(10) << i->minAddr << " : " << setw(10)
+				<< i->maxAddr << "]   ";
 		//cout << setw(10);
 		int pCnt = 0;
 		for (auto s : i->strideDist) {
@@ -834,13 +911,13 @@ void printInfo(vector<InsMem*> &res) {
 		}
 		auto idx = i->hashedRoot->root->srcFile.find_last_of('/');
 		string srcFile;
-		if(idx == string::npos){
-		  srcFile = i->hashedRoot->root->srcFile;
+		if (idx == string::npos) {
+			srcFile = i->hashedRoot->root->srcFile;
+		} else {
+			srcFile = i->hashedRoot->root->srcFile.substr(idx + 1);
 		}
-		else{
-		  srcFile = i->hashedRoot->root->srcFile.substr(idx+1);
-		}
-		cout << "\t" << srcFile << ":" << i->hashedRoot->root->srcLine << "\t\t" << i->addr.size() << "\t";
+		cout << "\t" << srcFile << ":" << i->hashedRoot->root->srcLine << "\t\t"
+				<< i->addr.size() << "\t";
 		/*InsLoopBase* lp = i->parentLoop;
 		 //InsLoop* ol = nullptr;
 		 while(lp){
@@ -867,24 +944,28 @@ UINT64 getTotalAccessSz(const vector<InsMem*> &insList) {
 
 vector<InsMem*> keepTop(vector<InsMem*> &insList, double perc) {
 	UINT64 sz = getTotalAccessSz(insList);
-	cout << "Before pruning. NumInst: " << insList.size() << "\t\tAccessSz: " << sz << endl;
+	//cout << "Before pruning. NumInst: " << insList.size() << "\t\tAccessSz: "
+	//		<< sz << endl;
 	UINT64 szAfter = sz * perc / 100.0;
 
 	//sort using total accessed size
-	sort(insList.begin(), insList.end(), [](const InsMem *lhs, const InsMem *rhs) {
-		return lhs->totalSz > rhs->totalSz;
-	});
+	sort(insList.begin(), insList.end(),
+			[](const InsMem *lhs, const InsMem *rhs) {
+				return lhs->totalSz > rhs->totalSz;
+			});
 
 	vector<InsMem*> out;
 	sz = 0;
 	for (InsMem *it : insList) {
+		it->isTop = true;
 		out.push_back(it);
 		sz += it->totalSz;
 		if (sz > szAfter)
 			break;
 	}
 
-	cout << "After pruning. NumInst: " << out.size() << "\t\tAccessSz: " << getTotalAccessSz(out) << endl;
+	//cout << "After pruning. NumInst: " << out.size() << "\t\tAccessSz: "
+	//		<< getTotalAccessSz(out) << endl;
 	return out;
 }
 
@@ -893,15 +974,15 @@ vector<InsMem*> deleteConstAccess2(const vector<InsMem*> &insList) {
 	for (InsMem *it : insList) {
 		ADDRINT lastAddr = 0;
 		UINT64 zeroCnt = 0;
-		for(ADDRINT addr : it->addr){
-			if(lastAddr - addr == 0){
+		for (ADDRINT addr : it->addr) {
+			if (lastAddr - addr == 0) {
 				zeroCnt++;
 			}
 			lastAddr = addr;
 		}
 
 		//consider only if less than 20% is zero stride access
-		if(zeroCnt < it->addr.size() * 0.2){
+		if (zeroCnt < it->addr.size() * 0.2) {
 			it->totalSz = it->addr.size() * it->accSz;
 			out.push_back(it);
 		} else {
@@ -914,262 +995,226 @@ vector<InsMem*> deleteConstAccess2(const vector<InsMem*> &insList) {
 vector<InsMem*> deleteZeroAccesses(const vector<InsMem*> &insList) {
 	vector<InsMem*> out;
 	for (InsMem *ins : insList) {
-    if (ins->totalSz >= MIN_SZ) {
-      out.push_back(ins);
-    } else {
-      vector<ADDRINT>().swap(ins->addr);
-    }
+		if (ins->totalSz >= MIN_SZ) {
+			out.push_back(ins);
+		} else {
+			vector<ADDRINT>().swap(ins->addr);
+		}
 	}
 	return out;
 }
 
 void shiftAddressSpace(InsMem *ins, INT64 offset) {
 	/*PatternInfo *pat = ins->patInfo;
-	pat->addrRange.s += offset;
-	pat->addrRange.e += offset;
-	const UINT64 cnt = pat->addr.size();
-	for (UINT64 i = 0; i < cnt; i++) {
-		pat->addr[i] += offset;
-	}
-	//pat->pat->shiftAddress(offset);
-	for (auto &it : pat->strideAddr) {
-		for (ADDRINT ea : it.second) {
-			it.second.erase(ea);
-			it.second.insert(ea + offset);
-		}
-	}
-	map<ADDRINT, set<INT64>> nm;
-	for (auto &it : pat->addrStrideMap) {
-		nm[it.first + offset] = it.second;
-	}
-	pat->addrStrideMap = nm;*/
+	 pat->addrRange.s += offset;
+	 pat->addrRange.e += offset;
+	 const UINT64 cnt = pat->addr.size();
+	 for (UINT64 i = 0; i < cnt; i++) {
+	 pat->addr[i] += offset;
+	 }
+	 //pat->pat->shiftAddress(offset);
+	 for (auto &it : pat->strideAddr) {
+	 for (ADDRINT ea : it.second) {
+	 it.second.erase(ea);
+	 it.second.insert(ea + offset);
+	 }
+	 }
+	 map<ADDRINT, set<INT64>> nm;
+	 for (auto &it : pat->addrStrideMap) {
+	 nm[it.first + offset] = it.second;
+	 }
+	 pat->addrStrideMap = nm;*/
 }
 
 void derivePatternInitial(const vector<InsMem*> &insList) {
 	/*for (InsMem *it : insList) {
-		PatternInfo *pat = it->patInfo;
-		//bool isRandom = false;
-		pat->totalSz = pat->addr.size() * it->accSz;
-		ADDRINT min = 0xFFFFFFFFFFFFFFFFULL;
-		ADDRINT max = 0;
-		UINT64 cnt = pat->addr.size();
+	 PatternInfo *pat = it->patInfo;
+	 //bool isRandom = false;
+	 pat->totalSz = pat->addr.size() * it->accSz;
+	 ADDRINT min = 0xFFFFFFFFFFFFFFFFULL;
+	 ADDRINT max = 0;
+	 UINT64 cnt = pat->addr.size();
+	 INT64 lastStride = 0xDEADBEEF;
+	 for (UINT64 i = 0; i < (cnt - 1); i++) {
+	 ADDRINT currAddr = pat->addr[i];
+	 ADDRINT nextAddr = pat->addr[i + 1];
+
+	 if (currAddr > max) {
+	 max = currAddr;
+	 }
+	 if (currAddr < min) {
+	 min = currAddr;
+	 }
+
+	 //if(isRandom == false){
+	 INT64 stride = nextAddr - currAddr;
+	 pat->strideDist[stride]++;
+	 if (stride != lastStride) {
+	 //stride change point!
+	 pat->strideAddr[stride].insert(currAddr);
+	 pat->strideRef[stride].insert(i);
+	 pat->addrStrideMap[currAddr].insert(stride);
+	 //if(pat->strideAddr.size() > MAX_STRIDE_BUCKETS){
+	 //  isRandom = true;
+	 //}
+	 }
+	 lastStride = stride;
+	 //}
+	 }
+	 ADDRINT lastAddr = pat->addr[cnt - 1];
+	 if (lastAddr > max) {
+	 max = lastAddr;
+	 }
+	 if (lastAddr < min) {
+	 min = lastAddr;
+	 }
+	 pat->addrRange.s = min;
+	 pat->addrRange.e = max + it->accSz;
+
+	 //only go further if pattern type is not random
+	 //if(isRandom){
+	 //create random
+	 //  it->patInfo->pat = PatternRandom::create(it);
+	 //  continue;
+	 //}
+
+	 //check if constant/zero stride access
+	 if ((it->patInfo->pat = PatternConst::create(it))) {
+	 continue;
+	 }
+	 }*/
+}
+
+
+
+
+
+
+void updateAddrInfo(vector<InsMem*> &insList) {
+	for (InsMem *it : insList) {
+		for (UINT64 addr : it->addr) {
+			vpnSet.insert(getPageNum(addr));
+		}
+	}
+
+	//cout << "\tUpdate addr..." << endl;
+	for (InsMem *it : insList) {
+		assert(it->maxAddr > it->minAddr);
+		it->maxAddr += it->accSz;
+
+		UINT64 cnt = it->addr.size();
 		INT64 lastStride = 0xDEADBEEF;
+		//bool isRandom = false;
+		bool isValidAddrMap = true;
 		for (UINT64 i = 0; i < (cnt - 1); i++) {
-			ADDRINT currAddr = pat->addr[i];
-			ADDRINT nextAddr = pat->addr[i + 1];
-
-			if (currAddr > max) {
-				max = currAddr;
-			}
-			if (currAddr < min) {
-				min = currAddr;
-			}
-
 			//if(isRandom == false){
+			ADDRINT currAddr = it->addr[i];
+			ADDRINT nextAddr = it->addr[i + 1];
+
 			INT64 stride = nextAddr - currAddr;
-			pat->strideDist[stride]++;
-			if (stride != lastStride) {
+			it->strideDist[stride]++;
+			//if(it->strideDist.size() > 30){
+			//  isRandom = true;
+			//}
+			if (stride != lastStride && isValidAddrMap) {
 				//stride change point!
-				pat->strideAddr[stride].insert(currAddr);
-				pat->strideRef[stride].insert(i);
-				pat->addrStrideMap[currAddr].insert(stride);
-				//if(pat->strideAddr.size() > MAX_STRIDE_BUCKETS){
-				//  isRandom = true;
-				//}
+				auto iter = it->addrStrideMap.find(currAddr);
+				if (iter == it->addrStrideMap.end()) {
+					//not found, insert
+					it->addrStrideMap[currAddr] = stride;
+				} else if (iter->second != stride) {
+					//found, but different stride. Invalidate...
+					iter->second = 0xDEADBEAF;
+					isValidAddrMap = false;
+				}
+				if (it->addrStrideMap.size() > MAX_SMALL_TILES) {
+					isValidAddrMap = false;
+				}
 			}
 			lastStride = stride;
 			//}
 		}
-		ADDRINT lastAddr = pat->addr[cnt - 1];
-		if (lastAddr > max) {
-			max = lastAddr;
-		}
-		if (lastAddr < min) {
-			min = lastAddr;
-		}
-		pat->addrRange.s = min;
-		pat->addrRange.e = max + it->accSz;
-
-		//only go further if pattern type is not random
 		//if(isRandom){
-		//create random
-		//  it->patInfo->pat = PatternRandom::create(it);
-		//  continue;
+		//  it->pat = PatternRandom::create(it);
 		//}
-
-		//check if constant/zero stride access
-		if ((it->patInfo->pat = PatternConst::create(it))) {
-			continue;
-		}
-	}*/
-}
-
-void updateAddrInfo(vector<InsMem*> &insList){
-	cout << "Updating address related info..." << endl;
-
-	//sort using min address
-  //sort(insList.begin(), insList.end(), [](const InsMem *lhs, const InsMem *rhs) {
-  //  if (lhs->minAddr == rhs->minAddr) {
-  //    return lhs->maxAddr < rhs->maxAddr;
-  //  }
-  //  return lhs->minAddr < rhs->minAddr;
-  //});
-
-	cout << "\tBuild VNP list..." << endl;
-  set<UINT64> vpnSet;
-  for(InsMem* it : insList){
-    for(UINT64 addr : it->addr){
-      UINT64 vpn = addr & 0xFFFFFFFFFFFFF000ULL;
-      vpnSet.insert(vpn);
-    }
-  }
-
-  cout << "\tTotal VPN count: " << vpnSet.size() << endl;
-  globalMaxAddr = vpnSet.size() * 4096ULL;
-  cout << "\tGlobal max address (or memory footprint): " << globalMaxAddr << endl;
-
-  map<UINT64, UINT64> vpnMap;
-  uint64_t ppn = 0;
-  for(UINT64 vpn : vpnSet){
-    vpnMap[vpn] = (ppn << 12);
-    //cout << vpn << " : " << ppn << "\n";
-    ppn++;
-  }
-
-  cout << "\tUpdate addr..." << endl;
-  for(InsMem* it : insList){
-    assert(it->maxAddr > it->minAddr);
-    it->minAddr = vpnMap[it->minAddr & 0xFFFFFFFFFFFFF000ULL] | (it->minAddr & 0xFFFULL);
-    it->maxAddr = vpnMap[it->maxAddr & 0xFFFFFFFFFFFFF000ULL] | (it->maxAddr & 0xFFFULL);
-    it->maxAddr += it->accSz;
-    assert(it->maxAddr > it->minAddr);
-
-    //update global max addresses
-    //if (it->maxAddr > globalMaxAddr) {
-    //  globalMaxAddr = it->maxAddr;
-    //}
-
-    UINT64 cnt = it->addr.size();
-    INT64 lastStride = 0xDEADBEEF;
-    //bool isRandom = false;
-    bool isValidAddrMap = true;
-    it->addr[0] = vpnMap[it->addr[0] & 0xFFFFFFFFFFFFF000ULL] | (it->addr[0] & 0xFFFULL);
-    for (UINT64 i = 0; i < (cnt - 1); i++) {
-      it->addr[i + 1] = vpnMap[it->addr[i+1] & 0xFFFFFFFFFFFFF000ULL] | (it->addr[i+1] & 0xFFFULL);
-      //if(isRandom == false){
-        ADDRINT currAddr = it->addr[i];
-        ADDRINT nextAddr = it->addr[i + 1];
-
-        INT64 stride = nextAddr - currAddr;
-        it->strideDist[stride]++;
-        //if(it->strideDist.size() > 30){
-        //  isRandom = true;
-        //}
-        if (stride != lastStride && isValidAddrMap) {
-          //stride change point!
-          auto iter = it->addrStrideMap.find(currAddr);
-          if(iter == it->addrStrideMap.end()){
-            //not found, insert
-            it->addrStrideMap[currAddr] = stride;
-          }
-          else if(iter->second != stride){
-            //found, but different stride. Invalidate...
-            iter->second = 0xDEADBEAF;
-            isValidAddrMap = false;
-          }
-          if(it->addrStrideMap.size() > MAX_SMALL_TILES){
-            isValidAddrMap = false;
-          }
-        }
-        lastStride = stride;
-      //}
-    }
-    //if(isRandom){
-    //  it->pat = PatternRandom::create(it);
-    //}
-  }
+	}
 
 
-  /*
-  //update address space to remove gaps
-  ADDRINT gmax = 0;
-  ADDRINT gap = 0;
-
-  for (InsMem *it : insList) {
-    //if(it->minAddr & (it->accSz-1)){
-    //  cout << "unaligned access: " << it->accSz << "  " << it->minAddr << endl;
-    //  exit(-1);
-    //}
-    //if(it->maxAddr & (it->accSz-1)){
-    //  cout << "unaligned access: " << it->accSz << "  " << it->maxAddr << endl;
-    //  exit(-1);
-    //}
-    if (it->minAddr > gmax) {
-      //found a gap in the address space
-      gap = gap + it->minAddr - gmax;
-
-      //align to access size
-      //gap &= ~(it->accSz - 1ULL);
-      //if(gap & (it->accSz - 1ULL)){
-      //  //not aligned. align the gap.
-      //  gap = (gap & ~(it->accSz - 1ULL)) + it->accSz;
-      //}
-      gap = (gap & ~(MIN_ALIGNMENT - 1ULL));
-    }
-    if (it->maxAddr > gmax) {
-      //update max address if needed
-      gmax = it->maxAddr;
-    }
-
-    it->minAddr -= gap;
-    it->maxAddr -= gap;
-
-    //update global max addresses
-    if (it->maxAddr > globalMaxAddr) {
-      globalMaxAddr = it->maxAddr;
-    }
-
-    UINT64 cnt = it->addr.size();
-    INT64 lastStride = 0xDEADBEEF;
-    //bool isRandom = false;
-    bool isValidAddrMap = true;
-    it->addr[0] -= gap;
-    for (UINT64 i = 0; i < (cnt - 1); i++) {
-      it->addr[i + 1] -= gap;
-      //if(isRandom == false){
-        ADDRINT currAddr = it->addr[i];
-        ADDRINT nextAddr = it->addr[i + 1];
-
-        INT64 stride = nextAddr - currAddr;
-        it->strideDist[stride]++;
-        //if(it->strideDist.size() > 30){
-        //  isRandom = true;
-        //}
-        if (stride != lastStride && isValidAddrMap) {
-          //stride change point!
-          auto iter = it->addrStrideMap.find(currAddr);
-          if(iter == it->addrStrideMap.end()){
-            //not found, insert
-            it->addrStrideMap[currAddr] = stride;
-          }
-          else if(iter->second != stride){
-            //found, but different stride. Invalidate...
-            iter->second = 0xDEADBEAF;
-            isValidAddrMap = false;
-          }
-          if(it->addrStrideMap.size() > MAX_SMALL_TILES){
-            isValidAddrMap = false;
-          }
-        }
-        lastStride = stride;
-      //}
-    }
-    //if(isRandom){
-    //  it->pat = PatternRandom::create(it);
-    //}
-  }
-  */
-  //cout << "Global max address: " << globalMaxAddr << endl;
+//	//cout << "Updating address related info..." << endl;
+//
+//	//cout << "\tBuild VPN list..." << endl;
+//	set<UINT64> vpnSet;
+//	for (InsMem *it : insList) {
+//		for (UINT64 addr : it->addr) {
+//			UINT64 vpn = addr & 0xFFFFFFFFFFFFF000ULL;
+//			vpnSet.insert(vpn);
+//		}
+//	}
+//
+//	//cout << "\tTotal VPN count: " << vpnSet.size() << endl;
+//	if(vpnSet.size() * 4096ULL > globalMaxAddr){
+//		globalMaxAddr = vpnSet.size() * 4096ULL;
+//	}
+//	//cout << "\tGlobal max address (or memory footprint): " << globalMaxAddr << endl;
+//
+//	map<UINT64, UINT64> vpnMap;
+//	uint64_t ppn = 0;
+//	for (UINT64 vpn : vpnSet) {
+//		vpnMap[vpn] = (ppn << 12);
+//		//cout << vpn << " : " << ppn << "\n";
+//		ppn++;
+//	}
+//
+//	//cout << "\tUpdate addr..." << endl;
+//	for (InsMem *it : insList) {
+//		assert(it->maxAddr > it->minAddr);
+//		it->minAddr = vpnMap[it->minAddr & 0xFFFFFFFFFFFFF000ULL]
+//				| (it->minAddr & 0xFFFULL);
+//		it->maxAddr = vpnMap[it->maxAddr & 0xFFFFFFFFFFFFF000ULL]
+//				| (it->maxAddr & 0xFFFULL);
+//		it->maxAddr += it->accSz;
+//		assert(it->maxAddr > it->minAddr);
+//
+//		UINT64 cnt = it->addr.size();
+//		INT64 lastStride = 0xDEADBEEF;
+//		//bool isRandom = false;
+//		bool isValidAddrMap = true;
+//		it->addr[0] = vpnMap[it->addr[0] & 0xFFFFFFFFFFFFF000ULL]
+//				| (it->addr[0] & 0xFFFULL);
+//		for (UINT64 i = 0; i < (cnt - 1); i++) {
+//			it->addr[i + 1] = vpnMap[it->addr[i + 1] & 0xFFFFFFFFFFFFF000ULL]
+//					| (it->addr[i + 1] & 0xFFFULL);
+//			//if(isRandom == false){
+//			ADDRINT currAddr = it->addr[i];
+//			ADDRINT nextAddr = it->addr[i + 1];
+//
+//			INT64 stride = nextAddr - currAddr;
+//			it->strideDist[stride]++;
+//			//if(it->strideDist.size() > 30){
+//			//  isRandom = true;
+//			//}
+//			if (stride != lastStride && isValidAddrMap) {
+//				//stride change point!
+//				auto iter = it->addrStrideMap.find(currAddr);
+//				if (iter == it->addrStrideMap.end()) {
+//					//not found, insert
+//					it->addrStrideMap[currAddr] = stride;
+//				} else if (iter->second != stride) {
+//					//found, but different stride. Invalidate...
+//					iter->second = 0xDEADBEAF;
+//					isValidAddrMap = false;
+//				}
+//				if (it->addrStrideMap.size() > MAX_SMALL_TILES) {
+//					isValidAddrMap = false;
+//				}
+//			}
+//			lastStride = stride;
+//			//}
+//		}
+//		//if(isRandom){
+//		//  it->pat = PatternRandom::create(it);
+//		//}
+//	}
 }
 
 void derivePattern(const vector<InsMem*> &insList) {
@@ -1235,15 +1280,15 @@ ADDRINT getMask(ADDRINT addr) {
 }
 
 vector<InsMem*> markTopAndProcessInfo(const vector<InsMem*> &insList) {
-  vector<InsMem*> out;
+	vector<InsMem*> out;
 	for (InsMem *it : insList) {
 		//it->maxAddr += it->accSz;
 		//if((it->maxAddr - it->minAddr) > MAX_ADDRESS_RANGE){
 		//  cerr << "[WARN] dropping inst for going over range" << endl;
 		//}
 		//else{
-		  it->isTop = true;
-		  out.push_back(it);
+		it->isTop = true;
+		out.push_back(it);
 		//}
 	}
 	return out;
@@ -1265,38 +1310,38 @@ void printMaxEdgeStack(const set<InsBlock*> &cfg) {
 }
 
 /*void printStrideAddr(const vector<InsMem*> &insList, UINT64 id) {
-	cout << "Printing Stride Address for " << id << endl;
-	for (InsMem *ins : insList) {
-		if (ins->id == id) {
-			PatternInfo *pat = ins->patInfo;
-			for (auto &it : pat->strideAddr) {
-				cout << setw(10) << it.first << ": ";
-				for (ADDRINT addr : it.second) {
-					cout << addr << ", ";
-				}
-				cout << endl;
-			}
-			return;
-		}
-	}
-}*/
+ cout << "Printing Stride Address for " << id << endl;
+ for (InsMem *ins : insList) {
+ if (ins->id == id) {
+ PatternInfo *pat = ins->patInfo;
+ for (auto &it : pat->strideAddr) {
+ cout << setw(10) << it.first << ": ";
+ for (ADDRINT addr : it.second) {
+ cout << addr << ", ";
+ }
+ cout << endl;
+ }
+ return;
+ }
+ }
+ }*/
 
 /*void printStrideRef(const vector<InsMem*> &insList, UINT64 id) {
-	cout << "Printing Stride Refs for " << id << endl;
-	for (InsMem *ins : insList) {
-		if (ins->id == id) {
-			PatternInfo *pat = ins->patInfo;
-			for (auto &it : pat->strideRef) {
-				cout << setw(10) << it.first << ": ";
-				for (ADDRINT addr : it.second) {
-					cout << addr << ", ";
-				}
-				cout << endl;
-			}
-			return;
-		}
-	}
-}*/
+ cout << "Printing Stride Refs for " << id << endl;
+ for (InsMem *ins : insList) {
+ if (ins->id == id) {
+ PatternInfo *pat = ins->patInfo;
+ for (auto &it : pat->strideRef) {
+ cout << setw(10) << it.first << ": ";
+ for (ADDRINT addr : it.second) {
+ cout << addr << ", ";
+ }
+ cout << endl;
+ }
+ return;
+ }
+ }
+ }*/
 
 void replaceRand(vector<InsBase*> &insList) {
 	int state = 0;
@@ -1336,114 +1381,122 @@ void detectRandFunction() {
 	}
 }
 
-void print_pat_dist(vector<InsMem*> &insList){
-  uint64_t dom = 0;
-  uint64_t loopedIndex = 0;
-  uint64_t random = 0;
-  uint64_t dynDom = 0;
-  uint64_t dynLoopedIndex = 0;
-  uint64_t dynRandom = 0;
-  for(InsMem* ins : insList){
-    if((ins->pat->type == PatType::PatLoopIndexed) || (ins->pat->type == PatType::PatTypeSmallTile)){
-      loopedIndex++;
-      dynLoopedIndex += ins->addr.size();
-    }
-    else if(ins->pat->type == PatType::PatTypeDominant){
-      dom++;
-      dynDom += ins->addr.size();
-    }
-    else if(ins->pat->type == PatType::PatTypeRandom){
-      random++;
-      dynRandom += ins->addr.size();
-    }
-    else{
-      cout << "[ERROR] unknown pattern" <<  endl;
-    }
-  }
-  cout << "Dynamic #dom: " << dynDom << endl;
-  cout << "Dynamic #rand: " << dynRandom << endl;
-  cout << "Dynamic #loopedIndex: " << dynLoopedIndex << endl;
-  cout << "Static #dom: " << dom << endl;
-  cout << "Static #rand: " << random << endl;
-  cout << "Static #loopedIndex: " << loopedIndex << endl;
+void print_pat_dist(vector<InsMem*> &insList) {
+	uint64_t dom = 0;
+	uint64_t loopedIndex = 0;
+	uint64_t random = 0;
+	uint64_t dynDom = 0;
+	uint64_t dynLoopedIndex = 0;
+	uint64_t dynRandom = 0;
+	for (InsMem *ins : insList) {
+		if ((ins->pat->type == PatType::PatLoopIndexed)
+				|| (ins->pat->type == PatType::PatTypeSmallTile)) {
+			loopedIndex++;
+			dynLoopedIndex += ins->addr.size();
+		} else if (ins->pat->type == PatType::PatTypeDominant) {
+			dom++;
+			dynDom += ins->addr.size();
+		} else if (ins->pat->type == PatType::PatTypeRandom) {
+			random++;
+			dynRandom += ins->addr.size();
+		} else {
+			cout << "[ERROR] unknown pattern" << endl;
+		}
+	}
+	cout << "Dynamic #dom: " << dynDom << endl;
+	cout << "Dynamic #rand: " << dynRandom << endl;
+	cout << "Dynamic #loopedIndex: " << dynLoopedIndex << endl;
+	cout << "Static #dom: " << dom << endl;
+	cout << "Static #rand: " << random << endl;
+	cout << "Static #loopedIndex: " << loopedIndex << endl;
 }
 
-void print_edge_dist(){
-  cout << "Dynamic #direct: " << dynDirect << endl;
-  cout << "Dynamic #ordered: " << dynOrdered << endl;
-  cout << "Dynamic #random: " << dynRandom << endl;
-  cout << "Static #direct: " << statDirect << endl;
-  cout << "Static #ordered: " << statOrdered << endl;
-  cout << "Static #random: " << statRandom << endl;
+void print_edge_dist() {
+	cout << "Dynamic #direct: " << dynDirect << endl;
+	cout << "Dynamic #ordered: " << dynOrdered << endl;
+	cout << "Dynamic #random: " << dynRandom << endl;
+	cout << "Static #direct: " << statDirect << endl;
+	cout << "Static #ordered: " << statOrdered << endl;
+	cout << "Static #random: " << statRandom << endl;
 }
 
-void print_filtering(const vector<InsMem*> &insList, string msg, bool top){
-  cout << msg << endl;
+void print_filtering(const vector<InsMem*> &insList, string msg, bool top) {
+	cout << msg << endl;
 
-  uint64_t mem_acc_sz = 0;
-  uint64_t dyn_inst = 0;
-  uint64_t stat_inst = 0;
-  for (InsMem *ins : insList) {
-    if(ins->isTop == top){
-      mem_acc_sz += ins->totalSz;
-      dyn_inst += ins->addr.size();
-      stat_inst++;
-    }
-  }
+	uint64_t mem_acc_sz = 0;
+	uint64_t dyn_inst = 0;
+	uint64_t stat_inst = 0;
+	for (InsMem *ins : insList) {
+		if (ins->isTop == top) {
+			mem_acc_sz += ins->totalSz;
+			dyn_inst += ins->addr.size();
+			stat_inst++;
+		}
+	}
 
-  cout << "\tDynamic memory instructions: " << dyn_inst << endl;
-  cout << "\tStatic memory instructions: " << stat_inst << endl;
-  cout << "\tMemory access size: " << mem_acc_sz << endl;
+	cout << "\tDynamic memory instructions: " << dyn_inst << endl;
+	cout << "\tStatic memory instructions: " << stat_inst << endl;
+	cout << "\tMemory access size: " << mem_acc_sz << endl;
 }
 
-VOID Fini(INT32 code, VOID *v) {
-	cout << "AT FINI" << endl;
+
+
+static UINT64 intervalCnt = 0;
+
+void processInterval() {
+	cout << "Interval: " << intervalCnt++ << "\n";
 	// 0. Filter zero  (or very low) cnt instructions
 	vector<InsMem*> filteredInsList;
 	for (InsBase *it : InsBase::insList) {
-    if (it->type == InsTypeNormal) {
-      InsMem *ins = static_cast<InsMem*>(it);
-      ins->totalSz = ins->accSz * ins->addr.size();
-      filteredInsList.push_back(ins);
-    }
-  }
-	print_filtering(filteredInsList, "Before filtering...", false);
-
+		//if (it->type == InsTypeNormal) {
+			InsMem *ins = static_cast<InsMem*>(it);
+			if(ins->addr.size()){		//delete zero accesses
+				ins->totalSz = ins->accSz * ins->addr.size();
+				filteredInsList.push_back(ins);
+			}
+		//}
+	}
+	//print_filtering(filteredInsList, "Before filtering...", false);
 	filteredInsList = deleteZeroAccesses(filteredInsList);
 
-	//derivePatternInitial(filteredInsList);   //needed for next step
 	// 1. filter constant access instructions
 	filteredInsList = deleteConstAccess2(filteredInsList);
 
-	print_filtering(filteredInsList, "After const access filtering...", false);
+	//print_filtering(filteredInsList, "After const access filtering...", false);
 
 	// 2. Only take instructions that represents top_perc of reads/writes
 	filteredInsList = keepTop(filteredInsList, top_perc);
+
 	//cout << "Static memory instructions: top " << filteredInsList.size() << endl;
-	filteredInsList = markTopAndProcessInfo(filteredInsList);
+	//filteredInsList = markTopAndProcessInfo(filteredInsList);
 
-	print_filtering(filteredInsList, "After filtering...", true);
+	//print_filtering(filteredInsList, "After filtering...", true);
 
-  updateAddrInfo(filteredInsList);
+	updateAddrInfo(filteredInsList);
 
-	cout << "Inst Trace size: " << insTrace.size() << endl;
+	//cout << "Inst Trace size: " << insTrace.size() << endl;
 	set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
 	updateParentLoops(cfg);
-	//printMaxEdgeStack(cfg);
 	derivePattern(filteredInsList);
-	//detectRandFunction();
 
 	//printInfo(filteredInsList);
-	generateCode(filteredInsList, cfg, out_file_name.c_str());
+	generateCodeFragment(1, filteredInsList, cfg);
+}
 
+void resetState() {
+	for(InsBase* it : InsBase::insList){
+		InsMem *ins = static_cast<InsMem*>(it);
+		ins->reset();
+	}
+	InsBlock::deleteAll();
+	insTrace.clear();
+}
 
-	//printStrideAddr(filteredInsList, 394900101);
-	//printStrideRef(filteredInsList, 394900101);
+VOID Fini(INT32 code, VOID *v) {
+	processInterval();
 
-	//assert(callHash == HASH_INIT_VALUE);
-	//for(InsNormal* it : insNormalList){ delete it; }
-	print_pat_dist(filteredInsList);
-	print_edge_dist();
+	generateCode(out_file_name.c_str());
+
 	for (InsRoot *it : insRootList) {
 		delete it;
 	}
@@ -1479,21 +1532,26 @@ void ImgCallback(IMG img, VOID *arg) {
 	//First try for exact match of function
 	for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) {
 		if (SEC_Name(sec) == ".text") {
-			for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn)) {
-				string name = PIN_UndecorateSymbolName(RTN_Name(rtn), UNDECORATION_NAME_ONLY);
+			for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn);
+					rtn = RTN_Next(rtn)) {
+				string name = PIN_UndecorateSymbolName(RTN_Name(rtn),
+						UNDECORATION_NAME_ONLY);
 				// add suffix for openmp functions
 				string rtn_name_omp = rtn_name + "._omp_fn.";
 
 				// Try exact name match
-				if ((name == rtn_name) || (name.find(rtn_name_omp) != string::npos)) {
+				if ((name == rtn_name)
+						|| (name.find(rtn_name_omp) != string::npos)) {
 					// Match found!
 					match_count++;
 					cout << "    Tagged function \"" << name << "\"" << endl;
 
 					// Instrument function entry and exit
 					RTN_Open(rtn);
-					RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR) RtnEntry, IARG_THREAD_ID, IARG_END);
-					RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) RtnLeave, IARG_THREAD_ID, IARG_END);
+					RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR) RtnEntry,
+							IARG_THREAD_ID, IARG_END);
+					RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) RtnLeave,
+							IARG_THREAD_ID, IARG_END);
 					RTN_Close(rtn);
 				}
 			}
@@ -1503,11 +1561,14 @@ void ImgCallback(IMG img, VOID *arg) {
 		return;
 
 	//Exact match not found. Try to find a function containing the given function name.
-	cout << "Exact match not found! Tagging all functions containing \"" << rtn_name << "\"..." << endl;
+	cout << "Exact match not found! Tagging all functions containing \""
+			<< rtn_name << "\"..." << endl;
 	for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) {
 		if (SEC_Name(sec) == ".text") {
-			for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn)) {
-				string name = PIN_UndecorateSymbolName(RTN_Name(rtn), UNDECORATION_NAME_ONLY);
+			for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn);
+					rtn = RTN_Next(rtn)) {
+				string name = PIN_UndecorateSymbolName(RTN_Name(rtn),
+						UNDECORATION_NAME_ONLY);
 
 				// Check if the current routine contains the requested routine name
 				if (name.find(rtn_name) != string::npos) {
@@ -1517,8 +1578,10 @@ void ImgCallback(IMG img, VOID *arg) {
 
 					// Instrument function entry and exit
 					RTN_Open(rtn);
-					RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR) RtnEntry, IARG_THREAD_ID, IARG_END);
-					RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) RtnLeave, IARG_THREAD_ID, IARG_END);
+					RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR) RtnEntry,
+							IARG_THREAD_ID, IARG_END);
+					RTN_InsertCall(rtn, IPOINT_AFTER, (AFUNPTR) RtnLeave,
+							IARG_THREAD_ID, IARG_END);
 					RTN_Close(rtn);
 				}
 			}
@@ -1527,7 +1590,8 @@ void ImgCallback(IMG img, VOID *arg) {
 
 	//Not found
 	if (!match_count) {
-		cout << "Unable to find any function containing \"" << rtn_name << "\"... Quitting..." << endl;
+		cout << "Unable to find any function containing \"" << rtn_name
+				<< "\"... Quitting..." << endl;
 		PIN_ExitProcess(11);
 	}
 }
@@ -1569,20 +1633,28 @@ InsMem* getInsLeaf(InsRoot *root, UINT32 op) {
 void record(InsRoot *root, ADDRINT ea, UINT32 op) {
 	if (rtnEntryCnt <= 0)
 		return;
-	InsMem *ins = getInsLeaf(root, op);
-	insTrace.push_back(ins);
-	if(ea > ins->maxAddr){
-	  ins->maxAddr = ea;
+	startCnt++;
+	if (startCnt > 0) {
+		InsMem *ins = getInsLeaf(root, op);
+		insTrace.push_back(ins);
+		if (ea > ins->maxAddr) {
+			ins->maxAddr = ea;
+		}
+		if (ea < ins->minAddr) {
+			ins->minAddr = ea;
+		}
+		ins->addr.push_back(ea);
+		if (__builtin_expect(startCnt == interval, 0)) {
+			startCnt = 0;
+			processInterval();
+			resetState();
+		}
 	}
-	if(ea < ins->minAddr){
-	  ins->minAddr = ea;
-	}
-	ins->addr.push_back(ea);
 }
 
 InsRoot* createInsRoot(INS &ins) {
 	static UINT64 rootId = 0;
-	static unordered_map<ADDRINT, InsRoot*> processedIns;   //set of already processed instructions
+	static unordered_map<ADDRINT, InsRoot*> processedIns; //set of already processed instructions
 
 	ADDRINT addr = INS_Address(ins);
 	// check if already processed or not
@@ -1599,11 +1671,14 @@ InsRoot* createInsRoot(INS &ins) {
 	for (UINT32 i = 0; i < root->opCnt; i++) {
 		OpInfo info;
 		info.accSz = INS_MemoryOperandSize(ins, i);
-		if (INS_MemoryOperandIsRead(ins, i) && !INS_MemoryOperandIsWritten(ins, i)) {
+		if (INS_MemoryOperandIsRead(ins, i)
+				&& !INS_MemoryOperandIsWritten(ins, i)) {
 			info.accType = AccessType::AccessTypeRead;
-		} else if (!INS_MemoryOperandIsRead(ins, i) && INS_MemoryOperandIsWritten(ins, i)) {
+		} else if (!INS_MemoryOperandIsRead(ins, i)
+				&& INS_MemoryOperandIsWritten(ins, i)) {
 			info.accType = AccessType::AccessTypeWrite;
-		} else if (INS_MemoryOperandIsRead(ins, i) && INS_MemoryOperandIsWritten(ins, i)) {
+		} else if (INS_MemoryOperandIsRead(ins, i)
+				&& INS_MemoryOperandIsWritten(ins, i)) {
 			info.accType = AccessType::AccessTypeRMW;
 		} else {
 			info.accType = AccessType::AccessTypeInvalid;
@@ -1617,7 +1692,7 @@ InsRoot* createInsRoot(INS &ins) {
 	return root;
 }
 
-InsBase* getJmpInsLeaf(InsRoot *root) {
+/*InsBase* getJmpInsLeaf(InsRoot *root) {
 	if (root->childMap.find(callHash) == root->childMap.end()) {
 		//create new hashed map
 		InsHashedRoot *tmp = new InsHashedRoot();
@@ -1639,7 +1714,7 @@ void jmpInst(InsRoot *root) {
 		return;
 	InsBase *ins = getJmpInsLeaf(root);
 	insTrace.push_back(ins);
-}
+}*/
 
 void Instruction(INS ins, VOID *v) {
 	// do some filtering
@@ -1648,18 +1723,20 @@ void Instruction(INS ins, VOID *v) {
 	// Add other instructions if needed
 
 	if (INS_IsCall(ins)) {    //excludes system call
-		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallEntry, IARG_INST_PTR, IARG_END);
+		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallEntry,
+				IARG_INST_PTR, IARG_END);
 		return;
 	}
 
 	if (INS_IsRet(ins)) {
-		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallRet, IARG_END);
+		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallRet,
+				IARG_END);
 		return;
 	}
 
 	if (INS_Category(ins) == XED_CATEGORY_COND_BR) {
-	//	InsRoot *root = createInsRoot(ins);
-	//	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) jmpInst, IARG_PTR, root, IARG_END);
+		//	InsRoot *root = createInsRoot(ins);
+		//	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) jmpInst, IARG_PTR, root, IARG_END);
 		return;
 	}
 
@@ -1669,8 +1746,9 @@ void Instruction(INS ins, VOID *v) {
 	if (memOperands) {
 		InsRoot *root = createInsRoot(ins);
 		for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
-			INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record, IARG_PTR, root, IARG_MEMORYOP_EA, memOp,
-					IARG_UINT32, memOp, IARG_END);
+			INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record,
+					IARG_PTR, root, IARG_MEMORYOP_EA, memOp, IARG_UINT32, memOp,
+					IARG_END);
 		}
 	}
 }
@@ -1685,17 +1763,27 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Initializations
-	PIN_InitLock(&lock);
+	// PIN_InitLock(&lock);
 	PIN_InitSymbolsAlt(IFUNC_SYMBOLS);
 
 	rtn_name = knobFunctionName.Value();
 	log_en = knobLogEn.Value();
 	top_perc = knobTopPerc.Value();
 	out_file_name = knobOutFile.Value();
+	interval = knobInterval.Value();
+	startCnt = 0 - knobStart.Value();
+	cout << "Start Ref: " << startCnt << endl;
+	cout << "Interval: " << interval << endl;
 
 	insRootList.reserve(100000);
 	insHashedRootList.reserve(100000);
-	insTrace.reserve(40000000);
+
+	if(interval <= 0 || interval > 40000000L){
+		insTrace.reserve(40000000L);
+	}
+	else {
+		insTrace.reserve(interval);
+	}
 
 	IMG_AddInstrumentFunction(ImgCallback, NULL);
 	INS_AddInstrumentFunction(Instruction, NULL);

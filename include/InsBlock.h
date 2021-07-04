@@ -40,7 +40,7 @@ public:
 
   //constructors
   explicit InsBlock();
-  explicit InsBlock(UINT64 id);
+  //explicit InsBlock(UINT64 id);
 
   //class members
   std::string printDot(UINT32 indent) const;

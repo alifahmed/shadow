@@ -58,3 +58,20 @@ void InsMem::setParentLoop(InsLoop *pl) {
   parentLoop = pl;
 }
 
+void InsMem::reset(){
+	//InsBase
+	parentLoop = nullptr;
+	isTop = false;
+	parentBlock = nullptr;
+
+	//InsMem
+	addr.clear();
+	totalSz = 0;
+	minAddr = 0xFFFFFFFFFFFFFFFFULL;
+	maxAddr = 0;
+	addrStrideMap.clear();
+	strideDist.clear();
+	loops.clear();
+	pat = nullptr;
+}
+
