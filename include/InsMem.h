@@ -22,7 +22,7 @@ public:
   UINT64 maxAddr = 0;
 
   //std::unordered_map<ADDRINT, INT64> addrStrideMap;
-  std::unordered_map<ADDRINT, INT64> addrStrideMap;
+  std::unordered_map<ADDRINT, ADDRINT> addrStrideMap;
   std::unordered_map<INT64, UINT64> strideDist;
 
   std::vector<LoopInfo> loops;

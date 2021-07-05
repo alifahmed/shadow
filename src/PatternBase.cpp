@@ -2,9 +2,10 @@
 #include "PatternBase.h"
 #include "InsHashedRoot.h"
 #include "InsRoot.h"
-
+#include "cln_utils.h"
 
 using namespace std;
+using namespace cln_utils;
 
 string PatternBase::genBody(UINT32 indent) const {
   stringstream ss;
@@ -21,6 +22,6 @@ string PatternBase::genBody(UINT32 indent) const {
   }
   ss << "\n";
   ss << _tab(indent) << ins->pat->printPattern() << "\n";
-  ss << _tab(indent) << ins->maxAddr - ins->minAddr << " [ " << ins->minAddr << " : " << ins->maxAddr << " ]\n";
+  ss << _tab(indent) << ins->maxAddr << - ins->minAddr << " [ " << ins->minAddr << " : " << ins->maxAddr << " ]\n";
   return ss.str();
 }

@@ -12,4 +12,4 @@ bfs: bfs.cpp
 clean:
 	rm -f bfs bfs_offload result.txt
 
-/sw/centos/gcc/current/lib64
+

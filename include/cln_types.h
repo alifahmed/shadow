@@ -31,7 +31,7 @@ class InsMem;
 #define MAX_STRIDE_BUCKETS  10
 #define MIN_SZ              2048
 #define MIN_ALIGNMENT       128
-#define MAX_SMALL_TILES		  5
+#define MAX_SMALL_TILES		  6
 #define MAX_ADDRESS_RANGE   (1024ULL*1024ULL*1024ULL*16)
 #define HASH_INIT_VALUE     (0xABCDEF94ED70BA3EULL)
 #define _tab(x)             setw((x)*4) << " "

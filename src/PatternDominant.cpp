@@ -26,7 +26,7 @@ PatternDominant* PatternDominant::create(const InsMem* ins){
 
       //has repeat
       stringstream ss;
-      ss << "addr_" << ins->id << " = " << ins->addr[0] << "LL";   //base address
+      ss << "addr_" << ins->id << " = " << encodeVAddr(ins->addr[0]);   //base address
       for(const auto &li : ins->loops){
         if(li.lp){
           if(li.m){

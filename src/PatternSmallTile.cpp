@@ -37,13 +37,13 @@ string PatternSmallTile::genBody(UINT32 indent) const {
   ss << _tab(indent) << "//Small tile\n";
   if(ins->addrStrideMap.size() == 1){
     ss << ins->printReadWrite(indent, true);
-    ss << _tab(indent) << "addr_" << ins->id << " += " << ins->addrStrideMap.begin()->second << "LL;\n";
+    ss << _tab(indent) << "addr_" << ins->id << " += " << encodeVAddrDiff(ins->addrStrideMap.begin()->second, ins->addrStrideMap.begin()->first) << ";\n";
   }
   else{
     ss << ins->printReadWrite(indent, true);
     ss << _tab(indent) << "switch(addr_" << ins->id << ") {\n";
     for(auto it : ins->addrStrideMap){
-      ss << _tab(indent+1) << "case " << encodeVAddr(it.first) << " : strd_" << ins->id << " = " << it.second << "LL; break;\n";
+      ss << _tab(indent+1) << "case " << encodeVAddr(it.first) << " : strd_" << ins->id << " = " << encodeVAddrDiff(it.second, it.first) << "; break;\n";
     }
     //ss << _tab(indent+1) << "default : strd_" << ins->id << " = 0;\n";
     ss << _tab(indent) << "}\n";

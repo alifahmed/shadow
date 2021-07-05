@@ -11,5 +11,6 @@ bool isRepeat(const std::vector<ADDRINT> &addr, size_t sz, size_t rep, INT64 &m)
 //std::string printHash();
 
 std::string encodeVAddr(ADDRINT vAddr);
+std::string encodeVAddrDiff(ADDRINT addr1, ADDRINT addr2);
 
 }
