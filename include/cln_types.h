@@ -29,7 +29,7 @@ class InsMem;
  * Defines
  ******************************************************************************/
 #define MAX_STRIDE_BUCKETS  10
-#define MIN_SZ              512
+#define MIN_SZ              2048
 #define MIN_ALIGNMENT       128
 #define MAX_SMALL_TILES		  5
 #define MAX_ADDRESS_RANGE   (1024ULL*1024ULL*1024ULL*16)

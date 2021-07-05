@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include "InsBase.h"
 #include "LoopInfo.h"
 
@@ -20,6 +21,7 @@ public:
   UINT64 minAddr = 0xFFFFFFFFFFFFFFFFULL;
   UINT64 maxAddr = 0;
 
+  //std::unordered_map<ADDRINT, INT64> addrStrideMap;
   std::unordered_map<ADDRINT, INT64> addrStrideMap;
   std::unordered_map<INT64, UINT64> strideDist;
 
@@ -33,6 +35,7 @@ public:
   AccessType accType = AccessTypeInvalid;
 
   InsMem(UINT64 id) : InsBase(InsTypeNormal, id){};
+  ~InsMem(){}
 
   std::string printDot(UINT32 indent) const;
   std::string printCodeBody(UINT32 indent) const ;

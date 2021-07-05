@@ -82,6 +82,8 @@ static string out_file_name;
 static INT64 rtnEntryCnt = 0;
 static INT64 interval = 0;
 static INT64 startCnt = 0;
+static INT64 startCntSaved = 0;
+static UINT64 intervalCnt = 0;
 
 static vector<InsRoot*> insRootList;
 static vector<InsHashedRoot*> insHashedRootList;
@@ -94,7 +96,6 @@ static vector<InsMem*> insTrace;   //td
 static stack<ADDRINT> callStack;
 static ADDRINT callHash = HASH_INIT_VALUE;
 
-static ADDRINT globalMaxAddr = 0;
 static set<ADDRINT> vpnSet;
 static map<ADDRINT, ADDRINT> vpnToPpnMap;
 static vector<string> codeFragments;
@@ -119,17 +120,39 @@ static inline ADDRINT getPageNum(ADDRINT addr){
 	return addr & 0xFFFFFFFFFFFFF000UL;
 }
 
-//static void genVpnToPpnMap(){
-//	uint64_t ppn = 0;
-//	for (UINT64 vpn : vpnSet) {
-//		vpnToPpnMap[vpn] = ppn << 12;
-//		ppn++;
-//	}
-//}
+static void genVpnToPpnMap(){
+	uint64_t ppn = 0;
+	for (UINT64 vpn : vpnSet) {
+		vpnToPpnMap[vpn] = ppn << 12;
+		ppn++;
+	}
+}
 
 static inline ADDRINT virtToPhyConvert(ADDRINT vAddr){
 	return vpnToPpnMap[getPageNum(vAddr)] + (vAddr & 0xFFFUL);
 }
+
+
+string replaceVtoPAddr(const string &str){
+	stringstream ss;
+	const UINT64 len = str.length();
+	UINT64 lastPos = 0;
+	for(UINT64 i = 0; i < len; i++){
+		if(str[i] == '@' && str[i+1] == '{'){
+			ss << str.substr(lastPos, i - lastPos);
+			i++;
+			UINT64 val = 0;
+			while(str[++i] != '}'){
+				val = val * 10UL + str[i] - '0';
+			}
+			ss << virtToPhyConvert(val) << "UL";
+			lastPos = ++i;
+		}
+	}
+	ss << str.substr(lastPos, len - lastPos);
+	return ss.str();
+}
+
 
 void deriveLoopInfo(InsMem *ins) {
 
@@ -699,7 +722,7 @@ void generateCodeHeader(ofstream &out) {
 	out << _tab(1) << "uint16_t tmp2;\n";
 	out << _tab(1) << "uint32_t tmp4;\n";
 	out << _tab(1) << "uint64_t tmp8;\n";
-	out << _tab(1) << "uint64_t allocSize = " << globalMaxAddr << "ULL;\n";
+	out << _tab(1) << "uint64_t allocSize = " << vpnSet.size() * 4096 << "ULL;\n";
 	out << _tab(1)
 			<< "gm = (volatile uint8_t*)aligned_alloc(4096, allocSize);\n";
 	//out << _tab(1) << "if(gm == NULL) {\n";
@@ -749,6 +772,8 @@ void generateCodeFooter(ofstream &out) {
 void generateCode(const char *fname) {
 	cout << "Generating code in: " << fname << "...\n";
 
+	genVpnToPpnMap();
+
 	//open output file
 	ofstream out(fname);
 
@@ -756,7 +781,7 @@ void generateCode(const char *fname) {
 	generateCodeHeader(out);
 
 	for(string& s : codeFragments){
-		out << s;
+		out << replaceVtoPAddr(s);
 	}
 
 	//write footer
@@ -766,6 +791,9 @@ void generateCode(const char *fname) {
 
 void generateCodeFragment(int indent, const vector<InsMem*> &insList, const set<InsBlock*> &cfg){
 	stringstream ss;
+	UINT64 intervalStart = startCntSaved + intervalCnt * interval;
+	UINT64 IntervalEnd = intervalStart + startCnt;
+	ss << _tab(indent) << "// Interval: " << intervalStart << " - " << IntervalEnd << "\n";
 	ss << _tab(indent) << "{\n";
 	ss << generateCodeHeaderFragment(indent + 1, insList);
 
@@ -779,6 +807,7 @@ void generateCodeFragment(int indent, const vector<InsMem*> &insList, const set<
 	}
 
 	ss << endBlock->printCodeBody(indent + 1);
+	ss << _tab(indent + 1) << "int dummy;\n";
 	ss << _tab(indent) << "}\n\n";
 	codeFragments.push_back(ss.str());
 }
@@ -1099,6 +1128,8 @@ void updateAddrInfo(vector<InsMem*> &insList) {
 
 	//cout << "\tUpdate addr..." << endl;
 	for (InsMem *it : insList) {
+		it->addrStrideMap.clear();
+		it->strideDist.clear();
 		assert(it->maxAddr > it->minAddr);
 		it->maxAddr += it->accSz;
 
@@ -1440,21 +1471,20 @@ void print_filtering(const vector<InsMem*> &insList, string msg, bool top) {
 }
 
 
-
-static UINT64 intervalCnt = 0;
-
 void processInterval() {
-	cout << "Interval: " << intervalCnt++ << "\n";
+	UINT64 intervalStart = startCntSaved + intervalCnt * interval;
+	UINT64 IntervalEnd = intervalStart + startCnt;
+	cout << "Interval: " << intervalStart << " - " << IntervalEnd << "\n";
 	// 0. Filter zero  (or very low) cnt instructions
 	vector<InsMem*> filteredInsList;
 	for (InsBase *it : InsBase::insList) {
-		//if (it->type == InsTypeNormal) {
+		if (it->type == InsTypeNormal) {
 			InsMem *ins = static_cast<InsMem*>(it);
 			if(ins->addr.size()){		//delete zero accesses
 				ins->totalSz = ins->accSz * ins->addr.size();
 				filteredInsList.push_back(ins);
 			}
-		//}
+		}
 	}
 	//print_filtering(filteredInsList, "Before filtering...", false);
 	filteredInsList = deleteZeroAccesses(filteredInsList);
@@ -1481,18 +1511,26 @@ void processInterval() {
 
 	//printInfo(filteredInsList);
 	generateCodeFragment(1, filteredInsList, cfg);
+	//cout << "Process Done" << endl;
 }
 
 void resetState() {
 	for(InsBase* it : InsBase::insList){
-		InsMem *ins = static_cast<InsMem*>(it);
-		ins->reset();
+		if(it->type == InsType::InsTypeNormal){
+			InsMem *ins = static_cast<InsMem*>(it);
+			ins->reset();
+		}
+		else if(it->type != InsType::InsTypeSingleLoop){
+			cout << "WRONG TYPE" << endl;
+		}
 	}
 	InsBlock::deleteAll();
 	insTrace.clear();
+	//cout << "Reset Done" << endl;
 }
 
 VOID Fini(INT32 code, VOID *v) {
+	cout << "Entered FINI" << endl;
 	processInterval();
 
 	generateCode(out_file_name.c_str());
@@ -1645,9 +1683,10 @@ void record(InsRoot *root, ADDRINT ea, UINT32 op) {
 		}
 		ins->addr.push_back(ea);
 		if (__builtin_expect(startCnt == interval, 0)) {
-			startCnt = 0;
 			processInterval();
 			resetState();
+			startCnt = 0;
+			intervalCnt++;
 		}
 	}
 }
@@ -1771,9 +1810,11 @@ int main(int argc, char *argv[]) {
 	top_perc = knobTopPerc.Value();
 	out_file_name = knobOutFile.Value();
 	interval = knobInterval.Value();
-	startCnt = 0 - knobStart.Value();
+	startCntSaved = knobStart.Value();
+	startCnt = 0 - startCntSaved;
 	cout << "Start Ref: " << startCnt << endl;
 	cout << "Interval: " << interval << endl;
+
 
 	insRootList.reserve(100000);
 	insHashedRootList.reserve(100000);

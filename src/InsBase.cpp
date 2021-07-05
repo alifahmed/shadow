@@ -13,4 +13,5 @@ void InsBase::deleteAll(){
   for(InsBase* ins : insList){
     delete ins;
   }
+  insList.clear();
 }

@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define N  10000
+#define N  1000000
 #define ITER	3
 
 static int a[N];

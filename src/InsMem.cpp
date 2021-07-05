@@ -69,9 +69,7 @@ void InsMem::reset(){
 	totalSz = 0;
 	minAddr = 0xFFFFFFFFFFFFFFFFULL;
 	maxAddr = 0;
-	addrStrideMap.clear();
-	strideDist.clear();
-	loops.clear();
+	//loops.clear();
 	pat = nullptr;
 }
 
