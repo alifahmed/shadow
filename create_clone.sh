@@ -37,7 +37,7 @@ if [ ! -f "${ORIG_BIN}" ]; then
 fi
 
 #check for argument file
-ARG_FILE=${ORIG_DIR}/cmd.args
+ARG_FILE=${ORIG_DIR}/cmd.param
 if [ ! -f "${ARG_FILE}" ]; then
 	echo "Argument file ${ARG_FILE} does not exists"
 	exit -1

@@ -8,7 +8,7 @@ RF    no
 CS    no
 MAP   yes
 COM   hmmbuild -F HMM_ls.ann SEED.ann
-COM   ./hmmer --fixed 0 --mean 325 --num 10000 --sd 200 --seed 0 bombesin.hmm
+COM   /home/alif/research/MemAP/examples/hmmer/hmmer --fixed 0 --mean 325 --num 10000 --sd 200 --seed 0 bombesin.hmm
 NSEQ  25
 DATE  Sun Dec 15 22:22:43 2002
 CKSUM 9682
