@@ -7,7 +7,7 @@ all: $(OBJ_FILES)
 
 	
 %.out : %.cpp
-	g++ $^ -o $@ -mavx
+	g++ $^ -o $@ -mavx -O0 -g
 
 
 clean:

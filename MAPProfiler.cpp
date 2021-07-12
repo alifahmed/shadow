@@ -667,11 +667,11 @@ void generateCodeHeader(ofstream &out) {
 	//out << "#define READ_32b(X) __asm__ __volatile__ (\"vmovdqa    (\%1,\%2), \%0\" : \"=r\"(tmp32) : \"r\"(gm), \"r\"(X) : \"memory\")\n";
 	//out << "#define READ_64b(X) __asm__ __volatile__ (\"vmovdqa32  (\%1,\%2), \%0\" : \"=r\"(tmp64) : \"r\"(gm), \"r\"(X) : \"memory\")\n";
 	out
-			<< "#define READ_16b(X) tmp16 = _mm_loadu_si128((__m128i const*)(gm + (X)))\n";
+			<< "#define READ_16b(X) tmp16 = _mm_load_si128((__m128i const*)(gm + (X)))\n";
 	out
-			<< "#define READ_32b(X) tmp32 = _mm256_loadu_si256((__m256i const*)(gm + (X)))\n";
+			<< "#define READ_32b(X) tmp32 = _mm256_load_si256((__m256i const*)(gm + (X)))\n";
 	out
-			<< "#define READ_64b(X) tmp64 = _mm512_loadu_si512((__m512i const*)(gm + (X)))\n";
+			<< "#define READ_64b(X) tmp64 = _mm512_load_si512((__m512i const*)(gm + (X)))\n";
 	out << "\n";
 	out
 			<< "#define WRITE_1b(X)  __asm__ __volatile__ (\"movb      \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp1)  : \"memory\")\n";
@@ -685,11 +685,11 @@ void generateCodeHeader(ofstream &out) {
 	//out << "#define WRITE_32b(X) __asm__ __volatile__ (\"vmovdqa   \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp32) : \"memory\")\n";
 	//out << "#define WRITE_64b(X) __asm__ __volatile__ (\"vmovdqa32 \%2, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X), \"r\"(tmp64) : \"memory\")\n";
 	out
-			<< "#define WRITE_16b(X) _mm_storeu_si128((__m128i*)(gm + (X)), tmp16)\n";
+			<< "#define WRITE_16b(X) _mm_store_si128((__m128i*)(gm + (X)), tmp16)\n";
 	out
-			<< "#define WRITE_32b(X) _mm256_storeu_si256((__m256i*)(gm + (X)), tmp32)\n";
+			<< "#define WRITE_32b(X) _mm256_store_si256((__m256i*)(gm + (X)), tmp32)\n";
 	out
-			<< "#define WRITE_64b(X) _mm512_storeu_si512((__m512i*)(gm + (X)), tmp64)\n";
+			<< "#define WRITE_64b(X) _mm512_store_si512((__m512i*)(gm + (X)), tmp64)\n";
 	out << "\n";
 	out
 			<< "#define RMW_1b(X)  __asm__ __volatile__ (\"addb $1, (\%0,\%1)\" : : \"r\"(gm), \"r\"(X) : \"memory\")\n";

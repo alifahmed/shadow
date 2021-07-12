@@ -10,4 +10,4 @@ for bin in ${OBJ_FILES}; do
 done
 
 
-make clean
+#make clean
