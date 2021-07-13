@@ -30,6 +30,7 @@
 #include "InsRand.h"
 #include <unordered_map>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -57,6 +58,9 @@ KNOB<INT64> knobInterval(KNOB_MODE_WRITEONCE, "pintool", "step", "-1",
 KNOB<INT64> knobStart(KNOB_MODE_WRITEONCE, "pintool", "start", "0",
 		"Profiling starts after this many number of memory instructions executed");
 
+KNOB<UINT64> knobMaxInst(KNOB_MODE_WRITEONCE, "pintool", "maxinst", "-1",
+		"Profile upto maxinst number of instructions (any type, not just memory instructions)");
+
 // Max threads
 //KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",	"Upper limit of the number of threads that can be used by the program being profiled.");
 
@@ -81,9 +85,11 @@ static float top_perc;
 static string out_file_name;
 static INT64 rtnEntryCnt = 0;
 static INT64 interval = 0;
+static UINT64 MAX_INST = 0;
 static INT64 startCnt = 0;
 static INT64 startCntSaved = 0;
 static UINT64 intervalCnt = 0;
+static UINT64 instCount = 0;
 
 static vector<InsRoot*> insRootList;
 static vector<InsHashedRoot*> insHashedRootList;
@@ -106,12 +112,29 @@ static InsBlock* endBlock = nullptr;
 //static map<UINT64, string> accTypeMap;
 //static map<UINT64, string> regNameMap;
 
-uint64_t statDirect = 0;
-uint64_t statOrdered = 0;
-uint64_t statRandom = 0;
-uint64_t dynDirect = 0;
-uint64_t dynOrdered = 0;
-uint64_t dynRandom = 0;
+//static uint64_t edgeStatDirect = 0;
+//static uint64_t edgeStatOrdered = 0;
+//static uint64_t edgeStatRandom = 0;
+uint64_t edgeDynDirect = 0;
+uint64_t edgeDynOrdered = 0;
+uint64_t edgeDynRandom = 0;
+
+static uint64_t instStatDom = 0;
+static uint64_t instStatLoopedIndex = 0;
+static uint64_t instStatRandom = 0;
+static uint64_t instDynDom = 0;
+static uint64_t instDynLoopedIndex = 0;
+static uint64_t instDynRandom = 0;
+
+typedef struct {
+	set<InsMem*> statMemInst;
+	uint64_t dynMemInst = 0;
+	uint64_t totMemUsage = 0;
+} FilterInfo;
+
+static FilterInfo fInfoOrig;
+static FilterInfo fInfoAfterZero;
+static FilterInfo fInfoTop;
 
 /*******************************************************************************
  * Pattern Classes
@@ -1412,62 +1435,62 @@ void detectRandFunction() {
 	}
 }
 
-void print_pat_dist(vector<InsMem*> &insList) {
-	uint64_t dom = 0;
-	uint64_t loopedIndex = 0;
-	uint64_t random = 0;
-	uint64_t dynDom = 0;
-	uint64_t dynLoopedIndex = 0;
-	uint64_t dynRandom = 0;
+
+
+void update_pat_dist(vector<InsMem*> &insList) {
 	for (InsMem *ins : insList) {
 		if ((ins->pat->type == PatType::PatLoopIndexed)
 				|| (ins->pat->type == PatType::PatTypeSmallTile)) {
-			loopedIndex++;
-			dynLoopedIndex += ins->addr.size();
+			instStatLoopedIndex++;
+			instDynLoopedIndex += ins->addr.size();
 		} else if (ins->pat->type == PatType::PatTypeDominant) {
-			dom++;
-			dynDom += ins->addr.size();
+			instStatDom++;
+			instDynDom += ins->addr.size();
 		} else if (ins->pat->type == PatType::PatTypeRandom) {
-			random++;
-			dynRandom += ins->addr.size();
+			instStatRandom++;
+			instDynRandom += ins->addr.size();
 		} else {
 			cout << "[ERROR] unknown pattern" << endl;
+			exit(-1);
 		}
 	}
-	cout << "Dynamic #dom: " << dynDom << endl;
-	cout << "Dynamic #rand: " << dynRandom << endl;
-	cout << "Dynamic #loopedIndex: " << dynLoopedIndex << endl;
-	cout << "Static #dom: " << dom << endl;
-	cout << "Static #rand: " << random << endl;
-	cout << "Static #loopedIndex: " << loopedIndex << endl;
+}
+
+void print_pat_dist() {
+	cout << "Dynamic Inst: #dom: " << instDynDom << endl;
+	cout << "Dynamic Inst: #rand: " << instDynRandom << endl;
+	cout << "Dynamic Inst: #loopedIndex: " << instDynLoopedIndex << endl;
+	//cout << "Static #dom: " << instStatDom << endl;
+	//cout << "Static #rand: " << instStatRandom << endl;
+	//cout << "Static #loopedIndex: " << instStatLoopedIndex << endl;
 }
 
 void print_edge_dist() {
-	cout << "Dynamic #direct: " << dynDirect << endl;
-	cout << "Dynamic #ordered: " << dynOrdered << endl;
-	cout << "Dynamic #random: " << dynRandom << endl;
-	cout << "Static #direct: " << statDirect << endl;
-	cout << "Static #ordered: " << statOrdered << endl;
-	cout << "Static #random: " << statRandom << endl;
+	cout << "Dynamic Edge: #direct: " << edgeDynDirect << endl;
+	cout << "Dynamic Edge: #ordered: " << edgeDynOrdered << endl;
+	cout << "Dynamic Edge: #random: " << edgeDynRandom << endl;
+	//cout << "Static #direct: " << edgeStatDirect << endl;
+	//cout << "Static #ordered: " << edgeStatOrdered << endl;
+	//cout << "Static #random: " << edgeStatRandom << endl;
 }
 
-void print_filtering(const vector<InsMem*> &insList, string msg, bool top) {
-	cout << msg << endl;
-
-	uint64_t mem_acc_sz = 0;
-	uint64_t dyn_inst = 0;
-	uint64_t stat_inst = 0;
+void update_filtering_info(const vector<InsMem*> &insList, bool top, FilterInfo &fInfo) {
 	for (InsMem *ins : insList) {
 		if (ins->isTop == top) {
-			mem_acc_sz += ins->totalSz;
-			dyn_inst += ins->addr.size();
-			stat_inst++;
+			fInfo.totMemUsage += ins->totalSz;
+			fInfo.dynMemInst += ins->addr.size();
+			fInfo.statMemInst.insert(ins);
 		}
 	}
+}
 
-	cout << "\tDynamic memory instructions: " << dyn_inst << endl;
-	cout << "\tStatic memory instructions: " << stat_inst << endl;
-	cout << "\tMemory access size: " << mem_acc_sz << endl;
+
+void print_filtering_info(const FilterInfo &fInfo, string msg) {
+	cout << msg << endl;
+
+	cout << "\tDynamic memory instructions: " << fInfo.dynMemInst << endl;
+	cout << "\tStatic memory instructions: " << fInfo.statMemInst.size() << endl;
+	cout << "\tMemory access size: " << fInfo.totMemUsage << endl;
 }
 
 
@@ -1487,12 +1510,14 @@ void processInterval() {
 		}
 	}
 	//print_filtering(filteredInsList, "Before filtering...", false);
+	update_filtering_info(filteredInsList, false, fInfoOrig);
 	filteredInsList = deleteZeroAccesses(filteredInsList);
 
 	// 1. filter constant access instructions
 	filteredInsList = deleteConstAccess2(filteredInsList);
 
 	//print_filtering(filteredInsList, "After const access filtering...", false);
+	update_filtering_info(filteredInsList, false, fInfoAfterZero);
 
 	// 2. Only take instructions that represents top_perc of reads/writes
 	filteredInsList = keepTop(filteredInsList, top_perc);
@@ -1501,6 +1526,7 @@ void processInterval() {
 	//filteredInsList = markTopAndProcessInfo(filteredInsList);
 
 	//print_filtering(filteredInsList, "After filtering...", true);
+	update_filtering_info(filteredInsList, true, fInfoTop);
 
 	updateAddrInfo(filteredInsList);
 
@@ -1512,6 +1538,7 @@ void processInterval() {
 	//printInfo(filteredInsList);
 	generateCodeFragment(1, filteredInsList, cfg);
 	//cout << "Process Done" << endl;
+	update_pat_dist(filteredInsList);
 }
 
 void resetState() {
@@ -1544,7 +1571,13 @@ VOID Fini(INT32 code, VOID *v) {
 	InsBlock::deleteAll();
 	InsBase::deleteAll();
 
+	print_pat_dist();
+	print_filtering_info(fInfoOrig, "Filter info orig...");
+	print_filtering_info(fInfoAfterZero, "Filter info after zero stride filtering...");
+	print_filtering_info(fInfoTop, "Filter info of top...");
+
 	cout << "DONE" << endl;
+	cout << "Total instructions executed: " << instCount << endl;
 }
 
 /*******************************************************************************
@@ -1755,7 +1788,16 @@ void jmpInst(InsRoot *root) {
 	insTrace.push_back(ins);
 }*/
 
+void inst_count(){
+	instCount++;
+	if(instCount == MAX_INST){
+		PIN_ExitApplication(0);
+	}
+}
+
 void Instruction(INS ins, VOID *v) {
+	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) inst_count, IARG_END);
+
 	// do some filtering
 	if (INS_IsLea(ins))
 		return;
@@ -1810,10 +1852,12 @@ int main(int argc, char *argv[]) {
 	top_perc = knobTopPerc.Value();
 	out_file_name = knobOutFile.Value();
 	interval = knobInterval.Value();
+	MAX_INST = knobMaxInst.Value();
 	startCntSaved = knobStart.Value();
 	startCnt = 0 - startCntSaved;
-	cout << "Start Ref: " << startCnt << endl;
+	//cout << "Start Ref: " << startCnt << endl;
 	cout << "Interval: " << interval << endl;
+	cout << "Maxinst: " << (INT64)MAX_INST << endl;
 
 
 	insRootList.reserve(100000);

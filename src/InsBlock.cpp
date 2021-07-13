@@ -9,12 +9,12 @@ using namespace std;
 std::vector<InsBlock*> InsBlock::blockList;
 UINT64 InsBlock::_idCnt = 0;
 
-extern uint64_t statDirect;
-extern uint64_t statOrdered;
-extern uint64_t statRandom;
-extern uint64_t dynDirect;
-extern uint64_t dynOrdered;
-extern uint64_t dynRandom;
+//extern uint64_t edgeStatDirect;
+//extern uint64_t edgeStatOrdered;
+//extern uint64_t edgeStatRandom;
+extern uint64_t edgeDynDirect;
+extern uint64_t edgeDynOrdered;
+extern uint64_t edgeDynRandom;
 
 InsBlock::InsBlock() {
   blockList.push_back(this);
@@ -164,8 +164,8 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
     out << _tab(indent) << "goto block" << outEdgesStack[0].first->id
         << ";\n\n";
     //if(id != 0){
-    statDirect++;
-    dynDirect += outEdgesStack[0].second;
+    //edgeStatDirect++;
+    edgeDynDirect += outEdgesStack[0].second;
     //}
     return out.str();
   }
@@ -190,8 +190,8 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
       out << "goto block" << outEdgesStack[i].first->id << ";\n";
     }
     out << "\n\n";
-    statDirect++;
-    dynDirect += total;
+    //edgeStatDirect++;
+    edgeDynDirect += total;
     return out.str();
   }
 
@@ -221,7 +221,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
     UINT64 tot_cnt = 0;
     for (auto it : estat) {
       tot_cnt += it.second.avgCnt;
-      dynOrdered += it.second.totCnt;
+      edgeDynOrdered += it.second.totCnt;
     }
     out << _tab(indent) << "static uint64_t out_" << id << " = 0;\n";
     out << _tab(indent) << "out_" << id << " = (out_" << id << " == "
@@ -244,7 +244,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
       out << "goto block" << nb->id << ";\n";
     }
     out << "\n\n";
-    statOrdered++;
+    //edgeStatOrdered++;
     return out.str();
   }
 
@@ -256,7 +256,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
       for (auto it : estat) {
         tot_cnt += it.second.avgCnt;
         cov_cnt += it.second.avgCnt * it.second.entryCnt;
-        dynOrdered += it.second.totCnt;
+        edgeDynOrdered += it.second.totCnt;
       }
       out << _tab(indent) << "static uint64_t cov_" << id << " = 0;\n";
       out << _tab(indent) << "cov_" << id << "++;\n";
@@ -305,7 +305,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
         out << "goto block" << remBlocks[i].first->id << ";\n";
       }
       out << "\n";
-      statOrdered++;
+      //edgeStatOrdered++;
       return out.str();
     }
 
@@ -364,9 +364,9 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
     out << _tab(indent) << "static uint64_t out_" << id << "_" << it.first->id
         << " = " << it.second.totCnt << "LL;\n";
     tmpBlks.push_back(it.first);
-    dynRandom += it.second.totCnt;
+    edgeDynRandom += it.second.totCnt;
   }
-  statRandom++;
+  //edgeStatRandom++;
 
   //calculate total
   UINT64 cc = 0;
