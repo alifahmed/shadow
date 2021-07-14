@@ -1,44 +1,5 @@
-*.gv
-*.ps
-genCode.cpp
-*.log
 .cproject
 .project
 .settings/
-*.txt
 
-obj*
-*.csv
-
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-nbproject/
+obj-inte64/

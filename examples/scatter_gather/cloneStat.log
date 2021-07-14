@@ -1,0 +1,19 @@
+Dynamic Inst: #dom: 0
+Dynamic Inst: #rand: 0
+Dynamic Inst: #loopedIndex: 1882327
+Dynamic Edge: #direct: 418296
+Dynamic Edge: #ordered: 0
+Dynamic Edge: #random: 0
+Filter info orig...
+	Dynamic memory instructions: 10039086
+	Static memory instructions: 55
+	Memory access size: 60234516
+Filter info after zero stride filtering...
+	Dynamic memory instructions: 1882327
+	Static memory instructions: 9
+	Memory access size: 7529308
+Filter info of top...
+	Dynamic memory instructions: 1882327
+	Static memory instructions: 9
+	Memory access size: 7529308
+Total instructions executed: 34784349
