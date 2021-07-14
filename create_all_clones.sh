@@ -6,88 +6,54 @@ if [ $# -ne 1 ]; then
 fi
 
 CLONE_DIR=$1
+mkdir -p ${CLONE_DIR}
 
-BENCH=scatter_gather
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 95 1 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 95 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 95 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 95 1000 &
-wait
+# cloneBench <bench> <top>
+function cloneBench {
+	BENCH=$1
+	TOP=$2
+	
+	#check for source dir
+	SRC_DIR=examples/${BENCH}
+	if [ ! -d "${SRC_DIR}" ]; then
+		echo "Directory ${SRC_DIR} does not exists"
+		exit -1
+	fi
+	
+	OUT_DIR=${CLONE_DIR}/${BENCH}
+	mkdir -p ${OUT_DIR}
+	
+	TARGET_DIR=${OUT_DIR}/orig
+	rm -rf ${TARGET_DIR}
+	mkdir -p ${TARGET_DIR}
+	
+	cp -r ${SRC_DIR}/* ${TARGET_DIR}
+	OLD_DIR=$PWD
+	cd ${TARGET_DIR}
+	make
+	cd ${OLD_DIR}
+	
+	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 10000
+	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 5 &
+	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 10 &
+	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 20 &
+	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 50 &
+	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 100 &
+	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 200 &
+	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 500 &
+	wait
+}
 
-
-BENCH=nw
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 1 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 1000 &
-wait
-
-
-BENCH=particlefilter
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 1 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 1000 &
-wait
-
-
-BENCH=pathfinder
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 1 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 1000 &
-wait
-
-
-BENCH=srad
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 1 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 92 1000 &
-wait
-
-
-BENCH=bfs
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 90 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 90 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 90 1000 &
-wait
-
-
-BENCH=gobmk
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 1 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 1000 &
-wait
-
-
-BENCH=hmmer
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 1000 &
-wait
-
-
-BENCH=h264ref
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 1000 &
-wait
-
-
-BENCH=libquantum
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 1 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 100 &
-wait
-
-
-BENCH=mcf
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 10 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 100 &
-./create_clone.sh examples/${BENCH} ${CLONE_DIR}/${BENCH} 85 1000 &
-wait
-
+#cloneBench scatter_gather 95
+#cloneBench nw 92
+#cloneBench particlefilter 92
+#cloneBench pathfinder 92
+#cloneBench srad 92
+cloneBench bfs 90
+#cloneBench gobmk 90
+#cloneBench hmmer 90
+#cloneBench h264ref 90
+#cloneBench libquantum 90
+#cloneBench mcf 90
 
 

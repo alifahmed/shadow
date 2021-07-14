@@ -27,7 +27,6 @@ if [ ! -f "${ORIG_DIR}/cmd.bin" ]; then
 fi
 
 cd ${ORIG_DIR}
-make
 
 #check for bin file
 ORIG_BIN=${ORIG_DIR}/$(cat ${ORIG_DIR}/cmd.bin)
@@ -43,17 +42,13 @@ if [ ! -f "${ARG_FILE}" ]; then
 	exit -1
 fi
 
-
-
-mkdir -p ${CLONE_DIR}
-
 CLONE_OUT_DIR=${CLONE_DIR}/${INTERVAL}M
 rm -rf ${CLONE_OUT_DIR}
 mkdir ${CLONE_OUT_DIR}
 echo "" > ${CLONE_OUT_DIR}/cmd.param
 echo "genCode.out" > ${CLONE_OUT_DIR}/cmd.bin
 
-PIN_CMD="${PIN_BIN} -t ${TARGET} -out ${CLONE_OUT_DIR}/genCode.cpp -top ${TOP_PERC} -step ${INTERVAL}000000 -- ${ORIG_BIN} $(cat ${ARG_FILE})"
+PIN_CMD="${PIN_BIN} -t ${TARGET} -out ${CLONE_OUT_DIR}/genCode.cpp -top ${TOP_PERC} -stat ${CLONE_OUT_DIR}/cloneStat.log -step ${INTERVAL}000000 -maxinst 3000000000 -- ${ORIG_BIN} $(cat ${ARG_FILE})"
 
 INPUT_FILE=${ORIG_DIR}/cmd.input
 if [ ! -f "${INPUT_FILE}" ]; then
@@ -61,4 +56,8 @@ if [ ! -f "${INPUT_FILE}" ]; then
 else
 	cat $(cat ${INPUT_FILE}) | ${PIN_CMD}
 fi
+
+cd ${CLONE_OUT_DIR}
+g++ genCode.cpp -o genCode.out -O0 -mavx
+
 

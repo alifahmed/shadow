@@ -45,6 +45,9 @@ KNOB<string> knobFunctionName(KNOB_MODE_WRITEONCE, "pintool", "func", "main",
 KNOB<string> knobOutFile(KNOB_MODE_WRITEONCE, "pintool", "out", "genCode.cpp",
 		"Output file name.");
 
+KNOB<string> knobStatFile(KNOB_MODE_WRITEONCE, "pintool", "stat", "cloneStat.log",
+		"Clone statistics file name.");
+
 // Enable Log
 KNOB<bool> knobLogEn(KNOB_MODE_WRITEONCE, "pintool", "log", "0",
 		"Enable logging \
@@ -83,6 +86,7 @@ static string rtn_name;
 static bool log_en = false;
 static float top_perc;
 static string out_file_name;
+static string stat_file_name;
 static INT64 rtnEntryCnt = 0;
 static INT64 interval = 0;
 static UINT64 MAX_INST = 0;
@@ -125,6 +129,8 @@ static uint64_t instStatRandom = 0;
 static uint64_t instDynDom = 0;
 static uint64_t instDynLoopedIndex = 0;
 static uint64_t instDynRandom = 0;
+
+static ofstream cloneLog;
 
 typedef struct {
 	set<InsMem*> statMemInst;
@@ -1463,6 +1469,10 @@ void print_pat_dist() {
 	//cout << "Static #dom: " << instStatDom << endl;
 	//cout << "Static #rand: " << instStatRandom << endl;
 	//cout << "Static #loopedIndex: " << instStatLoopedIndex << endl;
+
+	cloneLog << "Dynamic Inst: #dom: " << instDynDom << endl;
+	cloneLog << "Dynamic Inst: #rand: " << instDynRandom << endl;
+	cloneLog << "Dynamic Inst: #loopedIndex: " << instDynLoopedIndex << endl;
 }
 
 void print_edge_dist() {
@@ -1472,6 +1482,10 @@ void print_edge_dist() {
 	//cout << "Static #direct: " << edgeStatDirect << endl;
 	//cout << "Static #ordered: " << edgeStatOrdered << endl;
 	//cout << "Static #random: " << edgeStatRandom << endl;
+
+	cloneLog << "Dynamic Edge: #direct: " << edgeDynDirect << endl;
+	cloneLog << "Dynamic Edge: #ordered: " << edgeDynOrdered << endl;
+	cloneLog << "Dynamic Edge: #random: " << edgeDynRandom << endl;
 }
 
 void update_filtering_info(const vector<InsMem*> &insList, bool top, FilterInfo &fInfo) {
@@ -1487,10 +1501,14 @@ void update_filtering_info(const vector<InsMem*> &insList, bool top, FilterInfo 
 
 void print_filtering_info(const FilterInfo &fInfo, string msg) {
 	cout << msg << endl;
-
 	cout << "\tDynamic memory instructions: " << fInfo.dynMemInst << endl;
 	cout << "\tStatic memory instructions: " << fInfo.statMemInst.size() << endl;
 	cout << "\tMemory access size: " << fInfo.totMemUsage << endl;
+
+	cloneLog << msg << endl;
+	cloneLog << "\tDynamic memory instructions: " << fInfo.dynMemInst << endl;
+	cloneLog << "\tStatic memory instructions: " << fInfo.statMemInst.size() << endl;
+	cloneLog << "\tMemory access size: " << fInfo.totMemUsage << endl;
 }
 
 
@@ -1571,13 +1589,19 @@ VOID Fini(INT32 code, VOID *v) {
 	InsBlock::deleteAll();
 	InsBase::deleteAll();
 
+	cloneLog.open(stat_file_name.c_str());
 	print_pat_dist();
+	print_edge_dist();
 	print_filtering_info(fInfoOrig, "Filter info orig...");
 	print_filtering_info(fInfoAfterZero, "Filter info after zero stride filtering...");
 	print_filtering_info(fInfoTop, "Filter info of top...");
 
+
 	cout << "DONE" << endl;
 	cout << "Total instructions executed: " << instCount << endl;
+
+	cloneLog << "Total instructions executed: " << instCount << endl;
+	cloneLog.close();
 }
 
 /*******************************************************************************
@@ -1851,6 +1875,7 @@ int main(int argc, char *argv[]) {
 	log_en = knobLogEn.Value();
 	top_perc = knobTopPerc.Value();
 	out_file_name = knobOutFile.Value();
+	stat_file_name = knobStatFile.Value();
 	interval = knobInterval.Value();
 	MAX_INST = knobMaxInst.Value();
 	startCntSaved = knobStart.Value();
