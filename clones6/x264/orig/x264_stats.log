@@ -1,9 +1,0 @@
-#options: 1280x720 fps=25/1 timebase=1/25 cabac=1 ref=1 deblock=1:0:0 analyse=0x1:0 me=dia subme=2 psy=1 psy_rd=0.00:0.00 mixed_ref=0 me_range=16 chroma_me=1 trellis=0 8x8dct=0 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=0 threads=1 sliced_threads=0 nr=0 decimate=1 interlaced=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 weightp=2 keyint=250 keyint_min=25 scenecut=40 intra_refresh=0 rc_lookahead=40 rc=abr mbtree=1 bitrate=1000 ratetol=1.0 qcomp=0.60 qpmin=10 qpmax=51 qpstep=4 ip_ratio=1.40 aq=1:1.00
-in:0 out:0 type:I dur:2 cpbdur:2 q:33.76 tex:3163099 mv:34069 misc:5880 imb:3600 pmb:0 smb:0 d:- ref:;
-in:1 out:1 type:P dur:2 cpbdur:2 q:40.67 tex:1808411 mv:9381 misc:288 imb:3600 pmb:0 smb:0 d:- ref:0 ;
-in:2 out:2 type:P dur:2 cpbdur:2 q:44.67 tex:1309577 mv:12132 misc:291 imb:3599 pmb:1 smb:0 d:- ref:0 ;
-in:3 out:3 type:P dur:2 cpbdur:2 q:48.67 tex:1294693 mv:12734 misc:325 imb:3044 pmb:556 smb:0 d:- ref:0 ;
-in:4 out:4 type:P dur:2 cpbdur:2 q:51.00 tex:1290516 mv:12640 misc:356 imb:2891 pmb:709 smb:0 d:- ref:0 ;
-in:5 out:5 type:P dur:2 cpbdur:2 q:51.00 tex:1289728 mv:12264 misc:336 imb:2757 pmb:843 smb:0 d:- ref:0 ;
-in:6 out:6 type:P dur:2 cpbdur:2 q:51.00 tex:1283639 mv:12213 misc:364 imb:2730 pmb:870 smb:0 d:- ref:0 ;
-in:7 out:7 type:P dur:2 cpbdur:2 q:51.00 tex:1289136 mv:12014 misc:354 imb:2673 pmb:927 smb:0 d:- ref:0 ;

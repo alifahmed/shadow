@@ -1,13 +1,3 @@
-/*******************************************************************************
- *
- * File: MAPProfiler.cpp
- * Description: Pin tool for tracing memory accesses.
- * 
- * Author:  Alif Ahmed
- * Email:   alifahmed@virginia.edu
- * Updated: Oct 09, 2020
- *
- ******************************************************************************/
 #include <InsLoop.h>
 #include "types.h"
 #include "cln_utils.h"
