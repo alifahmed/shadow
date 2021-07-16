@@ -34,7 +34,7 @@ function cloneBench {
 	cd ${OLD_DIR}
 	
 	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 10000
-	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 5 &
+	#./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 5 &
 	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 10 &
 	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 20 &
 	./create_clone.sh ${TARGET_DIR} ${OUT_DIR} ${TOP} 50 &
@@ -49,11 +49,17 @@ function cloneBench {
 #cloneBench particlefilter 92
 #cloneBench pathfinder 92
 #cloneBench srad 92
-cloneBench bfs 90
+#cloneBench bfs 90
 #cloneBench gobmk 90
 #cloneBench hmmer 90
 #cloneBench h264ref 90
 #cloneBench libquantum 90
 #cloneBench mcf 90
+#cloneBench xz 90
+#cloneBench x264 90
+#cloneBench leela 90
+#cloneBench deepsjeng 90
+#cloneBench mcf 90
+cloneBench omnetpp 90
 
 

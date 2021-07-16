@@ -58,6 +58,6 @@ else
 fi
 
 cd ${CLONE_OUT_DIR}
-g++ genCode.cpp -o genCode.out -O0 -mavx
+g++ genCode.cpp -o genCode.out -O0 -mavx -g
 
 

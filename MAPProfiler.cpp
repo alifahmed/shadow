@@ -1731,7 +1731,16 @@ void record(InsRoot *root, ADDRINT ea, UINT32 op) {
 	startCnt++;
 	if (startCnt > 0) {
 		InsMem *ins = getInsLeaf(root, op);
+		/*if(ea & (ins->accSz-1)){
+			cout << "Unaligned access" << endl;
+			cout << "\t" << ins->hashedRoot->root->dis << endl;
+			cout << "\tSize: " << ins->accSz << endl;
+			cout << "\tAddr: " << hex << ea << dec << endl;
+			exit(-1);
+		}*/
 		insTrace.push_back(ins);
+		//make the address aligned
+		ea &= ~(ins->accSz - 1ULL);
 		if (ea > ins->maxAddr) {
 			ins->maxAddr = ea;
 		}
@@ -1851,9 +1860,12 @@ void Instruction(INS ins, VOID *v) {
 	if (memOperands) {
 		InsRoot *root = createInsRoot(ins);
 		for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
-			INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record,
-					IARG_PTR, root, IARG_MEMORYOP_EA, memOp, IARG_UINT32, memOp,
-					IARG_END);
+			const int accSz = INS_MemoryOperandSize(ins, memOp);
+			if((accSz == 1) || (accSz == 2) || (accSz == 4) || (accSz == 8) || (accSz == 16) || (accSz == 32) || (accSz == 64)){
+				INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record,
+						IARG_PTR, root, IARG_MEMORYOP_EA, memOp, IARG_UINT32, memOp,
+						IARG_END);
+			}
 		}
 	}
 }
