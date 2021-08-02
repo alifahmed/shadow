@@ -55,7 +55,7 @@ This will clone the scatter_gather benchmark with a batch size of 1 million memo
 
 	$ g++ genCode.cpp -o shadow -mavx
 	
-The -mavx flag is necessary since the clone can contain AVX/AVX2/AVX512 load/store instructions.
+The -mavx flag is necessary since the clone can contain AVX load/store instructions.
 
 
 
