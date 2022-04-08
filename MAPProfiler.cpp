@@ -1822,32 +1822,11 @@ void Instruction(INS ins, VOID *v) {
 	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) inst_count, IARG_END);
 
 	// do some filtering
-	if (INS_IsLea(ins))
-		return;
-	// Add other instructions if needed
-
-	if (INS_IsCall(ins)) {    //excludes system call
-		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallEntry,
-				IARG_INST_PTR, IARG_END);
-		return;
-	}
-
-	if (INS_IsRet(ins)) {
-		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) anyCallRet,
-				IARG_END);
-		return;
-	}
-
-	if (INS_Category(ins) == XED_CATEGORY_COND_BR) {
-		//	InsRoot *root = createInsRoot(ins);
-		//	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) jmpInst, IARG_PTR, root, IARG_END);
-		return;
-	}
 
 	// Get the memory operand count of the current instruction.
 	UINT32 memOperands = INS_MemoryOperandCount(ins);
 
-	if (memOperands) {
+	if (memOperands && INS_IsMov(ins)) {
 		InsRoot *root = createInsRoot(ins);
 		for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
 			const int accSz = INS_MemoryOperandSize(ins, memOp);
