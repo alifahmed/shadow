@@ -23,6 +23,8 @@
 #include <algorithm>
 #include <set>
 
+#include "pinplay.H"
+
 using namespace std;
 
 /*******************************************************************************
@@ -54,6 +56,15 @@ KNOB<INT64> knobStart(KNOB_MODE_WRITEONCE, "pintool", "start", "0",
 
 KNOB<UINT64> knobMaxInst(KNOB_MODE_WRITEONCE, "pintool", "maxinst", "-1",
 		"Profile upto maxinst number of instructions (any type, not just memory instructions)");
+
+// PinPlay intergration
+PINPLAY_ENGINE pinplay_engine;
+KNOB<BOOL> KnobPinPlayLogger(KNOB_MODE_WRITEONCE, 
+                      "pintool", "log", "0",
+                      "Activate the pinplay logger");
+KNOB<BOOL> KnobPinPlayReplayer(KNOB_MODE_WRITEONCE, 
+                      "pintool", "replay", "0",
+                      "Activate the pinplay replayer");
 
 // Max threads
 //KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",	"Upper limit of the number of threads that can be used by the program being profiled.");
