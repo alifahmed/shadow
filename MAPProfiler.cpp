@@ -18,6 +18,7 @@
 #include "PatternConst.h"
 #include "PatternDominant.h"
 #include "InsRand.h"
+#include "InsMix.h"
 #include <unordered_map>
 #include <algorithm>
 #include <set>
@@ -84,6 +85,8 @@ static INT64 startCnt = 0;
 static INT64 startCntSaved = 0;
 static UINT64 intervalCnt = 0;
 static UINT64 instCount = 0;
+
+static InsMix insMixCnt;
 
 static vector<InsRoot*> insRootList;
 static vector<InsHashedRoot*> insHashedRootList;
@@ -1543,7 +1546,7 @@ void processInterval() {
 	updateParentLoops(cfg);
 	derivePattern(filteredInsList);
 
-	//printInfo(filteredInsList);
+	printInfo(filteredInsList);
 	generateCodeFragment(1, filteredInsList, cfg);
 	//cout << "Process Done" << endl;
 	update_pat_dist(filteredInsList);
@@ -1818,6 +1821,10 @@ void inst_count(){
 	}
 }
 
+void inst_mix_count(InsMix::InsMixType ty) {
+	insMixCnt.cnt[ty] += 1;
+}
+
 void Instruction(INS ins, VOID *v) {
 	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) inst_count, IARG_END);
 
@@ -1837,6 +1844,50 @@ void Instruction(INS ins, VOID *v) {
 			}
 		}
 	}
+
+	if (INS_IsMemoryRead(ins) || INS_HasMemoryRead2(ins)) {
+		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::LOAD, IARG_END);
+	}
+	if (INS_IsMemoryWrite(ins)) {
+		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::STORE, IARG_END);
+	}
+	if (INS_IsControlFlow(ins)) { // account for func calls
+		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::CONTROL, IARG_END);
+	}
+	if (INS_IsBranch(ins)) {
+		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::BRANCH, IARG_END);
+	}
+	if (INS_IsSyscall(ins)) {
+		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::SYSCALL, IARG_END);
+	}
+
+	xed_iclass_enum_t iclass = static_cast<xed_iclass_enum_t>(INS_Opcode(ins));
+	if ((INS_Category(ins) == XED_CATEGORY_FCMOV) || (INS_Category(ins) == XED_CATEGORY_X87_ALU) || (INS_Category(ins) == XED_CATEGORY_LOGICAL_FP)) {	
+		if ((iclass == XED_ICLASS_FMUL) || (iclass == XED_ICLASS_PFMUL) || (iclass == XED_ICLASS_FMULP)) {
+			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::FPMUL, IARG_END);
+		}
+		else if ((iclass == XED_ICLASS_FDIV) || (iclass == XED_ICLASS_FDIVR) || (iclass == XED_ICLASS_FDIVRP) || (iclass == XED_ICLASS_FDIVP)) {
+			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::FPDIV, IARG_END);
+		}
+		else {
+			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::FPOTHER, IARG_END);
+		}
+	}
+	else if ((INS_Category(ins) == XED_CATEGORY_LOGICAL) || (INS_Category(ins) == XED_CATEGORY_BINARY) || (INS_Category(ins) == XED_CATEGORY_BITBYTE) || (INS_Category(ins) == XED_CATEGORY_FLAGOP)) {
+		if((iclass == XED_ICLASS_IMUL) || (iclass == XED_ICLASS_MUL) || (iclass == XED_ICLASS_PMULLW) || (iclass == XED_ICLASS_PMULUDQ) || (iclass == XED_ICLASS_PMULHUW) || (iclass == XED_ICLASS_PMULHW) || (iclass == XED_ICLASS_MULPS) || (iclass == XED_ICLASS_MULSS) || (iclass == XED_ICLASS_MULPD) || (iclass == XED_ICLASS_MULSD)) {
+			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::INTMUL, IARG_END);
+		}
+		else if ((iclass == XED_ICLASS_DIV) || (iclass == XED_ICLASS_IDIV) || (iclass == XED_ICLASS_DIVPS) || (iclass == XED_ICLASS_DIVSS) || (iclass == XED_ICLASS_DIVPD) || (iclass == XED_ICLASS_DIVSD)) {
+			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::INTDIV, IARG_END);
+		}
+		else {
+			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::INTOTHER, IARG_END);
+		}
+	}
+	else {
+		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::OTHER, IARG_END);
+	}
+
 }
 
 /*******************************************************************************
