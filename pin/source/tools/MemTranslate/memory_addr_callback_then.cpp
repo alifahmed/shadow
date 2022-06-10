@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,14 +15,16 @@
 using std::cout;
 using std::endl;
 
-BOOL ifTrue                 = FALSE;
-BOOL foundTwoMemOpIns       = FALSE;
-BOOL instrumentMemOp        = FALSE;
-INT callbackCounter         = 0;
-INT expectedCallbackCounter = 0;
-THREADID mainThread         = INVALID_THREADID;
 
-ADDRINT PIN_FAST_ANALYSIS_CALL memoryCallback(PIN_MEM_TRANS_INFO* memTransInfo, VOID* v)
+BOOL ifTrue = FALSE;
+BOOL foundTwoMemOpIns = FALSE;
+BOOL instrumentMemOp = FALSE;
+INT callbackCounter = 0;
+INT expectedCallbackCounter = 0;
+THREADID mainThread = INVALID_THREADID;
+
+
+ADDRINT PIN_FAST_ANALYSIS_CALL memoryCallback(PIN_MEM_TRANS_INFO* memTransInfo, VOID *v)
 {
     if (memTransInfo->flags.bits.isFromPin)
     {
@@ -41,7 +43,8 @@ ADDRINT PIN_FAST_ANALYSIS_CALL memoryCallback(PIN_MEM_TRANS_INFO* memTransInfo, 
     return memTransInfo->addr;
 }
 
-VOID thenMemoryCallbackCounter2(ADDRINT memeaOrig, ADDRINT memeaCallback, ADDRINT memeaOrig2, ADDRINT memeaCallback2)
+VOID thenMemoryCallbackCounter2(ADDRINT memeaOrig, ADDRINT memeaCallback,
+        ADDRINT memeaOrig2, ADDRINT memeaCallback2)
 {
     foundTwoMemOpIns = TRUE;
     ASSERTX(memeaOrig == memeaCallback);
@@ -67,7 +70,7 @@ ADDRINT ifRoutine(THREADID tid)
     return ifTrue;
 }
 
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     if (instrumentMemOp)
     {
@@ -77,14 +80,24 @@ VOID Instruction(INS ins, VOID* v)
             if (1 == memOperands)
             {
                 INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(ifRoutine), IARG_THREAD_ID, IARG_END);
-                INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)thenMemoryCallbackCounter, IARG_MEMORYOP_EA, 0, IARG_MEMORYOP_PTR,
-                                   0, IARG_END);
+                INS_InsertThenCall(ins,
+                    IPOINT_BEFORE,
+                    (AFUNPTR)thenMemoryCallbackCounter,
+                    IARG_MEMORYOP_EA, 0,
+                    IARG_MEMORYOP_PTR, 0,
+                    IARG_END);
             }
             else if (2 == memOperands)
             {
                 INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(ifRoutine), IARG_THREAD_ID, IARG_END);
-                INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)thenMemoryCallbackCounter2, IARG_MEMORYOP_EA, 0,
-                                   IARG_MEMORYOP_PTR, 0, IARG_MEMORYOP_EA, 1, IARG_MEMORYOP_PTR, 1, IARG_END);
+                INS_InsertThenCall(ins,
+                    IPOINT_BEFORE,
+                    (AFUNPTR)thenMemoryCallbackCounter2,
+                    IARG_MEMORYOP_EA, 0,
+                    IARG_MEMORYOP_PTR, 0,
+                    IARG_MEMORYOP_EA, 1,
+                    IARG_MEMORYOP_PTR, 1,
+                    IARG_END);
             }
         }
     }
@@ -93,32 +106,52 @@ VOID Instruction(INS ins, VOID* v)
         if (INS_HasMemoryRead2(ins))
         {
             INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(ifRoutine), IARG_THREAD_ID, IARG_END);
-            INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)thenMemoryCallbackCounter2, IARG_MEMORYREAD_EA, IARG_MEMORYREAD_PTR,
-                               IARG_MEMORYREAD2_EA, IARG_MEMORYREAD2_PTR, IARG_END);
+            INS_InsertThenCall(ins,
+                IPOINT_BEFORE,
+                (AFUNPTR)thenMemoryCallbackCounter2,
+                IARG_MEMORYREAD_EA,
+                IARG_MEMORYREAD_PTR,
+                IARG_MEMORYREAD2_EA,
+                IARG_MEMORYREAD2_PTR,
+                IARG_END);
         }
         else if (INS_IsMemoryWrite(ins) && INS_IsMemoryRead(ins))
         {
             INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(ifRoutine), IARG_THREAD_ID, IARG_END);
-            INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)thenMemoryCallbackCounter2, IARG_MEMORYREAD_EA, IARG_MEMORYREAD_PTR,
-                               IARG_MEMORYWRITE_EA, IARG_MEMORYWRITE_PTR, IARG_END);
+            INS_InsertThenCall(ins,
+                IPOINT_BEFORE,
+                (AFUNPTR)thenMemoryCallbackCounter2,
+                IARG_MEMORYREAD_EA,
+                IARG_MEMORYREAD_PTR,
+                IARG_MEMORYWRITE_EA,
+                IARG_MEMORYWRITE_PTR,
+                IARG_END);
         }
         else if (INS_IsMemoryRead(ins))
         {
             INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(ifRoutine), IARG_THREAD_ID, IARG_END);
-            INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)thenMemoryCallbackCounter, IARG_MEMORYREAD_EA, IARG_MEMORYREAD_PTR,
-                               IARG_END);
+            INS_InsertThenCall(ins,
+                IPOINT_BEFORE,
+                (AFUNPTR)thenMemoryCallbackCounter,
+                IARG_MEMORYREAD_EA,
+                IARG_MEMORYREAD_PTR,
+                IARG_END);
         }
         else if (INS_IsMemoryWrite(ins))
         {
             INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(ifRoutine), IARG_THREAD_ID, IARG_END);
-            INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)thenMemoryCallbackCounter, IARG_MEMORYWRITE_EA, IARG_MEMORYWRITE_PTR,
-                               IARG_END);
+            INS_InsertThenCall(ins,
+                IPOINT_BEFORE,
+                (AFUNPTR)thenMemoryCallbackCounter,
+                IARG_MEMORYWRITE_EA,
+                IARG_MEMORYWRITE_PTR,
+                IARG_END);
         }
     }
     instrumentMemOp = !instrumentMemOp;
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     if (INVALID_THREADID == mainThread)
     {
@@ -126,7 +159,7 @@ VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
     }
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     if (!foundTwoMemOpIns)
     {
@@ -137,8 +170,7 @@ VOID Fini(INT32 code, VOID* v)
     if (callbackCounter != expectedCallbackCounter)
     {
         cout << "Then-analysis routine executed different number of times than memory callback." << endl;
-        cout << "callbackCounter: " << callbackCounter << ", "
-             << "expectedCallbackCounter: " << expectedCallbackCounter << endl;
+        cout << "callbackCounter: " << callbackCounter << ", " << "expectedCallbackCounter: " << expectedCallbackCounter << endl;
         PIN_ExitProcess(1);
     }
 }
@@ -147,7 +179,7 @@ VOID Fini(INT32 code, VOID* v)
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

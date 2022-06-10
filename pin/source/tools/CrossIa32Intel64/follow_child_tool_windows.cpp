@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,7 +14,7 @@
 
 namespace WIND
 {
-#include <windows.h>
+#include <windows.h>  
 }
 
 using std::cout;
@@ -22,28 +22,35 @@ using std::endl;
 using std::flush;
 
 // Whether to check current process id received in KnobCurrentProcessId
-KNOB< BOOL > KnobLoadSystemDlls(KNOB_MODE_WRITEONCE, "pintool", "load_system_dlls", "0", "load system dlls in main()");
+KNOB<BOOL> KnobLoadSystemDlls(KNOB_MODE_WRITEONCE,         "pintool",
+                                         "load_system_dlls", "0", "load system dlls in main()");
 
-BOOL FollowChild(CHILD_PROCESS cProcess, VOID* userData)
+BOOL FollowChild(CHILD_PROCESS childProcess, VOID * userData)
 {
     cout << "At follow child callback" << endl << flush;
-    cout << "Child process id = " << CHILD_PROCESS_GetId(cProcess) << endl << flush;
+    cout << "Child process id = " << CHILD_PROCESS_GetId(childProcess) << endl << flush;
     return TRUE;
 }
 
-VOID ImageLoad(IMG img, VOID* v) { cout << "Loading " << IMG_Name(img) << ", Image id = " << IMG_Id(img) << endl << flush; }
+
+VOID ImageLoad(IMG img, VOID *v)
+{
+    cout << "Loading " <<  IMG_Name(img) << ", Image id = " << IMG_Id(img) << endl << flush;
+}
 
 // Pin calls this function every time a new img is unloaded
 // You can't instrument an image that is about to be unloaded
-VOID ImageUnload(IMG img, VOID* v) { cout << "Unloading " << IMG_Name(img) << ", Image id = " << IMG_Id(img) << endl << flush; }
-
-VOID AppStart(VOID* v)
+VOID ImageUnload(IMG img, VOID *v)
 {
-    cout << "Application started" << endl << flush;
-    ;
+    cout << "Unloading " <<  IMG_Name(img) << ", Image id = " << IMG_Id(img) << endl << flush;
 }
 
-int main(INT32 argc, CHAR** argv)
+VOID AppStart(VOID *v)
+{
+    cout << "Application started" << endl << flush;;
+}
+
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
 
@@ -57,37 +64,38 @@ int main(INT32 argc, CHAR** argv)
     IMG_AddInstrumentFunction(ImageLoad, 0);
 
     IMG_AddUnloadFunction(ImageUnload, 0);
-
-    if (KnobLoadSystemDlls)
+    
+       
+    if(KnobLoadSystemDlls)
     {
         WIND::HMODULE h1 = WIND::LoadLibrary("RPCRT4.dll");
-        if (h1 == NULL)
+        if(h1 == NULL)
         {
             cout << "Failed to load RPCRT4" << endl << flush;
             exit(-1);
-        }
+        }     
         WIND::HMODULE h2 = WIND::LoadLibrary("advapi32.dll");
-        if (h1 == NULL)
+        if(h1 == NULL)
         {
             cout << "Failed to load advapi32" << endl << flush;
             exit(-1);
         }
         WIND::HMODULE h3 = WIND::LoadLibrary("dbghelp.dll");
-        if (h1 == NULL)
+        if(h1 == NULL)
         {
             cout << "Failed to load dbghelp" << endl << flush;
             exit(-1);
         }
         WIND::HMODULE h4 = WIND::LoadLibrary("user32.dll");
-        if (h1 == NULL)
+        if(h1 == NULL)
         {
             cout << "Failed to load user32" << endl << flush;
             exit(-1);
-        }
+        }       
     }
-
+ 
     // Never returns
-    if (PIN_IsProbeMode())
+    if ( PIN_IsProbeMode() )
     {
         PIN_AddApplicationStartFunction(AppStart, 0);
         PIN_StartProgramProbed();

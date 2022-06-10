@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -24,8 +24,7 @@
 
 typedef ADDRINT OS_SPINLOCK_TYPE;
 
-typedef enum _OS_APIS_MUTEX_KIND
-{
+typedef enum _OS_APIS_MUTEX_KIND {
     OS_MUTEX_DEPTH_SIMPLE = 0, //!< This lock can only be acquired once, no matter if the same thread tried to acquire it twice
     OS_MUTEX_DEPTH_RECURSIVE   //!< Recursive lock that can be acquired recursively by the same thread.
 } OS_MUTEX_DEPTH;
@@ -37,8 +36,7 @@ typedef enum _OS_APIS_MUTEX_KIND
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-typedef struct _OS_APIS_MUTEX_TYPE
-{
+typedef struct _OS_APIS_MUTEX_TYPE {
     OS_MUTEX_DEPTH kind;
     OS_SPINLOCK_TYPE spinlock;
     OS_EVENT event;
@@ -52,19 +50,15 @@ typedef struct _OS_APIS_MUTEX_TYPE
 typedef PRE_ALIGNTO(CPU_MEMORY_CACHELINE_SIZE) union
 {
     OS_MUTEX_TYPE_IMPL impl;
-    char reserved[2 * CPU_MEMORY_CACHELINE_SIZE];
-} POST_ALIGNTO(CPU_MEMORY_CACHELINE_SIZE) OS_MUTEX_TYPE;
+    char reserved[CPU_MEMORY_CACHELINE_SIZE*2];
+}  POST_ALIGNTO(CPU_MEMORY_CACHELINE_SIZE) OS_MUTEX_TYPE;
 
 #ifdef TARGET_WINDOWS
-#define OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER                                            \
-    {                                                                                          \
-        OS_MUTEX_DEPTH_SIMPLE, (OS_SPINLOCK_TYPE)0, OS_EVENT_INITIALIZER, (UINT32)0, (UINT32)0 \
-    }
+#define OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER {OS_MUTEX_DEPTH_SIMPLE ,(OS_SPINLOCK_TYPE)0, OS_EVENT_INITIALIZER, \
+                                                     (UINT32)0, (UINT32)0}
 #else
-#define OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER                                                       \
-    {                                                                                                     \
-        OS_MUTEX_DEPTH_SIMPLE, (OS_SPINLOCK_TYPE)0, OS_EVENT_INITIALIZER, (UINT32)0, (UINT32)0, (UINT32)0 \
-    }
+#define OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER {OS_MUTEX_DEPTH_SIMPLE ,(OS_SPINLOCK_TYPE)0, OS_EVENT_INITIALIZER, \
+                                                     (UINT32)0, (UINT32)0, (UINT32)0}
 #endif
 
 /*! @ingroup OS_APIS_MUTEX
@@ -83,21 +77,14 @@ typedef PRE_ALIGNTO(CPU_MEMORY_CACHELINE_SIZE) union
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-#define OS_APIS_MUTEX_DEPTH_SIMPLE_INITIALIZER      \
-    {                                               \
-        OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER \
-    }
+#define OS_APIS_MUTEX_DEPTH_SIMPLE_INITIALIZER {OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER}
 
 #ifdef TARGET_WINDOWS
-#define OS_APIS_MUTEX_IMPL_DEPTH_RECURSIVE_INITIALIZER                                            \
-    {                                                                                             \
-        OS_MUTEX_DEPTH_RECURSIVE, (OS_SPINLOCK_TYPE)0, OS_EVENT_INITIALIZER, (UINT32)0, (UINT32)0 \
-    }
+#define OS_APIS_MUTEX_IMPL_DEPTH_RECURSIVE_INITIALIZER {OS_MUTEX_DEPTH_RECURSIVE ,(OS_SPINLOCK_TYPE)0, OS_EVENT_INITIALIZER, \
+                                                        (UINT32)0, (UINT32)0}
 #else
-#define OS_APIS_MUTEX_IMPL_DEPTH_RECURSIVE_INITIALIZER                                                       \
-    {                                                                                                        \
-        OS_MUTEX_DEPTH_RECURSIVE, (OS_SPINLOCK_TYPE)0, OS_EVENT_INITIALIZER, (UINT32)0, (UINT32)0, (UINT32)0 \
-    }
+#define OS_APIS_MUTEX_IMPL_DEPTH_RECURSIVE_INITIALIZER {OS_MUTEX_DEPTH_RECURSIVE ,(OS_SPINLOCK_TYPE)0, OS_EVENT_INITIALIZER, \
+                                                        (UINT32)0, (UINT32)0, (UINT32)0}
 #endif
 
 /*! @ingroup OS_APIS_MUTEX
@@ -112,10 +99,7 @@ typedef PRE_ALIGNTO(CPU_MEMORY_CACHELINE_SIZE) union
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-#define OS_APIS_MUTEX_DEPTH_RECURSIVE_INITIALIZER      \
-    {                                                  \
-        OS_APIS_MUTEX_IMPL_DEPTH_RECURSIVE_INITIALIZER \
-    }
+#define OS_APIS_MUTEX_DEPTH_RECURSIVE_INITIALIZER {OS_APIS_MUTEX_IMPL_DEPTH_RECURSIVE_INITIALIZER}
 
 /*! @ingroup OS_APIS_MUTEX
  * Initialize a mutex.
@@ -128,7 +112,7 @@ typedef PRE_ALIGNTO(CPU_MEMORY_CACHELINE_SIZE) union
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-void OS_MutexInit(volatile OS_MUTEX_TYPE* lock);
+void OS_MutexInit(volatile OS_MUTEX_TYPE *lock);
 
 /*! @ingroup OS_APIS_MUTEX
  * Initialize a recursive mutex.
@@ -141,7 +125,7 @@ void OS_MutexInit(volatile OS_MUTEX_TYPE* lock);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-void OS_MutexRecursiveInit(volatile OS_MUTEX_TYPE* lock);
+void OS_MutexRecursiveInit(volatile OS_MUTEX_TYPE *lock);
 
 /*! @ingroup OS_APIS_MUTEX
  * Destroys a mutex after it is no longer in use.
@@ -156,7 +140,7 @@ void OS_MutexRecursiveInit(volatile OS_MUTEX_TYPE* lock);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-void OS_MutexDestroy(volatile OS_MUTEX_TYPE* lock);
+void OS_MutexDestroy(volatile OS_MUTEX_TYPE *lock);
 
 /*! @ingroup OS_APIS_MUTEX
  * Aquire a mutex, blocks until the mutex becomes available (according to the mutex's semantics).
@@ -167,7 +151,7 @@ void OS_MutexDestroy(volatile OS_MUTEX_TYPE* lock);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-void OS_MutexLock(volatile OS_MUTEX_TYPE* lock);
+void OS_MutexLock(volatile OS_MUTEX_TYPE *lock);
 
 /*! @ingroup OS_APIS_MUTEX
  * Aquire a mutex, blocks until the mutex becomes available (according to the mutex's semantics).
@@ -183,7 +167,7 @@ void OS_MutexLock(volatile OS_MUTEX_TYPE* lock);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-void OS_MutexLockTid(volatile OS_MUTEX_TYPE* lock, NATIVE_TID myTid);
+void OS_MutexLockTid(volatile OS_MUTEX_TYPE *lock, NATIVE_TID myTid);
 
 /*! @ingroup OS_APIS_MUTEX
  * Tries to aquire a mutex:\n
@@ -198,7 +182,7 @@ void OS_MutexLockTid(volatile OS_MUTEX_TYPE* lock, NATIVE_TID myTid);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-BOOL_T OS_MutexTryLock(volatile OS_MUTEX_TYPE* lock);
+BOOL_T OS_MutexTryLock(volatile OS_MUTEX_TYPE *lock);
 
 /*! @ingroup OS_APIS_MUTEX
  * Tries to aquire a mutex:\n
@@ -218,7 +202,7 @@ BOOL_T OS_MutexTryLock(volatile OS_MUTEX_TYPE* lock);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-BOOL_T OS_MutexTryLockTid(volatile OS_MUTEX_TYPE* lock0, NATIVE_TID myTid);
+BOOL_T OS_MutexTryLockTid(volatile OS_MUTEX_TYPE *lock0, NATIVE_TID myTid);
 
 /*! @ingroup OS_APIS_MUTEX
  * Checks whether a mutex state is locked.\n
@@ -232,7 +216,7 @@ BOOL_T OS_MutexTryLockTid(volatile OS_MUTEX_TYPE* lock0, NATIVE_TID myTid);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-BOOL_T OS_MutexIsLocked(volatile OS_MUTEX_TYPE* lock);
+BOOL_T OS_MutexIsLocked(volatile OS_MUTEX_TYPE *lock);
 
 /*! @ingroup OS_APIS_MUTEX
  * Aquire a mutex, blocks until the mutex becomes available (according to the mutex's semantics).
@@ -249,7 +233,7 @@ BOOL_T OS_MutexIsLocked(volatile OS_MUTEX_TYPE* lock);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-BOOL_T OS_MutexTimedLock(volatile OS_MUTEX_TYPE* lock, UINT32 timeoutMillis);
+BOOL_T OS_MutexTimedLock(volatile OS_MUTEX_TYPE *lock, UINT32 timeoutMillis);
 
 /*! @ingroup OS_APIS_MUTEX
  * Aquire a mutex, blocks until the mutex becomes available (according to the mutex's semantics).
@@ -271,7 +255,7 @@ BOOL_T OS_MutexTimedLock(volatile OS_MUTEX_TYPE* lock, UINT32 timeoutMillis);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-BOOL_T OS_MutexTimedLockTid(volatile OS_MUTEX_TYPE* lock0, NATIVE_TID myTid, UINT32 timeoutMillis);
+BOOL_T OS_MutexTimedLockTid(volatile OS_MUTEX_TYPE *lock0, NATIVE_TID myTid, UINT32 timeoutMillis);
 
 /*! @ingroup OS_APIS_MUTEX
  * Queries the owner of a recursive mutex.
@@ -286,7 +270,7 @@ BOOL_T OS_MutexTimedLockTid(volatile OS_MUTEX_TYPE* lock0, NATIVE_TID myTid, UIN
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-NATIVE_TID OS_MutexGetOwner(volatile OS_MUTEX_TYPE* lock);
+NATIVE_TID OS_MutexGetOwner(volatile OS_MUTEX_TYPE *lock);
 
 /*! @ingroup OS_APIS_MUTEX
  * Queries the recursion of a recursive mutex. I.e. the number of times that the unlock functions needs to be
@@ -303,7 +287,7 @@ NATIVE_TID OS_MutexGetOwner(volatile OS_MUTEX_TYPE* lock);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-UINT32 OS_MutexGetRecursionLevel(volatile OS_MUTEX_TYPE* lock);
+UINT32 OS_MutexGetRecursionLevel(volatile OS_MUTEX_TYPE *lock);
 
 /*! @ingroup OS_APIS_MUTEX
  * Releases a mutex.
@@ -316,6 +300,6 @@ UINT32 OS_MutexGetRecursionLevel(volatile OS_MUTEX_TYPE* lock);
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-BOOL_T OS_MutexUnlock(volatile OS_MUTEX_TYPE* lock);
+BOOL_T OS_MutexUnlock(volatile OS_MUTEX_TYPE *lock);
 
 #endif // OS_APIS_MUTEX_H_INCLUDED_

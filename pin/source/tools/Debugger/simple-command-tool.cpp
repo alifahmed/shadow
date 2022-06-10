@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,10 +19,11 @@
 bool GotPinCommand = false;
 bool GotOurCommand = false;
 
-static bool OnCommand(THREADID, CONTEXT*, const std::string&, std::string*, VOID*);
-static void OnExit(INT32, VOID*);
+static bool OnCommand(THREADID, CONTEXT *, const std::string &, std::string *, VOID *);
+static void OnExit(INT32, VOID *);
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
@@ -32,7 +33,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static bool OnCommand(THREADID, CONTEXT*, const std::string& cmd, std::string* reply, VOID*)
+
+static bool OnCommand(THREADID, CONTEXT *, const std::string &cmd, std::string *reply, VOID *)
 {
     if (cmd == "pin foo")
     {
@@ -44,14 +46,14 @@ static bool OnCommand(THREADID, CONTEXT*, const std::string& cmd, std::string* r
     }
     if (cmd == "mycommand")
     {
-        *reply        = "Got mycommand\n";
+        *reply = "Got mycommand\n";
         GotOurCommand = true;
         return true;
     }
     return false;
 }
 
-static void OnExit(INT32, VOID*)
+static void OnExit(INT32, VOID *)
 {
     if (!GotOurCommand)
     {

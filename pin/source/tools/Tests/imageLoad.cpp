@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,22 +18,25 @@
 #include <iomanip>
 #include "pin.H"
 using std::dec;
-using std::endl;
-using std::hex;
-using std::ofstream;
-using std::showbase;
 using std::string;
+using std::hex;
+using std::showbase;
+using std::ofstream;
+using std::endl;
 
-ofstream* out = 0;
+ofstream *out=0;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "imageload.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "imageload.out", "specify output file name");
 
-KNOB< BOOL > KnobImageOnly(KNOB_MODE_WRITEONCE, "pintool", "l", "0", "List the loaded images");
+KNOB<BOOL> KnobImageOnly(KNOB_MODE_WRITEONCE, "pintool",
+    "l", "0", "List the loaded images");
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID * v)
 {
     *out << "Tool loading " << IMG_Name(img) << " at " << IMG_LoadOffset(img) << endl;
-    if (KnobImageOnly) return;
+    if (KnobImageOnly)
+        return;
 
     for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
     {
@@ -43,7 +46,7 @@ VOID ImageLoad(IMG img, VOID* v)
             *out << "    rtn " << RTN_Name(rtn) << " " << RTN_Address(rtn) << ":" << RTN_Size(rtn) << endl;
 
             RTN_Open(rtn);
-
+            
             for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
             {
                 // Just print first and last
@@ -63,9 +66,9 @@ VOID ImageLoad(IMG img, VOID* v)
                     {
                         *out << " " << REG_StringShort(INS_RegW(ins, i));
                     }
-#endif
+#endif                    
 
-                    *out << endl;
+                    *out <<  endl;
                 }
             }
 
@@ -74,12 +77,15 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-VOID ImageUnload(IMG img, VOID* v) { *out << "Tool unloading " << IMG_Name(img) << " at " << IMG_LoadOffset(img) << endl; }
+VOID ImageUnload(IMG img, VOID * v)
+{
+    *out << "Tool unloading " << IMG_Name(img) << " at " << IMG_LoadOffset(img) << endl;
+}
 
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
     INS head = BBL_InsHead(TRACE_BblHead(trace));
-
+    
     INT32 line;
     INT32 column;
     string file;
@@ -92,33 +98,39 @@ VOID Trace(TRACE trace, VOID* v)
 
     RTN rtn = RTN_FindByAddress(INS_Address(head));
 
-    if (RTN_Valid(rtn))
-    {
+
+    if (RTN_Valid(rtn)){
         IMG img = SEC_Img(RTN_Sec(rtn));
 
-        if (IMG_Valid(img))
-        {
-            *out << IMG_Name(img) << ":" << RTN_Name(rtn) << "+" << INS_Address(head) - RTN_Address(rtn) << " "
-                 << INS_Disassemble(head) << endl;
+        if (IMG_Valid(img)) {
+            *out << IMG_Name(img)
+                 << ":"
+                 << RTN_Name(rtn)
+                 << "+"
+                 << INS_Address(head) - RTN_Address(rtn)
+                 << " "
+                 << INS_Disassemble(head)
+                 << endl;
         }
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
-
+    
     out = new ofstream(KnobOutputFile.Value().c_str());
     *out << hex << showbase;
-
+    
     IMG_AddInstrumentFunction(ImageLoad, 0);
     IMG_AddUnloadFunction(ImageUnload, 0);
 
-    if (!KnobImageOnly) TRACE_AddInstrumentFunction(Trace, 0);
-
+    if (!KnobImageOnly)
+        TRACE_AddInstrumentFunction(Trace, 0);
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

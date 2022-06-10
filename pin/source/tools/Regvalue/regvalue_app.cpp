@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,10 +12,11 @@
 #include "regvalues.h"
 
 #ifdef TARGET_WINDOWS
-#define EXPORT_SYM __declspec(dllexport)
+#define EXPORT_SYM __declspec( dllexport )
 #else
 #define EXPORT_SYM
 #endif
+
 
 /////////////////////
 // EXTERNAL FUNCTIONS
@@ -29,6 +30,7 @@
 // Finally, the original register values are restored.
 extern "C" void ChangeRegsWrapper() ASMNAME("ChangeRegsWrapper");
 
+
 /////////////////////
 // UTILITY FUNCTIONS
 /////////////////////
@@ -36,9 +38,12 @@ extern "C" void ChangeRegsWrapper() ASMNAME("ChangeRegsWrapper");
 // The SaveAppPointers() function is an empty function which is used by the tool to save pointers
 // to the application's modified register values.
 // These values will be set in the SaveRegsToMem() function (see the changeRegs_<arch> assembly file).
-extern "C" EXPORT_SYM void SaveAppPointers(unsigned char* agprptr, unsigned char* astptr, unsigned char* axmmptr,
-                                           unsigned char* aymmptr, unsigned char* azmmptr, unsigned char* aopmaskptr)
-{}
+extern "C" EXPORT_SYM void SaveAppPointers(unsigned char* agprptr, unsigned char* astptr,
+                                           unsigned char* axmmptr, unsigned char* aymmptr,
+                                           unsigned char* azmmptr, unsigned char* aopmaskptr)
+{
+}
+
 
 /////////////////////
 // MAIN FUNCTION

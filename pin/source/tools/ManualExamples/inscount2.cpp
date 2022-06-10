@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,10 +13,10 @@
 #include <fstream>
 #include "pin.H"
 using std::cerr;
-using std::endl;
-using std::ios;
 using std::ofstream;
+using std::ios;
 using std::string;
+using std::endl;
 
 ofstream OutFile;
 
@@ -27,10 +27,10 @@ static UINT64 icount = 0;
 // This function is called before every block
 // Use the fast linkage for calls
 VOID PIN_FAST_ANALYSIS_CALL docount(ADDRINT c) { icount += c; }
-
+    
 // Pin calls this function every time a new basic block is encountered
 // It inserts a call to docount
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
     // Visit every basic block  in the trace
     for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
@@ -42,10 +42,11 @@ VOID Trace(TRACE trace, VOID* v)
     }
 }
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "inscount.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "inscount.out", "specify output file name");
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     // Write to a file since cout and cerr maybe closed by the application
     OutFile.setf(ios::showbase);
@@ -68,7 +69,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();
@@ -80,9 +81,9 @@ int main(int argc, char* argv[])
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

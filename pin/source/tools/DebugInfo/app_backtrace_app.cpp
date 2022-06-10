@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,7 +17,9 @@ extern "C" void qux()
     fflush(stdout);
 }
 
-extern "C" void baz() {}
+extern "C" void baz()
+{
+}
 
 extern "C" void bar()
 {
@@ -30,6 +32,7 @@ extern "C" void foo()
     bar();
     qux();
 }
+
 
 int main()
 {

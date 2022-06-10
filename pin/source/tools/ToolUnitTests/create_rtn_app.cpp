@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,17 +20,18 @@ using std::cout;
 using std::endl;
 
 #if defined(TARGET_LINUX)
-#define DATA_SECTION(secName) __attribute__((section(secName)))
-#define SECTION_END
+# define DATA_SECTION(secName) __attribute__ ((section (secName)))
+# define SECTION_END
 #elif defined(TARGET_MAC)
-#define DATA_SECTION(secName) __attribute__((section("__DATA," secName)))
-#define SECTION_END
+# define DATA_SECTION(secName) __attribute__ ((section ("__DATA,"secName)))
+# define SECTION_END
 #else
-#define PUSH_SECTIONS__ __pragma(code_seg(push)) __pragma(data_seg(push)) __pragma(const_seg(push))
-#define POP_SECTIONS__ __pragma(code_seg(pop)) __pragma(data_seg(pop)) __pragma(const_seg(pop))
-#define DATA_SECTION(secName) PUSH_SECTIONS__ __pragma(data_seg(secName))
-#define SECTION_END POP_SECTIONS__
+# define PUSH_SECTIONS__ __pragma(code_seg(push)) __pragma(data_seg(push)) __pragma(const_seg(push))
+# define POP_SECTIONS__  __pragma(code_seg(pop))  __pragma(data_seg(pop))  __pragma(const_seg(pop))
+# define DATA_SECTION(secName) PUSH_SECTIONS__  __pragma(data_seg(secName))
+# define SECTION_END           POP_SECTIONS__
 #endif
+
 
 static int Proc1();
 static int Proc2();
@@ -39,14 +40,14 @@ static int Proc2();
 #pragma code_seg(push)
 #pragma code_seg("mySpecialSegment$a")
 #endif
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    cout << "Hello, world!" << endl;
+  cout << "Hello, world!" << endl;
 
-    Proc1();
-    Proc2();
+  Proc1();
+  Proc2();
 
-    return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }
 
 // We will use probes on the following functions, so their first BBL
@@ -59,7 +60,7 @@ int Proc1()
 {
     int n = 15;
     int i = 0;
-    for (; i < 10; i++)
+    for (; i<10; i++)
     {
         cout << ".";
         n--;
@@ -74,7 +75,7 @@ int Proc2()
 {
     int n = 15;
     int i = 0;
-    for (; i < 10; i++)
+    for (; i<10; i++)
     {
         cout << ".";
         n++;
@@ -86,6 +87,7 @@ int Proc2()
 #pragma code_seg(pop)
 #endif
 
+
 DATA_SECTION(".fTable")
-const char* ptr[2] = {(const char*)&Proc1, (const char*)&Proc2};
+const char *ptr[2] = { (const char *)&Proc1, (const char *)&Proc2 };
 SECTION_END

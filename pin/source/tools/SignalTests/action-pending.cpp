@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,13 +21,14 @@
 #include <unistd.h>
 #include "pin.H"
 
-static VOID OnImage(IMG, VOID*);
+static VOID OnImage(IMG, VOID *);
 static VOID Check(THREADID);
-static void OnExit(INT32, VOID*);
+static void OnExit(INT32, VOID *);
 
 static BOOL DidCheck = FALSE;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -39,7 +40,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static VOID OnImage(IMG img, VOID*)
+static VOID OnImage(IMG img, VOID *)
 {
 #if defined(TARGET_MAC)
     RTN rtn = RTN_FindByName(img, "_HandlerIsEstablished");
@@ -65,7 +66,7 @@ static VOID Check(THREADID tid)
     }
 }
 
-static VOID OnExit(INT32, VOID*)
+static VOID OnExit(INT32, VOID *)
 {
     if (!DidCheck)
     {

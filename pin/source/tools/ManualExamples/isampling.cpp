@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,10 +20,10 @@
 #include <stdlib.h>
 #include "pin.H"
 
-FILE* trace;
+FILE * trace;
 
 const INT32 N = 100000;
-const INT32 M = 50000;
+const INT32 M =  50000;
 
 INT32 icount = N;
 
@@ -48,31 +48,34 @@ INT32 icount = N;
 ADDRINT CountDown()
 {
     --icount;
-    return (icount == 0);
+    return (icount==0);
 }
+
 
 // The IP of the current instruction will be printed and
 // the icount will be reset to a random number between N and N+M.
-VOID PrintIp(VOID* ip)
+VOID PrintIp(VOID *ip)
 {
     fprintf(trace, "%p\n", ip);
-
+    
     // Prepare for next period
     icount = N + rand() % M; // random number from N to N+M
 }
 
+
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     // CountDown() is called for every instruction executed
     INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)CountDown, IARG_END);
-
+    
     // PrintIp() is called only when the last CountDown() returns a non-zero value.
     INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)PrintIp, IARG_INST_PTR, IARG_END);
+    
 }
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     fprintf(trace, "#eof\n");
     fclose(trace);
@@ -84,7 +87,8 @@ VOID Fini(INT32 code, VOID* v)
 
 INT32 Usage()
 {
-    PIN_ERROR("This Pintool samples the IPs of instruction executed\n" + KNOB_BASE::StringKnobSummary() + "\n");
+    PIN_ERROR( "This Pintool samples the IPs of instruction executed\n"
+                + KNOB_BASE::StringKnobSummary() + "\n");
     return -1;
 }
 
@@ -92,10 +96,10 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     trace = fopen("isampling.out", "w");
-
+    
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();
 
@@ -104,9 +108,9 @@ int main(int argc, char* argv[])
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

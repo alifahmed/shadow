@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -1186,9 +1186,6 @@ string __WideToASCII(const wchar_t *wide);
 
 inline const char* _STLP_CALL
 __get_c_string(const string& __str) { return __str.c_str(); }
-
-inline size_t _STLP_CALL
-__get_c_string_length(const string& __str) { return __str.size(); }
 
 _STLP_MOVE_TO_STD_NAMESPACE
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,11 +20,11 @@
 /*!
  * The main procedure of the application.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    void* dynamicBuffer;
+    void * dynamicBuffer;
     dynamicBuffer = MemAlloc(PI_FUNC::MAX_SIZE, MEM_READ_WRITE_EXEC);
-    if (dynamicBuffer == 0)
+    if (dynamicBuffer == 0) 
     {
         cerr << "MemAlloc failed" << endl;
         return 1;

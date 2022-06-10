@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,31 +16,35 @@
 #include "pin.H"
 #include <stdio.h>
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "rebase_dll.out", "specify file name");
 
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "rebase_dll.out", "specify file name");
+    
 ofstream TraceFile;
 
 // Pin calls this function every time a new img is loaded
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     SEC sec;
     RTN rtn;
 
-    if (string::npos == IMG_Name(img).find("dummy_dll")) return;
+    if ( string::npos == IMG_Name(img).find( "dummy_dll" ) ) 
+        return;
 
     TraceFile << "library:" << IMG_Name(img).c_str() << endl;
 
-    for (sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
-        for (rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
+    for ( sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec) ) 
+        for ( rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn) )
             TraceFile << "rtn:" << RTN_Name(rtn).c_str() << endl;
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
+
     // Initialize symbol processing
     PIN_InitSymbols();
-
+    
     // Initialize pin
     if (PIN_Init(argc, argv) != 0)
     {
@@ -53,12 +57,11 @@ int main(int argc, char* argv[])
     IMG_AddInstrumentFunction(ImageLoad, 0);
 
     // Start the program, never returns
-    if (PIN_IsProbeMode())
+    if (PIN_IsProbeMode()) 
     {
         fprintf(trace, "Probe mode\n");
         PIN_StartProgramProbed();
-    }
-    else
+    } else 
     {
         fprintf(trace, "JIT mode\n");
         PIN_StartProgram();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,10 +20,12 @@
  * This is a template function, therefore the symbol name will include the string
  * "operator<". Pin should not corrupt this string.
  */
-template< class T > int my_operator(const T& src) { return src; }
+template<class T>
+int my_operator(const T& src) {
+    return src;
+}
 
-int main()
-{
-    int a = my_operator< int >(0);
+int main() {
+    int a = my_operator<int>(0);
     return a;
 }

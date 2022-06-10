@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,20 +14,20 @@
 
 using std::string;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "thread_count2.out", "Output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "thread_count2.out", "Output file");
 
 /* ===================================================================== */
 /* Global Variables */
 /* ===================================================================== */
 
-FILE* out;
+FILE * out;
 PIN_LOCK pinLock;
 INT32 threadCreated = 0;
-INT32 threadEnded   = 0;
+INT32 threadEnded = 0;
 
 /* ===================================================================== */
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
     threadCreated++;
@@ -36,7 +36,7 @@ VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
 
 /* ===================================================================== */
 
-VOID ThreadFini(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID* v)
+VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
     threadEnded++;
@@ -45,7 +45,7 @@ VOID ThreadFini(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID* v)
 
 /* ===================================================================== */
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     fprintf(out, "Number of threads created  - %d\n", (int)threadCreated);
     fprintf(out, "Number of threads terminated  - %d\n", (int)threadEnded);
@@ -62,11 +62,14 @@ VOID UseToolStack()
 
 /* ===================================================================== */
 
-VOID Instruction(INS ins, VOID* v) { INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)UseToolStack, IARG_END); }
+VOID Instruction(INS ins, VOID *v)
+{
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)UseToolStack, IARG_END);
+}
 
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
     PIN_InitLock(&pinLock);
@@ -84,3 +87,4 @@ int main(INT32 argc, CHAR** argv)
 
     return 0;
 }
+

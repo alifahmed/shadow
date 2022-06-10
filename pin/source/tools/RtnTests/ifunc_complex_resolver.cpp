@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,15 +25,22 @@ void Before_ifunc_resolver()
     cout << "Before_ifunc_resolver" << endl;
 }
 
-void Before_ifunc_exist() { cout << "Before_ifunc_exist" << endl; }
-
-void Before_ifunc_not_exist() { cout << "Before_ifunc_not_exist" << endl; }
-
-VOID ImageLoad(IMG img, VOID* v)
+void Before_ifunc_exist()
 {
-    if (IMG_Name(img).find("ifunc_complex_resolver_lib_app") == string::npos) return;
-    RTN ifunc           = RTN_FindByName(img, "ifunc");
-    RTN ifunc_exist     = RTN_FindByName(img, "ifunc_exist");
+    cout << "Before_ifunc_exist" << endl;
+}
+
+void Before_ifunc_not_exist()
+{
+    cout << "Before_ifunc_not_exist" << endl;
+}
+
+VOID ImageLoad( IMG img, VOID *v )
+{
+    if (IMG_Name(img).find("ifunc_complex_resolver_lib_app") == string::npos)
+        return;
+    RTN ifunc = RTN_FindByName(img, "ifunc");
+    RTN ifunc_exist = RTN_FindByName(img, "ifunc_exist");
     RTN ifunc_not_exist = RTN_FindByName(img, "ifunc_not_exist");
     ASSERTX(RTN_Valid(ifunc));
     ASSERTX(RTN_Valid(ifunc_exist));
@@ -52,9 +59,12 @@ VOID ImageLoad(IMG img, VOID* v)
     RTN_Close(ifunc_not_exist);
 }
 
-VOID Fini(INT32 code, VOID* v) { ASSERTX(1 == ifunc_resolver_count); }
+VOID Fini(INT32 code, VOID* v)
+{
+    ASSERTX(1 == ifunc_resolver_count);
+}
 
-int main(INT32 argc, CHAR* argv[])
+int main (INT32 argc, CHAR *argv[])
 {
     // Initialize pin
     //

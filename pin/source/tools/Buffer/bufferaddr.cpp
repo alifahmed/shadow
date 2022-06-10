@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,18 +18,20 @@
  *
  */
 
+
+
 #include "pin.H"
 #include <iostream>
 #include <stdio.h>
 #include <stddef.h>
 using std::cerr;
-using std::endl;
 using std::string;
+using std::endl;
 
 /*
  * Name of the output file
  */
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "bufferaddr.out", "output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "bufferaddr.out", "output file");
 
 /* Struct for holding memory references.  Rather than having two separate
  * buffers for loads and stores, we just use one struct that includes a
@@ -43,7 +45,7 @@ struct MEMREF
     UINT32 load;
 };
 
-FILE* outfile;
+FILE *outfile;
 
 BUFFER_ID bufId;
 PIN_LOCK fileLock;
@@ -61,52 +63,46 @@ INT32 Usage()
     return -1;
 }
 
-VOID Trace(TRACE trace, VOID* v)
-{
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
-    {
-        for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
-        {
-            if (INS_MemoryOperandCount(ins) == 0) continue;
+VOID Trace(TRACE trace, VOID *v){
 
-            UINT32 readSize = 0, read2Size = 0, writeSize = 0;
-            UINT32 readOperandCount = 0, writeOperandCount = 0;
+    UINT32 refSize;
+           
+    for(BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl=BBL_Next(bbl)){
+        for(INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins=INS_Next(ins)){
+            if(INS_IsMemoryRead(ins)){
 
-            for (UINT32 opIdx = 0; opIdx < INS_MemoryOperandCount(ins); opIdx++)
-            {
-                if (INS_MemoryOperandIsRead(ins, opIdx))
-                {
-                    if (readSize == 0)
-                        readSize = INS_MemoryOperandSize(ins, opIdx);
-                    else
-                        read2Size = INS_MemoryOperandSize(ins, opIdx);
+                refSize = INS_MemoryReadSize(ins);
 
-                    readOperandCount++;
-                }
-                if (INS_MemoryOperandIsWritten(ins, opIdx))
-                {
-                    writeSize = INS_MemoryOperandSize(ins, opIdx);
-                    writeOperandCount++;
-                }
+                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId,
+                    IARG_INST_PTR, offsetof(struct MEMREF, pc),
+                    IARG_MEMORYREAD_EA, offsetof(struct MEMREF, address),
+                    IARG_UINT32, refSize, offsetof(struct MEMREF, size), 
+                    IARG_UINT32, 1, offsetof(struct MEMREF, load),
+                    IARG_END);
+
             }
+            if(INS_HasMemoryRead2(ins)){
 
-            if (readOperandCount > 0)
-            {
-                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId, IARG_INST_PTR, offsetof(struct MEMREF, pc), IARG_MEMORYREAD_EA,
-                                     offsetof(struct MEMREF, address), IARG_UINT32, readSize, offsetof(struct MEMREF, size),
-                                     IARG_UINT32, 1, offsetof(struct MEMREF, load), IARG_END);
+                refSize = INS_MemoryReadSize(ins);
+
+                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId,
+                    IARG_INST_PTR, offsetof(struct MEMREF, pc),
+                    IARG_MEMORYREAD2_EA, offsetof(struct MEMREF, address),
+                    IARG_UINT32, refSize, offsetof(struct MEMREF, size), 
+                    IARG_UINT32, 1, offsetof(struct MEMREF, load),
+                    IARG_END);
+
             }
-            if (readOperandCount == 2)
-            {
-                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId, IARG_INST_PTR, offsetof(struct MEMREF, pc), IARG_MEMORYREAD2_EA,
-                                     offsetof(struct MEMREF, address), IARG_UINT32, read2Size, offsetof(struct MEMREF, size),
-                                     IARG_UINT32, 1, offsetof(struct MEMREF, load), IARG_END);
-            }
-            if (writeOperandCount > 0)
-            {
-                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId, IARG_INST_PTR, offsetof(struct MEMREF, pc), IARG_MEMORYWRITE_EA,
-                                     offsetof(struct MEMREF, address), IARG_UINT32, writeSize, offsetof(struct MEMREF, size),
-                                     IARG_UINT32, 0, offsetof(struct MEMREF, load), IARG_END);
+            if(INS_IsMemoryWrite(ins)){
+
+                refSize = INS_MemoryWriteSize(ins);
+
+                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId,
+                    IARG_INST_PTR, offsetof(struct MEMREF, pc),
+                    IARG_MEMORYWRITE_EA, offsetof(struct MEMREF, address),
+                    IARG_UINT32, refSize, offsetof(struct MEMREF, size), 
+                    IARG_UINT32, 0, offsetof(struct MEMREF, load),
+                    IARG_END);
             }
         }
     }
@@ -123,19 +119,19 @@ VOID Trace(TRACE trace, VOID* v)
  * @param[in] v			callback value
  * @return  A pointer to the buffer to resume filling.
  */
-VOID* BufferFull(BUFFER_ID bid, THREADID tid, const CONTEXT* ctxt, VOID* buf, UINT64 numElements, VOID* v)
+VOID * BufferFull(BUFFER_ID bid, THREADID tid, const CONTEXT *ctxt, VOID *buf,
+                  UINT64 numElements, VOID *v)
 {
     PIN_GetLock(&fileLock, 1);
 
     ASSERTX(buf == PIN_GetThreadData(buf_key, tid));
-
-    struct MEMREF* reference = (struct MEMREF*)buf;
+    
+    struct MEMREF* reference=(struct MEMREF*)buf;
     UINT64 i;
 
-    for (i = 0; i < numElements; i++, reference++)
-    {
-        fprintf(outfile, "%lx %lx %u %u\n", (unsigned long)reference->pc, (unsigned long)reference->address, reference->size,
-                reference->load);
+    for(i=0; i<numElements; i++, reference++){
+        fprintf(outfile, "%lx %lx %u %u\n", (unsigned long)reference->pc, (unsigned long)reference->address,
+                reference->size, reference->load);   
     }
     fflush(outfile);
     PIN_ReleaseLock(&fileLock);
@@ -150,15 +146,16 @@ VOID* BufferFull(BUFFER_ID bid, THREADID tid, const CONTEXT* ctxt, VOID* buf, UI
  * @param[in]   v               value specified by the tool in the 
  *                              PIN_AddFiniFunction function call
  */
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
+
     PIN_GetLock(&fileLock, 1);
     fclose(outfile);
     printf("outfile closed\n");
     PIN_ReleaseLock(&fileLock);
 }
 
-void ThreadStart(THREADID tid, CONTEXT* context, int flags, void* v)
+void ThreadStart(THREADID tid, CONTEXT * context, int flags, void * v)
 {
     // We check that we got the right thing in the buffer full callback
     PIN_SetThreadData(buf_key, PIN_GetBufferPointer(context, bufId), tid);
@@ -171,17 +168,18 @@ void ThreadStart(THREADID tid, CONTEXT* context, int flags, void* v)
  * @param[in]   argv            array of command line arguments, 
  *                              including pin -t <toolname> -- ...
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialize PIN library. Print help message if -h(elp) is specified
-    // in the command line or the command line is invalid
-    if (PIN_Init(argc, argv))
+    // in the command line or the command line is invalid 
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
-
+    
     // Initialize the memory reference buffer
-    bufId = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES, BufferFull, 0);
+    bufId = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES,
+                                  BufferFull, 0);
 
     if (bufId == BUFFER_ID_INVALID)
     {
@@ -200,15 +198,17 @@ int main(int argc, char* argv[])
 
     // add an instrumentation function
     TRACE_AddInstrumentFunction(Trace, 0);
-
+    
     // Register function to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
 
     buf_key = PIN_CreateThreadDataKey(0);
     PIN_AddThreadStartFunction(ThreadStart, 0);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
+
+

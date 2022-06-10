@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,8 +18,9 @@ int main()
     // verify that the instruction lea reg, [rip+offset] is translated correctly
     if (!VerifyLeaRip())
     {
-        fprintf(stderr, "VerifyLeaRip failed\n");
+        fprintf (stderr, "VerifyLeaRip failed\n");
         return (-1);
     }
-    return (0);
+    return(0);
 }
+    

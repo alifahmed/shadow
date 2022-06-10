@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,14 +13,14 @@
 #include <iostream>
 #include <stdio.h>
 
-using std::cout;
-using std::endl;
-using std::flush;
 using std::string;
-static volatile int i      = 0;
+using std::endl;
+using std::cout;
+using std::flush;
+static volatile int i = 0;
 static HANDLE threadHandle = NULL;
 
-extern "C" __declspec(dllexport) __declspec(noinline) DWORD WINAPI ThreadProc(VOID* p)
+extern "C" __declspec(dllexport) __declspec(noinline) DWORD WINAPI ThreadProc(VOID * p)
 {
     i++;
     return 0;
@@ -28,29 +28,29 @@ extern "C" __declspec(dllexport) __declspec(noinline) DWORD WINAPI ThreadProc(VO
 
 BOOL WINAPI DllMain(HANDLE hDll, DWORD dwReason, LPVOID lpReserved)
 {
-    switch (dwReason)
+    switch (dwReason) 
     {
-        case DLL_PROCESS_ATTACH:
-        {
-            threadHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadProc, NULL, 0, NULL);
-            if (threadHandle != NULL)
-            {
-                cout << "Creating thread in DllMain(PROCESS_ATTACH)" << endl << flush;
-            }
-            else
-            {
-                cout << "Failed to create thread in DllMain(PROCESS_ATTACH)" << endl << flush;
-            }
-            i = 12;
-            break;
-        }
-        case DLL_THREAD_ATTACH:
-        case DLL_THREAD_DETACH:
-        case DLL_PROCESS_DETACH:
-        default:
-            break;
-    }
-    return TRUE;
+      case DLL_PROCESS_ATTACH:
+      {
+          threadHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadProc, NULL, 0, NULL);
+          if (threadHandle != NULL)
+          {
+              cout << "Creating thread in DllMain(PROCESS_ATTACH)" << endl << flush;
+          }
+          else
+          {
+              cout << "Failed to create thread in DllMain(PROCESS_ATTACH)" << endl << flush;
+          }
+          i = 12;
+          break;
+      }  
+      case DLL_THREAD_ATTACH:
+      case DLL_THREAD_DETACH: 
+      case DLL_PROCESS_DETACH:
+      default:
+          break; 
+    } 
+    return TRUE; 
 }
 
 extern "C" __declspec(dllexport) int Something()

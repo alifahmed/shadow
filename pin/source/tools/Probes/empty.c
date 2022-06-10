@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,20 +16,21 @@
 
 extern void Bar(int);
 
-void Foo(int a, int b, int c, int d)
+void Foo( int a, int b, int c, int d)
 {
-    printf("Foo: calling Bar...\n");
+    printf( "Foo: calling Bar...\n");
+    
+    Bar( a );
 
-    Bar(a);
-
-    printf("Foo: %d, %d, %d, %d\n", a, b, c, d);
+    printf( "Foo: %d, %d, %d, %d\n", a,b,c,d );
 }
 
 int main()
 {
-    Foo(12, 345, 678, 90);
-    Foo(11, 22, 33, 44);
-    Foo(99, 88, 77, 66);
+    Foo( 12, 345, 678, 90 );
+    Foo( 11, 22, 33, 44 );
+    Foo( 99, 88, 77, 66 );
 
     return 0;
+    
 }

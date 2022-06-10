@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,9 +11,12 @@
 
 #include "pin.H"
 
-VOID Trace(TRACE trace, VOID* v) { PIN_ExitApplication(123); }
+VOID Trace(TRACE trace, VOID *v)
+{
+    PIN_ExitApplication(123);
+}
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     TRACE_AddInstrumentFunction(Trace, 0);

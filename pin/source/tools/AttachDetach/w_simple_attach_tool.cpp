@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -34,9 +34,15 @@ static volatile int pinCompletelyAttached = 0;
 
 /* ===================================================================== */
 
-int rep_PinIsAttached() { return pinCompletelyAttached; }
+int rep_PinIsAttached()
+{
+    return pinCompletelyAttached;
+}
 
-int rep_PinIsDetached() { return 0; }
+int rep_PinIsDetached()
+{
+    return 0;
+}
 
 void rep_FirstProbeInvoked()
 {
@@ -51,16 +57,16 @@ void rep_SecondProbeInvoked()
 }
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    if (isReadyForAttach == 1)
+    if(isReadyForAttach == 1)
     {
         //can't get callbacks from pin after detach completion
         std::cerr << "failure - got follow child notification when pin is detached" << endl;
         exit(-1);
     }
 
-    if (!IMG_IsMainExecutable(img))
+    if ( ! IMG_IsMainExecutable(img) )
     {
         return;
     }
@@ -84,17 +90,20 @@ VOID ImageLoad(IMG img, VOID* v)
     pinCompletelyAttached = 1;
 }
 
-VOID DetachComplete(VOID* v)
+VOID DetachComplete(VOID *v)
 {
-    isReadyForDetach      = 0;
-    isAppStarted          = 0;
-    isReadyForAttach      = 1;
+    isReadyForDetach = 0;
+    isAppStarted = 0;
+    isReadyForAttach = 1;
     pinCompletelyAttached = 0;
 }
 
-VOID AppStart(VOID* v) { isAppStarted = 1; }
+VOID AppStart(VOID *v)
+{
+    isAppStarted = 1;
+}
 
-VOID AttachMain(VOID* v)
+VOID AttachMain(VOID *v)
 {
     IMG_AddInstrumentFunction(ImageLoad, 0);
 
@@ -105,28 +114,28 @@ VOID AttachMain(VOID* v)
     isReadyForAttach = 0;
 }
 
-WIND::DWORD WINAPI ThreadProc(VOID* p)
+WIND::DWORD WINAPI ThreadProc(VOID * p)
 {
-    while (isReadyForDetach == 0)
+    while(isReadyForDetach == 0)
     {
         WIND::SwitchToThread();
     }
     PIN_DetachProbed();
 
-    while (isReadyForAttach == 0)
+    while(isReadyForAttach == 0)
     {
         WIND::SwitchToThread();
     }
 
     PIN_AttachProbed(AttachMain, 0);
 
-    while (isReadyForDetach == 0)
+    while(isReadyForDetach == 0)
     {
         WIND::SwitchToThread();
     }
     PIN_DetachProbed();
 
-    while (isReadyForAttach == 0)
+    while(isReadyForAttach == 0)
     {
         WIND::SwitchToThread();
     }
@@ -136,7 +145,7 @@ WIND::DWORD WINAPI ThreadProc(VOID* p)
     return 0;
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
 

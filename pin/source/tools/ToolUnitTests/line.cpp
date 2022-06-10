@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,30 +13,33 @@
 #include <fstream>
 #include <string>
 #include "pin.H"
-using std::endl;
 using std::ofstream;
 using std::string;
+using std::endl;
+
+
 
 /* ===================================================================== */
 /* Global Variables and Definitions */
 /* ===================================================================== */
 
 // A knob for defining the output file name
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "line_tool.out",
-                              "specify file name for line information output");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "line_tool.out",
+                            "specify file name for line information output");
 
 // ofstream object for handling the output.
 ofstream trace;
 
+
 #if defined(TARGET_MAC)
-#define MAINNAME "_main"
+# define MAINNAME "_main"
 #else
-#define MAINNAME "main"
+# define MAINNAME "main"
 #endif
 
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID * v)
 {
     // Looking for main symbol only in main image
 
@@ -48,16 +51,16 @@ VOID ImageLoad(IMG img, VOID* v)
             {
                 if (RTN_Name(rtn) == MAINNAME)
                 {
-                    string filePath;
+                    string  filePath;
                     INT32 line;
                     PIN_GetSourceLocation(RTN_Address(rtn), NULL, &line, &filePath);
 
                     if (filePath != "")
                     {
                         string::size_type index = filePath.find("hello");
-                        if (index != string::npos)
+                        if(index != string::npos)
                         {
-                            string file = filePath.substr(index);
+                            string file =  filePath.substr(index);
                             trace << "File " << file << " line " << line << endl;
                         }
                     }
@@ -70,20 +73,23 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-VOID Fini(INT32 code, VOID*) { trace.close(); }
+VOID Fini(INT32 code, VOID *)
+{
+    trace.close();
+}
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
-
+    
     trace.open(KnobOutputFile.Value().c_str());
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

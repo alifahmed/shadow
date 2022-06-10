@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -10,35 +10,37 @@
  */
 
 //
-// Check that IARG_EXECUTING works on IA32, by counting the number of
+// Check that IARG_EXECUTING works on IA32, by counting the number of 
 // cmovs and the number executed in the test code.
 //
 #include "pin.H"
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
-using std::cerr;
-using std::endl;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
 
-static ofstream out;
+LOCALVAR ofstream out;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "checkexecuting.out", "Output file");
-KNOB< BOOL > KnobVerbose(KNOB_MODE_WRITEONCE, "pintool", "v", "0", "Verbose");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,         "pintool",
+                            "o", "checkexecuting.out", "Output file");
+KNOB<BOOL> KnobVerbose(KNOB_MODE_WRITEONCE, "pintool", "v", "0", "Verbose");
+
 
 UINT64 executed = 0;
 UINT64 total    = 0;
-int enabled     = 0;
+int     enabled = 0;
 
-static struct
+static struct 
 {
-    const char* name;
+    const char * name;
     UINT32 opcode;
-} opInfo[] = {
-    {"cmovb", XED_ICLASS_CMOVB},
+} opInfo [] = {
+    {"cmovb",  XED_ICLASS_CMOVB},
     {"cmovbe", XED_ICLASS_CMOVBE},
-    {"cmovl", XED_ICLASS_CMOVL},
+    {"cmovl",  XED_ICLASS_CMOVL},
     {"cmovle", XED_ICLASS_CMOVLE},
     {"cmovnb", XED_ICLASS_CMOVNB},
     {"cmovnbe", XED_ICLASS_CMOVNBE},
@@ -74,7 +76,7 @@ static struct
     {"stosd", XED_ICLASS_STOSD},
     {"stosq", XED_ICLASS_STOSQ},
 };
-#define NumOps (sizeof(opInfo) / sizeof(opInfo[0]))
+#define NumOps (sizeof(opInfo)/sizeof(opInfo[0]))
 
 static struct opCS
 {
@@ -84,13 +86,14 @@ static struct opCS
     int viaIfPredicated;
     int viaThenPredicated;
     int viaIfThenPredicated;
-} opCounts[NumOps];
+} opCounts [NumOps];
 
 INT32 Usage()
 {
-    cerr << "This pin tool counts predicated instructions selected by the\n"
-            "following filter options\n"
-            "\n";
+    cerr <<
+        "This pin tool counts predicated instructions selected by the\n"
+        "following filter options\n"
+        "\n";
 
     cerr << KNOB_BASE::StringKnobSummary() << endl;
     return -1;
@@ -98,12 +101,13 @@ INT32 Usage()
 
 static int opcodeToIndex(UINT32 opcode)
 {
-    for (UINT32 i = 0; i < NumOps; i++)
+    for (UINT32 i=0; i<NumOps; i++)
     {
-        if (opInfo[i].opcode == opcode) return i;
+        if (opInfo[i].opcode == opcode)
+            return i;
     }
 
-    ASSERT(false, "Bad opcode " + xed_iclass_enum_t2str(xed_iclass_enum_t(opcode)) + "\n");
+    ASSERT (false, "Bad opcode " + xed_iclass_enum_t2str(xed_iclass_enum_t(opcode)) + "\n" );
     return -1;
 }
 
@@ -151,11 +155,20 @@ VOID doCountIfThenPredicated(UINT32 idx)
     }
 }
 
-ADDRINT trueFunction() { return 1; }
+ADDRINT trueFunction()
+{
+    return 1;
+}
 
-ADDRINT falseFunction() { return 0; }
+ADDRINT falseFunction()
+{
+    return 0;
+}
 
-VOID shouldntBeCalled() { out << "***shouldntBeCalled has been called\n"; }
+VOID shouldntBeCalled()
+{
+    out << "***shouldntBeCalled has been called\n";
+}
 
 VOID toggleEnabled()
 {
@@ -175,23 +188,29 @@ VOID InstructionTrace(TRACE trace, INS ins)
     }
 
     //    INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);
-    if (INS_Category(ins) == XED_CATEGORY_CMOV || INS_HasRealRep(ins))
+    if (INS_Category(ins) == XED_CATEGORY_CMOV ||
+        INS_HasRealRep(ins))
     {
         UINT32 opIdx = opcodeToIndex(INS_Opcode(ins));
 
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)doCount, IARG_EXECUTING, IARG_UINT32, opIdx, IARG_END);
-        INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountPredicated, IARG_UINT32, opIdx, IARG_END);
+        INS_InsertCall(ins,IPOINT_BEFORE, (AFUNPTR)doCount, IARG_EXECUTING, 
+                       IARG_UINT32, opIdx, IARG_END);
+        INS_InsertPredicatedCall(ins,IPOINT_BEFORE, (AFUNPTR)doCountPredicated,
+                                 IARG_UINT32, opIdx, IARG_END);
 
         // Each of the if/then predicated cases (with an IF which is always true,
         // so the results should be the same as before).
         INS_InsertIfPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)trueFunction, IARG_END);
-        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountIfPredicated, IARG_UINT32, opIdx, IARG_END);
+        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountIfPredicated,
+                                 IARG_UINT32, opIdx, IARG_END);
 
         INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)trueFunction, IARG_END);
-        INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountThenPredicated, IARG_UINT32, opIdx, IARG_END);
+        INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountThenPredicated,
+                                 IARG_UINT32, opIdx, IARG_END);
 
         INS_InsertIfPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)trueFunction, IARG_END);
-        INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountIfThenPredicated, IARG_UINT32, opIdx, IARG_END);
+        INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountIfThenPredicated,
+                                     IARG_UINT32, opIdx, IARG_END);
 
         // Then each of the if/then cases with a false IF condition, to check that
         // the function is not called, and we really are testing it.
@@ -206,11 +225,11 @@ VOID InstructionTrace(TRACE trace, INS ins)
     }
 }
 
-VOID Trace(TRACE trace, VOID* val)
+VOID Trace(TRACE trace, VOID * val)
 {
     // Images besides the executable may have extra cmovs/other insts that disrupt the reference so ignore them.
     if (!RTN_Valid(TRACE_Rtn(trace)) ||
-        (IMG_Valid(SEC_Img(RTN_Sec(TRACE_Rtn(trace)))) && !IMG_IsMainExecutable(SEC_Img(RTN_Sec(TRACE_Rtn(trace))))))
+           (IMG_Valid(SEC_Img(RTN_Sec(TRACE_Rtn(trace)))) && !IMG_IsMainExecutable(SEC_Img(RTN_Sec(TRACE_Rtn(trace))))))
         return;
 
     for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
@@ -222,14 +241,15 @@ VOID Trace(TRACE trace, VOID* val)
     }
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
-    out << "Total : " << total << " Executed : " << executed << endl;
-    for (UINT32 i = 0; i < NumOps; i++)
+    out <<  "Total : " << total << " Executed : " << executed << endl;
+    for (UINT32 i=0; i<NumOps; i++)
     {
-        opCS* counts = &opCounts[i];
+        opCS * counts = &opCounts[i];
 
-        if (counts->total == 0) continue;
+        if (counts->total == 0)
+            continue;
 
         out << opInfo[i].name << " :  " << counts->total << " " << counts->executed << endl;
         // Check that the predicated calls all gave the same results as the executed call.
@@ -244,42 +264,44 @@ VOID Fini(INT32 code, VOID* v)
 
         if (counts->executed != counts->viaPredicated)
         {
-            out << "***Error : executed gave " << counts->executed << " predicated gave " << counts->viaPredicated << endl;
+            out << "***Error : executed gave " << counts->executed << 
+                " predicated gave " << counts->viaPredicated << endl;
             exit(1);
         }
 
         if (counts->executed != counts->viaIfPredicated)
         {
-            out << "***Error : executed gave " << counts->executed << " if predicated gave " << counts->viaIfPredicated << endl;
+            out << "***Error : executed gave " << counts->executed << 
+                " if predicated gave " << counts->viaIfPredicated << endl;
             exit(1);
         }
 
         if (counts->executed != counts->viaThenPredicated)
         {
-            out << "***Error : executed gave " << counts->executed << " then predicated gave " << counts->viaThenPredicated
-                << endl;
+            out << "***Error : executed gave " << counts->executed << 
+                " then predicated gave " << counts->viaThenPredicated << endl;
             exit(1);
         }
 
         if (counts->executed != counts->viaIfThenPredicated)
         {
-            out << "***Error : executed gave " << counts->executed << " ifthen predicated gave " << counts->viaIfThenPredicated
-                << endl;
+            out << "***Error : executed gave " << counts->executed << 
+                " ifthen predicated gave " << counts->viaIfThenPredicated << endl;
             exit(1);
         }
     }
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
-
-    string filename = KnobOutputFile.Value();
-
+    
+    string filename =  KnobOutputFile.Value();
+    
     // Do this before we activate controllers
     out.open(filename.c_str());
 
@@ -288,6 +310,8 @@ int main(int argc, char* argv[])
 
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
+
+

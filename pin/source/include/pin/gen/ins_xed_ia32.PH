@@ -1,37 +1,13 @@
+//Groups: @ingroup\s+(API_REF|KNOBS|IMG_BASIC_API|INS_BASIC_API|INS_INST_API|INS_BASIC_API_GEN_IA32|INS_BASIC_API_IA32|INS_MOD_API_GEN_IA32|SEC_BASIC_API|RTN_BASIC_API|REG_BASIC_API|REG_CPU_GENERIC|REG_CPU_IA32|TRACE_BASIC_API|BBL_BASIC_API|SYM_BASIC_API|MISC_PRINT|MISC_PARSE|KNOB_API|KNOB_BASIC|KNOB_PRINT|LOCK|PIN_CONTROL|TRACE_VERSION_API|BUFFER_API|PROTO_API|PIN_PROCESS_API|PIN_THREAD_API|PIN_SYSCALL_API|WINDOWS_SYSCALL_API_UNDOC|DEBUG_API|ERROR_FILE_BASIC|TYPE_BASE|INSTLIB|ALARM|CHILD_PROCESS_API|UTILS|MISC|CONTEXT_API|PHYSICAL_CONTEXT_API|PIN_CALLBACKS|EXCEPTION_API|APPDEBUG_API|STOPPED_THREAD_API|BUFFER_API|PROTO|INST_ARGS|DEPRECATED_PIN_API|INTERNAL_EXCEPTION_PRIVATE_UNDOCUMENTED|PIN_THREAD_PRIVATE|CHILD_PROCESS_INTERNAL|BBL_BASIC|ROGUE_BASIC_API|MESSAGE_TYPE|MESSAGE_BASIC|ERRFILE|MISC_BASIC|ITC_INST_API|CONTEXT_API_UNDOC|EXCEPTION_API_UNDOC|UNDOCUMENTED_PIN_API|OPIN|TRACE_VERSIONS
+/* PIN API */
 
-#ifdef PIN_G_INS_XED_IA32_PH
-#error duplicate inclusion of ins_xed_ia32
-#else
-#define PIN_G_INS_XED_IA32_PH
-/*! @file
-  Intel(R) X86 Encoder Decoder low-level support routines.
+/* THIS FILE IS AUTOMAGICALLY GENERATED - DO NOT CHANGE DIRECTLY*/
 
-  This supports the other core_ia32 files and is the lowest level interface
-  to Intel(R) XED encoding/decoding.
-*/
-/*! @ingroup INS_INSPECTION
-  @return This provides the pointer to the decoded Intel(R) X86 Encoder Decoder instruction.
-*/
+
 extern xed_decoded_inst_t* INS_XedDec(INS ins);
 
-/*! @ingroup INS_INSPECTION
-  Convert a Intel(R) X86 Encoder Decoder xed_reg_enum_t register to a Pin REG type.
-  @returns a valid pin register, but never an invalid one. Asserts if there is no exact map.
- */
-extern REG INS_XedExactMapToPinReg(xed_reg_enum_t xed_reg);
+                                                                  /* DO NOT EDIT */
+extern REG INS_XedExactMapToPinReg(unsigned int r);
 
-/*! @ingroup INS_INSPECTION
-  Convert a Intel(R) X86 Encoder Decoder xed_reg_enum_t register to a Pin REG type.
-  @returns a valid pin register, but never an invalid one. Asserts if there is no exact map.
-  @note DEPRECATED: Use  INS_XedExactMapToPinReg(xed_reg_enum_t xed_reg) instead
- */
-extern PIN_DEPRECATED_API REG INS_XedExactMapToPinReg(unsigned int r);
+                                                                  /* DO NOT EDIT */
 
-/*! @ingroup INS_INSPECTION
-  Convert  Pin REG type (application register) to an Intel(R) X86 Encoder Decoder xed_reg_enum_t
-  register.
-  @returns xed reg mapping to pin reg. if no map returns XED_REG_INVALID
- */
-extern xed_reg_enum_t INS_XedExactMapFromPinReg(REG pin_reg);
-
-#endif // PIN_G_INS_XED_IA32_PH

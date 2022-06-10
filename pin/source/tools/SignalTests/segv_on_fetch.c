@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,10 +25,11 @@
 #include <unistd.h>
 
 #ifndef MAP_ANONYMOUS
-#ifdef MAP_ANON
-#define MAP_ANONYMOUS MAP_ANON
+ #ifdef MAP_ANON
+  #define MAP_ANONYMOUS MAP_ANON
+ #endif
 #endif
-#endif
+
 
 /*
  * We write this bit of machine code at the very end of a page, where the next page is unreadable.
@@ -36,26 +37,29 @@
  * such a way that Pin will speculatively fetch beyond the final JNE and attempt to fetch from
  * the unreadable page.
  */
-const unsigned char Code[] = {
-    0xc3,                   /* L1:    ret           */
-    0x66, 0x83, 0xfc, 0x00, /* Entry: cmp  $0x0,%sp */
-    0x75, 0xf9              /*        jne  L1       */
+const unsigned char Code[] =
+{
+    0xc3,                       /* L1:    ret           */
+    0x66, 0x83, 0xfc, 0x00,     /* Entry: cmp  $0x0,%sp */
+    0x75, 0xf9                  /*        jne  L1       */
 };
 
-const size_t EntryOffset = 1; /* Offset of 'Entry' from start of 'Code' */
+const size_t EntryOffset = 1;   /* Offset of 'Entry' from start of 'Code' */
+
 
 static void BlockSegv();
 
-int main(int argc, char** argv)
+
+int main (int argc, char ** argv)
 {
     size_t pageSize;
-    char* twoPages;
+    char *twoPages;
 
     /*
      * Map a page of memory and ensure that the subsequent page is unreadable.
      */
     pageSize = getpagesize();
-    twoPages = mmap(0, 2 * pageSize, (PROT_READ | PROT_WRITE | PROT_EXEC), (MAP_PRIVATE | MAP_ANONYMOUS), -1, 0);
+    twoPages = mmap(0, 2*pageSize, (PROT_READ|PROT_WRITE|PROT_EXEC), (MAP_PRIVATE|MAP_ANONYMOUS), -1, 0);
     if (twoPages == MAP_FAILED)
     {
         printf("Unable to map pages\n");
@@ -63,9 +67,9 @@ int main(int argc, char** argv)
     }
 
     printf("Mapped two pages at %p\n", twoPages);
-    printf("Unprotecting page at %p\n", twoPages + pageSize);
+    printf("Unprotecting page at %p\n", twoPages+pageSize);
 
-    if (mprotect(twoPages + pageSize, pageSize, PROT_NONE) != 0)
+    if (mprotect(twoPages+pageSize, pageSize, PROT_NONE) != 0)
     {
         printf("Unable to unprotect second page\n");
         return 1;
@@ -88,6 +92,7 @@ int main(int argc, char** argv)
     printf("Got back OK\n");
     return 0;
 }
+
 
 static void BlockSegv()
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,7 +17,7 @@
 #include <sched.h>
 #include <errno.h>
 #include <string.h>
-#define MAX_COMMAND_LINE_SIZE 15 // the size for the array of arguments to execv (this value is arbitrary)
+#define MAX_COMMAND_LINE_SIZE 15    // the size for the array of arguments to execv (this value is arbitrary)
 
 /*
  * This program tests for a bug with waitpid. We run pin in a child and
@@ -38,28 +38,27 @@
  * [4] copy source
  * [5] copy target
  */
-main(int argc, char* argv[])
+main(int argc, char * argv[])
 {
-    if (argc > MAX_COMMAND_LINE_SIZE)
-    {
-        fprintf(stderr, "Too many arguments\n");
+    if (argc > MAX_COMMAND_LINE_SIZE){
+        fprintf(stderr, "Too many arguments\n" );
         fflush(stderr);
         exit(1);
     }
     pid_t pid = fork();
     if (pid)
     {
-        while (1)
+        while(1)
         {
             int status;
-            pid_t cpid = waitpid(0, &status, WNOHANG);
+	           pid_t cpid = waitpid(0, &status, WNOHANG);
             if (cpid > 0)
             {
-                fprintf(stderr, "Child pid: %d\n", cpid);
+                fprintf(stderr,"Child pid: %d\n", cpid);
                 if (WIFEXITED(status))
                 {
                     int res = WEXITSTATUS(status);
-                    fprintf(stderr, "Child exited with value %d\n", res);
+                    fprintf(stderr,"Child exited with value %d\n", res);
                     exit(res);
                 }
                 else
@@ -78,15 +77,14 @@ main(int argc, char* argv[])
     }
     else
     {
-        char* args[MAX_COMMAND_LINE_SIZE] = {NULL}; // arguments for execv command
-        int args_count                    = 0;
-        int argv_count                    = 1; // to start from argv[1]...
-        while (argv_count < argc)
-        {
-            args[args_count++] = argv[argv_count++]; // all arguments including Pin flags will be passed to execv
+        char* args[MAX_COMMAND_LINE_SIZE] = {NULL};    // arguments for execv command
+        int args_count = 0;
+        int argv_count = 1;                            // to start from argv[1]...
+        while(argv_count < argc){
+            args[args_count++] = argv[argv_count++];   // all arguments including Pin flags will be passed to execv
         }
-        args[args_count++] = NULL;          // end
-        execv(argv[1], (char* const*)args); // never returns
+        args[args_count++] = NULL;                     // end
+        execv(argv[1], (char * const *)args);          // never returns
         fprintf(stderr, "execv failed with errno: %d\n", errno);
     }
 }

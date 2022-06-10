@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -20,8 +20,10 @@
 #include <stddef.h>
 #include <assert.h>
 
-namespace UTIL
-{
+
+namespace UTIL {
+
+
 /*!
  * A simple smart pointer, inspired by boost::scoped_array.  Pointers managed by
  * SCOPED_ARRAY cannot be shared, and there is no reference counting overhead.  A
@@ -29,22 +31,22 @@ namespace UTIL
  * these pointers can't be shared, SCOPED_ARRAY disallows assignment from one
  * SCOPED_ARRAY to another.
  */
-template< typename T > class /*<UTILITY>*/ SCOPED_ARRAY
+template<typename T> class /*<UTILITY>*/ SCOPED_ARRAY
 {
-  public:
+public:
     /*!
      * Create a smart pointer wrapper for \a p.
      *
      *  @param[in] p     A pointer from "new[]", or NULL.
      */
-    explicit SCOPED_ARRAY(T* p = 0) : _ptr(p) {}
+    explicit SCOPED_ARRAY(T *p = 0) : _ptr(p) {}
 
     /*!
      * The destructor automatically calls delete on the pointer.
      */
     ~SCOPED_ARRAY()
     {
-        delete[] _ptr; // Note, delete of NULL is defined to do nothing.
+        delete [] _ptr;    // Note, delete of NULL is defined to do nothing.
     }
 
     /*!
@@ -52,9 +54,9 @@ template< typename T > class /*<UTILITY>*/ SCOPED_ARRAY
      *
      *  @param[in] p    A pointer from "new[]", or NULL.
      */
-    void Reset(T* p = 0)
+    void Reset(T *p = 0)
     {
-        delete[] _ptr;
+        delete [] _ptr;
         _ptr = p;
     }
 
@@ -65,7 +67,7 @@ template< typename T > class /*<UTILITY>*/ SCOPED_ARRAY
      *
      * @return  A reference to the array element indexed by \a i.
      */
-    T& operator[](std::ptrdiff_t i) const
+    T & operator[](std::ptrdiff_t i) const
     {
         assert(_ptr != 0);
         assert(i >= 0);
@@ -75,26 +77,35 @@ template< typename T > class /*<UTILITY>*/ SCOPED_ARRAY
     /*!
      * @return The underlying pointer.
      */
-    T* Get() const { return _ptr; }
+    T * Get() const
+    {
+        return _ptr;
+    }
 
     /*!
      * Conversion to bool.
      *
      * @return  TRUE if the underlying pointer is not NULL.
      */
-    operator bool() const { return (_ptr != 0); }
+    operator bool () const
+    {
+        return (_ptr != 0);
+    }
 
     /*!
      * @return  TRUE if the underlying pointer is NULL.
      */
-    bool operator!() const { return (_ptr == 0); }
+    bool operator! () const
+    {
+        return (_ptr == 0);
+    }
 
-  private:
-    T* _ptr;
+private:
+    T *_ptr;
 
-    SCOPED_ARRAY(SCOPED_ARRAY const&);
-    SCOPED_ARRAY& operator=(SCOPED_ARRAY const&);
+    SCOPED_ARRAY(SCOPED_ARRAY const &);
+    SCOPED_ARRAY & operator=(SCOPED_ARRAY const &);
 };
 
-} // namespace UTIL
+} // namespace
 #endif // file guard

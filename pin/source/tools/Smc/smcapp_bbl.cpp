@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,8 +21,8 @@
 #error This must be a 32-bit Windows program.
 #endif
 
-#define CODE_SECTION(name) __pragma(code_seg(name))
-#define SECTION_END __pragma(code_seg())
+#define CODE_SECTION(name)          __pragma(code_seg(name))
+#define SECTION_END                 __pragma(code_seg())
 
 /*!
  * A function whose single basic block modifies its own code. 
@@ -32,9 +32,10 @@
  * code section along with the immediately following foo2barEnd() function.
  */
 CODE_SECTION("foo2bar_code")
-static void foo2bar(char* result)
+static void foo2bar(char * result)
 {
-    __asm {
+    __asm
+    {
         // Modify immediate operands in smc* instructions
         mov byte ptr [offset smc1 + 2], 'b'; 
         mov byte ptr [offset smc2 + 2], 'a';
@@ -57,7 +58,7 @@ static void foo2bar(char* result)
 SECTION_END
 
 CODE_SECTION("foo2bar_code")
-static void foo2barEnd(char* str) {}
+static void foo2barEnd(char * str) {}
 SECTION_END
 
 /*!
@@ -72,15 +73,15 @@ static void Abort(string msg)
 /*!
  * The main procedure of the application.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Set read-write-execute protection for the code of the foo2bar() function
-    size_t pageSize   = GetPageSize();
-    const char* start = CastPtr< char >(foo2bar);
-    const char* end   = CastPtr< char >(foo2barEnd);
-    char* firstPage   = (char*)(((size_t)start) & ~(pageSize - 1));
-    char* endPage     = (char*)(((size_t)end + pageSize - 1) & ~(pageSize - 1));
-    if (!MemProtect(firstPage, endPage - firstPage, MEM_READ_WRITE_EXEC))
+    size_t pageSize = GetPageSize();
+    const char * start = CastPtr<char>(foo2bar);
+    const char * end = CastPtr<char>(foo2barEnd);
+    char * firstPage = (char *)(((size_t)start) & ~(pageSize - 1));
+    char * endPage = (char *)(((size_t)end + pageSize - 1) & ~(pageSize - 1));
+    if (!MemProtect(firstPage, endPage - firstPage, MEM_READ_WRITE_EXEC)) 
     {
         Abort("MemProtect failed");
     }

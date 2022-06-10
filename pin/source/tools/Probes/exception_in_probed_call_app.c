@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,11 +18,16 @@
 #include <windows.h>
 #include <stdio.h>
 
+
 static int (*pBar)() = 0;
 
-int bar() { return 0; }
+int bar()
+{
+    return 0;
+}
 
-__declspec(dllexport) int foo()
+__declspec(dllexport)
+int foo()
 {
     // May cause exception due to NULL pointer
     return pBar();
@@ -36,10 +41,10 @@ int main()
     {
         i = foo();
     }
-    __except (EXCEPTION_EXECUTE_HANDLER)
+    __except(EXCEPTION_EXECUTE_HANDLER)
     {
         // If Pin translated probed code properly, exception will reach the handler
-        printf("Exception %08X\n", (unsigned long)GetExceptionCode());
+        printf("Exception %08X\n", (unsigned long) GetExceptionCode());
     }
 
     pBar = bar;
@@ -48,10 +53,10 @@ int main()
     {
         i = foo();
     }
-    __except (EXCEPTION_EXECUTE_HANDLER)
+    __except(EXCEPTION_EXECUTE_HANDLER)
     {
         // No exception expected
-        printf("Exception %08X\n", (unsigned long)GetExceptionCode());
+        printf("Exception %08X\n", (unsigned long) GetExceptionCode());
     }
 
     return i;

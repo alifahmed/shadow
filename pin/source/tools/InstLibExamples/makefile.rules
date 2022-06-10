@@ -69,12 +69,6 @@ ifeq ($(TARGET_OS),mac)
     APP_ROOTS += itext-marker-test int3-test multi-start-stop-test mt3-test
 endif
 
-###### Handle exceptions here (OS/arch related) ######
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
-
 ###### Define the sanity subset ######
 
 # This defines the list of tests that should run in sanity. It should include all the tests listed in

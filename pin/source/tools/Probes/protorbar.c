@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,13 +14,14 @@
 #include <stdio.h>
 static done = 0;
 
-void Bar(int a, int b, int c, int d)
+
+void Bar( int a, int b, int c, int d )
 {
-    if (done == 0)
+    if ( done == 0 )
     {
         done = 1;
-        Bar(a + 20, b + 20, c + 20, d + 20);
+        Bar(a+20, b+20, c+20, d+20);
     }
-
-    printf("Bar: %d, %d, %d, %d\n", a, b, c, d);
+    
+    printf( "Bar: %d, %d, %d, %d\n", a,b,c,d );
 }

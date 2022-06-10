@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,14 +24,15 @@
 #include <string>
 #include <sstream>
 
-using std::cerr;
 using std::cout;
+using std::cerr;
 using std::endl;
+using std::vector;
 using std::string;
 using std::stringstream;
-using std::vector;
 
-static void ParseArguments(const int argc, const char* argv[], vector< string >& pinCmd, vector< string >& appCmd)
+
+static void ParseArguments(const int argc, const char* argv[], vector<string>& pinCmd, vector<string>& appCmd)
 {
     if (argc < 4)
     {
@@ -78,7 +79,7 @@ static void VerifyAppReadyForAttach(pid_t child)
     while (1)
     {
         attempts++;
-        errno         = 0;
+        errno = 0;
         const int ret = access(file.c_str(), R_OK | X_OK);
         if (ret == 0)
         {
@@ -86,8 +87,8 @@ static void VerifyAppReadyForAttach(pid_t child)
         }
         else if (attempts == 1000)
         {
-            const string errorMsg = "LAUNCHER: Application not ready to be attached, need execute and read access to " + file +
-                                    ", errno=" + string(strerror(errno)) + "\n";
+            const string errorMsg = "LAUNCHER: Application not ready to be attached, need execute and read access to "
+                    + file + ", errno=" + string(strerror(errno)) + "\n";
             perror(errorMsg.c_str());
             kill(child, SIGKILL);
             exit(1);
@@ -96,7 +97,7 @@ static void VerifyAppReadyForAttach(pid_t child)
     }
 }
 
-static pid_t LaunchApp(const vector< string >& appCmd)
+static pid_t LaunchApp(const vector<string>& appCmd)
 {
     // Create the synchronization pipe. This is used to make sure that the launcher continues only after the child has
     // successfully execed to the application.
@@ -109,7 +110,7 @@ static pid_t LaunchApp(const vector< string >& appCmd)
 
     // Prepare the argument list.
     const unsigned int appArgc = appCmd.size();
-    char** appArgv             = new char*[appArgc + 1]; // additional slot for the NULL terminator
+    char** appArgv = new char*[appArgc + 1]; // additional slot for the NULL terminator
     for (unsigned int i = 0; i < appArgc; ++i)
     {
         appArgv[i] = strdup(appCmd[i].c_str());
@@ -133,7 +134,7 @@ static pid_t LaunchApp(const vector< string >& appCmd)
             perror("LAUNCHER ERROR: Failed to read the file descriptor flags");
             exit(1);
         }
-        fdflags |= FD_CLOEXEC;                  // this will set the write end of the pipe to be closed by the exec system call
+        fdflags |= FD_CLOEXEC; // this will set the write end of the pipe to be closed by the exec system call
         if (fcntl(fd[1], F_SETFD, fdflags) < 0) // set the new flags
         {
             perror("LAUNCHER ERROR: Failed to set the file descriptor flags");
@@ -153,7 +154,7 @@ static pid_t LaunchApp(const vector< string >& appCmd)
 
     // In the parent process.
     close(fd[1]); // close the write end of the pipe since it is not used
-    char buf[2] = {0};
+    char buf [2] = { 0 };
     if (read(fd[0], buf, 1) < 0) // wait here until the child execs to the application
     {
         perror("LAUNCHER: read from the pipe failed");
@@ -167,12 +168,13 @@ static pid_t LaunchApp(const vector< string >& appCmd)
     return child;
 }
 
-static pid_t LaunchPin(const vector< string >& pinCmd, const pid_t appPid)
+
+static pid_t LaunchPin(const vector<string>& pinCmd, const pid_t appPid)
 {
     // Prepare the argument list.
     const unsigned int pinArgc = pinCmd.size();
-    char** pinArgv             = new char*[pinArgc + 3]; // two additional slots: "-pid <appPid>" and one for the NULL terminator
-    pinArgv[0]                 = strdup(pinCmd[0].c_str());
+    char** pinArgv = new char*[pinArgc + 3]; // two additional slots: "-pid <appPid>" and one for the NULL terminator
+    pinArgv[0] = strdup(pinCmd[0].c_str());
 
     // Add the attach arguments.
     pinArgv[1] = "-pid";
@@ -212,6 +214,7 @@ static pid_t LaunchPin(const vector< string >& pinCmd, const pid_t appPid)
     return child;
 }
 
+
 static void WaitForPin(const pid_t pinPid, const pid_t appPid)
 {
     int pinStatus = 0;
@@ -241,6 +244,7 @@ static void WaitForPin(const pid_t pinPid, const pid_t appPid)
     }
 }
 
+
 static void WaitForApp(const pid_t appPid)
 {
     int appStatus = 0;
@@ -267,11 +271,12 @@ static void WaitForApp(const pid_t appPid)
     }
 }
 
+
 int main(const int argc, const char* argv[])
 {
     // Parse the given command line and break it down to Pin and application command lines.
-    vector< string > pinCmd;
-    vector< string > appCmd;
+    vector<string> pinCmd;
+    vector<string> appCmd;
     ParseArguments(argc, argv, pinCmd, appCmd);
 
     // Launch the application.

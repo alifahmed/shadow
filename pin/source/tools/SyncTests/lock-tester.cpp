@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -36,13 +36,14 @@ static const unsigned long ITERATION_COUNT = 100000;
 //
 static const unsigned DELAY_COUNT = 16;
 
-KNOB< std::string > KnobTest(KNOB_MODE_WRITEONCE, "pintool", "test", "",
-                             "Name of the test to run [lock-integrity | lock-stress | "
-                             "mutex-integrity | mutex-stress mutex-trystress | "
-                             "writer-integrity | writer-stress | writer-trystress | "
-                             "reader-stress | reader-trystress | "
-                             "rw-integrity | rw-stress | rw-trystress | "
-                             "semaphore | trylocks].");
+
+KNOB<std::string> KnobTest(KNOB_MODE_WRITEONCE, "pintool",
+    "test", "", "Name of the test to run [lock-integrity | lock-stress | "
+        "mutex-integrity | mutex-stress mutex-trystress | "
+        "writer-integrity | writer-stress | writer-trystress | "
+        "reader-stress | reader-trystress | "
+        "rw-integrity | rw-stress | rw-trystress | "
+        "semaphore | trylocks].");
 
 enum TEST
 {
@@ -78,11 +79,11 @@ PIN_LOCK pinLock;
 
 THREADID HasLock = INVALID_THREADID;
 REG RegThreadInfo;
-BOOL FoundTestFunc           = FALSE;
-BOOL FoundThreadCountFunc    = FALSE;
-volatile int RunningWorkers  = 0;
-volatile BOOL AllExit        = FALSE;
-volatile int ActiveReaders   = 0;
+BOOL FoundTestFunc = FALSE;
+BOOL FoundThreadCountFunc = FALSE;
+volatile int RunningWorkers = 0;
+volatile BOOL AllExit = FALSE;
+volatile int ActiveReaders = 0;
 volatile BOOL IsActiveWriter = FALSE;
 
 struct THREAD_INFO
@@ -92,29 +93,31 @@ struct THREAD_INFO
     UINT64 _count;
 };
 
-static TEST GetTestType(const std::string&);
-static VOID OnThreadFini(THREADID, const CONTEXT*, INT32, VOID*);
-static void InstrumentRtn(RTN ins, VOID*);
-static void OnExit(INT32, VOID*);
-static void GetThreadCount(ADDRINT);
-static void DoTestLockIntegrity(THREADID, THREAD_INFO*, UINT32*);
-static void DoTestLockStress(THREADID, THREAD_INFO*, UINT32*);
-static void DoTestMutexIntegrity(THREADID, THREAD_INFO*, UINT32*);
-static void DoTestMutexStress(THREAD_INFO*, UINT32*);
-static void DoTestMutexTryStress(THREAD_INFO*, UINT32*);
-static void DoTestWriterIntegrity(THREADID, THREAD_INFO*, UINT32*);
-static void DoTestWriterStress(THREAD_INFO*, UINT32*);
-static void DoTestWriterTryStress(THREAD_INFO*, UINT32*);
-static void DoTestReaderStress(THREAD_INFO*, UINT32*);
-static void DoTestReaderTryStress(THREAD_INFO*, UINT32*);
-static void DoTestReaderWriterIntegrity(THREAD_INFO*, UINT32*);
-static void DoTestReaderWriterStress(THREAD_INFO*, UINT32*);
-static void DoTestReaderWriterTryStress(THREAD_INFO*, UINT32*);
-static void DoTestSemaphore(THREAD_INFO*, UINT32*);
-static void DoTestTryLocks(UINT32*);
-static bool CheckIfDone(THREAD_INFO*, UINT32*);
 
-int main(int argc, char* argv[])
+static TEST GetTestType(const std::string &);
+static VOID OnThreadFini(THREADID, const CONTEXT *, INT32, VOID *);
+static void InstrumentRtn(RTN ins, VOID *);
+static void OnExit(INT32, VOID *);
+static void GetThreadCount(ADDRINT);
+static void DoTestLockIntegrity(THREADID, THREAD_INFO *, UINT32 *);
+static void DoTestLockStress(THREADID, THREAD_INFO *, UINT32 *);
+static void DoTestMutexIntegrity(THREADID, THREAD_INFO *, UINT32 *);
+static void DoTestMutexStress(THREAD_INFO *, UINT32 *);
+static void DoTestMutexTryStress(THREAD_INFO *, UINT32 *);
+static void DoTestWriterIntegrity(THREADID, THREAD_INFO *, UINT32 *);
+static void DoTestWriterStress(THREAD_INFO *, UINT32 *);
+static void DoTestWriterTryStress(THREAD_INFO *, UINT32 *);
+static void DoTestReaderStress(THREAD_INFO *, UINT32 *);
+static void DoTestReaderTryStress(THREAD_INFO *, UINT32 *);
+static void DoTestReaderWriterIntegrity(THREAD_INFO *, UINT32 *);
+static void DoTestReaderWriterStress(THREAD_INFO *, UINT32 *);
+static void DoTestReaderWriterTryStress(THREAD_INFO *, UINT32 *);
+static void DoTestSemaphore(THREAD_INFO *, UINT32 *);
+static void DoTestTryLocks(UINT32 *);
+static bool CheckIfDone(THREAD_INFO *, UINT32 *);
+
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -133,46 +136,46 @@ int main(int argc, char* argv[])
     TestType = GetTestType(KnobTest.Value());
     switch (TestType)
     {
-        case TEST_NONE:
-            std::cout << "Must specify a test to run with the '-test' knob" << std::endl;
-            PIN_ExitProcess(1);
-            break;
-        case TEST_INVALID:
-            std::cout << "Invalid test name: " << KnobTest.Value() << std::endl;
-            PIN_ExitProcess(1);
-            break;
-        case TEST_LOCK_INTEGRITY:
-        case TEST_LOCK_STRESS:
-            PIN_InitLock(&Lock);
-            break;
-        case TEST_MUTEX_INTEGRITY:
-        case TEST_MUTEX_STRESS:
-        case TEST_MUTEX_TRYSTRESS:
-            PIN_MutexInit(&Mutex);
-            break;
-        case TEST_WRITER_INTEGRITY:
-        case TEST_WRITER_STRESS:
-        case TEST_WRITER_TRYSTRESS:
-        case TEST_READER_STRESS:
-        case TEST_READER_TRYSTRESS:
-        case TEST_RW_INTEGRITY:
-        case TEST_RW_STRESS:
-        case TEST_RW_TRYSTRESS:
-            PIN_RWMutexInit(&RWMutex);
-            break;
-        case TEST_SEMAPHORE:
-            PIN_SemaphoreInit(&Sem1);
-            PIN_SemaphoreInit(&Sem2);
-            PIN_SemaphoreSet(&Sem1);
-            PIN_MutexInit(&Mutex);
-            break;
-        case TEST_TRYLOCKS:
-            PIN_MutexInit(&Mutex);
-            PIN_RWMutexInit(&RWMutex);
-            PIN_SemaphoreInit(&Sem1);
-            break;
-        default:
-            ASSERTX(0);
+    case TEST_NONE:
+        std::cout << "Must specify a test to run with the '-test' knob" << std::endl;
+        PIN_ExitProcess(1);
+        break;
+    case TEST_INVALID:
+        std::cout << "Invalid test name: " << KnobTest.Value() << std::endl;
+        PIN_ExitProcess(1);
+        break;
+    case TEST_LOCK_INTEGRITY:
+    case TEST_LOCK_STRESS:
+        PIN_InitLock(&Lock);
+        break;
+    case TEST_MUTEX_INTEGRITY:
+    case TEST_MUTEX_STRESS:
+    case TEST_MUTEX_TRYSTRESS:
+        PIN_MutexInit(&Mutex);
+        break;
+    case TEST_WRITER_INTEGRITY:
+    case TEST_WRITER_STRESS:
+    case TEST_WRITER_TRYSTRESS:
+    case TEST_READER_STRESS:
+    case TEST_READER_TRYSTRESS:
+    case TEST_RW_INTEGRITY:
+    case TEST_RW_STRESS:
+    case TEST_RW_TRYSTRESS:
+        PIN_RWMutexInit(&RWMutex);
+        break;
+    case TEST_SEMAPHORE:
+        PIN_SemaphoreInit(&Sem1);
+        PIN_SemaphoreInit(&Sem2);
+        PIN_SemaphoreSet(&Sem1);
+        PIN_MutexInit(&Mutex);
+        break;
+    case TEST_TRYLOCKS:
+        PIN_MutexInit(&Mutex);
+        PIN_RWMutexInit(&RWMutex);
+        PIN_SemaphoreInit(&Sem1);
+        break;
+    default:
+        ASSERTX(0);
     }
 
     PIN_AddThreadFiniFunction(OnThreadFini, NULL);
@@ -182,57 +185,78 @@ int main(int argc, char* argv[])
     return 1;
 }
 
-static TEST GetTestType(const std::string& name)
+static TEST GetTestType(const std::string &name)
 {
-    if (name == "") return TEST_NONE;
-    if (name == "lock-integrity") return TEST_LOCK_INTEGRITY;
-    if (name == "lock-stress") return TEST_LOCK_STRESS;
-    if (name == "mutex-integrity") return TEST_MUTEX_INTEGRITY;
-    if (name == "mutex-stress") return TEST_MUTEX_STRESS;
-    if (name == "mutex-trystress") return TEST_MUTEX_TRYSTRESS;
-    if (name == "writer-integrity") return TEST_WRITER_INTEGRITY;
-    if (name == "writer-stress") return TEST_WRITER_STRESS;
-    if (name == "writer-trystress") return TEST_WRITER_TRYSTRESS;
-    if (name == "reader-stress") return TEST_READER_STRESS;
-    if (name == "reader-trystress") return TEST_READER_TRYSTRESS;
-    if (name == "rw-integrity") return TEST_RW_INTEGRITY;
-    if (name == "rw-stress") return TEST_RW_STRESS;
-    if (name == "rw-trystress") return TEST_RW_TRYSTRESS;
-    if (name == "semaphore") return TEST_SEMAPHORE;
-    if (name == "trylocks") return TEST_TRYLOCKS;
+    if (name == "")
+        return TEST_NONE;
+    if (name == "lock-integrity")
+        return TEST_LOCK_INTEGRITY;
+    if (name == "lock-stress")
+        return TEST_LOCK_STRESS;
+    if (name == "mutex-integrity")
+        return TEST_MUTEX_INTEGRITY;
+    if (name == "mutex-stress")
+        return TEST_MUTEX_STRESS;
+    if (name == "mutex-trystress")
+        return TEST_MUTEX_TRYSTRESS;
+    if (name == "writer-integrity")
+        return TEST_WRITER_INTEGRITY;
+    if (name == "writer-stress")
+        return TEST_WRITER_STRESS;
+    if (name == "writer-trystress")
+        return TEST_WRITER_TRYSTRESS;
+    if (name == "reader-stress")
+        return TEST_READER_STRESS;
+    if (name == "reader-trystress")
+        return TEST_READER_TRYSTRESS;
+    if (name == "rw-integrity")
+        return TEST_RW_INTEGRITY;
+    if (name == "rw-stress")
+        return TEST_RW_STRESS;
+    if (name == "rw-trystress")
+        return TEST_RW_TRYSTRESS;
+    if (name == "semaphore")
+        return TEST_SEMAPHORE;
+    if (name == "trylocks")
+        return TEST_TRYLOCKS;
     return TEST_INVALID;
 }
 
-set< THREADID > appThreads;
+set<THREADID> appThreads;
 
 static VOID AppThreadStart(THREADID tid, PIN_REGISTER* regval)
 {
     // Give each worker thread a unique, contiguous ID.
     //
     static unsigned workerCount = 0;
-    regval->qword[0]            = (UINT64)(reinterpret_cast< ADDRINT >(new THREAD_INFO(workerCount++)));
+    regval->qword[0] = (UINT64)(reinterpret_cast<ADDRINT>(new THREAD_INFO(workerCount++)));
     PIN_GetLock(&pinLock, PIN_GetTid());
     appThreads.insert(tid);
     PIN_ReleaseLock(&pinLock);
 }
 
-static VOID OnThreadFini(THREADID tid, const CONTEXT* ctxt, INT32, VOID*)
+
+static VOID OnThreadFini(THREADID tid, const CONTEXT *ctxt, INT32, VOID *)
 {
     if (appThreads.find(tid) != appThreads.end())
     {
         appThreads.erase(appThreads.find(tid));
-        ADDRINT addrInfo  = PIN_GetContextReg(ctxt, RegThreadInfo);
-        THREAD_INFO* info = reinterpret_cast< THREAD_INFO* >(addrInfo);
+        ADDRINT addrInfo = PIN_GetContextReg(ctxt, RegThreadInfo);
+        THREAD_INFO *info = reinterpret_cast<THREAD_INFO *>(addrInfo);
         delete info;
     }
+
 }
 
-static void InstrumentRtn(RTN rtn, VOID*)
+
+static void InstrumentRtn(RTN rtn, VOID *)
 {
     if (RTN_Name(rtn) == "TellPinThreadStart" || RTN_Name(rtn) == "_TellPinThreadStart")
     {
         RTN_Open(rtn);
-        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(AppThreadStart), IARG_THREAD_ID, IARG_REG_REFERENCE, RegThreadInfo, IARG_END);
+        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(AppThreadStart),
+            IARG_THREAD_ID, IARG_REG_REFERENCE, RegThreadInfo,
+            IARG_END);
         RTN_Close(rtn);
     }
 
@@ -240,7 +264,9 @@ static void InstrumentRtn(RTN rtn, VOID*)
     {
         FoundThreadCountFunc = TRUE;
         RTN_Open(rtn);
-        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(GetThreadCount), IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
+        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(GetThreadCount),
+            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+            IARG_END);
         RTN_Close(rtn);
     }
 
@@ -250,73 +276,107 @@ static void InstrumentRtn(RTN rtn, VOID*)
         RTN_Open(rtn);
         switch (TestType)
         {
-            case TEST_LOCK_INTEGRITY:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestLockIntegrity), IARG_THREAD_ID, IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_LOCK_STRESS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestLockStress), IARG_THREAD_ID, IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_MUTEX_INTEGRITY:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestMutexIntegrity), IARG_THREAD_ID, IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_MUTEX_STRESS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestMutexStress), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_MUTEX_TRYSTRESS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestMutexTryStress), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_WRITER_INTEGRITY:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestWriterIntegrity), IARG_THREAD_ID, IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_WRITER_STRESS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestWriterStress), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_WRITER_TRYSTRESS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestWriterTryStress), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_READER_STRESS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderStress), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_READER_TRYSTRESS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderTryStress), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_RW_INTEGRITY:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderWriterIntegrity), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_RW_STRESS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderWriterStress), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_RW_TRYSTRESS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderWriterTryStress), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_SEMAPHORE:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestSemaphore), IARG_REG_VALUE, RegThreadInfo,
-                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            case TEST_TRYLOCKS:
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestTryLocks), IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
-                break;
-            default:
-                ASSERTX(0);
+        case TEST_LOCK_INTEGRITY:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestLockIntegrity),
+                IARG_THREAD_ID,
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_LOCK_STRESS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestLockStress),
+                IARG_THREAD_ID,
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_MUTEX_INTEGRITY:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestMutexIntegrity),
+                IARG_THREAD_ID,
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_MUTEX_STRESS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestMutexStress),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_MUTEX_TRYSTRESS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestMutexTryStress),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_WRITER_INTEGRITY:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestWriterIntegrity),
+                IARG_THREAD_ID,
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_WRITER_STRESS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestWriterStress),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_WRITER_TRYSTRESS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestWriterTryStress),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_READER_STRESS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderStress),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_READER_TRYSTRESS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderTryStress),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_RW_INTEGRITY:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderWriterIntegrity),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_RW_STRESS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderWriterStress),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_RW_TRYSTRESS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestReaderWriterTryStress),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_SEMAPHORE:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestSemaphore),
+                IARG_REG_VALUE, RegThreadInfo,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        case TEST_TRYLOCKS:
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoTestTryLocks),
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
+            break;
+        default:
+            ASSERTX(0);
         }
         RTN_Close(rtn);
     }
 }
 
-static void OnExit(INT32, VOID*)
+static void OnExit(INT32, VOID *)
 {
     if (!FoundTestFunc || !FoundThreadCountFunc)
     {
@@ -328,32 +388,32 @@ static void OnExit(INT32, VOID*)
     //
     switch (TestType)
     {
-        case TEST_LOCK_INTEGRITY:
-        case TEST_LOCK_STRESS:
-            /* nothing to do */
-            break;
-        case TEST_MUTEX_INTEGRITY:
-        case TEST_MUTEX_STRESS:
-        case TEST_MUTEX_TRYSTRESS:
-            break;
-        case TEST_WRITER_INTEGRITY:
-        case TEST_WRITER_STRESS:
-        case TEST_WRITER_TRYSTRESS:
-        case TEST_READER_STRESS:
-        case TEST_READER_TRYSTRESS:
-        case TEST_RW_INTEGRITY:
-        case TEST_RW_STRESS:
-        case TEST_RW_TRYSTRESS:
-            break;
-        case TEST_SEMAPHORE:
-            PIN_SemaphoreFini(&Sem1);
-            PIN_SemaphoreFini(&Sem2);
-            break;
-        case TEST_TRYLOCKS:
-            PIN_SemaphoreFini(&Sem1);
-            break;
-        default:
-            ASSERTX(0);
+    case TEST_LOCK_INTEGRITY:
+    case TEST_LOCK_STRESS:
+        /* nothing to do */
+        break;
+    case TEST_MUTEX_INTEGRITY:
+    case TEST_MUTEX_STRESS:
+    case TEST_MUTEX_TRYSTRESS:
+        break;
+    case TEST_WRITER_INTEGRITY:
+    case TEST_WRITER_STRESS:
+    case TEST_WRITER_TRYSTRESS:
+    case TEST_READER_STRESS:
+    case TEST_READER_TRYSTRESS:
+    case TEST_RW_INTEGRITY:
+    case TEST_RW_STRESS:
+    case TEST_RW_TRYSTRESS:
+        break;
+    case TEST_SEMAPHORE:
+        PIN_SemaphoreFini(&Sem1);
+        PIN_SemaphoreFini(&Sem2);
+        break;
+    case TEST_TRYLOCKS:
+        PIN_SemaphoreFini(&Sem1);
+        break;
+    default:
+        ASSERTX(0);
     }
 }
 
@@ -383,38 +443,41 @@ static void GetThreadCount(ADDRINT threadCount)
     }
 }
 
+
 // ----------------- Analysis routines that peform each test ----------------- //
 
-static void DoTestLockIntegrity(THREADID tid, THREAD_INFO* info, UINT32* done)
+static void DoTestLockIntegrity(THREADID tid, THREAD_INFO *info, UINT32 *done)
 {
     // This test checks to see if two threads can be in the PIN_LOCK mutex
     // simultaneously.
 
     PIN_GetLock(&Lock, tid);
     THREADID owner = HasLock;
-    HasLock        = tid;
+    HasLock = tid;
 
     if (owner != INVALID_THREADID)
     {
-        std::cout << "Two theads in lock simultaneously: " << std::dec << tid << " and " << owner << std::endl;
+        std::cout << "Two theads in lock simultaneously: " << std::dec << tid <<
+            " and " << owner << std::endl;
         PIN_ExitProcess(1);
     }
 
     ATOMIC::OPS::Delay(DELAY_COUNT);
 
-    HasLock      = INVALID_THREADID;
+    HasLock = INVALID_THREADID;
     THREADID ret = PIN_ReleaseLock(&Lock);
 
     if (ret != tid)
     {
-        std::cout << "PIN_ReleaseLock returned unexpected value " << std::dec << ret << " (expected " << tid << ")" << std::endl;
+        std::cout << "PIN_ReleaseLock returned unexpected value " << std::dec << ret <<
+            " (expected " << tid << ")" << std::endl;
         PIN_ExitProcess(1);
     }
 
     CheckIfDone(info, done);
 }
 
-static void DoTestLockStress(THREADID tid, THREAD_INFO* info, UINT32* done)
+static void DoTestLockStress(THREADID tid, THREAD_INFO *info, UINT32 *done)
 {
     // This test just tries to acquire and release PIN_LOCK as fast as possible
     // to see if we can provoke a deadlock due to missing a wakeup.
@@ -424,18 +487,19 @@ static void DoTestLockStress(THREADID tid, THREAD_INFO* info, UINT32* done)
     CheckIfDone(info, done);
 }
 
-static void DoTestMutexIntegrity(THREADID tid, THREAD_INFO* info, UINT32* done)
+static void DoTestMutexIntegrity(THREADID tid, THREAD_INFO *info, UINT32 *done)
 {
     // This test checks to see if two threads can be in the PIN_MUTEX mutex
     // simultaneously.
 
     PIN_MutexLock(&Mutex);
     THREADID owner = HasLock;
-    HasLock        = tid;
+    HasLock = tid;
 
     if (owner != INVALID_THREADID)
     {
-        std::cout << "Two theads in mutex simultaneously: " << std::dec << tid << " and " << owner << std::endl;
+        std::cout << "Two theads in mutex simultaneously: " << std::dec << tid <<
+            " and " << owner << std::endl;
         PIN_ExitProcess(1);
     }
 
@@ -447,7 +511,7 @@ static void DoTestMutexIntegrity(THREADID tid, THREAD_INFO* info, UINT32* done)
     CheckIfDone(info, done);
 }
 
-static void DoTestMutexStress(THREAD_INFO* info, UINT32* done)
+static void DoTestMutexStress(THREAD_INFO *info, UINT32 *done)
 {
     // This test just tries to acquire and release PIN_MUTEX as fast as possible
     // to see if we can provoke a deadlock due to missing a wakeup.
@@ -457,26 +521,28 @@ static void DoTestMutexStress(THREAD_INFO* info, UINT32* done)
     CheckIfDone(info, done);
 }
 
-static void DoTestMutexTryStress(THREAD_INFO* info, UINT32* done)
+static void DoTestMutexTryStress(THREAD_INFO *info, UINT32 *done)
 {
     // Try to acquire / release PIN_MUTEX as fast as possible, using "try".
 
-    if (PIN_MutexTryLock(&Mutex)) PIN_MutexUnlock(&Mutex);
+    if (PIN_MutexTryLock(&Mutex))
+        PIN_MutexUnlock(&Mutex);
     CheckIfDone(info, done);
 }
 
-static void DoTestWriterIntegrity(THREADID tid, THREAD_INFO* info, UINT32* done)
+static void DoTestWriterIntegrity(THREADID tid, THREAD_INFO *info, UINT32 *done)
 {
     // This test checks to see if two writer threads can be in the PIN_RWMUTEX mutex
     // simultaneously.
 
     PIN_RWMutexWriteLock(&RWMutex);
     THREADID owner = HasLock;
-    HasLock        = tid;
+    HasLock = tid;
 
     if (owner != INVALID_THREADID)
     {
-        std::cout << "Two writer theads in rwmutex simultaneously: " << std::dec << tid << " and " << owner << std::endl;
+        std::cout << "Two writer theads in rwmutex simultaneously: " << std::dec << tid <<
+            " and " << owner << std::endl;
         PIN_ExitProcess(1);
     }
 
@@ -488,7 +554,7 @@ static void DoTestWriterIntegrity(THREADID tid, THREAD_INFO* info, UINT32* done)
     CheckIfDone(info, done);
 }
 
-static void DoTestWriterStress(THREAD_INFO* info, UINT32* done)
+static void DoTestWriterStress(THREAD_INFO *info, UINT32 *done)
 {
     // This test just tries to acquire and release PIN_RWMUTEX as fast as possible
     // as a writer lock to see if we can provoke a deadlock due to missing a wakeup.
@@ -498,15 +564,16 @@ static void DoTestWriterStress(THREAD_INFO* info, UINT32* done)
     CheckIfDone(info, done);
 }
 
-static void DoTestWriterTryStress(THREAD_INFO* info, UINT32* done)
+static void DoTestWriterTryStress(THREAD_INFO *info, UINT32 *done)
 {
     // Try to acquire / release PIN_RWMUTEX as a writer using "try" as fast as possible.
 
-    if (PIN_RWMutexTryWriteLock(&RWMutex)) PIN_RWMutexUnlock(&RWMutex);
+    if (PIN_RWMutexTryWriteLock(&RWMutex))
+        PIN_RWMutexUnlock(&RWMutex);
     CheckIfDone(info, done);
 }
 
-static void DoTestReaderStress(THREAD_INFO* info, UINT32* done)
+static void DoTestReaderStress(THREAD_INFO *info, UINT32 *done)
 {
     // This test just tries to acquire and release PIN_RWMUTEX as fast as possible
     // as a reader lock.
@@ -516,15 +583,16 @@ static void DoTestReaderStress(THREAD_INFO* info, UINT32* done)
     CheckIfDone(info, done);
 }
 
-static void DoTestReaderTryStress(THREAD_INFO* info, UINT32* done)
+static void DoTestReaderTryStress(THREAD_INFO *info, UINT32 *done)
 {
     // Try to acquire / release PIN_RWMUTEX as a reader using "try" as fast as possible.
 
-    if (PIN_RWMutexTryReadLock(&RWMutex)) PIN_RWMutexUnlock(&RWMutex);
+    if (PIN_RWMutexTryReadLock(&RWMutex))
+        PIN_RWMutexUnlock(&RWMutex);
     CheckIfDone(info, done);
 }
 
-static void DoTestReaderWriterIntegrity(THREAD_INFO* info, UINT32* done)
+static void DoTestReaderWriterIntegrity(THREAD_INFO *info, UINT32 *done)
 {
     // This test checks that a "writer" thread can never hold the lock while
     // there is an active reader.
@@ -551,7 +619,7 @@ static void DoTestReaderWriterIntegrity(THREAD_INFO* info, UINT32* done)
         // Writer thread.
         //
         PIN_RWMutexWriteLock(&RWMutex);
-        ATOMIC::OPS::Store< BOOL >(&IsActiveWriter, TRUE);
+        ATOMIC::OPS::Store<BOOL>(&IsActiveWriter, TRUE);
         if (ATOMIC::OPS::Load(&ActiveReaders) != 0)
         {
             std::cout << "Writer has lock while there are active readers" << std::endl;
@@ -560,13 +628,13 @@ static void DoTestReaderWriterIntegrity(THREAD_INFO* info, UINT32* done)
 
         ATOMIC::OPS::Delay(DELAY_COUNT);
 
-        ATOMIC::OPS::Store< BOOL >(&IsActiveWriter, FALSE);
+        ATOMIC::OPS::Store<BOOL>(&IsActiveWriter, FALSE);
         PIN_RWMutexUnlock(&RWMutex);
     }
     CheckIfDone(info, done);
 }
 
-static void DoTestReaderWriterStress(THREAD_INFO* info, UINT32* done)
+static void DoTestReaderWriterStress(THREAD_INFO *info, UINT32 *done)
 {
     // This test uses a mix of "reader" and "writer" threads to acquire and
     // release the PIN_RWMUTEX as fast as possible.
@@ -588,7 +656,7 @@ static void DoTestReaderWriterStress(THREAD_INFO* info, UINT32* done)
     CheckIfDone(info, done);
 }
 
-static void DoTestReaderWriterTryStress(THREAD_INFO* info, UINT32* done)
+static void DoTestReaderWriterTryStress(THREAD_INFO *info, UINT32 *done)
 {
     // This test uses a mix of "reader" and "writer" threads to acquire and
     // release the PIN_RWMUTEX as fast as possible.  We acquire the lock using
@@ -598,18 +666,20 @@ static void DoTestReaderWriterTryStress(THREAD_INFO* info, UINT32* done)
     {
         // Reader thread.
         //
-        if (PIN_RWMutexTryReadLock(&RWMutex)) PIN_RWMutexUnlock(&RWMutex);
+        if (PIN_RWMutexTryReadLock(&RWMutex))
+            PIN_RWMutexUnlock(&RWMutex);
     }
     else
     {
         // Writer thread.
         //
-        if (PIN_RWMutexTryWriteLock(&RWMutex)) PIN_RWMutexUnlock(&RWMutex);
+        if (PIN_RWMutexTryWriteLock(&RWMutex))
+            PIN_RWMutexUnlock(&RWMutex);
     }
     CheckIfDone(info, done);
 }
 
-static void DoTestSemaphore(THREAD_INFO* info, UINT32* done)
+static void DoTestSemaphore(THREAD_INFO *info, UINT32 *done)
 {
     // This test assumes exactly two threads.  The two threads take turns pinging
     // each other's semaphore.  We make sure that a thread does not wake up from
@@ -653,7 +723,7 @@ static void DoTestSemaphore(THREAD_INFO* info, UINT32* done)
     }
 }
 
-static void DoTestTryLocks(UINT32* done)
+static void DoTestTryLocks(UINT32 *done)
 {
     // This is a collection of single-thread tests that make sure that the
     // various "try" operations succeed or fail as expected.
@@ -733,13 +803,14 @@ static void DoTestTryLocks(UINT32* done)
 
 // Common routine to check if the test is done.
 //
-static bool CheckIfDone(THREAD_INFO* info, UINT32* done)
+static bool CheckIfDone(THREAD_INFO *info, UINT32 *done)
 {
     // Each thread exits after all threads have reached their iteration count.
     //
     if (info->_count++ == ITERATION_COUNT)
     {
-        if (ATOMIC::OPS::Increment(&RunningWorkers, -1) <= 1) ATOMIC::OPS::Store< BOOL >(&AllExit, TRUE);
+        if (ATOMIC::OPS::Increment(&RunningWorkers, -1) <= 1)
+            ATOMIC::OPS::Store<BOOL>(&AllExit, TRUE);
     }
     if (ATOMIC::OPS::Load(&AllExit))
     {

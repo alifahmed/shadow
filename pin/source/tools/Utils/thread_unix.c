@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,18 +22,19 @@
 
 int data[MAXTHREADS];
 
-void* start(void* arg)
+void * start(void * arg)
 {
     int i = 0;
-    for (i = 0; i < 1000; i++)
+    for(i = 0; i < 1000; i++)
     {
-        void* h = malloc(13);
-        if (h) free(h);
+        void * h =  malloc(13);
+        if (h)
+            free(h);
     }
     return 0;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     pthread_t threads[MAXTHREADS];
     int i;
@@ -41,11 +42,11 @@ int main(int argc, char* argv[])
 
     printf("Creating %d threads\n", numthreads);
 
-    for (i = 0; i < numthreads; i++)
+    for (i = 0; i< numthreads; i++)
     {
         pthread_create(&threads[i], 0, start, 0);
     }
-
+    
     for (i = 0; i < numthreads; i++)
     {
         pthread_join(threads[i], 0);
@@ -54,3 +55,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,15 +16,15 @@
 using std::set;
 using std::string;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "thread_count.out", "Output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "thread_count.out", "Output file");
 
-FILE* out;
+FILE * out;
 PIN_LOCK pinLock;
 INT32 threadCreated = 0;
-INT32 threadEnded   = 0;
+INT32 threadEnded = 0;
 
 THREADID myThread = INVALID_THREADID;
-set< THREADID > appThreads;
+set<THREADID> appThreads;
 
 static VOID AppThreadStart(THREADID threadIndex)
 {
@@ -34,7 +34,7 @@ static VOID AppThreadStart(THREADID threadIndex)
     PIN_ReleaseLock(&pinLock);
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     if (myThread == INVALID_THREADID)
     {
@@ -46,11 +46,11 @@ VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
     }
 }
 
-VOID ThreadFini(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID* v)
+VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
     // Use the Pin lock to protect writes to appThreads between this callback function and the analysis routine AppThreadStart
     PIN_GetLock(&pinLock, PIN_GetTid());
-    set< THREADID >::iterator it = appThreads.find(threadid);
+    set<THREADID>::iterator it = appThreads.find(threadid);
     if (it != appThreads.end())
     {
         threadEnded++;
@@ -59,14 +59,14 @@ VOID ThreadFini(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID* v)
     PIN_ReleaseLock(&pinLock);
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     fprintf(out, "Number of threads created  - %d\n", (int)threadCreated);
     fprintf(out, "Number of threads terminated  - %d\n", (int)threadEnded);
     fclose(out);
 }
 
-static VOID InstrumentImg(IMG img, VOID*)
+static VOID InstrumentImg(IMG img, VOID *)
 {
     if (IMG_IsMainExecutable(img))
     {
@@ -80,7 +80,7 @@ static VOID InstrumentImg(IMG img, VOID*)
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
     PIN_InitLock(&pinLock);

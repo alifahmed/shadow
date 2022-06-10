@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,41 +26,45 @@ using std::endl;
 
 WIND::HANDLE outputMutex;
 
+
 // use mutex to synchronize outputs from multiple instances of this tool
-void MutexWriteToStdout(char* msg)
+void MutexWriteToStdout (char *msg)
 {
-    WIND::WaitForSingleObject(outputMutex, INFINITE);
-
-    printf(msg);
-
-    fflush(stdout);
-
-    WIND::ReleaseMutex(outputMutex);
+    
+    WIND::WaitForSingleObject (outputMutex, INFINITE);
+    
+    printf (msg);
+    
+    fflush (stdout);
+    
+    WIND::ReleaseMutex (outputMutex);
 }
 
-int main(INT32 argc, CHAR** argv)
+
+int main(INT32 argc, CHAR **argv)
 {
-    outputMutex = WIND::CreateMutex(NULL, false /* not initial owner*/, "pin_child_tool_output_mutex");
+    outputMutex = WIND::CreateMutex (NULL, false /* not initial owner*/, "pin_child_tool_output_mutex");
     if (outputMutex == NULL)
     {
         cout << "failed to create outputMutex\n";
-        exit(0);
+        exit (0);
     }
 
     PIN_InitSymbols();
     PIN_Init(argc, argv);
-
+    
     // Never returns
-    if (PIN_IsProbeMode())
+    if ( PIN_IsProbeMode() )
     {
-        MutexWriteToStdout("In follow_child PinTool is probed 1\n");
+        MutexWriteToStdout ("In follow_child PinTool is probed 1\n");
         PIN_StartProgramProbed();
     }
     else
     {
-        MutexWriteToStdout("In follow_child PinTool is probed 0\n");
+        MutexWriteToStdout ("In follow_child PinTool is probed 0\n");
         PIN_StartProgram();
     }
 
     return 0;
 }
+

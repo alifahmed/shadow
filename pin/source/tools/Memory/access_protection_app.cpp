@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,14 +23,16 @@
 #define EXPORT_SYM extern "C"
 #endif
 
-enum ExitType
-{
-    RES_SUCCESS = 0,      // 0
-    RES_INVALID_ARGS,     // 1
-    RES_INVALID_TEST_TYPE // 2
+enum ExitType {
+    RES_SUCCESS = 0,        // 0
+    RES_INVALID_ARGS,       // 1
+    RES_INVALID_TEST_TYPE   // 2
 };
 
-EXPORT_SYM void NotifyPinAfterMmap(const char* addr) { fprintf(stderr, "Allocated %p\n", addr); }
+EXPORT_SYM void NotifyPinAfterMmap(const char * addr)
+{
+    fprintf(stderr, "Allocated %p\n", addr);
+}
 
 #if defined(TARGET_WINDOWS)
 
@@ -38,42 +40,46 @@ size_t GetPageSize()
 {
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
-    return static_cast< size_t >(sysInfo.dwPageSize);
+    return static_cast<size_t>(sysInfo.dwPageSize);
 }
 
-const char* MmapWrapperNoMemoryAccess()
+const char * MmapWrapperNoMemoryAccess()
 {
-    return reinterpret_cast< const char* >(VirtualAlloc(0, GetPageSize(), MEM_COMMIT, PAGE_NOACCESS));
+    return reinterpret_cast<const char *> (VirtualAlloc(0, GetPageSize(), MEM_COMMIT, PAGE_NOACCESS));
 }
 
-const char* MmapWrapperWriteAndReadMemoryAccess()
+const char * MmapWrapperWriteAndReadMemoryAccess()
 {
-    return reinterpret_cast< const char* >(VirtualAlloc(0, GetPageSize(), MEM_COMMIT, PAGE_READWRITE));
+    return reinterpret_cast<const char *> (VirtualAlloc(0, GetPageSize(), MEM_COMMIT, PAGE_READWRITE));
 }
 
 #else
 
-size_t GetPageSize() { return static_cast< size_t >(getpagesize()); }
+size_t GetPageSize()
+{
+    return static_cast<size_t>(getpagesize());
+}
 
-const char* MmapWrapperNoMemoryAccess()
+const char * MmapWrapperNoMemoryAccess()
 {
 #if defined(TARGET_MAC)
-    return reinterpret_cast< const char* >(mmap(0, GetPageSize(), PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0));
+    return reinterpret_cast<const char *> (mmap(0, GetPageSize(),  PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0));
 #else
-    return reinterpret_cast< const char* >(mmap(0, GetPageSize(), PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0));
+   return reinterpret_cast<const char *> (mmap(0, GetPageSize(), PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0));
 #endif
 }
 
-const char* MmapWrapperWriteAndReadMemoryAccess()
+const char * MmapWrapperWriteAndReadMemoryAccess()
 {
 #if defined(TARGET_MAC)
-    return reinterpret_cast< const char* >(mmap(0, GetPageSize(), PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0));
+    return reinterpret_cast<const char *> (mmap(0, GetPageSize(), PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0));
 #else
-    return reinterpret_cast< const char* >(mmap(0, GetPageSize(), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0));
+   return reinterpret_cast<const char *> (mmap(0, GetPageSize(), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0));
 #endif
 }
 
 #endif
+
 
 /*
     Expected argv arguments:
@@ -81,24 +87,24 @@ const char* MmapWrapperWriteAndReadMemoryAccess()
         1- mmap function is called by the application.
         2- mmap function is called by the tool.
 */
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
-    if (argc != 2)
+    if(argc!=2)
     {
 #if defined(TARGET_WINDOWS)
-        fprintf(stderr, "Invalid number of arguments<%d>, expecting only one\n", argc);
+       fprintf(stderr, "Invalid number of arguments<%d>, expecting only one\n",argc);
 #else
-        fprintf(stderr, "Invalid number of arguments %d, expecting only one\n", argc);
+       fprintf(stderr, "Invalid number of arguments %d, expecting only one\n",argc);
 #endif
-        fflush(stderr);
-        exit(RES_INVALID_ARGS);
+       fflush(stderr);
+       exit(RES_INVALID_ARGS);
     }
 
-    switch (atoi(argv[1]))
+    switch(atoi(argv[1]))
     {
         case 1:
         {
-            const char* ans = MmapWrapperNoMemoryAccess();
+            const char * ans = MmapWrapperNoMemoryAccess();
             NotifyPinAfterMmap(ans);
             ans = MmapWrapperWriteAndReadMemoryAccess();
             NotifyPinAfterMmap(ans);

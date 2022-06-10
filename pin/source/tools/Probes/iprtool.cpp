@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,6 +21,7 @@
 using std::cerr;
 using std::endl;
 
+
 /* ===================================================================== */
 /* Global Variables */
 /* ===================================================================== */
@@ -28,6 +29,7 @@ using std::endl;
 static void (*pf_iprel_imm)();
 static void (*pf_iprel_reg)(int);
 static int (*pf_reg_iprel)();
+
 
 /* ===================================================================== */
 /* Replacement Functions */
@@ -41,17 +43,19 @@ void IprelImmProbe()
     }
 }
 
-void IprelRegProbe(int b)
+
+void IprelRegProbe( int b )
 {
     if (pf_iprel_reg)
     {
-        (pf_iprel_reg)(b);
+        (pf_iprel_reg)( b );
     }
 }
 
+
 int RegIprelProbe()
 {
-    int a = 0;
+    int a=0;
 
     if (pf_reg_iprel)
     {
@@ -65,42 +69,45 @@ int RegIprelProbe()
 // Called every time a new image is loaded
 // Look for routines that we want to probe
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     RTN iprelImmRtn = RTN_FindByName(img, C_MANGLE("iprel_imm"));
     if (RTN_Valid(iprelImmRtn))
     {
-        pf_iprel_imm = (void (*)())RTN_ReplaceProbed(iprelImmRtn, AFUNPTR(IprelImmProbe));
+        pf_iprel_imm = (void (*)()) RTN_ReplaceProbed(iprelImmRtn,
+                                                      AFUNPTR(IprelImmProbe));
         cerr << "Inserted probe for iprel_imm:" << IMG_Name(img) << endl;
     }
-
+    
     RTN iprelRegRtn = RTN_FindByName(img, C_MANGLE("iprel_reg"));
     if (RTN_Valid(iprelRegRtn))
     {
-        pf_iprel_reg = (void (*)(int))RTN_ReplaceProbed(iprelRegRtn, AFUNPTR(IprelRegProbe));
+        pf_iprel_reg = (void (*)(int)) RTN_ReplaceProbed(iprelRegRtn,
+                                                         AFUNPTR(IprelRegProbe));
         cerr << "Inserted probe for iprel_reg:" << IMG_Name(img) << endl;
     }
 
     RTN regIprelRtn = RTN_FindByName(img, C_MANGLE("reg_iprel"));
     if (RTN_Valid(regIprelRtn))
     {
-        pf_reg_iprel = (int (*)())RTN_ReplaceProbed(regIprelRtn, AFUNPTR(RegIprelProbe));
+        pf_reg_iprel = (int (*)()) RTN_ReplaceProbed(regIprelRtn,
+                                                     AFUNPTR(RegIprelProbe));
         cerr << "Inserted probe for reg_iprel:" << IMG_Name(img) << endl;
     }
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -19,9 +19,9 @@ END_LEGAL */
 # define XED_ENCODER_GEN_DEFS_H
 #define XED_ENCODE_ORDER_MAX_ENTRIES  32
 #define XED_ENCODE_ORDER_MAX_OPERANDS 5
-#define XED_ENCODE_MAX_FB_PATTERNS 120
-#define XED_ENCODE_MAX_EMIT_PATTERNS 185
-#define XED_ENCODE_FB_VALUES_TABLE_SIZE 3280
-#define XED_ENCODE_MAX_IFORMS 7048
-#define XED_ENC_GROUPS 506
+#define XED_ENCODE_MAX_FB_PATTERNS 112
+#define XED_ENCODE_MAX_EMIT_PATTERNS 177
+#define XED_ENCODE_FB_VALUES_TABLE_SIZE 3596
+#define XED_ENCODE_MAX_IFORMS 6848
+#define XED_ENC_GROUPS 500
 #endif

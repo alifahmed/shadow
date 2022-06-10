@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,14 +13,17 @@
 #include <stdlib.h>
 #include "pin.H"
 
-char* data[100];
+char * data[100];
 INT32 sizeindex[100];
 
-INT32 sizes[] = {100, 4000, 30, 20, 6000, 24000, 0};
-
+INT32 sizes[] = 
+{
+    100, 4000, 30, 20, 6000, 24000, 0
+};
+               
 VOID mal(INT32 id)
 {
-    char* d    = data[id];
+    char * d = data[id];
     INT32 size = sizes[sizeindex[id]];
 
     if (d)
@@ -29,7 +32,7 @@ VOID mal(INT32 id)
         {
             if (d[i] != id)
             {
-                fprintf(stderr, "Bad data id %d data %d\n", id, d[i]);
+                fprintf(stderr,"Bad data id %d data %d\n", id, d[i]);
                 exit(1);
             }
         }
@@ -38,29 +41,34 @@ VOID mal(INT32 id)
 
     sizeindex[id]++;
 
-    if (sizes[sizeindex[id]] == 0) sizeindex[id] = 0;
+    if (sizes[sizeindex[id]] == 0)
+        sizeindex[id] = 0;
     size = sizes[sizeindex[id]];
 
     ASSERTX(size != 0);
-
+    
+    
     data[id] = (char*)malloc(size);
-    d        = data[id];
+    d = data[id];
     for (INT32 i = 0; i < size; i++)
     {
         d[i] = id;
     }
 }
 
-VOID Tr(TRACE trace, VOID*) { TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(mal), IARG_THREAD_ID, IARG_END); }
+VOID Tr(TRACE trace, VOID *)
+{
+    TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(mal), IARG_THREAD_ID, IARG_END);
+}
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
-
+    
     TRACE_AddInstrumentFunction(Tr, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

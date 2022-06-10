@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -9,17 +9,18 @@
  * warranties, other than those that are expressly stated in the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdio.h>  
+#include <stdlib.h>  
 #include <unistd.h>
-#include <pthread.h>
+#include <pthread.h>  
 #include <assert.h>
 #include <errno.h>
 #include <sys/wait.h>
 
-void* functionC(void* p0);
+void *functionC(void *p0);  
 
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;  
+
 
 int main()
 {
@@ -36,8 +37,7 @@ int main()
         // parent
         int stat;
         pid_t waitpid_ret;
-        while (0 > (waitpid_ret = waitpid(pid, &stat, 0)) && errno == EINTR)
-            ;
+        while (0 > (waitpid_ret = waitpid(pid, &stat, 0)) && errno == EINTR);
         if (0 > waitpid_ret)
         {
             perror("waitpid failed\n");
@@ -51,20 +51,20 @@ int main()
         // process terminated by a signal
         return WTERMSIG(stat) + 128;
     }
-
+  
     int param;
-    if ((res = pthread_create(&thread1, NULL, &functionC, &param)))
+    if ( (res = pthread_create( &thread1, NULL, &functionC, &param)) )  
     {
         printf("Thread creation failed: %d\n", res);
         return 1;
     }
-
-    pthread_join(thread1, NULL);
+    
+    pthread_join( thread1, NULL);
     /*   pthread_join( thread2, NULL);*/
     return 0;
 }
 
-void* functionC(void* p0)
+void *functionC(void *p0)
 {
     pthread_exit(p0);
     printf("ERROR: This code comes after pthread_exit. It should not be executed!\n");

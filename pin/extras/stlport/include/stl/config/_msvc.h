@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -26,7 +26,7 @@
 #  define _STLP_MSVC _MSC_VER
 #endif
 
-#if !defined (_STLP_MSVC_LIB) && !defined(PIN_CRT)
+#if !defined (_STLP_MSVC_LIB) && !defined(__PIN__)
 #  define _STLP_MSVC_LIB _MSC_VER
 #endif
 
@@ -49,7 +49,7 @@
 #  define _STLP_VENDOR_GLOBAL_CSTD
 #  define _STLP_VENDOR_TERMINATE_STD
 #  define _STLP_GLOBAL_NEW_HANDLER
-#  if (_STLP_MSVC_LIB <= 1400) && !defined(PIN_CRT)
+#  if (_STLP_MSVC_LIB <= 1400) && !defined(__PIN__)
 /* We hope this bug will be fixed in future versions. */
 #    define _STLP_NEW_DONT_THROW_BAD_ALLOC 1
 #  endif
@@ -76,7 +76,7 @@
 #  define _STLP_NO_RTTI 1
 #endif
 
-#if defined (_MT) && !defined (_STLP_NO_THREADS) && !defined(PIN_CRT)
+#if defined (_MT) && !defined (_STLP_NO_THREADS) && !defined(__PIN__)
 #  define _STLP_THREADS 1
 #endif
 
@@ -211,7 +211,7 @@ work, 7.0 is still unknown (we assume it works until negative report). */
 #  define _STLP_USE_SAFE_STRING_FUNCTIONS 1
 #endif
 
-#if (_STLP_MSVC_LIB <= 1310) && !defined(PIN_CRT)
+#if (_STLP_MSVC_LIB <= 1310) && !defined(__PIN__)
 #  define _STLP_VENDOR_GLOBAL_CSTD
 #endif
 
@@ -222,7 +222,7 @@ work, 7.0 is still unknown (we assume it works until negative report). */
 #  define _STLP_NEW_PLATFORM_SDK 1
 #endif
 
-#if (_STLP_MSVC_LIB < 1300) && !defined(PIN_CRT) /* including MSVC 6.0 */
+#if (_STLP_MSVC_LIB < 1300) && !defined(__PIN__) /* including MSVC 6.0 */
 #  define _STLP_GLOBAL_NEW_HANDLER 1
 #  define _STLP_VENDOR_UNEXPECTED_STD
 #  define _STLP_NEW_DONT_THROW_BAD_ALLOC 1

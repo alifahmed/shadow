@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,20 +14,21 @@
 #include "pin.H"
 #include <iostream>
 
-UINT32* lastEa;
+UINT32 * lastEa;
 UINT32 lastValue;
 
-VOID CaptureEaAndValue(UINT32* ea)
+VOID CaptureEaAndValue(UINT32 * ea)
 {
-    lastEa    = ea;
+    lastEa = ea;
     lastValue = *ea;
 }
 
-VOID TestValue(VOID* ip, UINT32 val)
+VOID TestValue(VOID * ip, UINT32 val)
 {
     if (val != lastValue)
     {
-        fprintf(stderr, "Difference IP: %p, EA: %p, register value: %x, memory value: %x\n", ip, lastEa, val, lastValue);
+        fprintf(stderr, "Difference IP: %p, EA: %p, register value: %x, memory value: %x\n",
+                ip, lastEa, val, lastValue);
 
         exit(1);
     }
@@ -36,12 +37,12 @@ VOID TestValue(VOID* ip, UINT32 val)
 ADDRINT imgStartAdd;
 USIZE imgSize;
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     if (IMG_IsMainExecutable(img))
     {
         imgStartAdd = IMG_StartAddress(img);
-        imgSize     = IMG_SizeMapped(img);
+        imgSize = IMG_SizeMapped(img);
     }
 }
 
@@ -51,25 +52,28 @@ ADDRINT IsMainExe(ADDRINT InsAdd)
     return (InsAdd >= imgStartAdd && InsAdd < (imgStartAdd + imgSize));
 }
 
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
-    if (IsMainExe(INS_Address(ins)) && INS_Mnemonic(ins) == "MOV" && INS_IsMemoryRead(ins) && REG_is_gr(INS_RegW(ins, 0)))
+    if (IsMainExe(INS_Address(ins))
+        && INS_Mnemonic(ins) == "MOV"
+        && INS_IsMemoryRead(ins)
+        && REG_is_gr(INS_RegW(ins, 0)))
     {
         INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CaptureEaAndValue), IARG_MEMORYREAD_EA, IARG_END);
         INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(TestValue), IARG_INST_PTR, IARG_REG_VALUE, INS_RegW(ins, 0), IARG_END);
     }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
 
     IMG_AddInstrumentFunction(ImageLoad, NULL);
     INS_AddInstrumentFunction(Instruction, NULL);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 1;
 }

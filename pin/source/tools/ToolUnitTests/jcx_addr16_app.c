@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,13 +11,13 @@
 
 #include <stdio.h>
 
-int main()
+int main ()
 {
-    _asm
-        {
+    _asm 
+    {
         mov ecx, 0x100000
         jcxz foo
-        }
+    }
     printf("fail");
     return (0);
 

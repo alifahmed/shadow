@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,23 +19,25 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
-using std::cerr;
 using std::cout;
+using std::cerr;
 using std::endl;
+
 
 extern "C"
 {
-    void DoRelease(volatile bool* doRelease)
-    {
-        // Do nothing
-    }
+void DoRelease(volatile bool* doRelease)
+{
+    // Do nothing
+}
 } // extern "C"
+
 
 static void WaitForAttach()
 {
-    const unsigned int timeout  = 300;
+    const unsigned int timeout = 300;
     unsigned int releaseCounter = 0;
-    volatile bool released      = false;
+    volatile bool released = false;
     while (!released)
     {
         if (timeout == releaseCounter)
@@ -49,28 +51,30 @@ static void WaitForAttach()
     }
 }
 
+
 static void LoadAdditionalLibraries(const char* usrlib)
 {
-    const void* libutil = dlopen("libutil.so.1", RTLD_LAZY);
-    if (NULL == libutil)
+    const void *libutil = dlopen("libutil.so.1", RTLD_LAZY);
+    if(NULL == libutil)
     {
         cerr << "APP ERROR: Failed to load libutil.so.1" << endl;
         exit(1);
     }
-    const void* usrlibptr = dlopen(usrlib, RTLD_LAZY);
-    if (NULL == usrlibptr)
+    const void *usrlibptr = dlopen(usrlib, RTLD_LAZY);
+    if(NULL == usrlibptr)
     {
         cerr << "APP ERROR: Failed to load " << usrlib << endl;
         exit(1);
     }
 }
 
+
 /*
  * Expected arguments:
  *
  * [1] - Shared object to load dynamically
  */
-int main(int argc, char* argv[])
+int main( int argc, char *argv[] )
 {
     // Check the number of parameters.
     if (2 != argc)

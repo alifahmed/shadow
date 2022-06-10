@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,15 +18,15 @@
 
 VOID CharsUtilTest()
 {
-    CHAR c = 'a';
-    TEST('A' == CharToUpper(c), "CharToUpper failed");
+   CHAR c = 'a';
+   TEST('A' == CharToUpper(c), "CharToUpper failed");
 
-    TEST(10 == CharToHexDigit(c), "CharToHexDigit failed");
+   TEST(10 == CharToHexDigit(c), "CharToHexDigit failed");
 
-    TEST(false == CharIsSpace(c), "CharIsSpace failed");
-    TEST(true == CharIsSpace(' '), "CharIsSpace failed");
+   TEST(false == CharIsSpace(c), "CharIsSpace failed");
+   TEST(true == CharIsSpace(' '), "CharIsSpace failed");
 
-    //printf("Chars util tests completed\n");
+   //printf("Chars util tests completed\n");
 }
 
 VOID StringsUtilTest()
@@ -35,33 +35,34 @@ VOID StringsUtilTest()
     TEST(str == Joinpath("hello", "world"), "Joinpath failed");
     TEST(str == Joinpath("hello/", "world"), "Joinpath failed");
 
-    TEST(("DD1,234,567,890" == StringBignum(1234567890, 15, 'D')), "StringBignum failed");
+    TEST(("DD1,234,567,890" == StringBignum(1234567890, 15,'D')), "StringBignum failed");
     // if digits < len(number), digits and padding are irrelevant
-    TEST("-1,234,567,890" == StringBignum(-1234567890, 7, 'B'), "StringBignum failed");
+    TEST("-1,234,567,890" == StringBignum(-1234567890, 7,'B'), "StringBignum failed");
 
     TEST(("T" == StringBool(true)) && ("F" == StringBool(false)), "StringBool failed");
 
-    TEST(("Y" == StringTri(TRI_YES)) && ("N" == StringTri(TRI_NO)) && ("M" == StringTri(TRI_MAYBE)), "StringTri failed");
+    TEST(("Y" == StringTri(TRI_YES)) && ("N" == StringTri(TRI_NO)) &&
+            ("M" == StringTri(TRI_MAYBE)), "StringTri failed");
 
     TEST(float(100) == FLT64FromString("1.0E2"), "FLT64FromString failed");
-
+    
     //printf("Strings util tests completed\n");
 }
 
 VOID TempFileTest()
 {
-    CHAR tmpl[18]  = "/tmp/test.XXXXXX";
-    CHAR* filename = CreateTmpFileName(tmpl, sizeof tmpl);
+   CHAR tmpl[18] = "/tmp/test.XXXXXX";
+   CHAR* filename = CreateTmpFileName(tmpl, sizeof tmpl);
 
-    fstream tmpStream(filename);
-    TEST(tmpStream.is_open(), "Fail to open " + string(filename) + "\n");
-    //printf("%s is now opened\n", filename);
+   fstream tmpStream(filename);
+   TEST(tmpStream.is_open(), "Fail to open "+string(filename)+"\n");
+   //printf("%s is now opened\n", filename);
 
-    tmpStream.close();
+   tmpStream.close();
 
-    INT32 removed = remove(filename);
-    TEST(removed == 0, "Can't remove tmp file " + string(filename) + "\n");
-    //printf("%s is now removed\n", filename);
+   INT32 removed = remove(filename);
+   TEST(removed == 0, "Can't remove tmp file "+string(filename)+"\n");
+   //printf("%s is now removed\n", filename);
 }
 
 VOID TimeTest()
@@ -72,13 +73,13 @@ VOID TimeTest()
 
 VOID PageTest()
 {
-    ADDRINT addr     = 0x123456;
+    ADDRINT addr = 0x123456;
     string pageAddr1 = hexstr(GetPageOfAddr(addr));
     string pageAddr2 = ptrstr(MemPageRange((void*)addr).Base());
     TEST(pageAddr1 == pageAddr2, "GetPageOfAddr or MemPageRange failed");
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
 
@@ -88,11 +89,11 @@ int main(INT32 argc, CHAR** argv)
     TimeTest();
     PageTest();
 
-    TEST(PIN_VmFullPath() != string(), "PIN_VmFullPath failed");
+    TEST(PIN_VmFullPath() != string(), "PIN_VmFullPath failed"); 
     BreakMe(); // Empty function
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

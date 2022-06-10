@@ -70,7 +70,7 @@ ifeq ($(TARGET_OS),mac)
     endif
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 # topopcode can't be compiled on 64b Windows
 ifeq ($(TARGET_OS),windows)
@@ -78,18 +78,6 @@ ifeq ($(TARGET_OS),windows)
         TEST_TOOL_ROOTS := $(filter-out topopcode, $(TEST_TOOL_ROOTS))
     endif
 endif
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-
-###### Define the serial subset ######
-
-# Defines which tests need to be run serially as may cause issues when running in parallel
-# see mantis 4915 regarding topopcode 
-ifeq ($(TARGET_OS),windows)
-    SERIAL_SUBSET :=  topopcode
-endif
-
 
 ###### Define the sanity subset ######
 
@@ -123,17 +111,17 @@ endif
 get_source_location.test: $(OBJDIR)get_source_location$(PINTOOL_SUFFIX) $(OBJDIR)get_source_app$(EXE_SUFFIX)
 	$(PIN) -t $(OBJDIR)get_source_location$(PINTOOL_SUFFIX) $(DWARF_FILE_KNOB) \
 	  -- $(OBJDIR)get_source_app$(EXE_SUFFIX) > $(OBJDIR)get_source_location.out 2>&1
+	$(QGREP) "get_source_app.cpp:13" $(OBJDIR)get_source_location.out
 	$(QGREP) "get_source_app.cpp:14" $(OBJDIR)get_source_location.out
 	$(QGREP) "get_source_app.cpp:15" $(OBJDIR)get_source_location.out
-	$(QGREP) "get_source_app.cpp:16" $(OBJDIR)get_source_location.out
 	$(RM) $(OBJDIR)get_source_location.out
 
 get_source_location_gnu_debug.test: $(OBJDIR)get_source_location$(PINTOOL_SUFFIX) $(OBJDIR)get_source_app_gnu_debug$(EXE_SUFFIX)
 	$(PIN) -t $(OBJDIR)get_source_location$(PINTOOL_SUFFIX) \
 	  -- $(OBJDIR)get_source_app_gnu_debug$(EXE_SUFFIX) > $(OBJDIR)get_source_location_gnu_debug.out 2>&1
+	$(QGREP) "get_source_app.cpp:13" $(OBJDIR)get_source_location_gnu_debug.out
 	$(QGREP) "get_source_app.cpp:14" $(OBJDIR)get_source_location_gnu_debug.out
 	$(QGREP) "get_source_app.cpp:15" $(OBJDIR)get_source_location_gnu_debug.out
-	$(QGREP) "get_source_app.cpp:16" $(OBJDIR)get_source_location_gnu_debug.out
 	$(RM) $(OBJDIR)get_source_location_gnu_debug.out
 
 regval.test: $(OBJDIR)regval$(PINTOOL_SUFFIX) $(OBJDIR)regval_app$(EXE_SUFFIX)

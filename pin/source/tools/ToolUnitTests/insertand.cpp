@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,23 +23,25 @@
 
 extern "C" void incinst();
 extern "C" void andinst();
-extern "C" void leainst(void*);
-extern "C" void leaindex(void*);
-extern "C" void cmov_test(void*);
+extern "C" void leainst(void *);
+extern "C" void leaindex(void *);
+extern "C" void cmov_test(void *);
 
 int cmov_data = 0;
 char data[32];
 
 void CheckData()
 {
-    if ((unsigned int)cmov_data != 0xbeefbeef) exit(1);
-
-    if (data[16] != 2) exit(1);
+    if ((unsigned int)cmov_data != 0xbeefbeef)
+        exit(1);
+    
+    if (data[16] != 2)
+        exit(1);
 }
 
 long res;
 
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(incinst), IARG_END);
     INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(andinst), IARG_END);
@@ -62,7 +64,7 @@ VOID Instruction(INS ins, VOID* v)
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     PIN_Init(argc, argv);
@@ -72,6 +74,6 @@ int main(int argc, char* argv[])
 
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

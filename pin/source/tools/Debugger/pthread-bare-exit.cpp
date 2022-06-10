@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,7 +14,8 @@
 #include "tool_macros.h"
 
 extern "C" void BareExit() ASMNAME("BareExit");
-static void* Child(void*);
+static void *Child(void *);
+
 
 int main()
 {
@@ -25,12 +26,11 @@ int main()
         return 1;
     }
 
-    for (;;)
-        ;
+    for (;;);
     return 0;
 }
 
-static void* Child(void*)
+static void *Child(void *)
 {
     // Note:
     // The test which use this binary want to catch the moment in which the thread exit/terminate in order to check that the focus

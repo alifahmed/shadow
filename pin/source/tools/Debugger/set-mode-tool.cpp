@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,13 +13,15 @@
  * This tool enables PinADX debugging via PIN_SetDebugMode().  It should be
  * run without -appdebug.
  */
-
+ 
 #include <iostream>
 #include "pin.H"
 
-static void OnThreadStart(THREADID, CONTEXT*, INT32, VOID*);
 
-int main(int argc, char* argv[])
+static void OnThreadStart(THREADID, CONTEXT *, INT32, VOID *);
+
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
@@ -30,7 +32,7 @@ int main(int argc, char* argv[])
     }
 
     DEBUG_MODE mode;
-    mode._type    = DEBUG_CONNECTION_TYPE_TCP_SERVER;
+    mode._type = DEBUG_CONNECTION_TYPE_TCP_SERVER;
     mode._options = DEBUG_MODE_OPTION_STOP_AT_ENTRY;
     if (!PIN_SetDebugMode(&mode))
     {
@@ -49,7 +51,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static void OnThreadStart(THREADID, CONTEXT*, INT32, VOID*)
+static void OnThreadStart(THREADID, CONTEXT *, INT32, VOID *)
 {
     DEBUG_STATUS status = PIN_GetDebugStatus();
     if (status != DEBUG_STATUS_UNCONNECTED && status != DEBUG_STATUS_CONNECTED)

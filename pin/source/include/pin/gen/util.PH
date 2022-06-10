@@ -1,313 +1,471 @@
+//Groups: @ingroup\s+(API_REF|KNOBS|IMG_BASIC_API|INS_BASIC_API|INS_INST_API|INS_BASIC_API_GEN_IA32|INS_BASIC_API_IA32|INS_MOD_API_GEN_IA32|SEC_BASIC_API|RTN_BASIC_API|REG_BASIC_API|REG_CPU_GENERIC|REG_CPU_IA32|TRACE_BASIC_API|BBL_BASIC_API|SYM_BASIC_API|MISC_PRINT|MISC_PARSE|KNOB_API|KNOB_BASIC|KNOB_PRINT|LOCK|PIN_CONTROL|TRACE_VERSION_API|BUFFER_API|PROTO_API|PIN_PROCESS_API|PIN_THREAD_API|PIN_SYSCALL_API|WINDOWS_SYSCALL_API_UNDOC|DEBUG_API|ERROR_FILE_BASIC|TYPE_BASE|INSTLIB|ALARM|CHILD_PROCESS_API|UTILS|MISC|CONTEXT_API|PHYSICAL_CONTEXT_API|PIN_CALLBACKS|EXCEPTION_API|APPDEBUG_API|STOPPED_THREAD_API|BUFFER_API|PROTO|INST_ARGS|DEPRECATED_PIN_API|INTERNAL_EXCEPTION_PRIVATE_UNDOCUMENTED|PIN_THREAD_PRIVATE|CHILD_PROCESS_INTERNAL|BBL_BASIC|ROGUE_BASIC_API|MESSAGE_TYPE|MESSAGE_BASIC|ERRFILE|MISC_BASIC|ITC_INST_API|CONTEXT_API_UNDOC|EXCEPTION_API_UNDOC|UNDOCUMENTED_PIN_API|OPIN|TRACE_VERSIONS
+/* PIN API */
 
-#ifdef PIN_G_UTIL_PH
-#error duplicate inclusion of util
-#else
-#define PIN_G_UTIL_PH
-/*! @file
- * This module contains useful utility functions.
- */
+/* THIS FILE IS AUTOMAGICALLY GENERATED - DO NOT CHANGE DIRECTLY*/
 
-/*! @ingroup UTILS
-  ctype::isspace alternative (avoids complications from including ctype.h).
-*/
+
+class COMMAND_LINE_ARGUMENTS
+{
+  public:
+   /*!
+    * Empty Constructor
+    */
+    COMMAND_LINE_ARGUMENTS()
+    {
+        Enter(0, NULL, NULL);
+    }
+
+   /*!
+    * Constructor. Construct an object from argc, argv and delimiter
+    * Example1: argc = 6, argv = {ab bc cd de ef de}, delimiter = "de"
+    *          => the object will contain:
+    *          argc = 4, argv = {ab bc cd de}
+    * Example2: argc = 6, argv = {ab bc cd de ef de}, delimiter = NULL
+    *          => the object will contain:
+    *          argc = 6, argv = {ab bc cd de ef de}
+    * Example3: argc = 6, argv = {ab bc cd de ef de}, delimiter = "fg"
+    *          => the object will contain:
+    *          argc = 6, argv = {ab bc cd de ef de}
+    *
+    * @param[in]   argc        argc for the command line arguments object
+    * @param[in]   argv        argv for the command line arguments object
+    * @param[in]   delimiter   remove any argv argument AFTER the delimiter.
+    *                          If it was not found, nothing will be removed
+    */
+    COMMAND_LINE_ARGUMENTS(INT argc, const CHAR * const * argv, const CHAR * delimiter = NULL)
+    {
+        Enter(argc, argv, delimiter);
+    }
+
+   /*!
+    * Constructor. Construct an object from a string using MS CRT Parsing rules
+    * (For more details see GetCmdArg() documentation)
+    *
+    * NOTE: Use this function only for original application's command line
+    *
+    * @param[in]   commandLine     original application's command line represented as string
+    */
+    COMMAND_LINE_ARGUMENTS(const std::string & commandLine)
+    {
+        Enter(commandLine);
+    }
+
+   /*!
+    * Copy Constructor. Construct an object from another object
+    *
+    * @param[in]   source       source object
+    */
+    COMMAND_LINE_ARGUMENTS(const COMMAND_LINE_ARGUMENTS & source)
+    {
+        Enter(source.m_argc, source.m_argv, NULL);
+    }
+
+   /*!
+    * Assignment operator
+    *
+    * @param[in]   source       source object
+    *
+    * @return  reference to current object
+    */
+    COMMAND_LINE_ARGUMENTS & operator= (const COMMAND_LINE_ARGUMENTS & source)
+    {
+        //Avoid self assignment
+        if(this != &source)
+        {
+            Clean();
+            Enter(source.m_argc, source.m_argv, NULL);
+        }
+        return *this;
+    }
+
+   /*!
+    * Insert a set of command line arguments into this set of arguments.
+    *
+    * @param[in]   args     Arguments to be inserted.
+    * @param[in]   pos      Arguments are inserted before the argument with this position.
+    *                        If \a pos is -1, they are appended to the end.
+    *
+    * @return  reference to current object
+    */
+    COMMAND_LINE_ARGUMENTS & Insert (const COMMAND_LINE_ARGUMENTS & right, INT pos = -1);
+
+    /*!
+     * Insert a single argument into this set of arguments.
+     *
+     * @param[in]   arg     Argument to be inserted.
+     * @param[in]   pos     The argument is inserted before the argument with this position.
+     *                       If \a pos is -1, it is appended to the end.
+     *
+     * @return  reference to current object
+     */
+    COMMAND_LINE_ARGUMENTS & Insert (const std::string & arg, INT pos = -1);
+
+    /*!
+     * Insert a single argument into this set of arguments.
+     * Don't try to tokenize (split) the added argument to several arguments.
+     *
+     * @param[in]   arg     Argument to be inserted.
+     * @param[in]   pos     The argument is inserted before the argument with this position.
+     *                       If \a pos is -1, it is appended to the end.
+     *
+     * @return  reference to current object
+     */
+    COMMAND_LINE_ARGUMENTS & InsertAsOneToken (const std::string & arg, INT pos = -1);
+
+    /*!
+    * Find an argument by name
+    *
+    * @param[in]   argStr - argument to be found
+    *
+    * @return index of argument or -1 if not found
+    */
+    INT FindArgument(const std::string& argStr) const;
+
+    /*!
+    * Looks for argument equal to argStr; remove "numOfArgs" arguments starting from the found argument
+    *
+    * @param[in]   argStr - argument to be found,
+    * @param[in]   numOfArgs - numer of arguments that should be removed starting from the found argument
+    *
+    * @return  TRUE if numOfArgs were removed from the list
+    */
+    BOOL RemoveArguments(const std::string& argStr, INT numOfArgs);
+
+   /*!
+    * @return  Argc of current object
+    *          the value life time is as long as the object was not changed
+    *          (using operator=(), Insert() or ~COMMAND_LINE_ARGUMENTS() will invalidate this data)
+    */
+    INT  Argc() const
+    {
+        return m_argc;
+    }
+
+   /*!
+    * @return  Argv of current object,
+    *          the pointer life time is as long as the object was not changed
+    *          (using operator=(), Insert() or  ~COMMAND_LINE_ARGUMENTS() will invalidate this data)
+    */
+    const CHAR * const * Argv() const
+    {
+        return m_argv;
+    }
+
+    /*!
+     * @return string with all command line arguments separated with \" \"
+     */
+    std::string String() const;
+
+   /*!
+    * Destructor
+    */
+    ~COMMAND_LINE_ARGUMENTS()
+    {
+        Clean();
+    }
+
+  private:
+   /*!
+    * Initialize the object using argc, argv and delimiter
+    */
+    BOOL Enter(INT argc, const CHAR * const * argv, const CHAR * delimiter);
+
+   /*!
+    * Initialize the object using commandLine string
+    */
+    BOOL Enter(const std::string & commandLine);
+
+   /*!
+    * Deallocate all resources used by current object
+    */
+    BOOL Clean();
+
+   /*!
+    * Find array size using argc, argv and delimiter
+    */
+    INT FindArraySize(INT argc, const CHAR * const * argv, const CHAR * delimiter);
+
+    /*!
+    * Remove argument by index (0 <= index < m_argc)
+    */
+    VOID RemoveArgument(INT index);
+
+  private:
+    INT m_argc;       //!< size of argv array
+    CHAR ** m_argv;   //!< CHAR* array
+};
+
+                                                                  /* DO NOT EDIT */
+extern VOID SetAddress0x(BOOL val);
+
+                                                                  /* DO NOT EDIT */
 extern BOOL CharIsSpace(CHAR c);
 
-/*! @ingroup UTILS
-    ctype::toupper alternative (avoids complications from including ctype.h).
-*/
+                                                                  /* DO NOT EDIT */
 extern CHAR CharToUpper(CHAR c);
 
-/*! @ingroup UTILS
-  Print pointer.
- */
-extern std::string ptrstr(const VOID* val);
+                                                                  /* DO NOT EDIT */
+extern std::string ptrstr(const VOID *val );
 
-/*! @ingroup UTILS
-  Convert a ADDRINT into a string using the hex address format.
- */
-extern std::string StringFromAddrint(ADDRINT l);
+                                                                  /* DO NOT EDIT */
+extern std::string StringFromAddrint( ADDRINT l);
 
-/*! @ingroup UTILS
-  Convert a UINT64 into a string using the hex address format.
- */
-extern std::string StringFromUint64(UINT64 l);
+                                                                  /* DO NOT EDIT */
+extern std::string StringFromUint64( UINT64 l);
 
-/*! @ingroup UTILS
-  Convert a UINT64 into a dec string. Padding can be specified as well.
- */
-extern std::string StringDec(UINT64 l, UINT32 digits, CHAR padding);
+                                                                  /* DO NOT EDIT */
+extern std::string StringDec( UINT64 l, UINT32 digits, CHAR padding);
 
-/*! @ingroup UTILS
-  Convert a INT64 into a dec string. Padding can be specified as well.
- */
-extern std::string StringDecSigned(INT64 l, UINT32 digits, CHAR padding);
+                                                                  /* DO NOT EDIT */
+extern std::string StringDecSigned( INT64 l, UINT32 digits, CHAR padding);
 
-/*! @ingroup UTILS
-  Convert a INT64 into a dec string with 1000 separation . Padding can be specified as well.
- */
-extern std::string StringBignum(INT64 l, UINT32 digits, CHAR padding);
+                                                                  /* DO NOT EDIT */
+extern std::string StringBignum( INT64 l, UINT32 digits, CHAR padding);
 
-/*! @ingroup UTILS
-  Add new lines to string to make it fit given line width restrictions.
- */
+                                                                  /* DO NOT EDIT */
 extern std::string Reformat(const std::string& s, const std::string& prefix, UINT32 min_line, UINT32 max_line);
 
-/*! @ingroup UTILS
-  Convert a UINT32 into a hex string. Padding can be specified as well.
- */
-extern std::string StringHex32(UINT32 l, UINT32 digits, BOOL prefix_0x);
+                                                                  /* DO NOT EDIT */
+extern std::string StringHex32( UINT32 l, UINT32 digits, BOOL prefix_0x);
 
-/*! @ingroup UTILS
-  Convert a BOOL into a string.
- */
+                                                                  /* DO NOT EDIT */
+extern std::string StringFlt(FLT64 val , UINT32 precision, UINT32 width);
+
+                                                                  /* DO NOT EDIT */
 extern std::string StringBool(BOOL b);
 
-/*! @ingroup UTILS
-  Convert a TRI into a string.
- */
+                                                                  /* DO NOT EDIT */
 extern std::string StringTri(TRI t);
 
-/*! @ingroup UTILS
-  Convert a string to an INT32.
- */
+                                                                  /* DO NOT EDIT */
 extern INT32 Int32FromString(const std::string& s);
 
-/*! @ingroup UTILS
-  Convert a string to a UINT32.
- */
+                                                                  /* DO NOT EDIT */
 extern UINT32 Uint32FromString(const std::string& s);
 
-/*! @ingroup UTILS
-  Convert a string to an INT64.
- */
+                                                                  /* DO NOT EDIT */
 extern INT64 Int64FromString(const std::string& s);
 
-/*! @ingroup UTILS
-  Convert a string to a UINT64.
- */
+                                                                  /* DO NOT EDIT */
 extern UINT64 Uint64FromString(const std::string& s);
 
-/*! @ingroup UTILS
-  Convert a string to a FLT64.
- */
+                                                                  /* DO NOT EDIT */
 extern FLT64 FLT64FromString(const std::string& s);
 
-/*! @ingroup UTILS
- * Convert specified character to the corresponding hexadecimal digit.
- * @return integer in the interval [0, 15] or -1 upon failure
- */
+                                                                  /* DO NOT EDIT */
 extern INT CharToHexDigit(CHAR c);
 
-/*! @ingroup UTILS
-  Convert a string to an ADDRINT.
- */
+                                                                  /* DO NOT EDIT */
 extern ADDRINT AddrintFromString(const std::string& str);
 
-/*! @ingroup UTILS
-  Read a line from file while maintaining a current line count
-  skipping over blank and comment lines.
- */
-extern std::string ReadLine(std::istream& inputFile, UINT32* lineNum);
-
-/*! @ingroup UTILS
-  Break a line into tokens separated by whitespace.
-  @return 'array' contains the tokens
-*/
-extern UINT32 Tokenize(const std::string& line, std::string* array, UINT32 n);
-
-/*! @ingroup UTILS
-  Create a string with a hexadecimal prefix containing the given hexadecimal integer.
- */
-inline std::string StringHex(UINT32 l, UINT32 digits, BOOL prefix_0x = TRUE) { return StringHex32(l, digits, prefix_0x); }
-
-/*! @ingroup UTILS
-  Create a string containing the given decimal integer.
- */
-inline std::string decstr(INT64 val, UINT32 width = 0) { return StringDecSigned(val, width, ' '); }
-
-/*! @ingroup UTILS
-  Create a string containing the given decimal integer.
- */
-inline std::string decstr(INT32 val, UINT32 width = 0) { return StringDecSigned(val, width, ' '); }
-
-/*! @ingroup UTILS
-  Create a string containing the given decimal integer.
- */
-inline std::string decstr(INT16 val, UINT32 width = 0) { return StringDecSigned(val, width, ' '); }
-
-/*! @ingroup UTILS
-  Create a string containing the given decimal integer.
- */
-inline std::string decstr(UINT64 val, UINT32 width = 0) { return StringDec(val, width, ' '); }
-
-/*! @ingroup UTILS
-  Create a string containing the given decimal integer.
- */
-inline std::string decstr(UINT32 val, UINT32 width = 0) { return StringDec(val, width, ' '); }
-
-/*! @ingroup UTILS
-  Create a string containing the given decimal integer.
- */
-inline std::string decstr(UINT16 val, UINT32 width = 0) { return StringDec(val, width, ' '); }
-
-/*! @ingroup UTILS
-  Create a string with a hexadecimal prefix containing the given hexadecimal integer.
- */
-inline std::string hexstr(INT64 val, UINT32 width = 0)
-{
-    std::string ostr;
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-    ostr = StringHex(INT32((val >> 16) >> 16), width);
-#else
-    ostr = StringHex(INT32(val >> 32), width);
-#endif
-    ostr += StringHex(UINT32(val), 8, FALSE);
-
-    return ostr;
-}
-
-/*! @ingroup UTILS
-  Create a string with a hexadecimal prefix containing the given hexadecimal integer.
- */
-inline std::string hexstr(INT32 val, UINT32 width = 0) { return StringHex(INT32(val), width); }
-
-/*! @ingroup UTILS
-  Create a string with a hexadecimal prefix containing the given hexadecimal integer.
- */
-inline std::string hexstr(INT16 val, UINT32 width = 0) { return StringHex(INT32(val), width); }
-
-/*! @ingroup UTILS
-  Create a string with a hexadecimal prefix containing the given hexadecimal integer.
- */
-inline std::string hexstr(UINT64 val, UINT32 width = 0)
-{
-    std::string ostr;
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-    ostr = StringHex(UINT32((val >> 16) >> 16), width);
-#else
-    ostr = StringHex(UINT32(val >> 32), width);
-#endif
-    ostr += StringHex(UINT32(val), 8, FALSE);
-
-    return ostr;
-}
-
-/*! @ingroup UTILS
-  Create a string with a hexadecimal prefix containing the given hexadecimal integer.
- */
-inline std::string hexstr(VOID* p, UINT32 width = 0)
-{
-#if defined(HOST_IA32E)
-    UINT64 val = reinterpret_cast< UINT64 >(p);
-    return hexstr(val, width);
-#else
-    UINT32 val = reinterpret_cast< UINT32 >(p);
-    return StringHex(val, width);
-#endif
-}
-
-/*! @ingroup UTILS
-  Create a string with a hexadecimal prefix containing the given hexadecimal integer.
- */
-inline std::string hexstr(const VOID* p, UINT32 width = 0)
-{
-#if defined(HOST_IA32E)
-    UINT64 val = reinterpret_cast< UINT64 >(p);
-    return hexstr(val, width);
-#else
-    UINT32 val = reinterpret_cast< UINT32 >(p);
-    return StringHex(val, width);
-#endif
-}
-
-/*! @ingroup UTILS
-  Create a string with a hexadecimal prefix containing the given hexadecimal integer.
- */
-inline std::string hexstr(UINT32 val, UINT32 width = 0) { return StringHex(UINT32(val), width); }
-
-/*! @ingroup UTILS
-  Create a string with a hexadecimal prefix containing the given hexadecimal integer.
- */
-inline std::string hexstr(UINT16 val, UINT32 width = 0) { return StringHex(UINT32(val), width); }
-
-/*! @ingroup UTILS
-  Left justify string.
- */
-inline std::string ljstr(const std::string& s, UINT32 width, CHAR padding = ' ')
-{
-    std::string ostr(width, padding);
-    ostr.replace(0, s.length(), s);
-    return ostr;
-}
-
-/*! @ingroup UTILS
-  Decimal-to-string conversion object.
- */
-struct DECSTR
-{
-    DECSTR(UINT32 width = 0) : _w(width) {}
-    template< typename T > std::string operator()(const T& t) const { return decstr(t, _w); }
-    UINT32 _w;
-};
-
-/*! @ingroup UTILS
-  Hexadecimal-to-string conversion object.
- */
-struct HEXSTR
-{
-    HEXSTR(UINT32 width = 0) : _w(width) {}
-    template< typename T > std::string operator()(const T& t) const { return hexstr(t, _w); }
-    UINT32 _w;
-};
-
-/*! @ingroup UTILS
-  popcount/bitcount code using the usual trick
- */
+                                                                  /* DO NOT EDIT */
 extern UINT32 BitCount(ADDRINT val);
 
-/*! @ingroup UTILS
-    Convert ADDRINT to "void *"
- */
-inline VOID* Addrint2VoidStar(ADDRINT addr)
+                                                                  /* DO NOT EDIT */
+extern std::string ReadLine(std::istream& inputFile, UINT32 *lineNum);
+
+                                                                  /* DO NOT EDIT */
+extern UINT32 Tokenize(const std::string& line, std::string *array, UINT32 n);
+
+                                                                  /* DO NOT EDIT */
+inline std::string StringHex( UINT32 l, UINT32 digits, BOOL prefix_0x = TRUE) {return StringHex32(l, digits, prefix_0x);}
+
+                                                                  /* DO NOT EDIT */
+inline std::string decstr(INT64 val, UINT32 width=0 )  {return StringDecSigned(val,width,' ');}
+
+                                                                  /* DO NOT EDIT */
+inline std::string decstr(INT32 val, UINT32 width=0 )  {return StringDecSigned(val,width,' ');}
+
+                                                                  /* DO NOT EDIT */
+inline std::string decstr(INT16 val, UINT32 width=0 )  {return StringDecSigned(val,width,' ');}
+
+                                                                  /* DO NOT EDIT */
+inline std::string decstr(UINT64 val, UINT32 width=0 )  {return StringDec(val,width,' ');}
+
+                                                                  /* DO NOT EDIT */
+inline std::string decstr(UINT32 val, UINT32 width=0 )  {return StringDec(val,width,' ');}
+
+                                                                  /* DO NOT EDIT */
+inline std::string decstr(UINT16 val, UINT32 width=0 )  {return StringDec(val,width,' ');}
+
+                                                                  /* DO NOT EDIT */
+inline std::string hexstr(INT64 val, UINT32 width=0 )
 {
-#if defined(HOST_IA32E) && defined(TARGET_IA32)
-    ASSERT(false, "Should not be called in cross environment\n");
-    return 0;
+    std::string ostr;
+#if defined(_MSC_VER) && _MSC_VER  >= 1400
+    ostr = StringHex( INT32((val >> 16) >> 16), width);
 #else
-    return reinterpret_cast< VOID* >(addr);
+    ostr = StringHex( INT32(val >> 32), width);
+#endif
+    ostr += StringHex( UINT32(val), 8, FALSE);
+
+    return ostr;
+}
+
+                                                                  /* DO NOT EDIT */
+inline std::string hexstr(INT32 val, UINT32 width=0 )  {return StringHex(INT32(val),width);}
+
+                                                                  /* DO NOT EDIT */
+inline std::string hexstr(INT16 val, UINT32 width=0 )  {return StringHex(INT32(val),width);}
+
+                                                                  /* DO NOT EDIT */
+inline std::string hexstr(UINT64 val, UINT32 width=0 )
+{
+    std::string ostr;
+#if defined(_MSC_VER) && _MSC_VER  >= 1400
+    ostr = StringHex( UINT32((val >> 16) >> 16), width);
+#else
+    ostr = StringHex( UINT32(val >> 32), width);
+#endif
+    ostr += StringHex( UINT32(val), 8, FALSE);
+
+    return ostr;
+}
+
+                                                                  /* DO NOT EDIT */
+inline std::string hexstr(VOID *p, UINT32 width=0 )
+{
+#if defined(HOST_IA32E)
+    UINT64 val = reinterpret_cast<UINT64>(p);
+    return hexstr(val,width);
+#else
+    UINT32 val = reinterpret_cast<UINT32>(p);
+    return StringHex(val,width);
 #endif
 }
 
-/*! @ingroup UTILS
-  Convert "void *" to ADDRINT.
- */
-inline ADDRINT VoidStar2Addrint(const VOID* addr)
+                                                                  /* DO NOT EDIT */
+inline std::string hexstr(const VOID *p, UINT32 width=0 )
 {
-#if defined(HOST_IA32E) && defined(TARGET_IA32)
-    ASSERT(false, "Should not be called in cross environment\n");
-    return 0;
+#if defined(HOST_IA32E)
+    UINT64 val = reinterpret_cast<UINT64>(p);
+    return hexstr(val,width);
 #else
-    return reinterpret_cast< ADDRINT >(addr);
+    UINT32 val = reinterpret_cast<UINT32>(p);
+    return StringHex(val,width);
 #endif
 }
 
-/*! @ingroup UTILS
-  Convert "void *" to ADDRINT
- */
-inline ADDRINT VoidStar2Addrint(VOID* addr)
+                                                                  /* DO NOT EDIT */
+inline std::string hexstr(UINT32 val, UINT32 width=0 )  {return StringHex(UINT32(val),width);}
+
+                                                                  /* DO NOT EDIT */
+inline std::string hexstr(UINT16 val, UINT32 width=0 )  {return StringHex(UINT32(val),width);}
+
+                                                                  /* DO NOT EDIT */
+inline std::string fltstr(FLT64 val, UINT32 prec=0,UINT32 width=0 )  {return StringFlt(val,prec,width);}
+
+                                                                  /* DO NOT EDIT */
+inline std::string ljstr(const std::string& s, UINT32 width, CHAR padding = ' ')
+{
+    std::string  ostr(width,padding);
+    ostr.replace(0,s.length(),s);
+    return ostr;
+}
+
+                                                                  /* DO NOT EDIT */
+struct DECSTR
+{
+    DECSTR(UINT32 width = 0) :_w(width){}
+    template <typename T> std::string operator() (const T & t) const {return decstr(t,_w);}
+    UINT32 _w;
+};
+
+                                                                  /* DO NOT EDIT */
+struct HEXSTR
+{
+    HEXSTR(UINT32 width = 0) :_w(width){}
+    template <typename T> std::string operator() (const T & t) const {return hexstr(t,_w);}
+    UINT32 _w;
+};
+
+                                                                  /* DO NOT EDIT */
+struct FLTSTR
+{
+    FLTSTR(UINT32 prec=0,UINT32 width=0) :_p(prec), _w(width) {}
+    template <typename T> std::string operator() (const T & t) const {return fltstr(t,_p,_w);}
+    UINT32 _p;
+    UINT32 _w;
+};
+
+                                                                  /* DO NOT EDIT */
+template <typename ITER, typename CONV>
+    std::string StringSequence(ITER begin, ITER end,
+                          const CONV & conv,
+                          const std::string & delimiter = std::string(" "))
+{
+    std::string str;
+
+    for (ITER it = begin;  it != end;  ++it)
+    {
+        if (it != begin) {str += delimiter;}
+        str += conv(*it);
+    }
+    return str;
+}
+
+                                                                  /* DO NOT EDIT */
+inline VOID * Addrint2VoidStar(ADDRINT addr)
 {
 #if defined(HOST_IA32E) && defined(TARGET_IA32)
-    ASSERT(false, "Should not be called in cross environment\n");
+    ASSERT(false,"Should not be called in cross environment\n");
     return 0;
 #else
-    return reinterpret_cast< ADDRINT >(addr);
+    return reinterpret_cast<VOID*>(addr);
 #endif
 }
 
-/*! @ingroup UTILS
- * Round integer of type <T> up to given alignment.
- */
-template< typename T > T RoundUp(T value, size_t alignment)
+                                                                  /* DO NOT EDIT */
+inline ADDRINT VoidStar2Addrint(const VOID * addr)
+{
+#if defined(HOST_IA32E) && defined(TARGET_IA32)
+    ASSERT(false,"Should not be called in cross environment\n");
+    return 0;
+#else
+    return reinterpret_cast<ADDRINT>(addr);
+#endif
+}
+
+                                                                  /* DO NOT EDIT */
+inline ADDRINT VoidStar2Addrint(VOID * addr)
+{
+#if defined(HOST_IA32E) && defined(TARGET_IA32)
+    ASSERT(false,"Should not be called in cross environment\n");
+    return 0;
+#else
+    return reinterpret_cast<ADDRINT>(addr);
+#endif
+}
+
+                                                                  /* DO NOT EDIT */
+template <typename T> BOOL IsPowerOf2(T value)
+{
+    return ((value & (value - 1)) == 0);
+}
+
+                                                                  /* DO NOT EDIT */
+template <typename T> T RoundToNextPower2(T value)
+{
+    //This algorithm rounds up to the next power of 2 by setting all the significant digits
+    //of the number in binary representation to 1. The rest of the digits are set to be 0.
+    //It increments the number, thus getting the next power of two. This handles all numbers
+    //that aren't powers of two. To handle the case of powers of two, 1 is decremented from
+    //the number before the process begins. This makes no difference if the number is not a
+    //power of 2, and when it is it makes sure we get the same power of two we had before.
+    //For details see "http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2"
+    T width = sizeof(T)*8; //bit width
+    --value;
+
+    for (T i=1; i < width; i <<= 1) //runs log2(width) times
+    {
+        value = (value | value >> i); //Turn i^2 bytes to 1.
+    }
+    ++value;
+    return value;
+}
+
+                                                                  /* DO NOT EDIT */
+template <typename T> T RoundUp(T value, size_t alignment)
 {
     if (alignment == 0)
     {
@@ -321,18 +479,29 @@ template< typename T > T RoundUp(T value, size_t alignment)
     return value;
 }
 
-/*! @ingroup UTILS
- * Specialization of the RoundUp function for pointer type
- */
-template< typename T > T* RoundUp(T* ptr, size_t alignment)
+                                                                  /* DO NOT EDIT */
+template <typename T> T * RoundUp(T * ptr, size_t alignment)
 {
-    return (reinterpret_cast< T* >(RoundUp(reinterpret_cast< ADDRINT >(ptr), alignment)));
+    return (reinterpret_cast<T *>(RoundUp(reinterpret_cast<ADDRINT>(ptr), alignment)));
 }
 
-/*! @ingroup UTILS
- * Round integer of type <T> down to given alignment.
- */
-template< typename T > T RoundDown(T value, size_t alignment)
+                                                                  /* DO NOT EDIT */
+template <typename T> T RoundUpPowerOf2(T value, size_t alignment)
+{
+    if (alignment == 0) return value;
+    T align_1 = static_cast<T>(alignment - 1);
+    ASSERTX((alignment & align_1) == 0);
+    return ((value + align_1) & ~align_1);
+}
+
+                                                                  /* DO NOT EDIT */
+template <typename T> T * RoundUpPowerOf2(T * ptr, size_t alignment)
+{
+    return (reinterpret_cast<T *>(RoundUpPowerOf2(reinterpret_cast<ADDRINT>(ptr), alignment)));
+}
+
+                                                                  /* DO NOT EDIT */
+template <typename T> T RoundDown(T value, size_t alignment)
 {
     if (alignment == 0)
     {
@@ -345,126 +514,247 @@ template< typename T > T RoundDown(T value, size_t alignment)
     return value;
 }
 
-/*! @ingroup UTILS
- * Specialization of the RoundDown function for pointer type
- */
-template< typename T > T* RoundDown(T* ptr, size_t alignment)
+                                                                  /* DO NOT EDIT */
+template <typename T> T * RoundDown(T * ptr, size_t alignment)
 {
-    return (reinterpret_cast< T* >(RoundDown(reinterpret_cast< ADDRINT >(ptr), alignment)));
+    return (reinterpret_cast<T *>(RoundDown(reinterpret_cast<ADDRINT>(ptr), alignment)));
 }
 
-/*! @ingroup UTILS
-    Get the address of the page that addr is in
- */
+                                                                  /* DO NOT EDIT */
+template <typename T> T RoundDownPowerOf2(T value, size_t alignment)
+{
+    if (alignment == 0) return value;
+    T align_1 = static_cast<T>(alignment - 1);
+    ASSERTX((alignment & align_1) == 0);
+    return (value & ~align_1);
+}
+
+                                                                  /* DO NOT EDIT */
+template <typename T> T * RoundDownPowerOf2(T * ptr, size_t alignment)
+{
+    return (reinterpret_cast<T *>(RoundDownPowerOf2(reinterpret_cast<ADDRINT>(ptr), alignment)));
+}
+
+                                                                  /* DO NOT EDIT */
+template<typename T> ADDRINT PointerToInt(const T *ptr)
+{
+#if (defined(HOST_IA32) && !defined(TARGET_IA32)) || (defined(HOST_IA32E) && !defined(TARGET_IA32E))
+    ASSERT(false,"Should not be called in cross environment\n");
+    return 0;
+
+#else
+    return reinterpret_cast<ADDRINT>(ptr);
+#endif
+}
+
+                                                                  /* DO NOT EDIT */
+template<typename T> T *IntToPointer(ADDRINT addr)
+{
+#if (defined(HOST_IA32) && !defined(TARGET_IA32)) || (defined(HOST_IA32E) && !defined(TARGET_IA32E))
+    ASSERT(false,"Should not be called in cross environment\n");
+    return 0;
+
+#else
+    return reinterpret_cast<T*>(addr);
+#endif
+}
+
+                                                                  /* DO NOT EDIT */
+inline INT64 VoidStar2Int(VOID * addr)
+{
+#if defined(HOST_IA32E) && defined(TARGET_IA32)
+    ASSERT(false,"Should not be called in cross environment\n");
+    return 0;
+#else
+    return reinterpret_cast<INT64>(addr);
+#endif
+}
+
+                                                                  /* DO NOT EDIT */
+inline BOOL UnsignedImmediateFits(const UINT64 value, const UINT32 bits)
+{
+    return 0 == (value>>bits);
+}
+
+                                                                  /* DO NOT EDIT */
+inline void RangeCheck(const UINT32 value, const UINT32 bits)
+{
+    ASSERT (UnsignedImmediateFits(value, bits),
+        decstr(bits) + "-bit range overflow in " + hexstr(value) + "\n");
+}
+
+                                                                  /* DO NOT EDIT */
+extern BOOL SignedImmediateFits(const INT64 value, const UINT32 origSize, const UINT32 extendedSize);
+
+                                                                  /* DO NOT EDIT */
+inline BOOL SignedImmediateFits(const INT64 value, const UINT32 origSize)
+{
+    return SignedImmediateFits(value, origSize, 8 * sizeof(ADDRINT));
+}
+
+                                                                  /* DO NOT EDIT */
+extern BOOL HasBaseName(const char *fileName, const char *baseNameToCheckFor);
+
+                                                                  /* DO NOT EDIT */
+inline INT32 MEMORY_ReadInt32(ADDRINT  address)
+{
+    return *reinterpret_cast<INT32*>(address);
+}
+
+                                                                  /* DO NOT EDIT */
+inline VOID MEMORY_WriteInt32(ADDRINT  address, INT32 value)
+{
+    *reinterpret_cast<INT32*>(address) = value;
+}
+
+                                                                  /* DO NOT EDIT */
+inline UINT32 MEMORY_ReadUint32(ADDRINT  address)
+{
+    return *reinterpret_cast<UINT32*>(address);
+}
+
+                                                                  /* DO NOT EDIT */
+inline VOID MEMORY_WriteUint32(ADDRINT  address, UINT32 value)
+{
+    *reinterpret_cast<UINT32*>(address) = value;
+}
+
+                                                                  /* DO NOT EDIT */
+inline INT64 MEMORY_ReadInt64(ADDRINT  address)
+{
+    return *reinterpret_cast<INT64*>(address);
+}
+
+                                                                  /* DO NOT EDIT */
+inline VOID MEMORY_WriteInt64(ADDRINT  address, INT64 value)
+{
+    *reinterpret_cast<INT64*>(address) = value;
+}
+
+                                                                  /* DO NOT EDIT */
+inline UINT64 MEMORY_ReadUint64(ADDRINT  address)
+{
+    return *reinterpret_cast<UINT64*>(address);
+}
+
+                                                                  /* DO NOT EDIT */
+inline VOID MEMORY_WriteUint64(ADDRINT  address, UINT32 value)
+{
+    *reinterpret_cast<UINT64*>(address) = value;
+}
+
+                                                                  /* DO NOT EDIT */
 extern ADDRINT GetPageOfAddr(ADDRINT addr);
 
-#if !defined(TARGET_WINDOWS)
+                                                                  /* DO NOT EDIT */
+extern ADDRINT ProgramEntry(const ImageLoaderInfo * mainImage, const ImageLoaderInfo * loader);
 
-/*! @ingroup UTILS
-   Concatenate two strings with a path delimiter
- */
+                                                                  /* DO NOT EDIT */
 extern std::string Joinpath(std::string s1, std::string s2);
 
-/*! @ingroup UTILS
-   Create a temporary file name
- */
+                                                                  /* DO NOT EDIT */
+extern std::string Basename(const std::string& path);
+
+                                                                  /* DO NOT EDIT */
 extern CHAR* CreateTmpFileName(const CHAR* fnameTemplate, const UINT32 fnameTemplateSize);
 
-#endif
+                                                                  /* DO NOT EDIT */
+extern const VOID * GetSp();
 
-/*! @ingroup UTILS
-  @return current stack pointer
-*/
-extern const VOID* GetSp();
-
-/*! @ingroup UTILS
-  Return offset, in bytes, of <ptr1> from <ptr2>
- */
-inline size_t PtrDiff(const VOID* ptr1, const VOID* ptr2)
+                                                                  /* DO NOT EDIT */
+inline size_t PtrDiff(const VOID * ptr1, const VOID * ptr2)
 {
-    return (reinterpret_cast< const INT8* >(ptr1) - reinterpret_cast< const INT8* >(ptr2));
+    return (reinterpret_cast<const INT8 *>(ptr1) - reinterpret_cast<const INT8 *>(ptr2));
 }
 
-/*! @ingroup UTILS
-  Return pointer whose offset, in bytes, from <ptr> is <offset>
- */
-inline VOID* PtrAtOffset(VOID* ptr, size_t offset) { return (reinterpret_cast< INT8* >(ptr) + offset); }
-
-/*! @ingroup UTILS
-  Return const pointer whose offset, in bytes, from <ptr> is <offset>
- */
-inline const VOID* PtrAtOffset(const VOID* ptr, size_t offset) { return (reinterpret_cast< const INT8* >(ptr) + offset); }
-
-/*! @ingroup UTILS
-  Return pointer of type <T> whose offset, in bytes, from <ptr> is <offset>
- */
-template< typename T > T* PtrAtOffset(VOID* ptr, size_t offset) { return (reinterpret_cast< T* >(PtrAtOffset(ptr, offset))); }
-
-/*! @ingroup UTILS
-  Return const pointer of type <T> whose offset, in bytes, from <ptr> is <offset>
- */
-template< typename T > const T* PtrAtOffset(const VOID* ptr, size_t offset)
+                                                                  /* DO NOT EDIT */
+inline VOID * PtrAtOffset(VOID * ptr, size_t offset)
 {
-    return (reinterpret_cast< const T* >(PtrAtOffset(ptr, offset)));
+    return (reinterpret_cast<INT8 *>(ptr) + offset);
 }
 
-/*! @ingroup UTILS
- * Class that represents a memory range - interval of addresses in the virtual
- * address space.
- * @note   The range that spans the entire address space can not be represented
- *         by this class. Whenever a function of this class should construct such
- *         range (logically), an empty range is returned instead.
- */
+                                                                  /* DO NOT EDIT */
+inline const VOID * PtrAtOffset(const VOID * ptr, size_t offset)
+{
+    return (reinterpret_cast<const INT8 *>(ptr) + offset);
+}
+
+                                                                  /* DO NOT EDIT */
+template <typename T> T * PtrAtOffset(VOID * ptr, size_t offset)
+{
+    return (reinterpret_cast<T *>(PtrAtOffset(ptr, offset)));
+}
+
+                                                                  /* DO NOT EDIT */
+template <typename T> const T * PtrAtOffset(const VOID * ptr, size_t offset)
+{
+    return (reinterpret_cast<const T *>(PtrAtOffset(ptr, offset)));
+}
+
+                                                                  /* DO NOT EDIT */
+template <typename T> VOID *
+ PushDataToStack(VOID * stack, const T * data, size_t alignment = 1, size_t size = sizeof(T))
+{
+    stack = PtrAtOffset(stack, 0 - size);
+    stack = RoundDown(stack , alignment);
+    return memcpy(stack, data, size);
+}
+
+                                                                  /* DO NOT EDIT */
+inline VOID * PushAddrintToStack(VOID * stack, ADDRINT value)
+{
+    stack = PtrAtOffset(stack, 0 - sizeof(ADDRINT));
+    *reinterpret_cast<ADDRINT *>(stack) = value;
+    return stack;
+}
+
+                                                                  /* DO NOT EDIT */
 class MemRange
 {
-  public:
+    public:
+
     //======= Constructors
 
     //Default constructor
-    MemRange() : m_base(NULL), m_size(0) {}
+    MemRange() {}
     //Construct range with a given base address and size
-    MemRange(VOID* base, size_t size) : m_base(base), m_size(size) {}
+    MemRange(VOID * base, size_t size) : m_base(base), m_size(size) {}
     MemRange(ADDRINT base, size_t size) : m_base(Addrint2VoidStar(base)), m_size(size) {}
     //Construct range with a given base and end addresses.
     //End address of a range is the address of the first byte following the range
-    MemRange(VOID* base, VOID* end) : m_base(base), m_size(PtrDiff(end, base)) {}
+    MemRange(VOID * base, VOID * end) : m_base(base), m_size(PtrDiff(end, base)) {}
 
     //Default copy constructor and assignment operator
 
     //======= operators == and !=
-    BOOL operator==(const MemRange& range) const { return ((m_base == range.m_base) && (m_size == range.m_size)); }
-    BOOL operator!=(const MemRange& range) const { return (!(*this == range)); }
+    BOOL operator == (const MemRange &  range) const
+    {
+        return ((m_base == range.m_base) && (m_size == range.m_size));
+    }
+    BOOL operator != (const MemRange &  range) const {return (!(*this == range));}
 
     //======= Accessors
 
     //Get/set base address of the range.
-    VOID* Base() const { return m_base; }
-    MemRange& Base(VOID* base)
-    {
-        m_base = base;
-        return *this;
-    }
+    VOID * Base() const {return m_base;}
+    MemRange& Base(VOID * base) { m_base = base; return *this;}
 
     //Get/set size, in bytes, of the range.
-    size_t Size() const { return m_size; }
-    MemRange& Size(size_t size)
-    {
-        m_size = size;
-        return *this;
-    }
+    size_t Size() const {return  m_size;}
+    MemRange& Size(size_t size) { m_size = size; return *this;}
 
     //Get end address of the range.
-    VOID* End() const { return PtrAtOffset(m_base, m_size); }
+    VOID * End() const {return  PtrAtOffset(m_base, m_size);}
 
     //Get the last address of the non-empty range.
-    VOID* Last() const { return PtrAtOffset(m_base, m_size - 1); }
+    VOID * Last() const {return PtrAtOffset(m_base, m_size - 1);}
 
     /*
     * Check to see whether this range is empty
     *
     * @return  true, if this range is empty, otherwise - false
     */
-    BOOL IsEmpty() const { return (m_size == 0); }
+    BOOL IsEmpty() const {return (m_size == 0);}
 
     /*
     * Check to see whether this range contains the specified memory address
@@ -474,7 +764,10 @@ class MemRange
     * @return   true, if this range contains the specified address,
     *           otherwise - false
     */
-    BOOL Contains(const VOID* addr) const { return (PtrDiff(addr, m_base) < m_size); }
+    BOOL Contains(const VOID * addr) const
+    {
+        return (PtrDiff(addr, m_base) < m_size);
+    }
 
     /*
     * Check to see whether this range contains the specified memory range
@@ -484,7 +777,10 @@ class MemRange
     * @return   true, if this range contains the specified range,
     *           otherwise - false.
     */
-    BOOL Contains(const MemRange& range) const { return (Contains(range.m_base) && !range.Contains(End())); }
+    BOOL Contains(const MemRange & range) const
+    {
+        return  (Contains(range.m_base) && !range.Contains(End()));
+    }
 
     /* Check to see whether this range intersects with the specified memory range
     *
@@ -493,7 +789,10 @@ class MemRange
     * @return   true, if this range intersects with the specified range
     *           otherwise - false
     */
-    BOOL Intersects(const MemRange& range) const { return (Contains(range.m_base) || range.Contains(m_base)); }
+    BOOL Intersects(const MemRange & range) const
+    {
+        return  (Contains(range.m_base) || range.Contains(m_base));
+    }
 
     /* Check to see whether this range is adjacent to the specified memory range
     *
@@ -502,9 +801,10 @@ class MemRange
     * @return   true, if this range is adjacent to the specified range
     *           otherwise - false
     */
-    BOOL AdjacentTo(const MemRange& range) const
+    BOOL AdjacentTo(const MemRange & range) const
     {
-        return (((range.m_base == End()) && (range.m_base != 0)) || ((m_base == range.End()) && (m_base != 0)));
+        return  (((range.m_base == End()) && (range.m_base != 0)) ||
+                 ((m_base == range.End()) && (m_base != 0)));
     }
 
     /* Check to see whether the current stack pointer belongs to this range
@@ -512,7 +812,10 @@ class MemRange
     * @return   true, if current stack pointer belongs to this range
     *           otherwise - false
     */
-    BOOL IsCurrentStack() const { return (Contains(GetSp())); }
+    BOOL IsCurrentStack() const
+    {
+        return  (Contains(GetSp()));
+    }
 
     /*
     * Round base/end address of the range down/up according to specified alignment
@@ -523,9 +826,9 @@ class MemRange
     */
     MemRange& Align(UINT32 alignment)
     {
-        VOID* end = RoundUp(End(), alignment);
-        m_base    = RoundDown(m_base, alignment);
-        m_size    = PtrDiff(end, m_base);
+        VOID * end  = RoundUp(End(), alignment);
+        m_base = RoundDown(m_base, alignment);
+        m_size = PtrDiff(end, m_base);
         return *this;
     }
 
@@ -550,9 +853,9 @@ class MemRange
     */
     MemRange& AlignDown(UINT32 alignment)
     {
-        VOID* end = RoundDown(End(), alignment);
-        m_size    = RoundUp(m_size, alignment);
-        m_base    = PtrAtOffset(end, 0 - m_size);
+        VOID * end  = RoundDown(End(), alignment);
+        m_size = RoundUp(m_size, alignment);
+        m_base = PtrAtOffset(end, 0 - m_size);
         return *this;
     }
 
@@ -576,8 +879,8 @@ class MemRange
     */
     MemRange& ShiftBase(size_t offset)
     {
-        VOID* end = End();
-        m_base    = PtrAtOffset(m_base, offset);
+        VOID * end  = End();
+        m_base = PtrAtOffset(m_base, offset);
         if (end < m_base)
         {
             m_size = 0;
@@ -606,7 +909,7 @@ class MemRange
     * @param[in] range      memory range, to be combined with this range
     * @return  reference to updated range
     */
-    MemRange& Combine(const MemRange& range)
+    MemRange& Combine(const MemRange & range)
     {
         size_t size;
         if (range.m_base >= m_base)
@@ -615,7 +918,7 @@ class MemRange
         }
         else
         {
-            size  = PtrDiff(End(), range.m_base);
+            size = PtrDiff(End(), range.m_base);
             *this = range;
         }
         if (size > m_size)
@@ -637,13 +940,16 @@ class MemRange
     * All three output paramters are optional - the range is not returned if the
     * corresponding parameter is NULL.
     */
-    VOID Decompose(const MemRange& range, MemRange* pIntersection, MemRange* pLowDiff, MemRange* pHighDiff) const
+    VOID Decompose(const MemRange & range,
+                   MemRange * pIntersection,
+                   MemRange * pLowDiff,
+                   MemRange * pHighDiff) const
     {
-        VOID* thisEnd  = End();
-        VOID* otherEnd = range.End();
+        VOID * thisEnd  = End();
+        VOID * otherEnd = range.End();
 
-        VOID* intersectionBase;
-        VOID* intersectionEnd;
+        VOID * intersectionBase;
+        VOID * intersectionEnd;
 
         if (Contains(range.m_base))
         {
@@ -682,42 +988,177 @@ class MemRange
         }
     }
 
-  private:
-    VOID* m_base;
+    private:
+    VOID * m_base;
     size_t m_size;
 };
 
-/*! @ingroup UTILS
- * Get the page that contains the specified address
- * @param[in] addr       address inside the requested page
- * @return one-page range that contains the specified address
- */
+                                                                  /* DO NOT EDIT */
+inline std::string MemRangeToString(const MemRange & range)
+{
+    return ("[" + hexstr(range.Base()) + " , " + hexstr(range.End()) + "]");
+}
+
+                                                                  /* DO NOT EDIT */
 extern MemRange MemPageRange(ADDRINT addr);
 
-/*! @ingroup UTILS
- * Get the page that contains the specified address
- * @param[in] addr       address inside the requested page
- * @return one-page range that contains the specified address
- */
-extern MemRange MemPageRange(const VOID* addr);
+                                                                  /* DO NOT EDIT */
+extern MemRange MemPageRange(const VOID * addr);
 
-/*! @ingroup UTILS
- *  Template POD structure that optionally keeps a value of type <T>.
- *  @tparam  T   the value type
- */
-template< typename T > struct OPTIONAL_VALUE
+                                                                  /* DO NOT EDIT */
+class ONCE_STATE
 {
-    BOOL m_hasValue; ///< TRUE, if a value has been assigned to this object
-    T m_value;       ///< The value assigned to this object
+  private:
+    // Function execution state
+    enum
+    {
+        NO_ONCE,            //!< initial state - function never executed
+        ONCE_RUNNING,       //!< function is currently running
+        ONCE_SUCCESS,       //!< function executed successfully
+        ONCE_FAILURE        //!< function executed but failed
+    } m_state;
+
+  public:
+    // Initial state - never executed
+    ONCE_STATE() : m_state(NO_ONCE) {}
+
+    // Return FALSE if function is already executed. Otherwise, set state to ONCE_RUNNING
+    // and return TRUE.
+    BOOL Enter()
+    {
+        if (m_state == NO_ONCE)
+        {
+            m_state = ONCE_RUNNING;
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    // Set and return exit state of the function just executed
+    BOOL Exit(BOOL result = TRUE)
+    {
+        m_state = (result ? ONCE_SUCCESS : ONCE_FAILURE);
+        return result;
+    }
+
+    // Return TRUE if function is already executed successfully
+    BOOL IsSuccess() const {return (m_state == ONCE_SUCCESS); }
+    // Return TRUE if function is already executed but failed
+    BOOL IsFailure() const {return (m_state == ONCE_FAILURE); }
+    // Return TRUE if function is already executed
+    BOOL IsDone() const {return (IsSuccess() || IsFailure()); }
+
+};
+
+                                                                  /* DO NOT EDIT */
+struct OBJECT_DELETER
+{
+    template<typename T> static VOID Delete(T* p) {delete p;}
+};
+
+                                                                  /* DO NOT EDIT */
+struct ARRAY_DELETER
+{
+    template<typename T> static VOID Delete(T* p) {delete [] p;}
+};
+
+                                                                  /* DO NOT EDIT */
+template<typename T, typename D = OBJECT_DELETER, typename C = INT32> class COUNTED_PTR
+{
+  public:
+    /*!
+     * Constructors.
+     * WARNING: do not use the same raw pointer to construct more than one
+     *          COUNTED_PTR object
+     */
+    COUNTED_PTR() : m_cptr(0){}
+    explicit COUNTED_PTR(T * p) : m_cptr((p != 0) ? (new CPTR(p)) : 0) {}
+    COUNTED_PTR(const COUNTED_PTR & r) : m_cptr(r.m_cptr) {AddRef();}
+
+    /*!
+     * Destructor.
+     */
+    ~COUNTED_PTR() {ReleaseRef();}
+
+    /*!
+     * Assignment.
+     */
+    COUNTED_PTR & operator = (const COUNTED_PTR & r)
+    {
+        r.AddRef();
+        ReleaseRef();
+        m_cptr = r.m_cptr;
+        return *this;
+    }
+
+    VOID Reset()
+    {
+        ReleaseRef();
+        m_cptr = 0;
+    }
+
+    VOID Reset(T * p)
+    {
+        if ((m_cptr != 0) && (p == m_cptr->m_ptr)) {return;}
+        ReleaseRef();
+        m_cptr = ((p != 0) ? (new CPTR(p)) : 0);
+    }
+
+
+    /*!
+     * Accessors.
+     */
+    T * Get()           const   {return ((m_cptr != 0) ? m_cptr->m_ptr : 0);}
+    T * operator->()    const   {return Get();}
+    T & operator*()     const   {return *(Get());}
+
+    /*!
+     * Comparison.
+     */
+    BOOL operator == (const COUNTED_PTR &  r) const {return (m_cptr == r.m_cptr);}
+    BOOL operator != (const COUNTED_PTR &  r) const {return (m_cptr != r.m_cptr);}
+    BOOL operator == (const T *  p) const {return (Get() == p);}
+    BOOL operator != (const T *  p) const {return (Get() != p);}
+
+  private:
+
+    struct CPTR
+    {
+        CPTR(T * p) : m_ptr(p), m_count(1) {}
+        T *     m_ptr;
+        C       m_count;
+    }* m_cptr;
+
+    VOID AddRef() const
+    {
+        if (m_cptr != 0) {++m_cptr->m_count;}
+    }
+
+    VOID ReleaseRef()
+    {
+        if ((m_cptr != 0) && (--m_cptr->m_count == 0))
+        {
+            D::Delete(m_cptr->m_ptr);
+            delete m_cptr;
+            m_cptr = 0;
+        }
+    }
+};
+
+                                                                  /* DO NOT EDIT */
+template <typename T> struct OPTIONAL_VALUE
+{
+    BOOL m_hasValue;    ///< TRUE, if a value has been assigned to this object
+    T m_value;          ///< The value assigned to this object
 
     /*!
      * Assign the specified value to this object.
      * @param[in]   value  the new value to be assigned to this object
      */
-    VOID Set(const T& value)
+    VOID Set(const T & value)
     {
         m_hasValue = TRUE;
-        m_value    = value;
+        m_value = value;
     }
 
     /*!
@@ -725,7 +1166,7 @@ template< typename T > struct OPTIONAL_VALUE
      * @param[in]   pValue  pointer to the new value to be assigned to this object or
      *                      NULL to remove the previous assignment
      */
-    VOID Set(const T* pValue)
+    VOID Set(const T * pValue)
     {
         if (pValue != 0)
         {
@@ -740,7 +1181,7 @@ template< typename T > struct OPTIONAL_VALUE
     /*!
      * Remove the previous value assignment, if any.
      */
-    VOID Reset() { m_hasValue = FALSE; }
+    VOID Reset() {m_hasValue = FALSE;}
 
     /*!
      * Get the value of this object, if previously assigned.
@@ -748,55 +1189,41 @@ template< typename T > struct OPTIONAL_VALUE
      *                      this object, if any
      * @return TRUE if a value has been assigned to this object.
      */
-    BOOL Get(T* pValue) const
+    BOOL Get(T * pValue) const
     {
-        if (m_hasValue && (pValue != 0))
-        {
-            *pValue = m_value;
-        }
+        if (m_hasValue && (pValue != 0)) {*pValue = m_value;}
         return m_hasValue;
     }
 
     /*!
      * @return TRUE if a value has been assigned to this object.
      */
-    BOOL HasValue() const { return m_hasValue; }
+    BOOL HasValue() const {return m_hasValue;}
 
     /*!
      * @return reference to the value assigned to this object.
      * The caller must ensure that a value has already been assigned to this object.
      */
-    T& Value() { return m_value; }
-    const T& Value() const { return m_value; }
+    T & Value() {return m_value;}
+    const T & Value() const {return m_value;}
 
     /*!
      * Get a pointer to the value of this object, if the value has been assigned.
      * @return pointer to the value kept in this object or NULL if no value has been
      *         assigned to this object.
      */
-    T* ValuePtr() { return ((m_hasValue) ? &m_value : 0); }
-    const T* ValuePtr() const { return ((m_hasValue) ? &m_value : 0); }
+    T * ValuePtr() {return ((m_hasValue) ? &m_value : 0);}
+    const T * ValuePtr() const {return ((m_hasValue) ? &m_value : 0);}
 };
 
-/*! @ingroup UTILS
-  Convert a FLT64 into a string. Padding can be specified as well.
- */
-extern std::string StringFlt(FLT64 val, UINT32 precision, UINT32 width);
+                                                                  /* DO NOT EDIT */
+extern STAT_NORM StatRawMmapBytes;
 
-/*! @ingroup UTILS
-  Create a string containing the given floating point number.
- */
-inline std::string fltstr(FLT64 val, UINT32 prec = 0, UINT32 width = 0) { return StringFlt(val, prec, width); }
+                                                                  /* DO NOT EDIT */
+extern STAT_NORM StatReservedBytes;
 
-/*! @ingroup UTILS
-  Floating-to-string conversion object.
- */
-struct FLTSTR
-{
-    FLTSTR(UINT32 prec = 0, UINT32 width = 0) : _p(prec), _w(width) {}
-    template< typename T > std::string operator()(const T& t) const { return fltstr(t, _p, _w); }
-    UINT32 _p;
-    UINT32 _w;
-};
+                                                                  /* DO NOT EDIT */
+extern VOID UpdateRawMmapBytes();
 
-#endif // PIN_G_UTIL_PH
+                                                                  /* DO NOT EDIT */
+

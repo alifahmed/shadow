@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,19 +24,23 @@
 #include <cstdlib>
 #include "pin.H"
 
-KNOB< BOOL > KnobWaitForDebugger(KNOB_MODE_WRITEONCE, "pintool", "wait_for_debugger", "0", "Wait for debugger to connect");
+
+KNOB<BOOL> KnobWaitForDebugger(KNOB_MODE_WRITEONCE, "pintool",
+    "wait_for_debugger", "0", "Wait for debugger to connect");
+
 
 ADDRINT _toolControlledFuncAddr = 0;
-BOOL _isJobDone                 = FALSE;
-BOOL _toolShouldStop            = FALSE;
+BOOL _isJobDone = FALSE;
+BOOL _toolShouldStop = FALSE;
 
-static BOOL BreakpointHandler(ADDRINT addr, UINT size, BOOL added, VOID* data);
-static VOID InstrumentImg(IMG img, VOID* data);
+static BOOL BreakpointHandler(ADDRINT addr, UINT size, BOOL added, VOID *data);
+static VOID InstrumentImg(IMG img, VOID *data);
 static ADDRINT IsAtBreakpoint(ADDRINT);
-static VOID ControlledBreakpoint(CONTEXT*, THREADID);
+static VOID ControlledBreakpoint(CONTEXT *, THREADID);
 static VOID ReActivateControlledBreakpoint();
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -48,13 +52,15 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static BOOL BreakpointHandler(ADDRINT addr, UINT size, BOOL insert, VOID* data)
+static BOOL BreakpointHandler(ADDRINT addr, UINT size, BOOL insert, VOID *data)
 {
-    if (_isJobDone) return FALSE;
+    if (_isJobDone)
+        return FALSE;
 
     // Only interested in my controlled function
     //
-    if (RTN_FindNameByAddress(addr) != "ToolControlled") return FALSE;
+    if (RTN_FindNameByAddress(addr) != "ToolControlled")
+        return FALSE;
 
     _toolControlledFuncAddr = addr;
 
@@ -65,9 +71,10 @@ static BOOL BreakpointHandler(ADDRINT addr, UINT size, BOOL insert, VOID* data)
     return TRUE;
 }
 
-static VOID InstrumentImg(IMG img, VOID* data)
+static VOID InstrumentImg(IMG img, VOID *data)
 {
-    if (!IMG_IsMainExecutable(img)) return;
+    if (!IMG_IsMainExecutable(img))
+        return;
 
     for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
     {
@@ -80,8 +87,8 @@ static VOID InstrumentImg(IMG img, VOID* data)
                 for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
                 {
                     INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)IsAtBreakpoint, IARG_INST_PTR, IARG_END);
-                    INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)ControlledBreakpoint, IARG_CONST_CONTEXT, IARG_THREAD_ID,
-                                       IARG_END);
+                    INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)ControlledBreakpoint, 
+                            IARG_CONST_CONTEXT, IARG_THREAD_ID, IARG_END);
                 }
                 RTN_Close(rtn);
             }
@@ -95,9 +102,12 @@ static VOID InstrumentImg(IMG img, VOID* data)
     }
 }
 
-static ADDRINT IsAtBreakpoint(ADDRINT pc) { return (pc == _toolControlledFuncAddr); }
+static ADDRINT IsAtBreakpoint(ADDRINT pc)
+{
+    return (pc == _toolControlledFuncAddr);
+}
 
-static VOID ControlledBreakpoint(CONTEXT* ctxt, THREADID tid)
+static VOID ControlledBreakpoint(CONTEXT *ctxt, THREADID tid)
 {
     if (_toolShouldStop)
     {
@@ -108,7 +118,8 @@ static VOID ControlledBreakpoint(CONTEXT* ctxt, THREADID tid)
 
 static VOID ReActivateControlledBreakpoint()
 {
-    _isJobDone      = TRUE;
+    _isJobDone = TRUE;
     _toolShouldStop = FALSE;
     PIN_ResetBreakpointAt(_toolControlledFuncAddr);
 }
+

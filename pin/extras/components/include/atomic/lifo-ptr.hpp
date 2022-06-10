@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -23,8 +23,10 @@
 #include "atomic/exponential-backoff.hpp"
 #include "atomic/nullstats.hpp"
 
-namespace ATOMIC
-{
+
+namespace ATOMIC {
+
+
 /*! @brief  Last-in-first-out queue.
  *
  * A non-blocking atomic LIFO queue of elements.  The client manages the allocation, deallocation, and content
@@ -59,7 +61,8 @@ namespace ATOMIC
  *  }
  *                                                                                          \endcode
  */
-template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > class /*<UTILITY>*/ LIFO_PTR
+template<typename ELEMENT, unsigned int LowBits,  
+         typename STATS=NULLSTATS> class /*<UTILITY>*/ LIFO_PTR
 {
   public:
     /*!
@@ -67,14 +70,17 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
      *
      *  @param[in] stats    The statistics collection object, or NULL if no statistics should be collected.
      */
-    LIFO_PTR(STATS* stats = 0) : _idGenerator(stats), _stats(stats) { _head = 0; }
+    LIFO_PTR(STATS *stats=0) : _idGenerator(stats), _stats(stats)
+    {
+        _head = 0;
+    }
 
     /*!
      * Set the statistics collection object.  This method is NOT atomic.
      *
      *  @param[in] stats    The new statistics collection object.
      */
-    void SetStatsNonAtomic(STATS* stats)
+    void SetStatsNonAtomic(STATS *stats)
     {
         _idGenerator.SetStatsNonAtomic(stats);
         _stats = stats;
@@ -85,23 +91,23 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
      *
      *  @param[in] element  The element to push.
      */
-    void Push(ELEMENT* element)
+    void Push(ELEMENT *element)
     {
         // Validate that the required low-order bits are zero.
         //
-        PTRINT intElement = reinterpret_cast< PTRINT >(element);
+        PTRINT intElement = reinterpret_cast<PTRINT>(element);
         ATOMIC_CHECK_ASSERT(((intElement >> LowBits) << LowBits) == intElement);
 
         PTRINT oldHead;
         PTRINT newHead;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
         do
         {
             backoff.Delay();
 
-            oldHead        = OPS::Load(&_head);
-            element->_next = reinterpret_cast< ELEMENT* >((oldHead >> LowBits) << LowBits); // clear any previous "owner"
-            newHead        = intElement;
+            oldHead = OPS::Load(&_head);
+            element->_next = reinterpret_cast<ELEMENT*>((oldHead >> LowBits) << LowBits);   // clear any previous "owner"
+            newHead = intElement;
 
             // BARRIER_CS_PREV below ensures that all processors will see the write to _next
             // before the element is inserted into the queue.
@@ -116,21 +122,21 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
      *                           last element's _next pointer must be NULL.
      *  @param[in] listTail     The last element in the list.
      */
-    void PushList(ELEMENT* listHead, ELEMENT* listTail)
+    void PushList(ELEMENT *listHead, ELEMENT *listTail)
     {
         ATOMIC_CHECK_ASSERTSLOW(listTail && CheckList(listHead, listTail));
 
         PTRINT oldHead;
         PTRINT newHead;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
 
         do
         {
             backoff.Delay();
 
-            oldHead         = OPS::Load(&_head);
-            listTail->_next = reinterpret_cast< ELEMENT* >((oldHead >> LowBits) << LowBits); // clear any previous "owner"
-            newHead         = reinterpret_cast< PTRINT >(listHead);
+            oldHead = OPS::Load(&_head);
+            listTail->_next = reinterpret_cast<ELEMENT*>((oldHead >> LowBits) << LowBits);   // clear any previous "owner"
+            newHead = reinterpret_cast<PTRINT>(listHead);
 
             // BARRIER_CS_PREV below ensures that all processors will see the write to _next
             // before the element is inserted into the queue.
@@ -156,7 +162,7 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
      * @return  The popped element on success.  The return value is NULL if the queue is empty
      *           or if there are too many simultaneous callers to Pop().
      */
-    ELEMENT* PopInternal(bool* isEmpty = 0)
+    ELEMENT *PopInternal(bool *isEmpty=0)
     {
         // Get a unique ID for the calling thread.  We need this to avoid an "A-B-A" problem below.
         // This might fail (return zero) if there are too many threads simultaneously calling Pop().
@@ -164,21 +170,22 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
         UINT32 myID;
         if (!(myID = _idGenerator.GetID()))
         {
-            if (isEmpty) *isEmpty = false;
+            if (isEmpty)
+                *isEmpty = false;
             return 0;
         }
 
         PTRINT oldHead;
         PTRINT midHead;
         PTRINT newHead;
-        ELEMENT* oldHeadPtr;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        ELEMENT *oldHeadPtr;
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
         do
         {
             PTRINT oldHeadBare;
 
             // Store our unique ID in the low-order bits of the head pointer.  This avoids the "A-B-A"
-            // problem below.  It's possible that this will overwrite someone else's unique ID, but that's OK.
+            // problem below.  It's possible that this will overwrite someone else's unique ID, but that's OK.  
             do
             {
                 backoff.Delay();
@@ -186,12 +193,13 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
                 if (!oldHead)
                 {
                     _idGenerator.ReleaseID(myID);
-                    if (isEmpty) *isEmpty = true;
+                    if (isEmpty)
+                        *isEmpty = true;
                     return 0;
                 }
 
                 oldHeadBare = (oldHead >> LowBits) << LowBits;
-                midHead     = oldHeadBare | myID;
+                midHead = oldHeadBare | myID;
             }
             while (!OPS::CompareAndDidSwap(&_head, oldHead, midHead));
 
@@ -204,8 +212,8 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
             // of the unique ID in the head ensures that the CAS below will fail if another thread changes
             // head and then pushes it back on.
             //
-            oldHeadPtr = reinterpret_cast< ELEMENT* >(oldHeadBare);
-            newHead    = reinterpret_cast< PTRINT >(oldHeadPtr->_next);
+            oldHeadPtr = reinterpret_cast<ELEMENT*>(oldHeadBare);
+            newHead = reinterpret_cast<PTRINT>(oldHeadPtr->_next);
         }
         while (!OPS::CompareAndDidSwap(&_head, midHead, newHead, BARRIER_CS_NEXT));
 
@@ -247,26 +255,26 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
      * @return  The popped element on success.  The return value is NULL if the queue is empty
      *           or if there are too many simultaneous callers to Pop().
      */
-    ELEMENT* Pop(bool* isEmpty = 0, unsigned maxRetries = 0)
+    ELEMENT *Pop(bool *isEmpty=0, unsigned maxRetries=0)
     {
         bool isEmptyLocal;
-        bool* isEmptyPtr = isEmpty ? isEmpty : &(isEmptyLocal);
-        ELEMENT* element = PopInternal(isEmptyPtr);
+        bool *isEmptyPtr = isEmpty ? isEmpty : &(isEmptyLocal);
+        ELEMENT *element = PopInternal(isEmptyPtr);
         if (element)
         {
             return (element);
         }
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
         unsigned int numTried = 0;
-        while (!element && !(*isEmptyPtr) && (numTried < maxRetries))
+        while (!element && !(*isEmptyPtr) && (numTried<maxRetries))
         {
-            numTried++;
-            backoff.Delay();
-            element = PopInternal(isEmptyPtr);
-            if (element)
-            {
-                return (element);
-            }
+             numTried++;
+             backoff.Delay();
+             element = PopInternal(isEmptyPtr);
+             if (element)
+             {
+                 return (element);
+             }
         }
         return (0);
     }
@@ -274,17 +282,20 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
     /*!
      * @return  Returns the first element on the queue, or NULL if it is empty.
      */
-    ELEMENT* Head()
+    ELEMENT *Head()
     {
         PTRINT head = OPS::Load(&_head);
-        head        = (head >> LowBits) << LowBits;
-        return reinterpret_cast< ELEMENT* >(head);
+        head = (head >> LowBits) << LowBits;
+        return reinterpret_cast<ELEMENT*>(head);
     }
 
     /*!
      * @return  Returns the first element on the queue, or NULL if it is empty.
      */
-    const ELEMENT* Head() const { return const_cast< LIFO_PTR* >(this)->Head(); }
+    const ELEMENT *Head() const
+    {
+        return const_cast<LIFO_PTR*>(this)->Head();
+    }
 
     /*!
      * Atomically clears the lifo queue and returns a pointer to the previous contents.
@@ -292,23 +303,23 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
      * @return  Returns a pointer to a linked list with the previous elements in
      *           in the queue, or NULL if the queue was already empty.
      */
-    ELEMENT* Clear()
+    ELEMENT *Clear()
     {
         PTRINT oldHead;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
 
         do
         {
             backoff.Delay();
             oldHead = OPS::Load(&_head);
         }
-        while (!OPS::CompareAndDidSwap< PTRINT >(&_head, oldHead, 0, BARRIER_CS_NEXT));
+        while (!OPS::CompareAndDidSwap<PTRINT>(&_head, oldHead, 0, BARRIER_CS_NEXT));
 
         // BARRIER_CS_NEXT above ensures that all processors see that the elements are
         // removed from the list before the caller starts changing them.
 
         oldHead = (oldHead >> LowBits) << LowBits;
-        return reinterpret_cast< ELEMENT* >(oldHead);
+        return reinterpret_cast<ELEMENT*>(oldHead);
     }
 
     /*!
@@ -318,11 +329,11 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
      *  @param[in] list     A list of ELEMENTs linked through their _next pointers.  The
      *                       last element's _next pointer must be NULL.
      */
-    void AssignNonAtomic(ELEMENT* list)
+    void AssignNonAtomic(ELEMENT *list)
     {
         ATOMIC_CHECK_ASSERTSLOW(CheckList(list, 0));
 
-        _head = reinterpret_cast< PTRINT >(list);
+        _head = reinterpret_cast<PTRINT>(list);
     }
 
   private:
@@ -335,31 +346,33 @@ template< typename ELEMENT, unsigned int LowBits, typename STATS = NULLSTATS > c
      *
      * @return  Return TRUE if all elements have their LowBits clear.
      */
-    bool CheckList(ELEMENT* head, ELEMENT* tail)
+    bool CheckList(ELEMENT *head, ELEMENT *tail)
     {
-        ELEMENT* last = 0;
-        for (ELEMENT* el = head; el; el = el->_next)
+        ELEMENT *last = 0;
+        for (ELEMENT *el = head;  el;  el = el->_next)
         {
-            PTRINT intEl = reinterpret_cast< PTRINT >(el);
-            if (((intEl >> LowBits) << LowBits) != intEl) return false;
+            PTRINT intEl = reinterpret_cast<PTRINT>(el);
+            if (((intEl >> LowBits) << LowBits) != intEl)
+                return false;
             last = el;
         }
 
-        if (tail && tail != last) return false;
+        if (tail && tail != last)
+            return false;
         return true;
     }
 
   private:
-    volatile PTRINT _head; // The head of the list
+    volatile PTRINT _head;     // The head of the list
 
     // We use the low-order bits of _head to hold a unique ID (see Pop() method).  This object
     // allows us to generate small, unique IDs that will fit in the low-order bits.
     //
     static const UINT32 MaxID = (1 << LowBits) - 1;
-    IDSET< MaxID, STATS > _idGenerator;
+    IDSET<MaxID, STATS> _idGenerator;
 
-    STATS* _stats; // Object which collects statistics, or NULL
+    STATS *_stats;  // Object which collects statistics, or NULL
 };
 
-} // namespace ATOMIC
+} // namespace
 #endif // file guard

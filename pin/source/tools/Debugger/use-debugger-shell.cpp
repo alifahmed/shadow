@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,14 +16,16 @@
 
 #include "debugger-shell.H"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-    if (PIN_Init(argc, argv)) return 1;
+    if (PIN_Init(argc,argv))
+        return 1;
 
-    DEBUGGER_SHELL::ISHELL* shell = DEBUGGER_SHELL::CreateShell();
+    DEBUGGER_SHELL::ISHELL *shell = DEBUGGER_SHELL::CreateShell();
     DEBUGGER_SHELL::STARTUP_ARGUMENTS args;
     args._enableIcountBreakpoints = TRUE;
-    if (!shell->Enable(args)) return 1;
+    if (!shell->Enable(args))
+        return 1;
 
     PIN_StartProgram();
 }

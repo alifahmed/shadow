@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,13 +18,12 @@
  * "sched_yield" is implemented in this file, while "sleep" is implemented in
  * deepbind_syscalls.o which is linked to the tool.
  */
-
+ 
 #include "pin.H"
 #include <cstdio>
 #include <cstdlib>
 
-extern "C" int sched_yield()
-{
+extern "C" int sched_yield() {
     fprintf(stderr, "ERROR: In deepbind.cpp implementation of sched_yield\n");
     exit(2);
 }
@@ -32,11 +31,11 @@ extern "C" int sched_yield()
 int main(int argc, char** argv)
 {
     PIN_InitSymbols();
-
+    
     if (!PIN_Init(argc, argv))
     {
         PIN_StartProgram();
     }
 
-    return (1);
+    return(1);
 }

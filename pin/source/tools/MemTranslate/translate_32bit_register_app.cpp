@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,13 +26,14 @@ int main()
         return 1;
     }
 
-    asm("movq %1, %%rax\n"
-        "movl $0xbadc0de, (%%rax)\n"
-        "movl (%%eax), %%eax\n"
-        "movl %%eax, %0\n"
-        : "=m"(result)
-        : "m"(ptr_32bit)
-        : "%rax");
+    asm(
+            "movq %1, %%rax\n"
+            "movl $0xbadc0de, (%%rax)\n"
+            "movl (%%eax), %%eax\n"
+            "movl %%eax, %0\n"
+            : "=m" (result)
+            : "m" (ptr_32bit)
+            : "%rax");
     printf("result = %x\n", result);
     return 0;
 }

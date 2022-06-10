@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,26 +24,27 @@
 #include <string>
 #include <ctime>
 #include <unistd.h>
-using std::cerr;
-using std::endl;
-using std::hex;
-using std::ios;
-using std::ofstream;
 using std::string;
+using std::ios;
+using std::hex;
+using std::cerr;
+using std::ofstream;
+using std::endl;
 
 /* ===================================================================== */
 /* Commandline Switches                                                  */
 /* ===================================================================== */
 
-typedef int* INT_PTR;
+typedef int * INT_PTR;
 
-typedef void* VOID_PTR;
+typedef void * VOID_PTR;
 
-typedef char* CHAR_PTR;
+typedef char * CHAR_PTR;
 
 ofstream OutFile;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "tpss_lin_libc.txt", "specify tool log file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "tpss_lin_libc.txt",
+        "specify tool log file name");
 
 /* ===================================================================== */
 /* Pointers to the original functions that we probe                      */
@@ -181,135 +182,135 @@ extern AFUNPTR fptrsyscall;
 /* ===================================================================== */
 extern "C"
 {
-    void mysleep();
-    void mysocket();
-    void myshutdown();
-    void myselect();
-    void mypoll();
-    void mypselect();
-    void myaccept();
-    void myconnect();
-    void myrecv();
-    void myrecvfrom();
-    void mysend();
-    void mysendto();
-    void mygetwc();
-    void mygetw();
-    void my_IO_getc();
-    void mygetchar();
-    void mygetwchar();
-    void mygets();
-    void myfgetc();
-    void myfgetwc();
-    void myfgets();
-    void myfgetws();
-    void myfread();
-    void myfwrite();
-    void mypipe();
-    void myread();
-    void mywrite();
-    void myopen();
-    void myfopen();
-    void myfdopen();
-    void myclose();
-    void myfclose();
-    void mycallrpc();
-    void myclnt_broadcast();
-    void myclntudp_create();
-    void myclntudp_bufcreate();
-    void mypmap_getmaps();
-    void mypmap_getport();
-    void mypmap_rmtcall();
-    void mypmap_set();
-    void myclntraw_create();
-    void mysvc_run();
-    void mysvc_sendreply();
-    void mysvcraw_create();
-    void mysvctcp_create();
-    void mysvcudp_bufcreate();
-    void mysvcudp_create();
-    void myabort();
-    void my_exit();
-    void my_nanosleep();
-    void mysignal();
-    void mysigprocmask();
-    void mysigpending();
-    void mysigaction();
-    void mysetitimer();
-    void myexit();
-    void mydl_iterate_phdr();
-    void mysystem();
-    void myalarm();
-    void myrecvmsg();
-    void mysendmsg();
-    void mypause();
-    void mysigtimedwait();
-    void mysigwaitinfo();
-    void myepoll_wait();
-    void myppoll();
-    void mymsgsnd();
-    void mymsgrcv();
-    void mymsgrcv();
-    void mysemtimedop();
-    void myusleep();
-    void myualarm();
-    void mygetitimer();
-    void mysigwait();
-    void mymsgget();
-    void mysemget();
-    void mywait();
-    void mywaitpid();
-    void mywaitid();
-    void mywait3();
-    void mywait4();
-    void myreadv();
-    void mywritev();
-    void myflockfile();
-    void mylockf();
-    void mysetenv();
-    void myunsetenv();
-    void mygetenv();
-    void myperror();
-    void mymmap();
-    void mymunmap();
-    void myfileno();
-    void mygetpid();
-    void mygetppid();
-    void mymemset();
-    void mymemcpy();
-    void myaccess();
-    void mylseek();
-    void mylseek64();
-    void myfdatasync();
-    void myunlink();
-    void mystrlen();
-    void mywcslen();
-    void mystrcpy();
-    void mystrcpy();
-    void mystrcat();
-    void mystrstr();
-    void mystrchr0();
-    void mystrrchr();
-    void mystrcmp();
-    void mystrncmp();
-    void mysigaddset();
-    void mysigdelset();
-    void mysigismember();
-    void mystrerror();
-    void mybind();
-    void mylisten();
-    void myuname();
-    void mygethostname();
-    void mykill();
-    void mysched_yield();
-    void mytimer_settime();
-    void mysigaltstack();
-    void myioctl();
-    void myflock();
-    void my__libc_dlopen_mode();
-    void my__errno_location();
-    void mysyscall();
-    void myfunlockfile();
+void mysleep();
+void mysocket();
+void myshutdown();
+void myselect();
+void mypoll();
+void mypselect();
+void myaccept();
+void myconnect();
+void myrecv();
+void myrecvfrom();
+void mysend();
+void mysendto();
+void mygetwc();
+void mygetw();
+void my_IO_getc();
+void mygetchar();
+void mygetwchar();
+void mygets();
+void myfgetc();
+void myfgetwc();
+void myfgets();
+void myfgetws();
+void myfread();
+void myfwrite();
+void mypipe();
+void myread();
+void mywrite();
+void myopen();
+void myfopen();
+void myfdopen();
+void myclose();
+void myfclose();
+void mycallrpc();
+void myclnt_broadcast();
+void myclntudp_create();
+void myclntudp_bufcreate();
+void mypmap_getmaps();
+void mypmap_getport();
+void mypmap_rmtcall();
+void mypmap_set();
+void myclntraw_create();
+void mysvc_run();
+void mysvc_sendreply();
+void mysvcraw_create();
+void mysvctcp_create();
+void mysvcudp_bufcreate();
+void mysvcudp_create();
+void myabort();
+void my_exit();
+void my_nanosleep();
+void mysignal();
+void mysigprocmask();
+void mysigpending();
+void mysigaction();
+void mysetitimer();
+void myexit();
+void mydl_iterate_phdr();
+void mysystem();
+void myalarm();
+void myrecvmsg();
+void mysendmsg();
+void mypause();
+void mysigtimedwait();
+void mysigwaitinfo();
+void myepoll_wait();
+void myppoll();
+void mymsgsnd();
+void mymsgrcv();
+void mymsgrcv();
+void mysemtimedop();
+void myusleep();
+void myualarm();
+void mygetitimer();
+void mysigwait();
+void mymsgget();
+void mysemget();
+void mywait();
+void mywaitpid();
+void mywaitid();
+void mywait3();
+void mywait4();
+void myreadv();
+void mywritev();
+void myflockfile();
+void mylockf();
+void mysetenv();
+void myunsetenv();
+void mygetenv();
+void myperror();
+void mymmap();
+void mymunmap();
+void myfileno();
+void mygetpid();
+void mygetppid();
+void mymemset();
+void mymemcpy();
+void myaccess();
+void mylseek();
+void mylseek64();
+void myfdatasync();
+void myunlink();
+void mystrlen();
+void mywcslen();
+void mystrcpy();
+void mystrcpy();
+void mystrcat();
+void mystrstr();
+void mystrchr0();
+void mystrrchr();
+void mystrcmp();
+void mystrncmp();
+void mysigaddset();
+void mysigdelset();
+void mysigismember();
+void mystrerror();
+void mybind();
+void mylisten();
+void myuname();
+void mygethostname();
+void mykill();
+void mysched_yield();
+void mytimer_settime();
+void mysigaltstack();
+void myioctl();
+void myflock();
+void my__libc_dlopen_mode();
+void my__errno_location();
+void mysyscall();
+void myfunlockfile();
 }
 
 /* ===================================================================== */
@@ -317,17 +318,17 @@ extern "C"
 /* ===================================================================== */
 
 // Print help information
-INT32 Usage()
-{
-    cerr << "This tool mimics the behavior of TPSS on Linux by adding probes to various libc functions." << endl;
+INT32 Usage() {
+    cerr
+            << "This tool mimics the behavior of TPSS on Linux by adding probes to various libc functions."
+            << endl;
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return 1;
 }
 
 // Utility function to return the time
-string CurrentTime()
-{
+string CurrentTime() {
     char tmpbuf[128];
     time_t thetime = time(NULL);
     ctime_r(&thetime, tmpbuf);
@@ -343,7 +344,7 @@ extern "C" void printFunctionCalled(const char* funcName)
 bool is_GLIBC2_24_or_newer(IMG img)
 {
     char path[PATH_MAX] = {0};
-    if (0 <= readlink(IMG_Name(img).c_str(), path, sizeof(path) - 1))
+    if (0 <= readlink(IMG_Name(img).c_str(), path, sizeof(path)-1))
     {
         return (string("libc-2.24.so") == basename(path));
     }
@@ -355,32 +356,36 @@ bool is_GLIBC2_24_or_newer(IMG img)
 /* ===================================================================== */
 
 // Image load callback - inserts the probes.
-void ImgLoad(IMG img, VOID_PTR v)
-{
+void ImgLoad(IMG img, VOID_PTR v) {
     // Called every time a new image is loaded
-    if ((IMG_Name(img).find("libc.so") != string::npos) || (IMG_Name(img).find("LIBC.SO") != string::npos) ||
-        (IMG_Name(img).find("LIBC.so") != string::npos))
+    if ((IMG_Name(img).find("libc.so") != string::npos)
+            || (IMG_Name(img).find("LIBC.SO") != string::npos)
+            || (IMG_Name(img).find("LIBC.so") != string::npos))
     {
+
         RTN rtnsleep = RTN_FindByName(img, "sleep");
         if (RTN_Valid(rtnsleep) && RTN_IsSafeForProbedReplacement(rtnsleep))
         {
-            OutFile << CurrentTime() << "Inserting probe for sleep at " << RTN_Address(rtnsleep) << endl;
+            OutFile << CurrentTime() << "Inserting probe for sleep at "
+                    << RTN_Address(rtnsleep) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsleep, AFUNPTR(mysleep)));
-            fptrsleep    = fptr;
+            fptrsleep = fptr;
         }
 
         RTN rtnsocket = RTN_FindByName(img, "socket");
         if (RTN_Valid(rtnsocket) && RTN_IsSafeForProbedReplacement(rtnsocket))
         {
-            OutFile << CurrentTime() << "Inserting probe for socket at " << RTN_Address(rtnsocket) << endl;
+            OutFile << CurrentTime() << "Inserting probe for socket at "
+                    << RTN_Address(rtnsocket) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsocket, AFUNPTR(mysocket)));
-            fptrsocket   = fptr;
+            fptrsocket = fptr;
         }
 
         RTN rtnshutdown = RTN_FindByName(img, "shutdown");
-        if (RTN_Valid(rtnshutdown) && RTN_IsSafeForProbedReplacement(rtnshutdown))
+        if (RTN_Valid(rtnshutdown)
+                && RTN_IsSafeForProbedReplacement(rtnshutdown))
         {
             OutFile << CurrentTime() << "Inserting probe for shutdown at " << RTN_Address(rtnshutdown) << endl;
             OutFile.flush();
@@ -394,7 +399,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for select at " << RTN_Address(rtnselect) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnselect, AFUNPTR(myselect)));
-            fptrselect   = fptr;
+            fptrselect = fptr;
         }
 
         RTN rtnpoll = RTN_FindByName(img, "poll");
@@ -403,16 +408,18 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for poll at " << RTN_Address(rtnpoll) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnpoll, AFUNPTR(mypoll)));
-            fptrpoll     = fptr;
+            fptrpoll = fptr;
         }
 
         RTN rtnpselect = RTN_FindByName(img, "pselect");
-        if (RTN_Valid(rtnpselect) && RTN_IsSafeForProbedReplacement(rtnpselect))
+        if (RTN_Valid(rtnpselect)
+                && RTN_IsSafeForProbedReplacement(rtnpselect))
         {
-            OutFile << CurrentTime() << "Inserting probe for pselect at " << RTN_Address(rtnpselect) << endl;
+            OutFile << CurrentTime() << "Inserting probe for pselect at "
+                    << RTN_Address(rtnpselect) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnpselect, AFUNPTR(mypselect)));
-            fptrpselect  = fptr;
+            fptrpselect = fptr;
         }
 
         RTN rtnaccept = RTN_FindByName(img, "accept");
@@ -421,7 +428,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for accept at " << RTN_Address(rtnaccept) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnaccept, AFUNPTR(myaccept)));
-            fptraccept   = fptr;
+            fptraccept = fptr;
         }
 
         RTN rtnconnect = RTN_FindByName(img, "connect");
@@ -430,7 +437,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for connect at " << RTN_Address(rtnconnect) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnconnect, AFUNPTR(myconnect)));
-            fptrconnect  = fptr;
+            fptrconnect = fptr;
         }
 
         RTN rtnrecv = RTN_FindByName(img, "recv");
@@ -439,7 +446,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for recv at " << RTN_Address(rtnrecv) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnrecv, AFUNPTR(myrecv)));
-            fptrrecv     = fptr;
+            fptrrecv = fptr;
         }
 
         RTN rtnrecvfrom = RTN_FindByName(img, "recvfrom");
@@ -457,7 +464,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for send at " << RTN_Address(rtnsend) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsend, AFUNPTR(mysend)));
-            fptrsend     = fptr;
+            fptrsend = fptr;
         }
 
         RTN rtnsendto = RTN_FindByName(img, "sendto");
@@ -466,7 +473,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for sendto at " << RTN_Address(rtnsendto) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsendto, AFUNPTR(mysendto)));
-            fptrsendto   = fptr;
+            fptrsendto = fptr;
         }
 
         RTN rtngetwc = RTN_FindByName(img, "getwc");
@@ -475,7 +482,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for getwc at " << RTN_Address(rtngetwc) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtngetwc, AFUNPTR(mygetwc)));
-            fptrgetwc    = fptr;
+            fptrgetwc = fptr;
         }
 
         RTN rtngetw = RTN_FindByName(img, "getw");
@@ -484,11 +491,12 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for getw at " << RTN_Address(rtngetw) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtngetw, AFUNPTR(mygetw)));
-            fptrgetw     = fptr;
+            fptrgetw = fptr;
         }
 
         RTN rtn_IO_getc = RTN_FindByName(img, "_IO_getc");
-        if (RTN_Valid(rtn_IO_getc) && RTN_IsSafeForProbedReplacement(rtn_IO_getc))
+        if (RTN_Valid(rtn_IO_getc)
+                && RTN_IsSafeForProbedReplacement(rtn_IO_getc))
         {
             OutFile << CurrentTime() << "Inserting probe for _IO_getc at " << RTN_Address(rtn_IO_getc) << endl;
             OutFile.flush();
@@ -502,13 +510,14 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for getchar at " << RTN_Address(rtngetchar) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtngetchar, AFUNPTR(mygetchar)));
-            fptrgetchar  = fptr;
+            fptrgetchar = fptr;
         }
 
         RTN rtngetwchar = RTN_FindByName(img, "getwchar");
         if (RTN_Valid(rtngetwchar) && RTN_IsSafeForProbedReplacement(rtngetwchar))
         {
-            OutFile << CurrentTime() << "Inserting probe for getwchar at " << RTN_Address(rtngetwchar) << endl;
+            OutFile << CurrentTime() << "Inserting probe for getwchar at "
+                    << RTN_Address(rtngetwchar) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtngetwchar, AFUNPTR(mygetwchar)));
             fptrgetwchar = fptr;
@@ -520,7 +529,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for gets at " << RTN_Address(rtngets) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtngets, AFUNPTR(mygets)));
-            fptrgets     = fptr;
+            fptrgets = fptr;
         }
 
         RTN rtnfgetc = RTN_FindByName(img, "fgetc");
@@ -529,7 +538,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for fgetc at " << RTN_Address(rtnfgetc) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfgetc, AFUNPTR(myfgetc)));
-            fptrfgetc    = fptr;
+            fptrfgetc = fptr;
         }
 
         RTN rtnfgetwc = RTN_FindByName(img, "fgetwc");
@@ -538,7 +547,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for fgetwc at " << RTN_Address(rtnfgetwc) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfgetwc, AFUNPTR(myfgetwc)));
-            fptrfgetwc   = fptr;
+            fptrfgetwc = fptr;
         }
 
         RTN rtnfgets = RTN_FindByName(img, "fgets");
@@ -547,7 +556,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for fgets at " << RTN_Address(rtnfgets) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfgets, AFUNPTR(myfgets)));
-            fptrfgets    = fptr;
+            fptrfgets = fptr;
         }
 
         RTN rtnfgetws = RTN_FindByName(img, "fgetws");
@@ -556,7 +565,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for fgetws at " << RTN_Address(rtnfgetws) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfgetws, AFUNPTR(myfgetws)));
-            fptrfgetws   = fptr;
+            fptrfgetws = fptr;
         }
 
         RTN rtnfread = RTN_FindByName(img, "fread");
@@ -565,7 +574,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for fread at " << RTN_Address(rtnfread) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfread, AFUNPTR(myfread)));
-            fptrfread    = fptr;
+            fptrfread = fptr;
         }
 
         RTN rtnfwrite = RTN_FindByName(img, "fwrite");
@@ -574,7 +583,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for fwrite at " << RTN_Address(rtnfwrite) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfwrite, AFUNPTR(myfwrite)));
-            fptrfwrite   = fptr;
+            fptrfwrite = fptr;
         }
 
         RTN rtnpipe = RTN_FindByName(img, "pipe");
@@ -583,7 +592,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for pipe at " << RTN_Address(rtnpipe) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnpipe, AFUNPTR(mypipe)));
-            fptrpipe     = fptr;
+            fptrpipe = fptr;
         }
 
         RTN rtnread = RTN_FindByName(img, "read");
@@ -592,7 +601,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for read at " << RTN_Address(rtnread) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnread, AFUNPTR(myread)));
-            fptrread     = fptr;
+            fptrread = fptr;
         }
 
         RTN rtnwrite = RTN_FindByName(img, "write");
@@ -601,7 +610,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for write at " << RTN_Address(rtnwrite) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnwrite, AFUNPTR(mywrite)));
-            fptrwrite    = fptr;
+            fptrwrite = fptr;
         }
 
         RTN rtnopen = RTN_FindByName(img, "open");
@@ -610,7 +619,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for open at " << RTN_Address(rtnopen) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnopen, AFUNPTR(myopen)));
-            fptropen     = fptr;
+            fptropen = fptr;
         }
 
         RTN rtnfopen = RTN_FindByName(img, "fopen");
@@ -619,7 +628,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for fopen at " << RTN_Address(rtnfopen) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfopen, AFUNPTR(myfopen)));
-            fptrfopen    = fptr;
+            fptrfopen = fptr;
         }
 
         RTN rtnfdopen = RTN_FindByName(img, "fdopen");
@@ -628,7 +637,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for fdopen at " << RTN_Address(rtnfdopen) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfdopen, AFUNPTR(myfdopen)));
-            fptrfdopen   = fptr;
+            fptrfdopen = fptr;
         }
 
         RTN rtnclose = RTN_FindByName(img, "close");
@@ -637,7 +646,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for close at " << RTN_Address(rtnclose) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnclose, AFUNPTR(myclose)));
-            fptrclose    = fptr;
+            fptrclose = fptr;
         }
 
         RTN rtnfclose = RTN_FindByName(img, "fclose");
@@ -646,33 +655,35 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for fclose at " << RTN_Address(rtnfclose) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfclose, AFUNPTR(myfclose)));
-            fptrfclose   = fptr;
+            fptrfclose = fptr;
         }
 
         RTN rtncallrpc = RTN_FindByName(img, "callrpc");
-        if (RTN_Valid(rtncallrpc) && RTN_IsSafeForProbedReplacement(rtncallrpc))
+        if (RTN_Valid(rtncallrpc)&& RTN_IsSafeForProbedReplacement(rtncallrpc))
         {
             OutFile << CurrentTime() << "Inserting probe for callrpc at " << RTN_Address(rtncallrpc) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtncallrpc, AFUNPTR(mycallrpc)));
-            fptrcallrpc  = fptr;
+            fptrcallrpc = fptr;
         }
 
         RTN rtnclnt_broadcast = RTN_FindByName(img, "clnt_broadcast");
-        if (RTN_Valid(rtnclnt_broadcast) && RTN_IsSafeForProbedReplacement(rtnclnt_broadcast))
+        if (RTN_Valid(rtnclnt_broadcast)
+                && RTN_IsSafeForProbedReplacement(rtnclnt_broadcast))
         {
             OutFile << CurrentTime() << "Inserting probe for clnt_broadcast at " << RTN_Address(rtnclnt_broadcast) << endl;
             OutFile.flush();
-            AFUNPTR fptr       = (RTN_ReplaceProbed(rtnclnt_broadcast, AFUNPTR(myclnt_broadcast)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnclnt_broadcast, AFUNPTR(myclnt_broadcast)));
             fptrclnt_broadcast = fptr;
         }
 
         RTN rtnclntudp_create = RTN_FindByName(img, "clntudp_create");
-        if (RTN_Valid(rtnclntudp_create) && RTN_IsSafeForProbedReplacement(rtnclntudp_create))
+        if (RTN_Valid(rtnclntudp_create)
+                && RTN_IsSafeForProbedReplacement(rtnclntudp_create))
         {
             OutFile << CurrentTime() << "Inserting probe for clntudp_create at " << RTN_Address(rtnclntudp_create) << endl;
             OutFile.flush();
-            AFUNPTR fptr       = (RTN_ReplaceProbed(rtnclntudp_create, AFUNPTR(myclntudp_create)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnclntudp_create, AFUNPTR(myclntudp_create)));
             fptrclntudp_create = fptr;
         }
 
@@ -681,7 +692,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for clntudp_bufcreate at " << RTN_Address(rtnclntudp_bufcreate) << endl;
             OutFile.flush();
-            AFUNPTR fptr          = (RTN_ReplaceProbed(rtnclntudp_bufcreate, AFUNPTR(myclntudp_bufcreate)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnclntudp_bufcreate, AFUNPTR(myclntudp_bufcreate)));
             fptrclntudp_bufcreate = fptr;
         }
 
@@ -690,7 +701,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for pmap_getmaps at " << RTN_Address(rtnpmap_getmaps) << endl;
             OutFile.flush();
-            AFUNPTR fptr     = (RTN_ReplaceProbed(rtnpmap_getmaps, AFUNPTR(mypmap_getmaps)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnpmap_getmaps, AFUNPTR(mypmap_getmaps)));
             fptrpmap_getmaps = fptr;
         }
 
@@ -699,7 +710,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for pmap_getport at " << RTN_Address(rtnpmap_getport) << endl;
             OutFile.flush();
-            AFUNPTR fptr     = (RTN_ReplaceProbed(rtnpmap_getport, AFUNPTR(mypmap_getport)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnpmap_getport, AFUNPTR(mypmap_getport)));
             fptrpmap_getport = fptr;
         }
 
@@ -708,7 +719,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for pmap_rmtcall at " << RTN_Address(rtnpmap_rmtcall) << endl;
             OutFile.flush();
-            AFUNPTR fptr     = (RTN_ReplaceProbed(rtnpmap_rmtcall, AFUNPTR(mypmap_rmtcall)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnpmap_rmtcall, AFUNPTR(mypmap_rmtcall)));
             fptrpmap_rmtcall = fptr;
         }
 
@@ -722,21 +733,23 @@ void ImgLoad(IMG img, VOID_PTR v)
         }
 
         RTN rtnclntraw_create = RTN_FindByName(img, "clntraw_create");
-        if (RTN_Valid(rtnclntraw_create) && RTN_IsSafeForProbedReplacement(rtnclntraw_create))
+        if (RTN_Valid(rtnclntraw_create)
+                && RTN_IsSafeForProbedReplacement(rtnclntraw_create))
         {
             OutFile << CurrentTime() << "Inserting probe for clntraw_create at " << RTN_Address(rtnclntraw_create) << endl;
             OutFile.flush();
-            AFUNPTR fptr       = (RTN_ReplaceProbed(rtnclntraw_create, AFUNPTR(myclntraw_create)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnclntraw_create, AFUNPTR(myclntraw_create)));
             fptrclntraw_create = fptr;
         }
 
         RTN rtnsvc_run = RTN_FindByName(img, "svc_run");
         if (RTN_Valid(rtnsvc_run) && RTN_IsSafeForProbedReplacement(rtnsvc_run))
         {
-            OutFile << CurrentTime() << "Inserting probe for svc_run at " << RTN_Address(rtnsvc_run) << endl;
+            OutFile << CurrentTime() << "Inserting probe for svc_run at "
+                    << RTN_Address(rtnsvc_run) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsvc_run, AFUNPTR(mysvc_run)));
-            fptrsvc_run  = fptr;
+            fptrsvc_run = fptr;
         }
 
         RTN rtnsvc_sendreply = RTN_FindByName(img, "svc_sendreply");
@@ -744,7 +757,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for svc_sendreply at " << RTN_Address(rtnsvc_sendreply) << endl;
             OutFile.flush();
-            AFUNPTR fptr      = (RTN_ReplaceProbed(rtnsvc_sendreply, AFUNPTR(mysvc_sendreply)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsvc_sendreply, AFUNPTR(mysvc_sendreply)));
             fptrsvc_sendreply = fptr;
         }
 
@@ -753,7 +766,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for svcraw_create at " << RTN_Address(rtnsvcraw_create) << endl;
             OutFile.flush();
-            AFUNPTR fptr      = (RTN_ReplaceProbed(rtnsvcraw_create, AFUNPTR(mysvcraw_create)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsvcraw_create, AFUNPTR(mysvcraw_create)));
             fptrsvcraw_create = fptr;
         }
 
@@ -762,7 +775,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for svctcp_create at " << RTN_Address(rtnsvctcp_create) << endl;
             OutFile.flush();
-            AFUNPTR fptr      = (RTN_ReplaceProbed(rtnsvctcp_create, AFUNPTR(mysvctcp_create)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsvctcp_create, AFUNPTR(mysvctcp_create)));
             fptrsvctcp_create = fptr;
         }
 
@@ -771,7 +784,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for svcudp_bufcreate at " << RTN_Address(rtnsvcudp_bufcreate) << endl;
             OutFile.flush();
-            AFUNPTR fptr         = (RTN_ReplaceProbed(rtnsvcudp_bufcreate, AFUNPTR(mysvcudp_bufcreate)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsvcudp_bufcreate, AFUNPTR(mysvcudp_bufcreate)));
             fptrsvcudp_bufcreate = fptr;
         }
 
@@ -780,7 +793,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for svcudp_create at " << RTN_Address(rtnsvcudp_create) << endl;
             OutFile.flush();
-            AFUNPTR fptr      = (RTN_ReplaceProbed(rtnsvcudp_create, AFUNPTR(mysvcudp_create)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsvcudp_create, AFUNPTR(mysvcudp_create)));
             fptrsvcudp_create = fptr;
         }
 
@@ -790,7 +803,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for abort at " << RTN_Address(rtnabort) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnabort, AFUNPTR(myabort)));
-            fptrabort    = fptr;
+            fptrabort = fptr;
         }
 
         RTN rtn_exit = RTN_FindByName(img, "_exit");
@@ -799,7 +812,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for _exit at " << RTN_Address(rtn_exit) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtn_exit, AFUNPTR(my_exit)));
-            fptr_exit    = fptr;
+            fptr_exit = fptr;
         }
 
         RTN rtnnanosleep = RTN_FindByName(img, "nanosleep");
@@ -807,7 +820,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for nanosleep at " << RTN_Address(rtnnanosleep) << endl;
             OutFile.flush();
-            AFUNPTR fptr  = (RTN_ReplaceProbed(rtnnanosleep, AFUNPTR(my_nanosleep)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnnanosleep, AFUNPTR(my_nanosleep)));
             fptrnanosleep = fptr;
         }
 
@@ -817,7 +830,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for signal at " << RTN_Address(rtnsignal) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsignal, AFUNPTR(mysignal)));
-            fptrsignal   = fptr;
+            fptrsignal = fptr;
         }
 
         RTN rtnsigprocmask = RTN_FindByName(img, "sigprocmask");
@@ -825,7 +838,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for sigprocmask at " << RTN_Address(rtnsigprocmask) << endl;
             OutFile.flush();
-            AFUNPTR fptr    = (RTN_ReplaceProbed(rtnsigprocmask, AFUNPTR(mysigprocmask)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigprocmask, AFUNPTR(mysigprocmask)));
             fptrsigprocmask = fptr;
         }
 
@@ -834,7 +847,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for sigpending at " << RTN_Address(rtnsigpending) << endl;
             OutFile.flush();
-            AFUNPTR fptr   = (RTN_ReplaceProbed(rtnsigpending, AFUNPTR(mysigpending)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigpending, AFUNPTR(mysigpending)));
             fptrsigpending = fptr;
         }
 
@@ -843,7 +856,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for sigaction at " << RTN_Address(rtnsigaction) << endl;
             OutFile.flush();
-            AFUNPTR fptr  = (RTN_ReplaceProbed(rtnsigaction, AFUNPTR(mysigaction)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigaction, AFUNPTR(mysigaction)));
             fptrsigaction = fptr;
         }
 
@@ -852,7 +865,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for setitimer at " << RTN_Address(rtnsetitimer) << endl;
             OutFile.flush();
-            AFUNPTR fptr  = (RTN_ReplaceProbed(rtnsetitimer, AFUNPTR(mysetitimer)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsetitimer, AFUNPTR(mysetitimer)));
             fptrsetitimer = fptr;
         }
 
@@ -862,7 +875,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for exit at " << RTN_Address(rtnexit) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnexit, AFUNPTR(myexit)));
-            fptrexit     = fptr;
+            fptrexit = fptr;
         }
 
         RTN rtndl_iterate_phdr = RTN_FindByName(img, "dl_iterate_phdr");
@@ -870,26 +883,28 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for dl_iterate_phdr at " << RTN_Address(rtndl_iterate_phdr) << endl;
             OutFile.flush();
-            AFUNPTR fptr        = (RTN_ReplaceProbed(rtndl_iterate_phdr, AFUNPTR(mydl_iterate_phdr)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtndl_iterate_phdr, AFUNPTR(mydl_iterate_phdr)));
             fptrdl_iterate_phdr = fptr;
         }
 
         RTN rtnsystem = RTN_FindByName(img, "system");
         if (RTN_Valid(rtnsystem) && RTN_IsSafeForProbedReplacement(rtnsystem))
         {
-            OutFile << CurrentTime() << "Inserting probe for system at " << RTN_Address(rtnsystem) << endl;
+            OutFile << CurrentTime() << "Inserting probe for system at "
+                    << RTN_Address(rtnsystem) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsystem, AFUNPTR(mysystem)));
-            fptrsystem   = fptr;
+            fptrsystem = fptr;
         }
 
         RTN rtnalarm = RTN_FindByName(img, "alarm");
         if (RTN_Valid(rtnalarm) && RTN_IsSafeForProbedReplacement(rtnalarm))
         {
-            OutFile << CurrentTime() << "Inserting probe for alarm at " << RTN_Address(rtnalarm) << endl;
+            OutFile << CurrentTime() << "Inserting probe for alarm at "
+                    << RTN_Address(rtnalarm) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnalarm, AFUNPTR(myalarm)));
-            fptralarm    = fptr;
+            fptralarm = fptr;
         }
 
         RTN rtnrecvmsg = RTN_FindByName(img, "recvmsg");
@@ -898,25 +913,27 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for recvmsg at " << RTN_Address(rtnrecvmsg) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnrecvmsg, AFUNPTR(myrecvmsg)));
-            fptrrecvmsg  = fptr;
+            fptrrecvmsg = fptr;
         }
 
         RTN rtnsendmsg = RTN_FindByName(img, "sendmsg");
         if (RTN_Valid(rtnsendmsg) && RTN_IsSafeForProbedReplacement(rtnsendmsg))
         {
-            OutFile << CurrentTime() << "Inserting probe for sendmsg at " << RTN_Address(rtnsendmsg) << endl;
+            OutFile << CurrentTime() << "Inserting probe for sendmsg at "
+                    << RTN_Address(rtnsendmsg) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsendmsg, AFUNPTR(mysendmsg)));
-            fptrsendmsg  = fptr;
+            fptrsendmsg = fptr;
         }
 
         RTN rtnpause = RTN_FindByName(img, "pause");
         if (RTN_Valid(rtnpause) && RTN_IsSafeForProbedReplacement(rtnpause))
         {
-            OutFile << CurrentTime() << "Inserting probe for pause at " << RTN_Address(rtnpause) << endl;
+            OutFile << CurrentTime() << "Inserting probe for pause at "
+                    << RTN_Address(rtnpause) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnpause, AFUNPTR(mypause)));
-            fptrpause    = fptr;
+            fptrpause = fptr;
         }
 
         RTN rtnsigtimedwait = RTN_FindByName(img, "sigtimedwait");
@@ -924,7 +941,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for sigtimedwait at " << RTN_Address(rtnsigtimedwait) << endl;
             OutFile.flush();
-            AFUNPTR fptr     = (RTN_ReplaceProbed(rtnsigtimedwait, AFUNPTR(mysigtimedwait)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigtimedwait, AFUNPTR(mysigtimedwait)));
             fptrsigtimedwait = fptr;
         }
 
@@ -933,7 +950,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for sigwaitinfo at " << RTN_Address(rtnsigwaitinfo) << endl;
             OutFile.flush();
-            AFUNPTR fptr    = (RTN_ReplaceProbed(rtnsigwaitinfo, AFUNPTR(mysigwaitinfo)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigwaitinfo, AFUNPTR(mysigwaitinfo)));
             fptrsigwaitinfo = fptr;
         }
 
@@ -942,7 +959,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for epoll_wait at " << RTN_Address(rtnepoll_wait) << endl;
             OutFile.flush();
-            AFUNPTR fptr   = (RTN_ReplaceProbed(rtnepoll_wait, AFUNPTR(myepoll_wait)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnepoll_wait, AFUNPTR(myepoll_wait)));
             fptrepoll_wait = fptr;
         }
 
@@ -952,7 +969,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for ppoll at " << RTN_Address(rtnppoll) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnppoll, AFUNPTR(myppoll)));
-            fptrppoll    = fptr;
+            fptrppoll = fptr;
         }
 
         RTN rtnmsgsnd = RTN_FindByName(img, "msgsnd");
@@ -961,7 +978,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for msgsnd at " << RTN_Address(rtnmsgsnd) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnmsgsnd, AFUNPTR(mymsgsnd)));
-            fptrmsgsnd   = fptr;
+            fptrmsgsnd = fptr;
         }
 
         RTN rtnmsgrcv = RTN_FindByName(img, "msgrcv");
@@ -970,7 +987,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for msgrcv at " << RTN_Address(rtnmsgrcv) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnmsgrcv, AFUNPTR(mymsgrcv)));
-            fptrmsgrcv   = fptr;
+            fptrmsgrcv = fptr;
         }
 
         RTN rtnsemop = RTN_FindByName(img, "semop");
@@ -979,44 +996,42 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for semop at " << RTN_Address(rtnsemop) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsemop, AFUNPTR(mymsgrcv)));
-            fptrsemop    = fptr;
+            fptrsemop = fptr;
         }
 
         RTN rtnsemtimedop = RTN_FindByName(img, "semtimedop");
-        if (RTN_Valid(rtnsemtimedop) && RTN_IsSafeForProbedReplacement(rtnsemtimedop))
-        {
-            OutFile << CurrentTime() << "Inserting probe for semtimedop at " << RTN_Address(rtnsemtimedop) << endl;
+        if (RTN_Valid(rtnsemtimedop)
+                && RTN_IsSafeForProbedReplacement(rtnsemtimedop)) {
+            OutFile << CurrentTime() << "Inserting probe for semtimedop at "
+                    << RTN_Address(rtnsemtimedop) << endl;
             OutFile.flush();
-            AFUNPTR fptr   = RTN_ReplaceProbed(rtnsemtimedop, AFUNPTR(mysemtimedop));
+            AFUNPTR fptr = RTN_ReplaceProbed(rtnsemtimedop, AFUNPTR(mysemtimedop));
             fptrsemtimedop = fptr;
         }
 
         RTN rtnusleep = RTN_FindByName(img, "usleep");
-        if (RTN_Valid(rtnusleep) && RTN_IsSafeForProbedReplacement(rtnusleep))
-        {
-            OutFile << CurrentTime() << "Inserting probe for usleep at " << RTN_Address(rtnusleep) << endl;
+        if (RTN_Valid(rtnusleep) && RTN_IsSafeForProbedReplacement(rtnusleep)) {
+            OutFile << CurrentTime() << "Inserting probe for usleep at "
+                    << RTN_Address(rtnusleep) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnusleep, AFUNPTR(myusleep)));
-            fptrusleep   = fptr;
-        }
+            fptrusleep = fptr;}
 
         RTN rtnualarm = RTN_FindByName(img, "ualarm");
-        if (RTN_Valid(rtnualarm) && RTN_IsSafeForProbedReplacement(rtnualarm))
-        {
-            OutFile << CurrentTime() << "Inserting probe for ualarm at " << RTN_Address(rtnualarm) << endl;
+        if (RTN_Valid(rtnualarm) && RTN_IsSafeForProbedReplacement(rtnualarm)) {
+            OutFile << CurrentTime() << "Inserting probe for ualarm at "
+                    << RTN_Address(rtnualarm) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnualarm, AFUNPTR(myualarm)));
-            fptrualarm   = fptr;
-        }
+            fptrualarm = fptr;}
 
         RTN rtngetitimer = RTN_FindByName(img, "getitimer");
         if (RTN_Valid(rtngetitimer) && RTN_IsSafeForProbedReplacement(rtngetitimer))
         {
             OutFile << CurrentTime() << "Inserting probe for getitimer at " << RTN_Address(rtngetitimer) << endl;
             OutFile.flush();
-            AFUNPTR fptr  = (RTN_ReplaceProbed(rtngetitimer, AFUNPTR(mygetitimer)));
-            fptrgetitimer = fptr;
-        }
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtngetitimer, AFUNPTR(mygetitimer)));
+            fptrgetitimer = fptr;}
 
         RTN rtnsigwait = RTN_FindByName(img, "sigwait");
         if (RTN_Valid(rtnsigwait) && RTN_IsSafeForProbedReplacement(rtnsigwait))
@@ -1024,7 +1039,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for sigwait at " << RTN_Address(rtnsigwait) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigwait, AFUNPTR(mysigwait)));
-            fptrsigwait  = fptr;
+            fptrsigwait = fptr;
         }
 
         RTN rtnmsgget = RTN_FindByName(img, "msgget");
@@ -1033,7 +1048,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for msgget at " << RTN_Address(rtnmsgget) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnmsgget, AFUNPTR(mymsgget)));
-            fptrmsgget   = fptr;
+            fptrmsgget = fptr;
         }
 
         RTN rtnsemget = RTN_FindByName(img, "semget");
@@ -1042,7 +1057,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for semget at " << RTN_Address(rtnsemget) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsemget, AFUNPTR(mysemget)));
-            fptrsemget   = fptr;
+            fptrsemget = fptr;
         }
 
         RTN rtnwait = RTN_FindByName(img, "wait");
@@ -1051,7 +1066,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for wait at " << RTN_Address(rtnwait) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnwait, AFUNPTR(mywait)));
-            fptrwait     = fptr;
+            fptrwait = fptr;
         }
 
         RTN rtnwaitpid = RTN_FindByName(img, "waitpid");
@@ -1060,7 +1075,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for waitpid at " << RTN_Address(rtnwaitpid) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnwaitpid, AFUNPTR(mywaitpid)));
-            fptrwaitpid  = fptr;
+            fptrwaitpid = fptr;
         }
 
         RTN rtnwaitid = RTN_FindByName(img, "waitid");
@@ -1069,7 +1084,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for waitid at " << RTN_Address(rtnwaitid) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnwaitid, AFUNPTR(mywaitid)));
-            fptrwaitid   = fptr;
+            fptrwaitid = fptr;
         }
 
         RTN rtnwait3 = RTN_FindByName(img, "wait3");
@@ -1078,7 +1093,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for wait3 at " << RTN_Address(rtnwait3) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnwait3, AFUNPTR(mywait3)));
-            fptrwait3    = fptr;
+            fptrwait3 = fptr;
         }
 
         RTN rtnwait4 = RTN_FindByName(img, "wait4");
@@ -1087,7 +1102,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for wait4 at " << RTN_Address(rtnwait4) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnwait3, AFUNPTR(mywait4)));
-            fptrwait4    = fptr;
+            fptrwait4 = fptr;
         }
 
         RTN rtnreadv = RTN_FindByName(img, "readv");
@@ -1096,7 +1111,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for readv at " << RTN_Address(rtnreadv) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnreadv, AFUNPTR(myreadv)));
-            fptrreadv    = fptr;
+            fptrreadv = fptr;
         }
 
         RTN rtnwritev = RTN_FindByName(img, "writev");
@@ -1105,7 +1120,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for writev at " << RTN_Address(rtnwritev) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnwritev, AFUNPTR(mywritev)));
-            fptrwritev   = fptr;
+            fptrwritev = fptr;
         }
 
         RTN rtnflockfile = RTN_FindByName(img, "flockfile");
@@ -1113,17 +1128,18 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for flockfile at " << RTN_Address(rtnflockfile) << endl;
             OutFile.flush();
-            AFUNPTR fptr  = (RTN_ReplaceProbed(rtnflockfile, AFUNPTR(myflockfile)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnflockfile, AFUNPTR(myflockfile)));
             fptrflockfile = fptr;
         }
         RTN rtnfunlockfile = RTN_FindByName(img, "funlockfile");
-        if (RTN_Valid(rtnfunlockfile) && RTN_IsSafeForProbedReplacement(rtnfunlockfile))
-        {
-            OutFile << CurrentTime() << "Inserting probe for funlockfile at " << RTN_Address(rtnfunlockfile) << endl;
+        if (RTN_Valid(rtnfunlockfile)
+                && RTN_IsSafeForProbedReplacement(rtnfunlockfile)) {
+            OutFile << CurrentTime() << "Inserting probe for funlockfile at "
+                    << RTN_Address(rtnfunlockfile) << endl;
             OutFile.flush();
-            AFUNPTR fptr    = (RTN_ReplaceProbed(rtnfunlockfile, AFUNPTR(myfunlockfile)));
-            fptrfunlockfile = fptr;
-        }
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnfunlockfile,
+                    AFUNPTR(myfunlockfile)));
+            fptrfunlockfile = fptr;}
 
         RTN rtnlockf = RTN_FindByName(img, "lockf");
         if (RTN_Valid(rtnlockf) && RTN_IsSafeForProbedReplacement(rtnlockf))
@@ -1131,7 +1147,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for lockf at " << RTN_Address(rtnlockf) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnlockf, AFUNPTR(mylockf)));
-            fptrlockf    = fptr;
+            fptrlockf = fptr;
         }
 
         RTN rtnsetenv = RTN_FindByName(img, "setenv");
@@ -1140,7 +1156,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for setenv at " << RTN_Address(rtnsetenv) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsetenv, AFUNPTR(mysetenv)));
-            fptrsetenv   = fptr;
+            fptrsetenv = fptr;
         }
 
         RTN rtnunsetenv = RTN_FindByName(img, "unsetenv");
@@ -1155,55 +1171,61 @@ void ImgLoad(IMG img, VOID_PTR v)
         RTN rtngetenv = RTN_FindByName(img, "getenv");
         if (RTN_Valid(rtngetenv) && RTN_IsSafeForProbedReplacement(rtngetenv))
         {
-            OutFile << CurrentTime() << "Inserting probe for getenv at " << RTN_Address(rtngetenv) << endl;
+            OutFile << CurrentTime() << "Inserting probe for getenv at "
+                    << RTN_Address(rtngetenv) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtngetenv, AFUNPTR(mygetenv)));
-            fptrgetenv   = fptr;
+            fptrgetenv = fptr;
         }
 
         RTN rtnperror = RTN_FindByName(img, "perror");
         if (RTN_Valid(rtnperror) && RTN_IsSafeForProbedReplacement(rtnperror))
         {
-            OutFile << CurrentTime() << "Inserting probe for perror at " << RTN_Address(rtnperror) << endl;
+            OutFile << CurrentTime() << "Inserting probe for perror at "
+                    << RTN_Address(rtnperror) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnperror, AFUNPTR(myperror)));
-            fptrperror   = fptr;
+            fptrperror = fptr;
         }
 
         RTN rtnmmap = RTN_FindByName(img, "mmap");
         if (RTN_Valid(rtnmmap) && RTN_IsSafeForProbedReplacement(rtnmmap))
         {
-            OutFile << CurrentTime() << "Inserting probe for mmap at " << RTN_Address(rtnmmap) << endl;
+            OutFile << CurrentTime() << "Inserting probe for mmap at "
+                    << RTN_Address(rtnmmap) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnmmap, AFUNPTR(mymmap)));
-            fptrmmap     = fptr;
+            fptrmmap = fptr;
         }
 
         RTN rtnmunmap = RTN_FindByName(img, "munmap");
         if (RTN_Valid(rtnmunmap) && RTN_IsSafeForProbedReplacement(rtnmunmap))
         {
-            OutFile << CurrentTime() << "Inserting probe for munmap at " << RTN_Address(rtnmunmap) << endl;
+            OutFile << CurrentTime() << "Inserting probe for munmap at "
+                    << RTN_Address(rtnmunmap) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnmunmap, AFUNPTR(mymunmap)));
-            fptrmunmap   = fptr;
+            fptrmunmap = fptr;
         }
 
         RTN rtnfileno = RTN_FindByName(img, "fileno");
         if (RTN_Valid(rtnfileno) && RTN_IsSafeForProbedReplacement(rtnfileno))
         {
-            OutFile << CurrentTime() << "Inserting probe for fileno at " << RTN_Address(rtnfileno) << endl;
+            OutFile << CurrentTime() << "Inserting probe for fileno at "
+                    << RTN_Address(rtnfileno) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnfileno, AFUNPTR(myfileno)));
-            fptrfileno   = fptr;
+            fptrfileno = fptr;
         }
 
         RTN rtngetpid = RTN_FindByName(img, "getpid");
         if (RTN_Valid(rtngetpid) && RTN_IsSafeForProbedReplacement(rtngetpid))
         {
-            OutFile << CurrentTime() << "Inserting probe for getpid at " << RTN_Address(rtngetpid) << endl;
+            OutFile << CurrentTime() << "Inserting probe for getpid at "
+                    << RTN_Address(rtngetpid) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtngetpid, AFUNPTR(mygetpid)));
-            fptrgetpid   = fptr;
+            fptrgetpid = fptr;
         }
 
         RTN rtngetppid = RTN_FindByName(img, "getppid");
@@ -1212,7 +1234,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for getppid at " << RTN_Address(rtngetppid) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtngetppid, AFUNPTR(mygetppid)));
-            fptrgetppid  = fptr;
+            fptrgetppid = fptr;
         }
 
         RTN rtnmemset = RTN_FindByName(img, "memset");
@@ -1221,7 +1243,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for memset at " << RTN_Address(rtnmemset) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnmemset, AFUNPTR(mymemset)));
-            fptrmemset   = fptr;
+            fptrmemset = fptr;
         }
 
         RTN rtnmemcpy = RTN_FindByName(img, "memcpy");
@@ -1232,7 +1254,7 @@ void ImgLoad(IMG img, VOID_PTR v)
                 OutFile << CurrentTime() << "Inserting probe for memcpy at " << RTN_Address(rtnmemcpy) << endl;
                 OutFile.flush();
                 AFUNPTR fptr = (RTN_ReplaceProbed(rtnmemcpy, AFUNPTR(mymemcpy)));
-                fptrmemcpy   = fptr;
+                fptrmemcpy = fptr;
             }
         }
 
@@ -1242,7 +1264,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for access at " << RTN_Address(rtnaccess) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnaccess, AFUNPTR(myaccess)));
-            fptraccess   = fptr;
+            fptraccess = fptr;
         }
 
         RTN rtnlseek = RTN_FindByName(img, "lseek");
@@ -1251,7 +1273,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for lseek at " << RTN_Address(rtnlseek) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnlseek, AFUNPTR(mylseek)));
-            fptrlseek    = fptr;
+            fptrlseek = fptr;
         }
 
         RTN rtnlseek64 = RTN_FindByName(img, "lseek64");
@@ -1260,7 +1282,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for lseek64 at " << RTN_Address(rtnlseek64) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnlseek64, AFUNPTR(mylseek64)));
-            fptrlseek64  = fptr;
+            fptrlseek64 = fptr;
         }
 
         RTN rtnfdatasync = RTN_FindByName(img, "fdatasync");
@@ -1268,7 +1290,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for fdatasync at " << RTN_Address(rtnfdatasync) << endl;
             OutFile.flush();
-            AFUNPTR fptr  = (RTN_ReplaceProbed(rtnfdatasync, AFUNPTR(myfdatasync)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnfdatasync, AFUNPTR(myfdatasync)));
             fptrfdatasync = fptr;
         }
 
@@ -1278,7 +1300,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for unlink at " << RTN_Address(rtnunlink) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnunlink, AFUNPTR(myunlink)));
-            fptrunlink   = fptr;
+            fptrunlink = fptr;
         }
 
         RTN rtnstrlen = RTN_FindByName(img, "strlen");
@@ -1287,16 +1309,16 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for strlen at " << RTN_Address(rtnstrlen) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnstrlen, AFUNPTR(mystrlen)));
-            fptrstrlen   = fptr;
+            fptrstrlen = fptr;
         }
 
         RTN rtnwcslen = RTN_FindByName(img, "wcslen");
         if (RTN_Valid(rtnwcslen) && RTN_IsSafeForProbedReplacement(rtnwcslen))
         {
-            OutFile << CurrentTime() << "Inserting probe for wcslen at " << RTN_Address(rtnwcslen) << endl;
+            OutFile << CurrentTime() << "Inserting probe for wcslen at "<< RTN_Address(rtnwcslen) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnwcslen, AFUNPTR(mywcslen)));
-            fptrwcslen   = fptr;
+            fptrwcslen = fptr;
         }
 
         RTN rtnstrcpy = RTN_FindByName(img, "strcpy");
@@ -1305,7 +1327,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for strcpy at " << RTN_Address(rtnstrcpy) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnstrcpy, AFUNPTR(mystrcpy)));
-            fptrstrcpy   = fptr;
+            fptrstrcpy = fptr;
         }
 
         RTN rtnstrncpy = RTN_FindByName(img, "strncpy");
@@ -1314,7 +1336,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for strncpy at " << RTN_Address(rtnstrncpy) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnstrncpy, AFUNPTR(mystrcpy)));
-            fptrstrncpy  = fptr;
+            fptrstrncpy = fptr;
         }
 
         RTN rtnstrcat = RTN_FindByName(img, "strcat");
@@ -1323,7 +1345,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for strcat at " << RTN_Address(rtnstrcat) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnstrcat, AFUNPTR(mystrcat)));
-            fptrstrcat   = fptr;
+            fptrstrcat = fptr;
         }
 
         RTN rtnstrstr = RTN_FindByName(img, "strstr");
@@ -1332,7 +1354,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for strstr at " << RTN_Address(rtnstrstr) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnstrstr, AFUNPTR(mystrstr)));
-            fptrstrstr   = fptr;
+            fptrstrstr = fptr;
         }
 
         RTN rtnstrchr0 = RTN_FindByName(img, "strchr0");
@@ -1341,16 +1363,17 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for strchr0 at " << RTN_Address(rtnstrchr0) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnstrchr0, AFUNPTR(mystrchr0)));
-            fptrstrrchr  = fptr;
+            fptrstrrchr = fptr;
         }
 
         RTN rtnstrrchr = RTN_FindByName(img, "strrchr");
         if (RTN_Valid(rtnstrrchr) && RTN_IsSafeForProbedReplacement(rtnstrrchr))
         {
-            OutFile << CurrentTime() << "Inserting probe for strrchr at " << RTN_Address(rtnstrrchr) << endl;
+            OutFile << CurrentTime() << "Inserting probe for strrchr at "
+                    << RTN_Address(rtnstrrchr) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnstrrchr, AFUNPTR(mystrrchr)));
-            fptrstrrchr  = fptr;
+            fptrstrrchr = fptr;
         }
 
         RTN rtnstrcmp = RTN_FindByName(img, "strcmp");
@@ -1359,7 +1382,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for strcmp at " << RTN_Address(rtnstrcmp) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnstrcmp, AFUNPTR(mystrcmp)));
-            fptrstrcmp   = fptr;
+            fptrstrcmp = fptr;
         }
 
         RTN rtnstrncmp = RTN_FindByName(img, "strncmp");
@@ -1368,7 +1391,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for strncmp at " << RTN_Address(rtnstrncmp) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnstrncmp, AFUNPTR(mystrncmp)));
-            fptrstrncmp  = fptr;
+            fptrstrncmp = fptr;
         }
 
         RTN rtnsigaddset = RTN_FindByName(img, "sigaddset");
@@ -1376,16 +1399,16 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for sigaddset at " << RTN_Address(rtnsigaddset) << endl;
             OutFile.flush();
-            AFUNPTR fptr  = (RTN_ReplaceProbed(rtnsigaddset, AFUNPTR(mysigaddset)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigaddset, AFUNPTR(mysigaddset)));
             fptrsigaddset = fptr;
         }
 
         RTN rtnsigdelset = RTN_FindByName(img, "sigdelset");
         if (RTN_Valid(rtnsigdelset) && RTN_IsSafeForProbedReplacement(rtnsigdelset))
         {
-            OutFile << CurrentTime() << "Inserting probe for sigdelset at " << RTN_Address(rtnsigdelset) << endl;
+            OutFile << CurrentTime() << "Inserting probe for sigdelset at "<< RTN_Address(rtnsigdelset) << endl;
             OutFile.flush();
-            AFUNPTR fptr  = (RTN_ReplaceProbed(rtnsigdelset, AFUNPTR(mysigdelset)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigdelset, AFUNPTR(mysigdelset)));
             fptrsigdelset = fptr;
         }
 
@@ -1394,7 +1417,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for sigismember at " << RTN_Address(rtnsigismember) << endl;
             OutFile.flush();
-            AFUNPTR fptr  = (RTN_ReplaceProbed(rtnsigismember, AFUNPTR(mysigismember)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigismember, AFUNPTR(mysigismember)));
             fptrsigdelset = fptr;
         }
 
@@ -1413,7 +1436,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for bind at " << RTN_Address(rtnbind) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnbind, AFUNPTR(mybind)));
-            fptrbind     = fptr;
+            fptrbind = fptr;
         }
 
         RTN rtnlisten = RTN_FindByName(img, "listen");
@@ -1422,16 +1445,16 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for listen at " << RTN_Address(rtnlisten) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnlisten, AFUNPTR(mylisten)));
-            fptrlisten   = fptr;
+            fptrlisten = fptr;
         }
 
         RTN rtnuname = RTN_FindByName(img, "uname");
         if (RTN_Valid(rtnuname) && RTN_IsSafeForProbedReplacement(rtnuname))
         {
-            OutFile << CurrentTime() << "Inserting probe for uname at " << RTN_Address(rtnuname) << endl;
+            OutFile << CurrentTime() << "Inserting probe for uname at "    << RTN_Address(rtnuname) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnuname, AFUNPTR(myuname)));
-            fptruname    = fptr;
+            fptruname = fptr;
         }
 
         RTN rtngethostname = RTN_FindByName(img, "gethostname");
@@ -1439,7 +1462,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for gethostname at " << RTN_Address(rtngethostname) << endl;
             OutFile.flush();
-            AFUNPTR fptr    = (RTN_ReplaceProbed(rtngethostname, AFUNPTR(mygethostname)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtngethostname, AFUNPTR(mygethostname)));
             fptrgethostname = fptr;
         }
 
@@ -1449,15 +1472,14 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for kill at " << RTN_Address(rtnkill) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnkill, AFUNPTR(mykill)));
-            fptrkill     = fptr;
+            fptrkill = fptr;
         }
 
         RTN rtnsched_yield = RTN_FindByName(img, "sched_yield");
-        if (RTN_Valid(rtnsched_yield) && RTN_IsSafeForProbedReplacement(rtnsched_yield))
-        {
+        if (RTN_Valid(rtnsched_yield) && RTN_IsSafeForProbedReplacement(rtnsched_yield)) {
             OutFile << CurrentTime() << "Inserting probe for sched_yield at " << RTN_Address(rtnsched_yield) << endl;
             OutFile.flush();
-            AFUNPTR fptr    = (RTN_ReplaceProbed(rtnsched_yield, AFUNPTR(mysched_yield)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsched_yield, AFUNPTR(mysched_yield)));
             fptrsched_yield = fptr;
         }
 
@@ -1466,7 +1488,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for timer_settime at " << RTN_Address(rtntimer_settime) << endl;
             OutFile.flush();
-            AFUNPTR fptr      = (RTN_ReplaceProbed(rtntimer_settime, AFUNPTR(mytimer_settime)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtntimer_settime, AFUNPTR(mytimer_settime)));
             fptrtimer_settime = fptr;
         }
 
@@ -1475,7 +1497,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for sigaltstack at " << RTN_Address(rtnsigaltstack) << endl;
             OutFile.flush();
-            AFUNPTR fptr    = (RTN_ReplaceProbed(rtnsigaltstack, AFUNPTR(mysigaltstack)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnsigaltstack, AFUNPTR(mysigaltstack)));
             fptrsigaltstack = fptr;
         }
 
@@ -1485,7 +1507,7 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for ioctl at " << RTN_Address(rtnioctl) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnioctl, AFUNPTR(myioctl)));
-            fptrioctl    = fptr;
+            fptrioctl = fptr;
         }
 
         RTN rtnflock = RTN_FindByName(img, "flock");
@@ -1494,16 +1516,15 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for flock at " << RTN_Address(rtnflock) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnflock, AFUNPTR(myflock)));
-            fptrflock    = fptr;
+            fptrflock = fptr;
         }
 
         RTN rtn__libc_dlopen_mode = RTN_FindByName(img, "__libc_dlopen_mode");
         if (RTN_Valid(rtn__libc_dlopen_mode) && RTN_IsSafeForProbedReplacement(rtn__libc_dlopen_mode))
         {
-            OutFile << CurrentTime() << "Inserting probe for __libc_dlopen_mode at " << RTN_Address(rtn__libc_dlopen_mode)
-                    << endl;
+            OutFile << CurrentTime() << "Inserting probe for __libc_dlopen_mode at " << RTN_Address(rtn__libc_dlopen_mode) << endl;
             OutFile.flush();
-            AFUNPTR fptr           = (RTN_ReplaceProbed(rtn__libc_dlopen_mode, AFUNPTR(my__libc_dlopen_mode)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtn__libc_dlopen_mode, AFUNPTR(my__libc_dlopen_mode)));
             fptr__libc_dlopen_mode = fptr;
         }
 
@@ -1512,7 +1533,7 @@ void ImgLoad(IMG img, VOID_PTR v)
         {
             OutFile << CurrentTime() << "Inserting probe for __errno_location at " << RTN_Address(rtn__errno_location) << endl;
             OutFile.flush();
-            AFUNPTR fptr         = (RTN_ReplaceProbed(rtn__errno_location, AFUNPTR(my__errno_location)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtn__errno_location, AFUNPTR(my__errno_location)));
             fptr__errno_location = fptr;
         }
 
@@ -1522,22 +1543,19 @@ void ImgLoad(IMG img, VOID_PTR v)
             OutFile << CurrentTime() << "Inserting probe for syscall at " << RTN_Address(rtnsyscall) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnsyscall, AFUNPTR(mysyscall)));
-            fptrsyscall  = fptr;
+            fptrsyscall = fptr;}
         }
+        // finished instrumentation
     }
-    // finished instrumentation
-}
 
 /* ===================================================================== */
 /* Main function                                                         */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
     // Initialize Pin
     PIN_InitSymbols();
-    if (PIN_Init(argc, argv))
-    {
+    if (PIN_Init(argc, argv)) {
         return Usage();
     }
 

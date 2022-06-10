@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,14 +22,16 @@ unsigned SigCount = 0;
 
 static void Handle(int);
 
+
 int main()
 {
     struct sigaction sigact;
     ssize_t sz;
     char buf;
 
+
     sigact.sa_handler = Handle;
-    sigact.sa_flags   = 0;
+    sigact.sa_flags = 0;
     sigemptyset(&sigact.sa_mask);
     if (sigaction(SIGALRM, &sigact, 0) == -1)
     {
@@ -51,5 +53,6 @@ static void Handle(int sig)
 {
     printf("Got SIGALRM\n");
     SigCount++;
-    if (SigCount > 1) exit(0);
+    if (SigCount > 1)
+        exit(0);
 }

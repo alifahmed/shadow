@@ -20,8 +20,7 @@
 TEST_TOOL_ROOTS := iarg_explicit_memory_ea iarg_uint64 iarg_branch_taken_correct iarg_branch_taken_error
 
 # This defines the tests to be run that were not already defined in TEST_TOOL_ROOTS.
-TEST_ROOTS := iarg_inst_ptr_error_msg_ref iarg_inst_ptr_error_msg_ret iarg_inst_ptr_error_msg_check_reference \
-              iarg_memory_size_fxsave_fxrstor
+TEST_ROOTS := iarg_inst_ptr_error_msg_ref iarg_inst_ptr_error_msg_ret iarg_memory_size_fxsave_fxrstor
 
 # This defines the tools which will be run during the the tests, and were not already defined in
 # TEST_TOOL_ROOTS.
@@ -54,20 +53,15 @@ ifeq ($(TARGET_OS),windows)
     OBJECT_ROOTS += iarg_explicit_memory_ea_app_asm
 endif
 
-###### Handle exceptions here (OS/arch related) ######
-
+###### Handle exceptions here ######
 ifeq ($(TARGET_OS),linux)
-    RTM_NOT_SUPPORTED := $(shell $(TOOLS_ROOT)/Utils/testToolVersion $(CXXPATH) lt 4.8.3)
+    RTM_NOT_SUPPORTED := $(shell $(TOOLS_ROOT)/Utils/testGccVersion $(CXXPATH) 4.8.3)
     ifeq ($(RTM_NOT_SUPPORTED),1)
         APP_ROOTS := $(filter-out use_rtm_app, $(APP_ROOTS))
         TEST_TOOL_ROOTS := $(filter-out iarg_branch_taken_correct, $(TEST_TOOL_ROOTS))
         TEST_TOOL_ROOTS := $(filter-out iarg_branch_taken_error, $(TEST_TOOL_ROOTS))
     endif
 endif
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
 
 ###### Define the sanity subset ######
 

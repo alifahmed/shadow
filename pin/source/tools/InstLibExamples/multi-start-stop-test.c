@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,13 +11,25 @@
 
 #include <stdio.h>
 
-void foo() { printf("inside foo\n"); }
+void foo()
+{
+   printf("inside foo\n");
+}
 
-void mark1() { printf("inside mark1\n"); }
+void mark1()
+{
+   printf("inside mark1\n");
+}
 
-void mark2() { printf("inside mark2\n"); }
+void mark2()
+{
+   printf("inside mark2\n");
+}
 
-void bar() { printf("inside bar \n"); }
+void bar()
+{
+   printf("inside bar \n");
+}
 
 int main()
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,31 +22,34 @@
 using std::string;
 
 #if defined(PIN_CRT)
-#define HAVE_POSIX_MEMALIGN
-#define HAVE_MEMALIGN
-#define HAVE_VALLOC
+#    define HAVE_POSIX_MEMALIGN
+#    define HAVE_MEMALIGN
+#    define HAVE_VALLOC
 #elif defined(TARGET_WINDOWS)
-#define HAVE_ALIGNED_MALLOC
+#    define HAVE_ALIGNED_MALLOC
 #elif defined(TARGET_MAC)
-#define HAVE_POSIX_MEMALIGN
-#define HAVE_VALLOC
+#    define HAVE_POSIX_MEMALIGN
+#    define HAVE_VALLOC
 #elif defined(TARGET_LINUX)
-#define HAVE_POSIX_MEMALIGN
-#define HAVE_MEMALIGN
-#define HAVE_VALLOC
+#    define HAVE_POSIX_MEMALIGN
+#    define HAVE_MEMALIGN
+#    define HAVE_VALLOC
 #endif
+
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "memalign.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,    "pintool",
+    "o", "memalign.out", "specify output file name");
+
 
 /* ===================================================================== */
 /* Globals */
 /* ===================================================================== */
 
-FILE* out;
+FILE * out;
 
 #define NUMBER_OF_ALIGNMENTS_TO_CHECK 12
 #define SIZE_TO_ALLOCATE 117
@@ -62,29 +65,29 @@ VOID AlignCheck(const char* msg, VOID* p, int alignment, int size)
     ADDRINT addr = (ADDRINT)p;
     if ((addr & mask) != 0)
     {
-        fprintf(out, "Memory allocated from %s is not alligned. Returned memory %p, Alignment=%d, size=%d.\n", msg, p, alignment,
-                size);
+        fprintf(out, "Memory allocated from %s is not alligned. Returned memory %p, Alignment=%d, size=%d.\n", msg, p, alignment, size);
     }
     memset(p, 0x12345678, size);
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     int alignment = sizeof(VOID*);
     for (int i = 1; i < NUMBER_OF_ALIGNMENTS_TO_CHECK; i++)
     {
-        void* p = NULL;
+        void *p = NULL;
 #ifdef HAVE_ALIGNED_MALLOC
         fprintf(out, "Calling _aligned_malloc\n");
         p = _aligned_malloc(SIZE_TO_ALLOCATE, alignment);
-        AlignCheck("_aligned_malloc", p, alignment, SIZE_TO_ALLOCATE);
+        AlignCheck("_aligned_malloc", p , alignment, SIZE_TO_ALLOCATE);
         fprintf(out, "Free _aligned_malloc. p=%p\n", p);
         fflush(out);
         _aligned_free(p);
 #endif // HAVE_ALIGNED_MALLOC
 #ifdef HAVE_POSIX_MEMALIGN
         fprintf(out, "Calling posix_memalign. Alignment=%d\n", alignment);
-        if (posix_memalign(&p, alignment, SIZE_TO_ALLOCATE)) p = NULL;
+        if (posix_memalign(&p, alignment, SIZE_TO_ALLOCATE))
+            p = NULL;
         AlignCheck("posix_memalign", p, alignment, SIZE_TO_ALLOCATE);
         fprintf(out, "Free posix_memalign. p=%p\n", p);
         fflush(out);
@@ -105,12 +108,12 @@ VOID Fini(INT32 code, VOID* v)
     fprintf(out, "Calling valloc\n");
     void* p = valloc(SIZE_TO_ALLOCATE);
     AlignCheck("valloc", p,
-#if defined(TARGET_MAC) || defined(PIN_CRT)
-               getpagesize(),
-#else
-               sysconf(_SC_PAGESIZE),
-#endif
-               SIZE_TO_ALLOCATE);
+# if defined(TARGET_MAC) || defined(PIN_CRT)
+        getpagesize(),
+# else
+        sysconf(_SC_PAGESIZE),
+# endif
+        SIZE_TO_ALLOCATE);
     fprintf(out, "Free valloc. p=%p\n", p);
     fflush(out);
     free(p);
@@ -118,7 +121,7 @@ VOID Fini(INT32 code, VOID* v)
     fclose(out);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,22 +24,29 @@ using std::endl;
 
 static UINT64 insCount = 0;
 
-static size_t fetchIns(void* buf, ADDRINT addr, size_t size, EXCEPTION_INFO* pExceptInfo, VOID*)
+static size_t fetchIns(void *buf, ADDRINT addr, size_t size, EXCEPTION_INFO *pExceptInfo, VOID *)
 {
     /* Validate that the fetch is in the range we expect and abort if not.
      */
-    size_t bytesRead = PIN_SafeCopyEx(static_cast< UINT8* >(buf), reinterpret_cast< UINT8* >(addr), size, pExceptInfo);
+    size_t bytesRead = PIN_SafeCopyEx (static_cast<UINT8*>(buf),  
+                           reinterpret_cast<UINT8*>(addr),  size, pExceptInfo);
 
     return bytesRead;
 }
 
 // This is small enough to be inlined, which stresses the code fetcher from the tool
 // slightly more.
-static VOID incCount() { insCount++; }
+static VOID incCount()
+{
+    insCount++;
+}
 
-static VOID fini(INT32, VOID*) { cerr << insCount << " instructions in the main image executed" << endl; }
+static VOID fini(INT32, VOID *)
+{
+	cerr << insCount << " instructions in the main image executed" << endl;
+} 
 
-static VOID Trace(TRACE trace, VOID* arg)
+static VOID Trace(TRACE trace, VOID *arg)
 {
     UINT8 bytes[16];
     size_t len = 0;
@@ -60,21 +67,21 @@ static VOID Trace(TRACE trace, VOID* arg)
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
 
     // Initialize pin
     PIN_Init(argc, argv);
 
-    PIN_AddFetchFunction(fetchIns, 0);
+    PIN_AddFetchFunction (fetchIns, 0);
     TRACE_AddInstrumentFunction(Trace, 0);
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(fini, 0);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

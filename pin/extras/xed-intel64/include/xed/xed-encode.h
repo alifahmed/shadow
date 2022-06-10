@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -49,6 +49,18 @@ XED_DLL_EXPORT void
 xed_encoder_request_set_iclass( xed_encoder_request_t* p, 
                                 xed_iclass_enum_t iclass);
 
+/// @name Prefixes
+//@{
+/// @ingroup ENC
+/// for  REPNE(F2) prefix on string ops
+XED_DLL_EXPORT void xed_encoder_request_set_repne(xed_encoder_request_t* p);
+/// @ingroup ENC
+/// for REP(F3) prefix on string ops
+XED_DLL_EXPORT void xed_encoder_request_set_rep(xed_encoder_request_t* p);
+/// @ingroup ENC
+/// clear the REP prefix indicator
+XED_DLL_EXPORT void xed_encoder_request_clear_rep(xed_encoder_request_t* p);
+//@}
 
 /// @name Primary Encode Functions
 //@{

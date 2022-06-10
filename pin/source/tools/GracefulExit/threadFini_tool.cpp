@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,11 +21,12 @@
 #include <ctime>
 #include <set>
 #include "pin.H"
-using std::endl;
 using std::set;
 using std::string;
+using std::endl;
 
 using std::ofstream;
+
 
 /**************************************************
  * Global variables                               *
@@ -41,11 +42,12 @@ static TLS_KEY tidKey;
 // and one for the thread fini callbacks.
 // When the test is done, we sort and compare them and expect them to be identical. This verifies access
 // to the correct TLS during the thread fini callbacks.
-KNOB< string > KnobThreadsStartsFile(KNOB_MODE_WRITEONCE, "pintool", "startsfile", "threadStarts.out",
-                                     "specify file name for thread start callbacks output");
-KNOB< string > KnobThreadsFinisFile(KNOB_MODE_WRITEONCE, "pintool", "finisfile", "threadFinis.out",
-                                    "specify file name for thread fini callbacks output");
-KNOB< string > KnobOutFile(KNOB_MODE_WRITEONCE, "pintool", "o", "tool.out", "specify file name for general tool output");
+KNOB<string> KnobThreadsStartsFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "startsfile", "threadStarts.out", "specify file name for thread start callbacks output");
+KNOB<string> KnobThreadsFinisFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "finisfile", "threadFinis.out", "specify file name for thread fini callbacks output");
+KNOB<string> KnobOutFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "o", "tool.out", "specify file name for general tool output");
 
 // Output file streams
 ofstream startsOut;
@@ -70,38 +72,26 @@ volatile int numOfFinishedThreads = 0;
 volatile int totalNumOfThreads = 0;
 
 THREADID myThread = INVALID_THREADID;
-set< THREADID > appThreads;
+set<THREADID> appThreads;
 PIN_LOCK pinLock;
-
-static struct _ATEXIT
-{
-    ~_ATEXIT()
-    {
-        // We assume that stdout is not yet closed by application.
-        fprintf(stdout, "Tool unloaded.\n");
-        fflush(stdout);
-    }
-} s1;
 
 /**************************************************
  * Function declarations                          *
  **************************************************/
 static void InternalThreadMain(void* v);
 
+
 /**************************************************
  * Utility functions                              *
  **************************************************/
 // Retrieve a tid sotred in the TLS.
-static OS_THREAD_ID* GetTLSData(THREADID threadIndex)
-{
-    return static_cast< OS_THREAD_ID* >(PIN_GetThreadData(tidKey, threadIndex));
+static OS_THREAD_ID* GetTLSData(THREADID threadIndex) {
+    return static_cast<OS_THREAD_ID*>(PIN_GetThreadData(tidKey, threadIndex));
 }
 
 // Creates an internal thread for the tool.
-static void CreateToolThread()
-{
-    if (PIN_SpawnInternalThread(InternalThreadMain, NULL, 0, NULL) == INVALID_THREADID)
-    {
+static void CreateToolThread() {
+    if (PIN_SpawnInternalThread(InternalThreadMain, NULL, 0, NULL) == INVALID_THREADID) {
         fprintf(outfile, "TOOL: <%d> Unable to spawn internal thread. Killing the test!\n", PIN_GetTid());
         fflush(outfile);
         PIN_ExitProcess(101);
@@ -109,28 +99,20 @@ static void CreateToolThread()
 }
 
 // Calls exit application either directly (by the application thread) or indirectly (by releasing the internal thread).
-static void callExitApplication(bool appThread)
-{
-    if (appThread)
-    {
-        PIN_GetLock(&pinLock, PIN_GetTid());
+static void callExitApplication(bool appThread) {
+    if (appThread) {
         fprintf(outfile, "TOOL: <%d> Application thread calling PIN_ExitApplication()\n", PIN_GetTid());
         fflush(outfile);
-        PIN_ReleaseLock(&pinLock);
         PIN_ExitApplication(0);
     }
-    else
-    {
-        PIN_GetLock(&pinLock, PIN_GetTid());
+    else {
         fprintf(outfile, "TOOL: <%d> Releasing the internal exit thread\n", PIN_GetTid());
         fflush(outfile);
-        PIN_ReleaseLock(&pinLock);
         releaseExitThread = true;
     }
 }
 
-static VOID AppThreadStart(THREADID threadIndex)
-{
+static VOID AppThreadStart(THREADID threadIndex) {
     PIN_GetLock(&pinLock, PIN_GetTid());
     ++numOfActiveThreads;
     ++totalNumOfThreads;
@@ -147,25 +129,16 @@ static VOID AppThreadStart(THREADID threadIndex)
  * Analysis routines                              *
  **************************************************/
 
-static VOID ThreadStart(THREADID threadIndex, CONTEXT* c, INT32 flags, VOID* v)
-{
-    if (myThread == INVALID_THREADID)
-    {
-        // Assume the first ThreadStart event is for main thread.
-        if (threadIndex != 0)
-        {
-            PIN_ExitProcess(103);
-        }
+static VOID ThreadStart(THREADID threadIndex, CONTEXT* c, INT32 flags, VOID *v) {
+    if (myThread == INVALID_THREADID) {
         myThread = threadIndex;
         AppThreadStart(threadIndex);
     }
 }
 
-static VOID ThreadFini(THREADID threadIndex, CONTEXT const* c, INT32 code, VOID* v)
-{
+static VOID ThreadFini(THREADID threadIndex, CONTEXT const * c, INT32 code, VOID *v) {
     PIN_GetLock(&pinLock, PIN_GetTid());
-    if (appThreads.find(threadIndex) != appThreads.end())
-    {
+    if (appThreads.find(threadIndex) != appThreads.end()) {
         appThreads.erase(appThreads.find(threadIndex));
         --numOfActiveThreads;
         ++numOfFinishedThreads;
@@ -177,8 +150,7 @@ static VOID ThreadFini(THREADID threadIndex, CONTEXT const* c, INT32 code, VOID*
     PIN_ReleaseLock(&pinLock);
 }
 
-static VOID Fini(INT32 code, VOID* v)
-{
+static VOID Fini(INT32 code, VOID* v) {
     fprintf(outfile, "TOOL: <%d> fini function %d %d\n", PIN_GetTid(), numOfActiveThreads, totalNumOfThreads);
     fprintf(outfile, "TOOL: <%d> fini function %d %d\n", PIN_GetTid(), numOfFinishedThreads, totalNumOfThreads);
     fflush(outfile);
@@ -190,32 +162,23 @@ static VOID Fini(INT32 code, VOID* v)
 /**************************************************
  * Instrumentation routines                       *
  **************************************************/
-static VOID OnImage(IMG img, VOID* v)
-{
-    if (IMG_IsMainExecutable(img))
-    {
+static VOID OnImage(IMG img, VOID *v) {
+    if (IMG_IsMainExecutable(img)) {
         RTN rtn = RTN_FindByName(img, "doExit");
-        if (RTN_Valid(rtn))
-        {
-            PIN_GetLock(&pinLock, PIN_GetTid());
+        if (RTN_Valid(rtn)) {
             fprintf(outfile, "TOOL: <%d> Found doExit routine\n", PIN_GetTid());
             fflush(outfile);
-            PIN_ReleaseLock(&pinLock);
             RTN_Open(rtn);
             RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)callExitApplication, IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
             RTN_Close(rtn);
         }
-        else
-        {
-            PIN_GetLock(&pinLock, PIN_GetTid());
+        else {
             fprintf(outfile, "TOOL: <%d> Unable to find the doExit routine. Killing the test!\n", PIN_GetTid());
             fflush(outfile);
-            PIN_ReleaseLock(&pinLock);
             PIN_ExitProcess(102);
         }
         rtn = RTN_FindByName(img, "DoNewThread");
-        if (RTN_Valid(rtn))
-        {
+        if (RTN_Valid(rtn)) {
             RTN_Open(rtn);
             RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)AppThreadStart, IARG_THREAD_ID, IARG_END);
             RTN_Close(rtn);
@@ -223,47 +186,38 @@ static VOID OnImage(IMG img, VOID* v)
     }
 }
 
+
 /**************************************************
  * Main functions                                 *
  **************************************************/
 // Internal thread's main function
-void InternalThreadMain(void* v)
-{
+void InternalThreadMain(void* v) {
     time_t internal_th_start = time(NULL);
-    PIN_GetLock(&pinLock, PIN_GetTid());
     fprintf(outfile, "TOOL: <%d> Internal thread was created succesfully.\n", PIN_GetTid());
     fflush(outfile);
-    PIN_ReleaseLock(&pinLock);
     int timeout = 600;
-    while (!releaseExitThread && --timeout > 0)
-    { // wait here until the application requests to exit
+    while (!releaseExitThread && --timeout > 0) { // wait here until the application requests to exit
         PIN_Yield();
         PIN_Sleep(1000); // 1 sec
     }
 
-    PIN_GetLock(&pinLock, PIN_GetTid());
-    fprintf(outfile, "TOOL: timeout = %d, seconds since starting internal thread=%.f\n", timeout,
-            difftime(time(NULL), internal_th_start));
-    if (timeout <= 0)
-    {
+    fprintf(outfile, "TOOL: timeout = %d, seconds since starting internal thread=%.f\n",timeout, difftime(time(NULL), internal_th_start));
+    if (timeout <= 0 ) {
         fprintf(outfile, "TOOL: <%d> Internal thread got time out after 10 minutes - exiting with an error.\n", PIN_GetTid());
         fflush(outfile);
-        PIN_ReleaseLock(&pinLock);
         PIN_ExitProcess(102);
-    }
-    else
-    {
+    } else {
         fprintf(outfile, "TOOL: <%d> Internal thread calling PIN_ExitApplication().\n", PIN_GetTid());
         fflush(outfile);
-        PIN_ReleaseLock(&pinLock);
         PIN_ExitApplication(0);
     }
 }
 
+
 // Tool's main function.
 // The last parameter is expected to be a number which signifies which test is being run.
-int main(INT32 argc, CHAR** argv)
-{
+int main(INT32 argc, CHAR **argv) {
+
     PIN_InitLock(&pinLock);
     // Initialize Pin and TLS
     PIN_InitSymbols();
@@ -282,8 +236,7 @@ int main(INT32 argc, CHAR** argv)
     PIN_AddFiniFunction(Fini, NULL);
 
     // test "1" calls PIN_ExitApplication by a tool internal thread. We need to create that thread only in this case.
-    if (strcmp(argv[argc - 1], "1") == 0)
-    {
+    if (strcmp(argv[argc-1], "1") == 0) {
         CreateToolThread();
     }
 
@@ -292,3 +245,4 @@ int main(INT32 argc, CHAR** argv)
 
     return 0;
 }
+

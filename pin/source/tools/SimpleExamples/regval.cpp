@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,17 +16,19 @@
 #include <cassert>
 #include "pin.H"
 #include "../Utils/regvalue_utils.h"
-using std::endl;
 using std::hex;
+using std::endl;
 
 using std::ofstream;
+
 
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
 
 // A knob for defining the output file name
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "regval.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "regval.out", "specify output file name");
 
 // ofstream object for handling the output
 ofstream OutFile;
@@ -37,23 +39,30 @@ volatile bool printRegsNow = false;
 
 #ifdef TARGET_MAC
 const char* startRtnName = "_Start";
-const char* stopRtnName  = "_Stop";
+const char* stopRtnName = "_Stop";
 #else
 const char* startRtnName = "Start";
-const char* stopRtnName  = "Stop";
+const char* stopRtnName = "Stop";
 #endif
+
 
 /////////////////////
 // ANALYSIS FUNCTIONS
 /////////////////////
 
 // Once this is called, the registers will be printed until EndRoutine is called.
-static void StartRoutine() { printRegsNow = true; }
+static void StartRoutine()
+{
+    printRegsNow = true;
+}
 
 // After this is called, the registers will no longer be printed.
-static void StopRoutine() { printRegsNow = false; }
+static void StopRoutine()
+{
+    printRegsNow = false;
+}
 
-static void PrintRegisters(const CONTEXT* ctxt)
+static void PrintRegisters(const CONTEXT * ctxt)
 {
     if (!printRegsNow) return;
     static const UINT stRegSize = REG_Size(REG_ST_BASE);
@@ -61,23 +70,24 @@ static void PrintRegisters(const CONTEXT* ctxt)
     {
         // For the integer registers, it is safe to use ADDRINT. But make sure to pass a pointer to it.
         ADDRINT val;
-        PIN_GetContextRegval(ctxt, (REG)reg, reinterpret_cast< UINT8* >(&val));
+        PIN_GetContextRegval(ctxt, (REG)reg, reinterpret_cast<UINT8*>(&val));
         OutFile << REG_StringShort((REG)reg) << ": 0x" << hex << val << endl;
     }
     for (int reg = (int)REG_ST_BASE; reg <= (int)REG_ST_LAST; ++reg)
     {
         // For the x87 FPU stack registers, using PIN_REGISTER ensures a large enough buffer.
         PIN_REGISTER val;
-        PIN_GetContextRegval(ctxt, (REG)reg, reinterpret_cast< UINT8* >(&val));
+        PIN_GetContextRegval(ctxt, (REG)reg, reinterpret_cast<UINT8*>(&val));
         OutFile << REG_StringShort((REG)reg) << ": " << Val2Str(&val, stRegSize) << endl;
     }
 }
+
 
 /////////////////////
 // INSTRUMENTATION FUNCTIONS
 /////////////////////
 
-static VOID ImageLoad(IMG img, VOID* v)
+static VOID ImageLoad(IMG img, VOID * v)
 {
     if (IMG_IsMainExecutable(img))
     {
@@ -95,18 +105,22 @@ static VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-static VOID Trace(TRACE trace, VOID* v)
+static VOID Trace(TRACE trace, VOID *v)
 {
     TRACE_InsertCall(trace, IPOINT_BEFORE, (AFUNPTR)PrintRegisters, IARG_CONST_CONTEXT, IARG_END);
 }
 
-static VOID Fini(INT32 code, VOID* v) { OutFile.close(); }
+static VOID Fini(INT32 code, VOID *v)
+{
+    OutFile.close();
+}
+
 
 /////////////////////
 // MAIN FUNCTION
 /////////////////////
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize Pin
     PIN_InitSymbols();

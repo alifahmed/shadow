@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,20 +24,20 @@ namespace WND
 #include <windows.h>
 }
 
-typedef VOID(WINAPI* rtl_leave_critical_section_call_t)(WND::LPCRITICAL_SECTION lpCriticalSection);
+typedef VOID (WINAPI * rtl_leave_critical_section_call_t)(WND::LPCRITICAL_SECTION lpCriticalSection);
 
 VOID RtlLeaveCriticalSection_ver0(rtl_leave_critical_section_call_t orig_RtlLeaveCriticalSection,
-                                  WND::LPCRITICAL_SECTION lpCriticalSection, ADDRINT returnIp)
+                                         WND::LPCRITICAL_SECTION lpCriticalSection, ADDRINT returnIp)
 {
     if (lpCriticalSection == NULL)
     {
-        int* ptr = reinterpret_cast< int* >(0x0);
+        int* ptr = reinterpret_cast<int*>(0x0);
         __try
         {
             // this will cause an exception
             *ptr = 17;
         }
-        __except (EXCEPTION_EXECUTE_HANDLER)
+        __except(EXCEPTION_EXECUTE_HANDLER)
         {
             printf("Exception in RtlLeaveCriticalSection replacement routine\n");
         }
@@ -55,8 +55,8 @@ VOID RtlLeaveCriticalSection_ver0(rtl_leave_critical_section_call_t orig_RtlLeav
 
 static const char* extract_mod_name_with_ext(const char* full)
 {
-    const char* slash = NULL;
-    char* module_name = NULL;
+    const char *slash = NULL;
+    char *module_name = NULL;
 
     slash = strrchr(full, '\\');
 
@@ -72,9 +72,9 @@ static const char* extract_mod_name_with_ext(const char* full)
     return module_name;
 }
 
-static VOID instrument_module(IMG img, VOID* data)
+static VOID instrument_module(IMG img, VOID *data)
 {
-    const char* module_name = extract_mod_name_with_ext(IMG_Name(img).c_str());
+    const char *module_name = extract_mod_name_with_ext(IMG_Name(img).c_str());
 
     if (strcmp(module_name, "ntdll.dll") == 0)
     {
@@ -82,19 +82,22 @@ static VOID instrument_module(IMG img, VOID* data)
 
         if (RTN_Valid(routine))
         {
-            PROTO leave_proto =
-                PROTO_Allocate(PIN_PARG(void), CALLINGSTD_STDCALL, "RtlLeaveCriticalSection", PIN_PARG(void*), PIN_PARG_END());
-            AFUNPTR RtlLeaveCriticalSection_ptr =
-                RTN_ReplaceSignatureProbed(routine, (AFUNPTR)(RtlLeaveCriticalSection_ver0), IARG_PROTOTYPE, leave_proto,
-                                           IARG_ORIG_FUNCPTR, IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_RETURN_IP, IARG_END);
+            PROTO leave_proto = PROTO_Allocate( PIN_PARG(void), CALLINGSTD_STDCALL,
+                                             "RtlLeaveCriticalSection", PIN_PARG(void *), PIN_PARG_END() );
+            AFUNPTR RtlLeaveCriticalSection_ptr = RTN_ReplaceSignatureProbed(routine, (AFUNPTR)(RtlLeaveCriticalSection_ver0),
+                IARG_PROTOTYPE, leave_proto,
+                IARG_ORIG_FUNCPTR,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_RETURN_IP,
+                IARG_END);
             ASSERTX(RtlLeaveCriticalSection_ptr != 0);
         }
 
-        free((void*)(module_name));
+        free((void *)(module_name));
     }
 }
 
-static VOID on_module_loading(IMG img, VOID* data)
+static VOID on_module_loading(IMG img, VOID *data)
 {
     unsigned long origAttrs = 0;
 
@@ -108,7 +111,7 @@ static VOID on_module_loading(IMG img, VOID* data)
 }
 
 KNOB_COMMENT KnobMyfamFamily("pintool:myfam", "my own UINT64 family");
-KNOB< UINT64 > uint_knob(KNOB_MODE_WRITEONCE, "pintool:myfam", "myswi", "0x123456789", "my own UINT64 value");
+KNOB<UINT64> uint_knob(KNOB_MODE_WRITEONCE, "pintool:myfam", "myswi", "0x123456789", "my own UINT64 value");
 
 int main(int argc, char** argv)
 {
@@ -118,7 +121,7 @@ int main(int argc, char** argv)
     {
         printf("%s\n", uint_knob.ValueString().c_str());
 
-        IMG_AddInstrumentFunction(on_module_loading, 0);
+        IMG_AddInstrumentFunction(on_module_loading,  0);
 
         PIN_StartProgramProbed();
     }

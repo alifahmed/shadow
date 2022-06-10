@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,24 +24,25 @@ using std::vector;
 // The set is a subset of the TestReg enum (defined in the RegisterDB class below). It is defined by the knobs:
 // KnobTestSt, KnobTestPartial and KnobTestSIMD.
 
+
 /////////////////////
 // TYPE DEFINITIONS
 /////////////////////
 
 class RegisterDB
 {
-  public:
+public:
     // API FUNCTIONS
 
     static inline RegisterDB* Instance();
-    inline const vector< REG >& GetTestRegs() const;
+    inline const vector<REG>& GetTestRegs() const;
     inline const REGSET& GetTestRegset() const;
     void PrintStoredRegisters(ostream& ost) const;
     inline UINT8* GetRegval(REG reg);
     inline const UINT8* GetAppRegisterValue(REG reg) const;
     inline const UINT8* GetToolRegisterValue(REG reg) const;
 
-  private:
+private:
     // TYPE DEFINITIONS
 
     // Registers to check:
@@ -49,12 +50,11 @@ class RegisterDB
     // This is an enumeration of the complete set of test registers. The tested subset is defined by the knobs:
     // KnobTestSt, KnobTestPartial and KnobTestSIMD.
     // To obtain the tested subset, use the GetTestRegs() and/or GetTestRegset() functions.
-    enum TestReg
-    {
+    enum TestReg {
         GPRREG = 0,
-#if defined(TARGET_IA32E)
+    #if defined(TARGET_IA32E)
         GPR32REG,
-#endif
+    #endif
         GPR16REG,
         GPRLREG,
         GPRHREG,
@@ -66,17 +66,17 @@ class RegisterDB
         TESTREGSIZE
     };
 
-  private:
+private:
     // DATA FIELDS
 
     static RegisterDB* _theInstance;
 
-    vector< REG > _testRegs; // A vector of all the ARS REGs.
-    REGSET _testRegset;      // A REGSET of all the ARS REGs.
-    int _numOfTestRegs;      // The number of registers in the ARS.
+    vector<REG> _testRegs;  // A vector of all the ARS REGs.
+    REGSET _testRegset;     // A REGSET of all the ARS REGs.
+    int _numOfTestRegs;     // The number of registers in the ARS.
 
     // REG -> TestReg mapping. Contains only the registers in the ARS.
-    map< REG, TestReg > _regToTestReg;
+    map<REG, TestReg> _regToTestReg;
 
     // REG -> Value saved by the tool. Contains only the registers in the ARS.
     //
@@ -85,13 +85,13 @@ class RegisterDB
     // They will be stored and printed before and after the application changes them.
     // In addition, after the application changes the registers, the values will be
     // compared to the expected values, obtained using the _GetAppRegisterValue() function.
-    map< REG, UINT8* > _regvalMap;
+    map<REG, UINT8*> _regvalMap;
 
-  private:
+private:
     inline RegisterDB();
 
     // DISABLED FUNCTIONS
-    inline RegisterDB(const RegisterDB& src) { assert(false); }     // disable copy constructor
+    inline RegisterDB(const RegisterDB& src) { assert(false); } // disable copy constructor
     inline void operator=(const RegisterDB& src) { assert(false); } // disable assignment operator
 
     // MAPPING FUNCTIONS
@@ -117,9 +117,15 @@ RegisterDB* RegisterDB::Instance()
     return _theInstance;
 }
 
-const vector< REG >& RegisterDB::GetTestRegs() const { return _testRegs; }
+const vector<REG>& RegisterDB::GetTestRegs() const
+{
+    return _testRegs;
+}
 
-const REGSET& RegisterDB::GetTestRegset() const { return _testRegset; }
+const REGSET& RegisterDB::GetTestRegset() const
+{
+    return _testRegset;
+}
 
 void RegisterDB::PrintStoredRegisters(ostream& ost) const
 {
@@ -147,24 +153,29 @@ const UINT8* RegisterDB::GetToolRegisterValue(REG reg) const
     return _GetToolRegisterValue(reg);
 }
 
-RegisterDB::RegisterDB() : _numOfTestRegs(0) { InitializeDB(); }
+RegisterDB::RegisterDB() : _numOfTestRegs(0)
+{
+    InitializeDB();
+}
 
 REG RegisterDB::_GetRegFromTestReg(TestReg testReg) const
 {
     // TestReg -> REG mapping. Contains all the registers in the TestReg enum.
     static REG const testRegToReg[TESTREGSIZE] =
-    { REG_GBX,
+    {
+        REG_GBX,
 #if defined(TARGET_IA32E)
-      REG_EBX,
+        REG_EBX,
 #endif
-      REG_BX,
-      REG_BL,
-      REG_BH,
-      REG_ST2,
-      REG_XMM0,
-      REG_YMM1,
-      REG_ZMM5,
-      REG_K3 };
+        REG_BX,
+        REG_BL,
+        REG_BH,
+        REG_ST2,
+        REG_XMM0,
+        REG_YMM1,
+        REG_ZMM5,
+        REG_K3
+    };
     return testRegToReg[testReg];
 }
 
@@ -173,19 +184,15 @@ const UINT8* RegisterDB::_GetAppRegisterValue(REG reg) const
     // TestReg -> Expected application register value (defined in regvalues.h).
     // Contains all the registers in the TestReg enum.
     static const unsigned char* const appRegisterValues[TESTREGSIZE] =
-    { gprval,
+    {
+        gprval,
 #if defined(TARGET_IA32E)
-      gpr32val,
+        gpr32val,
 #endif
-      gpr16val,
-      gprlval,
-      gprhval,
-      stval,
-      xmmval,
-      ymmval,
-      zmmval,
-      opmaskval };
-    return reinterpret_cast< const UINT8* >(appRegisterValues[_regToTestReg.find(reg)->second]);
+        gpr16val, gprlval, gprhval, stval,
+        xmmval, ymmval, zmmval, opmaskval
+    };
+    return reinterpret_cast<const UINT8*>(appRegisterValues[_regToTestReg.find(reg)->second]);
 }
 
 const UINT8* RegisterDB::_GetToolRegisterValue(REG reg) const
@@ -193,22 +200,21 @@ const UINT8* RegisterDB::_GetToolRegisterValue(REG reg) const
     // TestReg -> Value loaded by the tool (defined in regvalues.h).
     // Contains all the registers in the TestReg enum.
     static const unsigned char* const toolRegisterValues[TESTREGSIZE] =
-    { tgprval,
+    {
+        tgprval,
 #if defined(TARGET_IA32E)
-      tgpr32val,
+        tgpr32val,
 #endif
-      tgpr16val,
-      tgprlval,
-      tgprhval,
-      tstval,
-      txmmval,
-      tymmval,
-      tzmmval,
-      topmaskval };
-    return reinterpret_cast< const UINT8* >(toolRegisterValues[_regToTestReg.find(reg)->second]);
+        tgpr16val, tgprlval, tgprhval, tstval,
+        txmmval, tymmval, tzmmval, topmaskval
+    };
+    return reinterpret_cast<const UINT8*>(toolRegisterValues[_regToTestReg.find(reg)->second]);
 }
 
-void RegisterDB::Verify(REG reg) const { assert(_testRegset.Contains(reg)); }
+void RegisterDB::Verify(REG reg) const
+{
+    assert(_testRegset.Contains(reg));
+}
 
 void RegisterDB::PrintRegval(REG reg, ostream& ost) const
 {
@@ -261,42 +267,63 @@ void RegisterDB::InitializeDB()
     _numOfTestRegs = _testRegs.size();
 }
 
+
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
 
 // A knob for specifying whether x87 fpstate registers should be tested.
-KNOB< bool > KnobTestSt(KNOB_MODE_WRITEONCE, "pintool", "test_st", "1", "specify whether x87 fpstate registers should be tested");
+KNOB<bool> KnobTestSt(KNOB_MODE_WRITEONCE, "pintool", "test_st", "1",
+                      "specify whether x87 fpstate registers should be tested");
 
 // A knob for specifying whether partial registers should be tested.
-KNOB< bool > KnobTestPartial(KNOB_MODE_WRITEONCE, "pintool", "test_partial", "1",
-                             "specify whether partial registers should be tested");
+KNOB<bool> KnobTestPartial(KNOB_MODE_WRITEONCE, "pintool", "test_partial", "1",
+                           "specify whether partial registers should be tested");
 
 // A knob for specifying whether the SIMD registers should be tested.
-KNOB< bool > KnobTestSIMD(KNOB_MODE_WRITEONCE, "pintool", "test_simd", "1",
-                          "specify whether the SIMD registers should be tested");
+KNOB<bool> KnobTestSIMD(KNOB_MODE_WRITEONCE, "pintool", "test_simd", "1",
+                           "specify whether the SIMD registers should be tested");
+
 
 /////////////////////
 // API FUNCTIONS IMPLEMENTATION
 /////////////////////
 
-const vector< REG >& GetTestRegs() { return RegisterDB::Instance()->GetTestRegs(); }
+const vector<REG>& GetTestRegs()
+{
+    return RegisterDB::Instance()->GetTestRegs();
+}
 
-const REGSET& GetTestRegset() { return RegisterDB::Instance()->GetTestRegset(); }
+const REGSET& GetTestRegset()
+{
+    return RegisterDB::Instance()->GetTestRegset();
+}
 
-void PrintStoredRegisters(ostream& ost) { RegisterDB::Instance()->PrintStoredRegisters(ost); }
+void PrintStoredRegisters(ostream& ost)
+{
+    RegisterDB::Instance()->PrintStoredRegisters(ost);
+}
 
-UINT8* GetRegval(REG reg) { return RegisterDB::Instance()->GetRegval(reg); }
+UINT8* GetRegval(REG reg)
+{
+    return RegisterDB::Instance()->GetRegval(reg);
+}
 
-const UINT8* GetAppRegisterValue(REG reg) { return RegisterDB::Instance()->GetAppRegisterValue(reg); }
+const UINT8* GetAppRegisterValue(REG reg)
+{
+    return RegisterDB::Instance()->GetAppRegisterValue(reg);
+}
 
-const UINT8* GetToolRegisterValue(REG reg) { return RegisterDB::Instance()->GetToolRegisterValue(reg); }
+const UINT8* GetToolRegisterValue(REG reg)
+{
+    return RegisterDB::Instance()->GetToolRegisterValue(reg);
+}
 
 bool CheckAllExpectedValues(ostream& ost)
 {
-    bool success              = true;
-    const vector< REG >& regs = GetTestRegs();
-    int numOfRegs             = regs.size();
+    bool success = true;
+    const vector<REG>& regs = GetTestRegs();
+    int numOfRegs = regs.size();
     for (int r = 0; r < numOfRegs; ++r)
     {
         REG reg = regs[r];

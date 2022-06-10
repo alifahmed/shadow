@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,12 +17,12 @@ static int IsHostArch64Bit()
     OS_RETURN_CODE os_ret;
     OS_HOST_CPU_ARCH_TYPE host_arch;
     static int host_is_64bit = 1;
-    static int checked       = 0;
+    static int checked = 0;
 
     if (1 == checked) return host_is_64bit;
     checked = 1;
 
-    os_ret = OS_GetHostCPUArch(&host_arch);
+    os_ret = OS_GetHostCPUArch( &host_arch );
     if (os_ret.generic_err == OS_RETURN_CODE_NO_ERROR)
     {
         if (OS_HOST_CPU_ARCH_TYPE_IA32 == host_arch)
@@ -37,10 +37,11 @@ static int IsHostArch64Bit()
     else
     {
         fprintf(stderr, "OS_GetHostCPUArch returned with error. Assuming 64 bit.\ngeneric_err=%d, os_specific_err=%d \n",
-                (int)os_ret.generic_err, os_ret.os_specific_err);
+                        (int)os_ret.generic_err, os_ret.os_specific_err);
     }
     return host_is_64bit;
 }
+
 
 void update_environment(char* base_path)
 {
@@ -60,67 +61,67 @@ void update_environment(char* base_path)
      */
 
     int r;
-    const int overwrite                      = 1;
-    char* pin_32_ld_library_path             = 0;
-    char* pin_32_ld_library_path_getenv      = 0;
-    char* pin_32_ld_library_path_xed         = 0;
-    char* pin_32_ld_library_path_extlibs     = 0;
-    char* pin_64_ld_library_path             = 0;
-    char* pin_64_ld_library_path_getenv      = 0;
-    char* pin_64_ld_library_path_xed         = 0;
-    char* pin_64_ld_library_path_extlibs     = 0;
-    char* injector_32_ld_library_path        = 0;
+    const int overwrite = 1;
+    char* pin_32_ld_library_path = 0;
+    char* pin_32_ld_library_path_getenv = 0;
+    char* pin_32_ld_library_path_xed = 0;
+    char* pin_32_ld_library_path_extlibs = 0;
+    char* pin_64_ld_library_path = 0;
+    char* pin_64_ld_library_path_getenv = 0;
+    char* pin_64_ld_library_path_xed = 0;
+    char* pin_64_ld_library_path_extlibs = 0;
+    char* injector_32_ld_library_path = 0;
     char* injector_32_ld_library_path_getenv = 0;
-    char* injector_32_ld_library_path_xed    = 0;
-    char* injector_64_ld_library_path        = 0;
+    char* injector_32_ld_library_path_xed = 0;
+    char* injector_64_ld_library_path = 0;
     char* injector_64_ld_library_path_getenv = 0;
-    char* injector_64_ld_library_path_xed    = 0;
-    const char* pin_runtime_dir              = "runtime";
-    const char* lib_ext_dir                  = "lib-ext";
-    const char* pincrt_lib_dir               = "pincrt";
-    const char* extras_dir                   = "extras";
-    const char* lib_dir                      = "lib";
-    char* ld_library_path                    = 0;
+    char* injector_64_ld_library_path_xed = 0;
+    const char* pin_runtime_dir = "runtime";
+    const char* lib_ext_dir = "lib-ext";
+    const char* pincrt_lib_dir = "pincrt";
+    const char* extras_dir = "extras";
+    const char* lib_dir = "lib";
+    char* ld_library_path = 0;
     const char* ld_assume_kernel;
-    char* base_path32        = 0;
-    char* base_path64        = 0;
-    char* extras_path        = 0;
-    char* xed32              = 0;
-    char* xed64              = 0;
+    char* base_path32 = 0;
+    char* base_path64 = 0;
+    char* extras_path = 0;
+    char* xed32 = 0;
+    char* xed64 = 0;
     char* xed_runtime_libs32 = 0;
     char* xed_runtime_libs64 = 0;
     char* pin_runtime_libs32 = 0;
     char* pin_runtime_libs64 = 0;
-    char* pincrt_libs32      = 0;
-    char* pincrt_libs64      = 0;
-    char* ext_libs32         = 0;
-    char* ext_libs64         = 0;
+    char* pincrt_libs32 = 0;
+    char* pincrt_libs64 = 0;
+    char* ext_libs32 = 0;
+    char* ext_libs64 = 0;
     const char* incoming_ld_preload;
     const char* incoming_ld_bind_now;
 
-    base_path32 = appendPath(base_path, "/", "ia32");
-    base_path64 = appendPath(base_path, "/", "intel64");
+    base_path32 = append3(base_path, "/", "ia32");
+    base_path64 = append3(base_path, "/", "intel64");
 
-    extras_path = appendPath(base_path, "/", extras_dir);
-    xed32       = appendPath(extras_path, "/", "xed-ia32");
-    xed64       = appendPath(extras_path, "/", "xed-intel64");
+    extras_path = append3(base_path, "/", extras_dir);
+    xed32 = append3(extras_path, "/", "xed-ia32");
+    xed64 = append3(extras_path, "/", "xed-intel64");
     if (extras_path) free(extras_path);
-    xed_runtime_libs32 = appendPath(xed32, "/", lib_dir);
-    xed_runtime_libs64 = appendPath(xed64, "/", lib_dir);
+    xed_runtime_libs32 = append3(xed32, "/", lib_dir);
+    xed_runtime_libs64 = append3(xed64, "/", lib_dir);
     if (xed32) free(xed32);
     if (xed64) free(xed64);
 
     /* make pin_libs - required for pin/vm */
-    pin_runtime_libs32 = appendPath(base_path32, "/", pin_runtime_dir);
-    pin_runtime_libs64 = appendPath(base_path64, "/", pin_runtime_dir);
+    pin_runtime_libs32 = append3(base_path32, "/", pin_runtime_dir);
+    pin_runtime_libs64 = append3(base_path64, "/", pin_runtime_dir);
 
-    ext_libs32 = appendPath(base_path32, "/", lib_ext_dir);
-    ext_libs64 = appendPath(base_path64, "/", lib_ext_dir);
+    ext_libs32 = append3(base_path32, "/", lib_ext_dir);
+    ext_libs64 = append3(base_path64, "/", lib_ext_dir);
     if (base_path32) free(base_path32);
     if (base_path64) free(base_path64);
 
-    pincrt_libs32 = appendPath(pin_runtime_libs32, "/", pincrt_lib_dir);
-    pincrt_libs64 = appendPath(pin_runtime_libs64, "/", pincrt_lib_dir);
+    pincrt_libs32 = append3(pin_runtime_libs32, "/", pincrt_lib_dir);
+    pincrt_libs64 = append3(pin_runtime_libs64, "/", pincrt_lib_dir);
     if (pin_runtime_libs32) free(pin_runtime_libs32);
     if (pin_runtime_libs64) free(pin_runtime_libs64);
 
@@ -128,36 +129,36 @@ void update_environment(char* base_path)
     pin_32_ld_library_path_getenv = getenv("PIN_VM32_LD_LIBRARY_PATH");
     pin_64_ld_library_path_getenv = getenv("PIN_VM64_LD_LIBRARY_PATH");
 
-    pin_32_ld_library_path_xed     = appendPath(xed_runtime_libs32, ":", pin_32_ld_library_path_getenv);
-    pin_64_ld_library_path_xed     = appendPath(xed_runtime_libs64, ":", pin_64_ld_library_path_getenv);
-    pin_32_ld_library_path_extlibs = appendPath(ext_libs32, ":", pin_32_ld_library_path_xed);
+    pin_32_ld_library_path_xed = append3(xed_runtime_libs32, ":", pin_32_ld_library_path_getenv);
+    pin_64_ld_library_path_xed = append3(xed_runtime_libs64, ":", pin_64_ld_library_path_getenv);
+    pin_32_ld_library_path_extlibs = append3(ext_libs32, ":", pin_32_ld_library_path_xed);
     if (ext_libs32) free(ext_libs32);
-    if (pin_32_ld_library_path_xed) free(pin_32_ld_library_path_xed);
-    pin_64_ld_library_path_extlibs = appendPath(ext_libs64, ":", pin_64_ld_library_path_xed);
+    if (pin_32_ld_library_path_xed)   free(pin_32_ld_library_path_xed);
+    pin_64_ld_library_path_extlibs = append3(ext_libs64, ":", pin_64_ld_library_path_xed);
     if (ext_libs64) free(ext_libs64);
-    if (pin_64_ld_library_path_xed) free(pin_64_ld_library_path_xed);
-    pin_32_ld_library_path = appendPath(pincrt_libs32, ":", pin_32_ld_library_path_extlibs);
-    if (pin_32_ld_library_path_extlibs) free(pin_32_ld_library_path_extlibs);
-    pin_64_ld_library_path = appendPath(pincrt_libs64, ":", pin_64_ld_library_path_extlibs);
-    if (pin_64_ld_library_path_extlibs) free(pin_64_ld_library_path_extlibs);
+    if (pin_64_ld_library_path_xed)   free(pin_64_ld_library_path_xed);
+    pin_32_ld_library_path = append3(pincrt_libs32, ":", pin_32_ld_library_path_extlibs);
+    if (pin_32_ld_library_path_extlibs)   free(pin_32_ld_library_path_extlibs);
+    pin_64_ld_library_path = append3(pincrt_libs64, ":", pin_64_ld_library_path_extlibs);
+    if (pin_64_ld_library_path_extlibs)   free(pin_64_ld_library_path_extlibs);
 
     r = setenv("PIN_VM32_LD_LIBRARY_PATH", pin_32_ld_library_path, overwrite);
     check_retval(r, "setenv PIN_VM32_LD_LIBRARY_PATH");
     r = setenv("PIN_VM64_LD_LIBRARY_PATH", pin_64_ld_library_path, overwrite);
     check_retval(r, "setenv PIN_VM64_LD_LIBRARY_PATH");
-    if (pin_32_ld_library_path) free(pin_32_ld_library_path);
-    if (pin_64_ld_library_path) free(pin_64_ld_library_path);
+    if (pin_32_ld_library_path)     free(pin_32_ld_library_path);
+    if (pin_64_ld_library_path)     free(pin_64_ld_library_path);
 
     /* Set Pin injector library paths */
     injector_32_ld_library_path_getenv = getenv("PIN_INJECTOR32_LD_LIBRARY_PATH");
     injector_64_ld_library_path_getenv = getenv("PIN_INJECTOR64_LD_LIBRARY_PATH");
 
-    injector_32_ld_library_path_xed = appendPath(xed_runtime_libs32, ":", injector_32_ld_library_path_getenv);
-    injector_64_ld_library_path_xed = appendPath(xed_runtime_libs64, ":", injector_64_ld_library_path_getenv);
+    injector_32_ld_library_path_xed = append3(xed_runtime_libs32, ":", injector_32_ld_library_path_getenv);
+    injector_64_ld_library_path_xed = append3(xed_runtime_libs64, ":", injector_64_ld_library_path_getenv);
     if (xed_runtime_libs32) free(xed_runtime_libs32);
     if (xed_runtime_libs64) free(xed_runtime_libs64);
-    injector_32_ld_library_path = appendPath(pincrt_libs32, ":", injector_32_ld_library_path_xed);
-    injector_64_ld_library_path = appendPath(pincrt_libs64, ":", injector_64_ld_library_path_xed);
+    injector_32_ld_library_path = append3(pincrt_libs32, ":", injector_32_ld_library_path_xed);
+    injector_64_ld_library_path = append3(pincrt_libs64, ":", injector_64_ld_library_path_xed);
     if (pincrt_libs32) free(pincrt_libs32);
     if (pincrt_libs64) free(pincrt_libs64);
 
@@ -249,21 +250,23 @@ char* find_driver_name(char* argv0)
     return strdup(base_path);
 }
 
-char** build_child_argv(char* base_path, int argc, char** argv, int user_argc, char** user_argv)
+char** build_child_argv(char* base_path, int argc, char** argv, int user_argc,
+        char** user_argv)
 {
     int var = 0, user_arg = 0, child_argv_ind = 0;
-    char *s1 = 0, *s2 = 0;
-    char** child_argv = (char**)malloc(sizeof(char*) * (argc + user_argc + 4));
-    if (child_argv == NULL) abort();
+    char *s1=0, *s2=0;
+    char** child_argv = (char**) malloc(sizeof(char*) * (argc + user_argc + 4));
+    if (child_argv == NULL)
+        abort();
 
     /*
         This is just to make sure both binaries actually exist. The program will exit if any of these calls fail.
       */
-    s1 = appendPath(base_path, "/", "ia32/bin/pinbin");
+    s1 = append3(base_path, "/", "ia32/bin/pinbin");
     s2 = find_driver_name(s1);
     if (s1) free(s1);
     if (s2) free(s2);
-    s1 = appendPath(base_path, "/", "intel64/bin/pinbin");
+    s1 = append3(base_path, "/", "intel64/bin/pinbin");
     s2 = find_driver_name(s1);
     if (s1) free(s1);
     if (s2) free(s2);
@@ -278,15 +281,15 @@ char** build_child_argv(char* base_path, int argc, char** argv, int user_argc, c
     */
     if (IsHostArch64Bit())
     {
-        child_argv[child_argv_ind++] = appendPath(base_path, "/", "intel64/bin/pinbin");
+        child_argv[child_argv_ind++] = append3(base_path, "/", "intel64/bin/pinbin");
         child_argv[child_argv_ind++] = "-p32";
-        child_argv[child_argv_ind++] = appendPath(base_path, "/", "ia32/bin/pinbin");
+        child_argv[child_argv_ind++] = append3(base_path, "/", "ia32/bin/pinbin");
     }
     else
     {
-        child_argv[child_argv_ind++] = appendPath(base_path, "/", "ia32/bin/pinbin");
+        child_argv[child_argv_ind++] = append3(base_path, "/", "ia32/bin/pinbin");
         child_argv[child_argv_ind++] = "-p64";
-        child_argv[child_argv_ind++] = appendPath(base_path, "/", "intel64/bin/pinbin");
+        child_argv[child_argv_ind++] = append3(base_path, "/", "intel64/bin/pinbin");
     }
 
     /* Add the user arguments */
@@ -312,3 +315,4 @@ char** build_child_argv(char* base_path, int argc, char** argv, int user_argc, c
 
     return child_argv;
 }
+

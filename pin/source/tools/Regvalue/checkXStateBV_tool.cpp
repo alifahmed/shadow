@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,6 +18,7 @@ using std::endl;
 
 using std::ofstream;
 
+
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
@@ -26,18 +27,19 @@ using std::ofstream;
 // 1. context   - regular CONTEXT passed to the analysis routine using IARG_CONTEXT.
 // 2. partial   - partial CONTEXT passed to the analysis routine using IARG_PARTIAL_CONTEXT.
 // 3. reference - IARG_REG_REFERENCE passed to the analysis routine.
-KNOB< string > KnobModificationMethod(KNOB_MODE_WRITEONCE, "pintool", "method", "context",
-                                      "specify which context to test. One of default|partial.");
+KNOB<string> KnobModificationMethod(KNOB_MODE_WRITEONCE, "pintool",
+    "method", "context", "specify which context to test. One of default|partial.");
 
 // A knob for defining which state class to test. One of:
 // 1. x87   - The x87 FPU registers.
 // 2. SSE   - The SSE registers (xmms).
 // 3. AVX   - The AVX registers (ymms).
-KNOB< string > KnobTestStateClass(KNOB_MODE_WRITEONCE, "pintool", "stateClass", "x87",
-                                  "specify which context to test. One of x87|SSE|AVX (case sensitive).");
+KNOB<string> KnobTestStateClass(KNOB_MODE_WRITEONCE, "pintool",
+    "stateClass", "x87", "specify which context to test. One of x87|SSE|AVX (case sensitive).");
 
 // A knob for defining the output file name
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "checkXStateBV_tool.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "checkXStateBV_tool.out", "specify output file name");
 
 // ofstream object for handling the output
 ofstream OutFile;
@@ -46,47 +48,57 @@ REG testedRegister = REG_INVALID();
 
 TEST_REG_CLASS regClass = TEST_REG_CLASS_INVALID;
 
+
 /////////////////////
 // UTILITY FUNCTIONS
 /////////////////////
 
 REG GetRegister()
 {
-    static const REG testRegs[TEST_REG_CLASS_SIZE] = {REG_FPCW, REG_XMM3, REG_YMM3};
+    static const REG testRegs[TEST_REG_CLASS_SIZE] =
+    {
+        REG_FPCW,
+        REG_XMM3,
+        REG_YMM3
+    };
 
     return testRegs[regClass];
 }
+
 
 /////////////////////
 // ANALYSIS FUNCTIONS
 /////////////////////
 
-static void ChangeRegister(CONTEXT* ctxt)
+static void ChangeRegister(CONTEXT * ctxt)
 {
     PIN_REGISTER val;
-    const UINT64* newval = reinterpret_cast< const UINT64* >(toolRegisterValues[regClass]);
-    AssignNewPinRegisterValue(&val, newval, (testRegSize[regClass] + 7) / 8);
-    PIN_SetContextRegval(ctxt, testedRegister, reinterpret_cast< UINT8* >(&val));
+    const UINT64* newval = reinterpret_cast<const UINT64*>(toolRegisterValues[regClass]);
+    AssignNewPinRegisterValue(&val, newval, (testRegSize[regClass]+7)/8);
+    PIN_SetContextRegval(ctxt, testedRegister, reinterpret_cast<UINT8*>(&val));
 }
 
-static void ChangeRegisterAndExecute(CONTEXT* ctxt, ADDRINT executeAtAddr)
+
+static void ChangeRegisterAndExecute(CONTEXT * ctxt, ADDRINT executeAtAddr)
 {
     ChangeRegister(ctxt);
     PIN_SetContextReg(ctxt, REG_INST_PTR, executeAtAddr);
     PIN_ExecuteAt(ctxt);
 }
 
+
 static void ChangeRegisterReference(PIN_REGISTER* reg)
 {
-    const UINT64* newval = reinterpret_cast< const UINT64* >(toolRegisterValues[regClass]);
-    AssignNewPinRegisterValue(reg, newval, (testRegSize[regClass] + 7) / 8);
+    const UINT64* newval = reinterpret_cast<const UINT64*>(toolRegisterValues[regClass]);
+    AssignNewPinRegisterValue(reg, newval, (testRegSize[regClass]+7)/8);
 }
+
 
 /////////////////////
 // CALLBACKS
 /////////////////////
 
-static VOID ImageLoad(IMG img, VOID* v)
+static VOID ImageLoad(IMG img, VOID * v)
 {
     if (IMG_IsMainExecutable(img))
     {
@@ -100,8 +112,10 @@ static VOID ImageLoad(IMG img, VOID* v)
         RTN_Open(changeRegisterValueRtn);
         if (KnobModificationMethod.Value() == "context")
         {
-            RTN_InsertCall(changeRegisterValueRtn, IPOINT_BEFORE, AFUNPTR(ChangeRegisterAndExecute), IARG_CONTEXT, IARG_ADDRINT,
-                           RTN_Address(executeAtRtn), IARG_END);
+            RTN_InsertCall(changeRegisterValueRtn, IPOINT_BEFORE, AFUNPTR(ChangeRegisterAndExecute),
+                                                                  IARG_CONTEXT,
+                                                                  IARG_ADDRINT, RTN_Address(executeAtRtn),
+                                                                  IARG_END);
         }
         else if (KnobModificationMethod.Value() == "partial")
         {
@@ -110,13 +124,15 @@ static VOID ImageLoad(IMG img, VOID* v)
             REGSET_Clear(regsin);
             REGSET_Clear(regsout);
             REGSET_Insert(regsout, testedRegister);
-            RTN_InsertCall(changeRegisterValueRtn, IPOINT_BEFORE, AFUNPTR(ChangeRegister), IARG_PARTIAL_CONTEXT, &regsin,
-                           &regsout, IARG_END);
+            RTN_InsertCall(changeRegisterValueRtn, IPOINT_BEFORE, AFUNPTR(ChangeRegister),
+                                                                  IARG_PARTIAL_CONTEXT, &regsin, &regsout,
+                                                                  IARG_END);
         }
         else if (KnobModificationMethod.Value() == "reference")
         {
-            RTN_InsertCall(changeRegisterValueRtn, IPOINT_BEFORE, AFUNPTR(ChangeRegisterReference), IARG_REG_REFERENCE,
-                           GetRegister(), IARG_END);
+            RTN_InsertCall(changeRegisterValueRtn, IPOINT_BEFORE, AFUNPTR(ChangeRegisterReference),
+                                                                  IARG_REG_REFERENCE, GetRegister(),
+                                                                  IARG_END);
         }
         else
         {
@@ -127,13 +143,17 @@ static VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-static VOID Fini(INT32 code, VOID* v) { OutFile.close(); }
+static VOID Fini(INT32 code, VOID *v)
+{
+    OutFile.close();
+}
+
 
 /////////////////////
 // MAIN FUNCTION
 /////////////////////
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize Pin
     PIN_InitSymbols();

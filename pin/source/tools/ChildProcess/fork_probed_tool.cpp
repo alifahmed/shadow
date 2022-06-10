@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,50 +14,52 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
-using std::cerr;
-using std::endl;
 using std::ios_base;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
 
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "forktool.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "forktool.out", "specify file name");
 
 ofstream Out;
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This pin tool tests probe replacement.\n"
-            "\n";
+    cerr <<
+        "This pin tool tests probe replacement.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
 }
 
 pid_t activeProcessId = 0;
-pid_t parentPid       = 0;
+pid_t parentPid = 0;
 
-void BeforeFork(UINT32 childPid, void* data)
+void BeforeFork(UINT32 childPid, void *data)
 {
     parentPid = PIN_GetPid();
     Out << "TOOL: Before fork.." << endl;
 }
 
-void AfterForkInParent(UINT32 childPid, void* data)
+void AfterForkInParent(UINT32 childPid, void *data)
 {
     activeProcessId = PIN_GetPid();
     Out << "TOOL: After fork in parent." << endl;
 }
 
-void AfterForkInChild(UINT32 childPid, void* data)
+void AfterForkInChild(UINT32 childPid, void *data)
 {
     activeProcessId = PIN_GetPid();
     Out << "TOOL: After fork in child." << endl;
 }
 
-BOOL FollowChild(CHILD_PROCESS cProcess, VOID* userData)
+BOOL FollowChild(CHILD_PROCESS childProcess, VOID * userData)
 {
     if (PIN_GetPid() == parentPid)
     {
@@ -77,23 +79,24 @@ BOOL FollowChild(CHILD_PROCESS cProcess, VOID* userData)
     return TRUE;
 }
 
-int main(int argc, CHAR* argv[])
+
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
 
     string outFileName = KnobOutputFile.Value() + string("_") + decstr(PIN_GetPid());
     Out.open(outFileName.c_str(), ios_base::app);
-    if (!Out.is_open())
+    if (!Out.is_open()) 
     {
-        cerr << "Can't open file " << outFileName << endl;
+        cerr << "Can't open file " <<  outFileName << endl;
         exit(-1);
     }
-    cerr << "Open file " << outFileName << endl;
+    cerr << "Open file " <<  outFileName << endl;
 
     PIN_AddForkFunctionProbed(FPOINT_BEFORE, BeforeFork, 0);
     PIN_AddForkFunctionProbed(FPOINT_AFTER_IN_CHILD, AfterForkInChild, 0);

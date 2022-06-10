@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,6 +12,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 
 void handle(int, siginfo_t*, void*);
 void make_segv();
@@ -41,15 +42,15 @@ void handle(int sig, siginfo_t* info, void* vctxt)
 }
 
 #if defined(TARGET_MAC)
-// Make segv by taking an address on the stack and go page by page
+// Make segv by taking an address on the stack and go page by page 
 // until reaching an unmapped page.
 void make_segv()
 {
     size_t pagesize = getpagesize();
-    int i           = 0;
-    volatile int* p = &i;
+    int i = 0;
+    volatile int * p = &i;
 
-    while (1)
+    while(1)
     {
         p += pagesize;
         i += *p;
@@ -58,10 +59,10 @@ void make_segv()
 #else
 void make_segv()
 {
-    volatile int* p;
+    volatile int * p;
     int i;
 
-    p = (volatile int*)0x9;
+    p = (volatile int *)0x9;
     i = *p;
 }
 #endif

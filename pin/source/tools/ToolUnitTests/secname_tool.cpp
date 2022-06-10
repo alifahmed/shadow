@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,6 +14,7 @@
 #include <string>
 #include "pin.H"
 
+
 using std::endl;
 
 /* ===================================================================== */
@@ -24,11 +25,11 @@ std::ofstream trace;
 
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID * v)
 {
     // Looking for sections only in main image
     IMG_TYPE imgType = IMG_Type(img);
-    if (imgType == IMG_TYPE_STATIC || imgType == IMG_TYPE_SHARED)
+    if(imgType ==  IMG_TYPE_STATIC || imgType == IMG_TYPE_SHARED)
     {
         for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
         {
@@ -37,9 +38,12 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-VOID Fini(INT32 code, VOID*) { trace.close(); }
+VOID Fini(INT32 code, VOID *)
+{
+    trace.close();
+}
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     trace.open("secname.out");
 

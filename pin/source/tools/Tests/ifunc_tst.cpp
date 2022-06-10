@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,11 +16,18 @@
 using std::cout;
 using std::endl;
 
-KNOB< BOOL > RunInProbeMode(KNOB_MODE_WRITEONCE, "pintool", "probe_mode", "0", "Run Pin in probe mode");
 
-VOID Strcmp(const char* str1, const char* str2) { cout << "strcmp called" << endl; }
+KNOB<BOOL> RunInProbeMode(KNOB_MODE_WRITEONCE, "pintool", "probe_mode", "0", "Run Pin in probe mode");
 
-VOID IfuncStrcmp() { cout << "ifunc strcmp called" << endl; }
+VOID Strcmp(const char * str1, const char * str2)
+{
+    cout << "strcmp called" << endl;
+}
+
+VOID IfuncStrcmp()
+{
+    cout << "ifunc strcmp called" << endl;
+}
 
 VOID Routine(RTN rtn)
 {
@@ -28,14 +35,14 @@ VOID Routine(RTN rtn)
 
     // In some libc implementations, the bcmp and strcmp symbols have the same address.
     // Since Pin only creates one RTN per start address, the RTN name will be eithor bcmp or strcmp.
-    bool isStrcmp = strcmp(RTN_Name(rtn).c_str(), "strcmp") == 0;
-    bool isSbcmp  = strcmp(RTN_Name(rtn).c_str(), "bcmp") == 0;
+    bool isStrcmp = strcmp(RTN_Name(rtn).c_str(), "strcmp")==0 ;
+    bool isSbcmp = strcmp(RTN_Name(rtn).c_str(), "bcmp")==0 ;
 
     if (isStrcmp || isSbcmp)
     {
-        if (SYM_IFuncResolver(RTN_Sym(rtn)))
+        if(SYM_IFuncResolver(RTN_Sym(rtn)))
         {
-            cout << "Found IFUNC strcmp" << endl;
+            cout << "Found IFUNC strcmp"<< endl;
             if (RunInProbeMode)
             {
                 RTN_InsertCallProbed(rtn, IPOINT_BEFORE, AFUNPTR(IfuncStrcmp), IARG_END);
@@ -47,7 +54,7 @@ VOID Routine(RTN rtn)
         }
         else
         {
-            cout << "Found non IFUNC strcmp" << endl;
+            cout << "Found non IFUNC strcmp"<< endl;
             if (RunInProbeMode)
             {
                 RTN_InsertCallProbed(rtn, IPOINT_BEFORE, AFUNPTR(Strcmp), IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
@@ -63,26 +70,29 @@ VOID Routine(RTN rtn)
     if (!RunInProbeMode) RTN_Close(rtn);
 }
 
-VOID Image(IMG img, void* v)
+
+VOID Image(IMG img, void * v)
 {
-    for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
+    for( SEC sec=IMG_SecHead(img); SEC_Valid(sec) ; sec=SEC_Next(sec) )
     {
-        if (SEC_IsExecutable(sec))
+        if ( SEC_IsExecutable(sec) )
         {
-            for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
-                Routine(rtn);
+            for( RTN rtn=SEC_RtnHead(sec); RTN_Valid(rtn) ; rtn=RTN_Next(rtn) )
+                Routine( rtn);
         }
     }
 }
 
-int main(int argc, char* argv[])
+
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
-    PIN_InitSymbolsAlt(SYMBOL_INFO_MODE(UINT32(IFUNC_SYMBOLS) | UINT32(DEBUG_OR_EXPORT_SYMBOLS)));
+    PIN_InitSymbolsAlt( SYMBOL_INFO_MODE(UINT32(IFUNC_SYMBOLS) |  UINT32(DEBUG_OR_EXPORT_SYMBOLS)));
 
-    IMG_AddInstrumentFunction(Image, 0);
-
+    IMG_AddInstrumentFunction(Image,0);
+    
     // Never returns
     if (RunInProbeMode)
     {
@@ -94,6 +104,6 @@ int main(int argc, char* argv[])
         cout << "Testing the JIT mode." << endl;
         PIN_StartProgram();
     }
-
+    
     return 0;
 }

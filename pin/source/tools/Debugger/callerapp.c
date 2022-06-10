@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,6 +14,7 @@
 void Foo(int a, int b, int c);
 void Inner(int x);
 
+
 int main()
 {
     printf("This is the main routine\n");
@@ -22,14 +23,16 @@ int main()
     return 0;
 }
 
+
 void Foo(int a, int b, int c)
 {
     printf("Foo: a=%d, b=%d, c=%d\n", a, b, c);
-    Inner(a + b + c);
+    Inner(a+b+c);
 }
 
 void Inner(int x)
 {
     printf("Bar: x=%d\n", x);
-    if (x == 10) Inner(12);
+    if (x == 10)
+        Inner(12);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -31,12 +31,12 @@ using namespace std;
  * Convert a pointer to <SRC> type into a pointer to <DST> type.
  * Allows any combination of data/function types.
  */
-template< typename DST, typename SRC > DST* CastPtr(SRC* src)
+template <typename DST, typename SRC> DST * CastPtr(SRC * src)
 {
     union CAST
     {
-        DST* dstPtr;
-        SRC* srcPtr;
+        DST * dstPtr;
+        SRC * srcPtr;
     } cast;
     cast.srcPtr = src;
     return cast.dstPtr;
@@ -45,16 +45,20 @@ template< typename DST, typename SRC > DST* CastPtr(SRC* src)
 /*!
  * Type of a position-independent function that copy its name into the specified buffer.
  */
-typedef void FOO_BAR_T(char*);
-typedef FOO_BAR_T* FOO_BAR_PTR;
+typedef void FOO_BAR_T(char *); 
+typedef FOO_BAR_T *FOO_BAR_PTR; 
 
 /*!
  * Implementation of the PI_FUNC for FOO_BAR_T functions.
  */
 class FOO_BAR_FUNC : public PI_FUNC
 {
-  public:
-    FOO_BAR_FUNC(FOO_BAR_PTR func, size_t size) : m_func(func), m_size(size), m_throwException(false), m_status(STATUS_OK)
+public:
+
+    FOO_BAR_FUNC(FOO_BAR_PTR func, size_t size) : m_func(func), 
+                                                  m_size(size),
+                                                  m_throwException(false),
+                                                  m_status(STATUS_OK)
     {
         m_func(m_name);
     }
@@ -62,10 +66,10 @@ class FOO_BAR_FUNC : public PI_FUNC
     // Get/set the exception mode for the Execute() function:
     // TRUE  - execute the function with arguments that cause an exception in the function
     // FALSE - execute the function without exceptions
-    bool GetExceptionMode() const { return m_throwException; }
-    void SetExceptionMode(bool throwException) { m_throwException = throwException; }
+    bool GetExceptionMode() const {return m_throwException;}
+    void SetExceptionMode(bool throwException) {m_throwException = throwException;}
 
-    FUNC_OBJ& Execute()
+    FUNC_OBJ & Execute()
     {
         if (m_throwException)
         {
@@ -78,10 +82,10 @@ class FOO_BAR_FUNC : public PI_FUNC
         return *this;
     }
 
-    PI_FUNC& Copy(void* buffer)
+    PI_FUNC & Copy(void * buffer)
     {
-        memcpy(buffer, CastPtr< void >(m_func), m_size);
-        m_func = CastPtr< FOO_BAR_T >(buffer);
+        memcpy(buffer, CastPtr<void>(m_func) , m_size);
+        m_func = CastPtr<FOO_BAR_T>(buffer);
         return *this;
     }
 
@@ -89,30 +93,31 @@ class FOO_BAR_FUNC : public PI_FUNC
     {
         switch (m_status)
         {
-            case STATUS_OK:
-                return "Success";
-            case STATUS_HANDLED_EXCEPTION:
-                return "Exception handled successfully";
-            case STATUS_UNEXPECTED_RESULT:
-                return "Unexpected result";
-            case STATUS_UNEXPECTED_EXCEPTION:
-                return "Unexpected exception";
-            default:
-                return "Unknown status";
+        case STATUS_OK:
+            return "Success";
+        case STATUS_HANDLED_EXCEPTION:
+            return "Exception handled successfully";
+        case STATUS_UNEXPECTED_RESULT:
+            return "Unexpected result";
+        case STATUS_UNEXPECTED_EXCEPTION:
+           return "Unexpected exception";
+        default:
+            return "Unknown status";
         }
     }
 
-    bool Status() const { return ((m_status == STATUS_OK) || (m_status == STATUS_HANDLED_EXCEPTION)); }
-    string Name() const { return m_name; }
-    void* Start() const { return CastPtr< void >(m_func); }
-    size_t Size() const { return m_size; }
-    FUNC_OBJ* Clone() const { return new FOO_BAR_FUNC(*this); }
+    bool Status() const {return ((m_status == STATUS_OK) || (m_status == STATUS_HANDLED_EXCEPTION));}
+    string Name() const {return m_name;}
+    void * Start() const {return CastPtr<void>(m_func);}
+    size_t Size() const {return m_size;}
+    FUNC_OBJ * Clone() const {return new FOO_BAR_FUNC(*this);}
 
-  protected:
-    FUNC_OBJ& HandleException(void* exceptIp)
+protected:
+
+    FUNC_OBJ & HandleException(void * exceptIp)
     {
-        char* start = CastPtr< char >(m_func);
-        char* ip    = CastPtr< char >(exceptIp);
+        char * start = CastPtr<char>(m_func);
+        char * ip = CastPtr<char>(exceptIp);
         if (m_throwException && (ip >= start) && (ip < start + m_size))
         {
             ExecuteNoThrow();
@@ -123,12 +128,13 @@ class FOO_BAR_FUNC : public PI_FUNC
         }
         else
         {
-            m_status = STATUS_UNEXPECTED_EXCEPTION;
+            m_status =  STATUS_UNEXPECTED_EXCEPTION;
         }
         return *this;
     }
 
-  private:
+private:
+
     FOO_BAR_PTR m_func;
     size_t m_size;
     bool m_throwException;
@@ -151,20 +157,19 @@ class FOO_BAR_FUNC : public PI_FUNC
     {
         char result[16];
         m_func(result);
-        m_status = ((strcmp(result, m_name) == 0) ? STATUS_OK : STATUS_UNEXPECTED_RESULT);
+        m_status = ((strcmp(result, m_name) == 0)? STATUS_OK : STATUS_UNEXPECTED_RESULT);
     }
+
 };
 
 class FOO_FUNC : public FOO_BAR_FUNC
 {
-  public:
-    FOO_FUNC();
+public:  FOO_FUNC();
 };
 
 class BAR_FUNC : public FOO_BAR_FUNC
 {
-  public:
-    BAR_FUNC();
+public:  BAR_FUNC();
 };
 
 #endif //SMC_UTIL_H

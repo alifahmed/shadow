@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -16,6 +16,7 @@
 
 #ifndef ATOMIC_CONFIG_HPP
 #define ATOMIC_CONFIG_HPP
+
 
 /*! @defgroup CONFIG Configuration
  *
@@ -40,20 +41,20 @@
 // Define the macro for normal asserts.
 //
 #if defined(ATOMIC_NO_ASSERT)
-#define ATOMIC_CHECK_ASSERT(x) (static_cast< void >(0))
+#   define ATOMIC_CHECK_ASSERT(x) (static_cast<void>(0))
 #elif !defined(ATOMIC_ASSERT)
-#include <cassert>
-#define ATOMIC_CHECK_ASSERT(x) assert(x)
+#   include <cassert>
+#   define ATOMIC_CHECK_ASSERT(x) assert(x)
 #else
-#define ATOMIC_CHECK_ASSERT(x) ATOMIC_ASSERT(x)
+#   define ATOMIC_CHECK_ASSERT(x) ATOMIC_ASSERT(x)
 #endif
 
 // Define the macro for slow asserts.
 //
 #if defined(ATOMIC_NO_ASSERTSLOW)
-#define ATOMIC_CHECK_ASSERTSLOW(x) ((void)0)
+#   define ATOMIC_CHECK_ASSERTSLOW(x) ((void)0)
 #else
-#define ATOMIC_CHECK_ASSERTSLOW(x) ATOMIC_CHECK_ASSERT(x)
+#   define ATOMIC_CHECK_ASSERTSLOW(x) ATOMIC_CHECK_ASSERT(x)
 #endif
 
 #endif // file guard

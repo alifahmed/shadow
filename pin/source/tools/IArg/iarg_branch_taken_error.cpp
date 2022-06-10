@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,8 +11,8 @@
 
 #include "pin.H"
 #include <iostream>
-using std::cerr;
 using std::cout;
+using std::cerr;
 using std::endl;
 
 /*
@@ -47,15 +47,20 @@ VOID analysis(bool is_taken)
 
 /* Instrumentation routines                                              */
 /* ===================================================================== */
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     if ((INS_Opcode(ins) == XED_ICLASS_XBEGIN) || (INS_Opcode(ins) == XED_ICLASS_XEND))
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)analysis, IARG_BRANCH_TAKEN, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) analysis,
+                IARG_BRANCH_TAKEN,
+                IARG_END);
     }
 }
 
-VOID Fini(INT32 code, VOID* v) { cout << "end of run: taken = " << taken_count << endl; }
+VOID Fini(INT32 code, VOID *v)
+{
+    cout << "end of run: taken = " << taken_count << endl;
+}
 
 /* =====================================================================
  * Called upon bad command line argument
@@ -71,7 +76,7 @@ INT32 Usage()
 
 /* Main                                                                  */
 /* ===================================================================== */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (PIN_Init(argc, argv))
     {
@@ -79,6 +84,6 @@ int main(int argc, char* argv[])
     };
     PIN_AddFiniFunction(Fini, 0);
     INS_AddInstrumentFunction(Instruction, 0);
-    PIN_StartProgram(); // Never returns
+    PIN_StartProgram();  // Never returns
     return 0;
 }

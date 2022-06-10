@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include "pin.H"
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     printf("Loading %s, Image id = %d\n", IMG_Name(img).c_str(), IMG_Id(img));
     fflush(stdout);
@@ -26,40 +26,41 @@ VOID ImageLoad(IMG img, VOID* v)
 
 // Pin calls this function every time a new img is unloaded
 // You can't instrument an image that is about to be unloaded
-VOID ImageUnload(IMG img, VOID* v)
+VOID ImageUnload(IMG img, VOID *v)
 {
     printf("Unloading %s\n", IMG_Name(img).c_str());
     fflush(stdout);
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     printf("Got thread start notification\n");
-    fflush(stdout);
+    fflush(stdout);    
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     printf("We are not expecting to get here...\n");
-    fflush(stdout);
+    fflush(stdout);    
     exit(1);
 }
 
-VOID DetachComplete(VOID* v)
+VOID DetachComplete(VOID *v)
 {
     printf("Detach complete\n");
     fflush(stdout);
 }
 
+
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
-{
+int main(int argc, char * argv[])
+{ 
     // Initialize symbol processing
     PIN_InitSymbols();
-
+    
     // Initialize pin
     PIN_Init(argc, argv);
-
+    
     // Register ImageLoad to be called when an image is loaded
     IMG_AddInstrumentFunction(ImageLoad, 0);
 
@@ -67,12 +68,12 @@ int main(int argc, char* argv[])
     IMG_AddUnloadFunction(ImageUnload, 0);
 
     // Register fini funcation
-    PIN_AddFiniFunction(Fini, 0);
-
+    PIN_AddFiniFunction(Fini, 0);     
+    
     printf("This is a negative test it is expected to fail\n");
-
+    
     // Never returns
-    if (PIN_IsProbeMode())
+    if ( PIN_IsProbeMode() )
     {
         // Thread start callback is JIT mode only
         PIN_AddThreadStartFunction(ThreadStart, 0);
@@ -81,9 +82,10 @@ int main(int argc, char* argv[])
     else
     {
         // Detach probed callback is Probe mode only
-        PIN_AddDetachFunctionProbed(DetachComplete, 0);
+        PIN_AddDetachFunctionProbed(DetachComplete, 0); 
         PIN_StartProgram();
-    }
-
+    }    
+        
     return 0;
 }
+

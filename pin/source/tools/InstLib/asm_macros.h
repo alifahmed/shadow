@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,21 +25,19 @@
  *-------------------------------------------------------------------
  */
 #ifdef TARGET_MAC
-#define NAME(x) _##x
-#define DECLARE_FUNCTION(fun) .global NAME(fun);
-#define DECLARE_FUNCTION_AS(fun) .global fun;
-#define END_FUNCTION(fun)        \
-    .global NAME(fun##_endfunc); \
-    NAME(fun##_endfunc) :
-#define PLT_ADDRESS(fun) NAME(fun)
+# define NAME(x) _##x
+# define DECLARE_FUNCTION(fun) .global NAME(fun);
+# define DECLARE_FUNCTION_AS(fun) .global fun;
+# define END_FUNCTION(fun)     .global NAME(fun ## _endfunc); \
+                               NAME(fun ## _endfunc):
+# define PLT_ADDRESS(fun)      NAME(fun)
 #else
-#define NAME(x) x
-#define DECLARE_FUNCTION(fun) \
-    .globl NAME(fun);         \
-    .type NAME(fun), @function
-#define DECLARE_FUNCTION_AS(fun) DECLARE_FUNCTION(fun)
-#define END_FUNCTION(fun) .size NAME(fun), .- NAME(fun)
-#define PLT_ADDRESS(fun) NAME(fun)##@plt
+# define NAME(x) x
+# define DECLARE_FUNCTION(fun) .globl NAME(fun); \
+                               .type NAME(fun),  @function
+# define DECLARE_FUNCTION_AS(fun) DECLARE_FUNCTION(fun)
+# define END_FUNCTION(fun)     .size NAME(fun),.-NAME(fun)
+# define PLT_ADDRESS(fun)      NAME(fun) ## @plt
 #endif
 
 /*-------------------------------------------------------------------
@@ -86,68 +84,66 @@
  *-------------------------------------------------------------------
  */
 #if defined(TARGET_IA32)
-#define BEGIN_STACK_FRAME \
-    push % ebp;           \
-    mov % esp, % ebp
-#define END_STACK_FRAME \
-    mov % ebp, % esp;   \
-    pop % ebp
-#define PARAM1 8(% ebp)
-#define PARAM2 0xc(% ebp)
-#define RETURN_REG % eax
-#define GAX_REG % eax
-#define GBX_REG % ebx
-#define GCX_REG % ecx
-#define CL_REG % cl
-#define GDX_REG % edx
-#define GSI_REG % esi
-#define STACK_PTR % esp
-#define PIC_VAR(a) a
-#ifdef TARGET_MAC
-#define SYSCALL_PARAM1 (% esp)
-#define PREPARE_UNIX_SYSCALL(num) \
-    mov num, % eax;               \
-    or $0x40000, % eax
-#define INVOKE_SYSCALL            \
-    calll LTrap##__LINE__;        \
-    jmpl LTrapDone##__LINE__;     \
-    LTrap##__LINE__ : popl % edx; \
-    movl % esp, % ecx;            \
-    sysenter;                     \
-    LTrapDone##__LINE__:
-#else
-#define PREPARE_UNIX_SYSCALL(num) mov num, % eax
-#define SYSCALL_PARAM1 % ebx
-#define INVOKE_SYSCALL int $0x80
-#endif
+# define BEGIN_STACK_FRAME \
+             push %ebp; \
+             mov %esp, %ebp
+# define END_STACK_FRAME \
+             mov %ebp, %esp; \
+             pop %ebp
+# define PARAM1 8(%ebp)
+# define PARAM2 0xc(%ebp)
+# define RETURN_REG %eax
+# define GAX_REG %eax
+# define GBX_REG %ebx
+# define GCX_REG %ecx
+# define CL_REG  %cl
+# define GDX_REG %edx
+# define GSI_REG %esi
+# define STACK_PTR %esp
+# define PIC_VAR(a) a
+# ifdef TARGET_MAC
+#  define SYSCALL_PARAM1 (%esp)
+#  define PREPARE_UNIX_SYSCALL(num) mov num, %eax; \
+                                    or $0x40000, %eax
+#  define INVOKE_SYSCALL calll LTrap ## __LINE__; \
+                         jmpl LTrapDone ## __LINE__ ; \
+                         LTrap ## __LINE__: \
+                         popl %edx; \
+                         movl %esp, %ecx; \
+                         sysenter; \
+                         LTrapDone ## __LINE__:
+# else
+#  define PREPARE_UNIX_SYSCALL(num) mov num, %eax
+#  define SYSCALL_PARAM1 %ebx
+#  define INVOKE_SYSCALL int $0x80
+# endif
 #elif defined(TARGET_IA32E)
-#define BEGIN_STACK_FRAME \
-    push % rbp;           \
-    mov % rsp, % rbp
-#define END_STACK_FRAME \
-    mov % rbp, % rsp;   \
-    pop % rbp
-#define PARAM1 % rdi
-#define PARAM2 % rsi
-#define RETURN_REG % rax
-#define GAX_REG % rax
-#define GBX_REG % rbx
-#define GCX_REG % rcx
-#define CL_REG % cl
-#define GDX_REG % rdx
-#define GSI_REG % rsi
-#define G12_REG % r12
-#define STACK_PTR % rsp
-#define PIC_VAR(a) a(% rip)
-#define SYSCALL_PARAM1 % rdi
-#define INVOKE_SYSCALL syscall
-#ifdef TARGET_MAC
-#define PREPARE_UNIX_SYSCALL(num) \
-    mov num, % rax;               \
-    or $0x2000000, % rax
-#else
-#define PREPARE_UNIX_SYSCALL(num) mov num, % rax
-#endif
+# define BEGIN_STACK_FRAME \
+             push %rbp; \
+             mov %rsp, %rbp
+# define END_STACK_FRAME \
+             mov %rbp, %rsp; \
+             pop %rbp
+# define PARAM1 %rdi
+# define PARAM2 %rsi
+# define RETURN_REG %rax
+# define GAX_REG %rax
+# define GBX_REG %rbx
+# define GCX_REG %rcx
+# define CL_REG  %cl
+# define GDX_REG %rdx
+# define GSI_REG %rsi
+# define G12_REG %r12
+# define STACK_PTR %rsp
+# define PIC_VAR(a) a(%rip)
+# define SYSCALL_PARAM1 %rdi
+# define INVOKE_SYSCALL syscall
+# ifdef TARGET_MAC
+#  define PREPARE_UNIX_SYSCALL(num) mov num, %rax; \
+                                    or $0x2000000, %rax
+# else
+#  define PREPARE_UNIX_SYSCALL(num) mov num, %rax
+# endif
 #endif
 
 /*
@@ -157,12 +153,12 @@
 #define SCRATCH_REG2 GCX_REG
 #define SCRATCH_REG3 GDX_REG
 #if defined(TARGET_IA32E)
-#define SCRATCH_REG4 GSI_REG
+# define SCRATCH_REG4 GSI_REG
 #endif
 
 #define CALLEE_SAVE_REG1 GBX_REG
-#if defined(TARGET_IA32)
+# if defined(TARGET_IA32)
 #define CALLEE_SAVE_REG2 GSI_REG
 #elif defined(TARGET_IA32E)
-#define CALLEE_SAVE_REG2 G12_REG
+# define CALLEE_SAVE_REG2 G12_REG
 #endif

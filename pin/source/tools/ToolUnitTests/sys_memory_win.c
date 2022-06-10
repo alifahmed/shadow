@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -42,11 +42,17 @@ size_t GetPageSize()
     return (size_t)(sysInfo.dwPageSize);
 }
 
-void* MemAlloc(size_t size, MEM_PROTECTION protect) { return VirtualAlloc(0, size, MEM_COMMIT, SysProtection(protect)); }
+void * MemAlloc(size_t size, MEM_PROTECTION protect)
+{
+    return VirtualAlloc(0, size, MEM_COMMIT, SysProtection(protect));
+}
 
-void MemFree(void* addr, size_t size) { VirtualFree(addr, 0, MEM_RELEASE); }
+void MemFree(void * addr, size_t size)
+{
+    VirtualFree(addr, 0, MEM_RELEASE);
+}
 
-BOOL MemProtect(void* addr, size_t size, MEM_PROTECTION protect)
+BOOL MemProtect(void * addr, size_t size, MEM_PROTECTION protect)
 {
     DWORD oldProtect;
     return VirtualProtect(addr, size, SysProtection(protect), &oldProtect);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,12 +18,12 @@
 #include <iostream>
 #include <memory.h>
 
-using std::cerr;
-using std::cout;
-using std::endl;
 using std::string;
+using std::endl;
+using std::cout;
+using std::cerr;
 
-typedef unsigned __int8 UINT8;
+typedef unsigned __int8 UINT8 ;
 typedef unsigned __int16 UINT16;
 typedef unsigned __int32 UINT32;
 typedef unsigned __int64 UINT64;
@@ -34,8 +34,8 @@ struct FXSAVE_STRUCT
 {
     UINT16 _fcw;
     UINT16 _fsw;
-    UINT8 _ftw;
-    UINT8 _pad1;
+    UINT8  _ftw;
+    UINT8  _pad1;
     UINT16 _fop;
     UINT32 _fpuip;
     UINT16 _cs;
@@ -45,9 +45,9 @@ struct FXSAVE_STRUCT
     UINT16 _pad3;
     UINT32 _mxcsr;
     UINT32 _mxcsrmask;
-    UINT8 _st[8 * 16];
-    UINT8 _xmm[8 * 16];
-    UINT8 _pad4[56 * 4];
+    UINT8  _st[8 * 16];
+    UINT8  _xmm[8 * 16];
+    UINT8  _pad4[56 * 4];
 };
 
 struct FPSTATE_STRUCT
@@ -56,23 +56,24 @@ struct FPSTATE_STRUCT
     // processors
     struct FXSAVE_STRUCT fxsave_legacy;
     // the following are only applicable on processors with AVX
-    UINT8 _header[64];
-    UINT8 _ymmUpper[8 * 16];
-    UINT8 _pad5[8 * 16];
+    UINT8  _header[64];
+    UINT8  _ymmUpper[8*16];
+    UINT8  _pad5[8*16];
 };
 
 typedef FPSTATE_STRUCT FPSTATE;
 
+
 const size_t FpRegsOffset = offsetof(CONTEXT, FloatSave.RegisterArea);
-const size_t FpRegSize    = 10;
-const size_t NumFpRegs    = 8;
+const size_t FpRegSize = 10;
+const size_t NumFpRegs = 8;
 
 const size_t FpRegsOffset2 = (offsetof(CONTEXT, ExtendedRegisters) + offsetof(FPSTATE, fxsave_legacy._st[0]));
-const size_t FpRegSize2    = 16;
+const size_t FpRegSize2 = 16;
 
 const size_t XmmRegsOffset = (offsetof(CONTEXT, ExtendedRegisters) + offsetof(FPSTATE, fxsave_legacy._xmm[0]));
-const size_t XmmRegSize    = 16;
-const size_t NumXmmRegs    = 8;
+const size_t XmmRegSize = 16;
+const size_t NumXmmRegs = 8;
 
 #elif defined(TARGET_IA32E)
 
@@ -80,8 +81,8 @@ struct FXSAVE_STRUCT
 {
     UINT16 _fcw;
     UINT16 _fsw;
-    UINT8 _ftw;
-    UINT8 _pad1;
+    UINT8  _ftw;
+    UINT8  _pad1;
     UINT16 _fop;
     UINT32 _fpuip;
     UINT16 _cs;
@@ -91,9 +92,9 @@ struct FXSAVE_STRUCT
     UINT16 _pad3;
     UINT32 _mxcsr;
     UINT32 _mxcsrmask;
-    UINT8 _st[8 * 16];
-    UINT8 _xmm[16 * 16];
-    UINT8 _pad4[24 * 4];
+    UINT8  _st[8 * 16];
+    UINT8  _xmm[16 * 16];
+    UINT8  _pad4[24 * 4];
 };
 
 struct FPSTATE_STRUCT
@@ -102,20 +103,21 @@ struct FPSTATE_STRUCT
     // processors
     struct FXSAVE_STRUCT fxsave_legacy;
     // the following are only applicable on processors with AVX
-    UINT8 _header[64];
-    UINT8 _ymmUpper[16 * 16];
+    UINT8  _header[64];
+    UINT8  _ymmUpper[16*16];
 };
 
 typedef FPSTATE_STRUCT FPSTATE;
 const size_t FpRegsOffset = offsetof(CONTEXT, FltSave.FloatRegisters);
-const size_t FpRegSize    = 16;
-const size_t NumFpRegs    = 8;
+const size_t FpRegSize = 16;
+const size_t NumFpRegs = 8;
 
 const size_t XmmRegsOffset = offsetof(CONTEXT, FltSave.XmmRegisters);
-const size_t XmmRegSize    = 16;
-const size_t NumXmmRegs    = 16;
+const size_t XmmRegSize = 16;
+const size_t NumXmmRegs = 16;
 
 #endif
+
 
 /*!
  * Set some constant values in FP and XMM registers. We set these values before
@@ -124,24 +126,24 @@ const size_t NumXmmRegs    = 16;
  */
 void SetMyFpContext(PCONTEXT pContext)
 {
-    memset((char*)(pContext) + FpRegsOffset, 0, NumFpRegs * FpRegSize);
+    memset((char *)(pContext) + FpRegsOffset, 0, NumFpRegs*FpRegSize);
     for (size_t i = 0; i < NumFpRegs; ++i)
     {
-        *((unsigned char*)(pContext) + FpRegsOffset + (i * FpRegSize)) = (unsigned char)i;
+        *((unsigned char *)(pContext) + FpRegsOffset + (i * FpRegSize)) = (unsigned char)i; 
     }
 
 #if defined(TARGET_IA32)
-    memset((char*)(pContext) + FpRegsOffset2, 0, NumFpRegs * FpRegSize2);
+    memset((char *)(pContext) + FpRegsOffset2, 0, NumFpRegs*FpRegSize2);
     for (size_t i = 0; i < NumFpRegs; ++i)
     {
-        *((unsigned char*)(pContext) + FpRegsOffset2 + (i * FpRegSize2)) = (unsigned char)i;
+        *((unsigned char *)(pContext) + FpRegsOffset2 + (i * FpRegSize2)) = (unsigned char)i; 
     }
 #endif
 
-    memset((char*)(pContext) + XmmRegsOffset, 0, NumXmmRegs * XmmRegSize);
+    memset((char *)(pContext) + XmmRegsOffset, 0, NumXmmRegs*XmmRegSize);
     for (size_t i = 0; i < NumXmmRegs; ++i)
     {
-        *((unsigned char*)(pContext) + XmmRegsOffset + (i * XmmRegSize)) = (unsigned char)i;
+        *((unsigned char *)(pContext) + XmmRegsOffset + (i * XmmRegSize)) = (unsigned char)i; 
     }
 }
 
@@ -151,29 +153,33 @@ void SetMyFpContext(PCONTEXT pContext)
  */
 static bool CheckMyFpContext(PCONTEXT pContext)
 {
-    for (size_t i = 0; i < NumFpRegs * FpRegSize; ++i)
+    for (size_t i = 0; i < NumFpRegs*FpRegSize; ++i)
     {
-        unsigned char regId = i / FpRegSize;
+        unsigned char regId = i/FpRegSize;
 
-        if ((i % FpRegSize == 0) && (*((unsigned char*)(pContext) + FpRegsOffset + i) != regId))
+        if ((i%FpRegSize == 0) && 
+            (*((unsigned char *)(pContext) + FpRegsOffset + i) != regId))
         {
             return false;
         }
-        if ((i % FpRegSize != 0) && (*((unsigned char*)(pContext) + FpRegsOffset + i) != 0))
+        if ((i%FpRegSize != 0) && 
+            (*((unsigned char *)(pContext) + FpRegsOffset + i) != 0))
         {
             return false;
         }
     }
 
-    for (size_t i = 0; i < NumXmmRegs * XmmRegSize; ++i)
+    for (size_t i = 0; i < NumXmmRegs*XmmRegSize; ++i)
     {
-        unsigned char regId = i / XmmRegSize;
+        unsigned char regId = i/XmmRegSize;
 
-        if ((i % XmmRegSize == 0) && (*((unsigned char*)(pContext) + XmmRegsOffset + i) != regId))
+        if ((i%XmmRegSize == 0) && 
+            (*((unsigned char *)(pContext) + XmmRegsOffset + i) != regId))
         {
             return false;
         }
-        if ((i % XmmRegSize != 0) && (*((unsigned char*)(pContext) + XmmRegsOffset + i) != 0))
+        if ((i%XmmRegSize != 0) && 
+            (*((unsigned char *)(pContext) + XmmRegsOffset + i) != 0))
         {
             return false;
         }
@@ -188,7 +194,8 @@ static bool CheckMyFpContext(PCONTEXT pContext)
  * On second exception we just return to the exception handler which verifies the
  * the FP/XMM state.
  */
-static int MyExceptionFilter(LPEXCEPTION_POINTERS exceptPtr, PCONTEXT pContext)
+static int MyExceptionFilter(LPEXCEPTION_POINTERS exceptPtr, 
+                             PCONTEXT pContext)
 {
     static bool first = true;
 
@@ -208,22 +215,23 @@ static int MyExceptionFilter(LPEXCEPTION_POINTERS exceptPtr, PCONTEXT pContext)
 /*!
  * Exit with the specified error message
  */
-static void Abort(const char* msg)
+static void Abort(const char * msg)
 {
     cerr << msg << endl;
     exit(1);
 }
 
+
 /*!
  * The main procedure of the application.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     CONTEXT context;
 
     __try
     {
-        char* p = 0;
+        char * p = 0;
         p++;
         *p = 0;
     }
@@ -234,7 +242,7 @@ int main(int argc, char* argv[])
             Abort("Mismatch in the FP context");
         }
     }
-
+    
     cerr << "Success" << endl;
     return 0;
 }

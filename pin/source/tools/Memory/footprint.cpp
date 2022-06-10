@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,17 +11,17 @@
 
 #include "pin.H"
 #include "footprint.H"
-using std::endl;
 using std::map;
+using std::endl;
 using std::string;
 
 #if defined(EMX_INIT)
-#include "emx-init.H"
+# include "emx-init.H"
 #endif
 
-int usage()
-{
-    cerr << "This pin tool computes memory footprints for loads, stores and code references" << endl << endl;
+int usage() {
+    cerr << "This pin tool computes memory footprints for loads, stores and code references"
+         << endl << endl;
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
@@ -29,14 +29,14 @@ int usage()
 
 footprint_t footprint;
 
-int main(int argc, char** argv)
-{
-    if (PIN_Init(argc, argv)) return usage();
+int main(int argc, char** argv) {
+    if( PIN_Init(argc,argv) )
+        return usage();
     PIN_InitSymbols();
     footprint.activate();
 #if defined(EMX_INIT)
     emx_init();
 #endif
-    PIN_StartProgram(); // Never returns
+    PIN_StartProgram();    // Never returns
     return 0;
 }

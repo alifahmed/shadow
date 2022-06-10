@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,18 +25,27 @@
 #include <cstdlib>
 #include "pin.H"
 
-using std::cout;
-using std::endl;
-using std::hex;
 using std::string;
+using std::endl;
+using std::cout;
+using std::hex;
 
-void MyReplacement() { cout << "The newly created routine was replaced successfully" << endl; }
+KNOB<BOOL> RunInProbeMode(KNOB_MODE_WRITEONCE, "pintool", "probe_mode", "0", "Run Pin in probe mode");
 
-void MyInsertedCall() { cout << "The call was inserted successfully" << endl; }
+void MyReplacement()
+{
+    cout << "The newly created routine was replaced successfully" << endl;
+}
+
+void MyInsertedCall()
+{
+    cout << "The call was inserted successfully" << endl;
+}
+
 
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID * v)
 {
     BOOL found = FALSE;
     for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
@@ -59,7 +68,7 @@ VOID ImageLoad(IMG img, VOID* v)
             {
                 offset = IMG_LoadOffset(img);
             }
-            ADDRINT* secAddr  = reinterpret_cast< ADDRINT* >(SEC_Address(sec));
+            ADDRINT *secAddr = reinterpret_cast <ADDRINT *> (SEC_Address(sec));
             ADDRINT proc1Addr = secAddr[0] + offset;
             ADDRINT proc2Addr = secAddr[1] + offset;
 
@@ -76,7 +85,7 @@ VOID ImageLoad(IMG img, VOID* v)
                 // The routine was created successfully
 
                 PROTO proto = PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "MyReplacement", PIN_PARG_END());
-                if (PIN_IsProbeMode())
+                if (RunInProbeMode)
                 {
                     if (RTN_IsSafeForProbedReplacement(rtn))
                     {
@@ -90,8 +99,8 @@ VOID ImageLoad(IMG img, VOID* v)
             }
             else
             {
-                cout << "Proc1: Existing routine has been found at the given address, 0x" << hex << proc1Addr
-                     << ". The new routine will not be created" << endl;
+                cout << "Proc1: Existing routine has been found at the given address, 0x" <<
+                        hex << proc1Addr << ". The new routine will not be created" << endl;
                 exit(-1);
             }
 
@@ -109,7 +118,7 @@ VOID ImageLoad(IMG img, VOID* v)
                 // The routine was created successfully
 
                 PROTO proto = PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "MyInsertedCall", PIN_PARG_END());
-                if (PIN_IsProbeMode())
+                if (RunInProbeMode)
                 {
                     if (RTN_IsSafeForProbedInsertion(rtn))
                     {
@@ -125,8 +134,8 @@ VOID ImageLoad(IMG img, VOID* v)
             }
             else
             {
-                cout << "Proc2: Existing routine has been found at the given address, 0x" << hex << proc2Addr
-                     << ". The new routine will not be created" << endl;
+                cout << "Proc2: Existing routine has been found at the given address, 0x" <<
+                        hex << proc2Addr << ". The new routine will not be created" << endl;
                 exit(-1);
             }
 
@@ -146,16 +155,16 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
-    // Ignore debug symbols
-    PIN_InitSymbolsAlt(EXPORT_SYMBOLS);
+    PIN_InitSymbols();
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
 
     // Never returns
-    if (PIN_IsProbeMode())
+    if (RunInProbeMode)
     {
         cout << "Testing the Probe mode." << endl;
         PIN_StartProgramProbed();

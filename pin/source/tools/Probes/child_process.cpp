@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,11 +17,12 @@
 using std::cout;
 using std::endl;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     if (argc != 3)
     {
-        cout << "Child report: expected 2 parameters, received " << argc - 1 << endl;
+        cout << "Child report: expected 2 parameters, received " << argc-1 << endl;
         return -1;
     }
     if (strcmp(argv[1], "param1 param2") || strcmp(argv[2], "param3"))

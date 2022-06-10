@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -36,7 +36,7 @@ void checkImageRange(const IMG& img, ADDRINT low, ADDRINT high)
 }
 
 // Trace an image load event
-static VOID TraceImageLoad(IMG img, VOID* v)
+static VOID TraceImageLoad(IMG img, VOID *v)
 {
     if (IMG_Name(img) == "MainImage")
     {
@@ -56,12 +56,14 @@ static VOID TraceImageLoad(IMG img, VOID* v)
         // Check that all RTNs are in place
         checkImageRange(img, 0x7000000, 0x7001000);
     }
-    else
-        ASSERT(FALSE, "Unknown image " + IMG_Name(img));
+    else ASSERT(FALSE, "Unknown image " + IMG_Name(img));
 }
 
 // This function is called when the application exits
-static VOID Fini(INT32 code, VOID* v) { ASSERTX(3 == knownImages); }
+static VOID Fini(INT32 code, VOID *v)
+{
+    ASSERTX(3 == knownImages);
+}
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
@@ -70,8 +72,8 @@ static VOID Fini(INT32 code, VOID* v) { ASSERTX(3 == knownImages); }
 static INT32 Usage()
 {
     PIN_ERROR("This tool tests that if you set an image load offset, Pin will shift all of\n"
-              "its RTNs according to the new load offset\n" +
-              KNOB_BASE::StringKnobSummary() + "\n");
+              "its RTNs according to the new load offset\n"
+             + KNOB_BASE::StringKnobSummary() + "\n");
     return -1;
 }
 
@@ -79,7 +81,7 @@ static INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize symbol processing
     PIN_InitSymbols();
@@ -88,7 +90,7 @@ int main(int argc, char* argv[])
     if (PIN_Init(argc, argv)) return Usage();
 
     // We will handle image load operations.
-    PIN_SetReplayMode(REPLAY_MODE_IMAGEOPS);
+    PIN_SetReplayMode (REPLAY_MODE_IMAGEOPS);
 
     // Creates artificial main image
     IMG img1 = IMG_CreateAt("MainImage", 0x4000000, 0x10000, 0, TRUE);
@@ -115,13 +117,13 @@ int main(int argc, char* argv[])
     // Now change the load offset
     LINUX_LOADER_IMAGE_INFO li;
     bzero(&li, sizeof(li));
-    li.name   = (char*)"SecondImage";
+    li.name = (char*)"SecondImage";
     li.l_addr = 0x6000000;
     IMG_SetLoaderInfo(img2, &li);
 
     // Now change the load offset
     bzero(&li, sizeof(li));
-    li.name   = (char*)"ThirdImage";
+    li.name = (char*)"ThirdImage";
     li.l_addr = 0x1000000;
     IMG_SetLoaderInfo(img3, &li);
 

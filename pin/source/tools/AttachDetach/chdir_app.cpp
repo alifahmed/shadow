@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -27,24 +27,26 @@
 using std::list;
 using std::string;
 
+
 string main_cwd;
 
-inline void PrintArguments(char** inArgv)
+inline void PrintArguments(char **inArgv)
 {
     fprintf(stderr, "Going to run: ");
-    for (unsigned int i = 0; inArgv[i] != 0; ++i)
+    for(unsigned int i=0; inArgv[i] != 0; ++i)
     {
         fprintf(stderr, "%s ", inArgv[i]);
     }
     fprintf(stderr, "\n");
 }
 
+
 /* AttachAndInstrument()
  * a special routine that runs $PIN
  */
-void AttachAndInstrument(list< string >* pinArgs)
+void AttachAndInstrument(list <string > * pinArgs)
 {
-    list< string >::iterator pinArgIt = pinArgs->begin();
+    list <string >::iterator pinArgIt = pinArgs->begin();
 
     string pinBinary = *pinArgIt;
     pinArgIt++;
@@ -65,17 +67,17 @@ void AttachAndInstrument(list< string >* pinArgs)
         // Change cwd back to the original cwd when this app was called
         chdir(main_cwd.c_str());
 
-        char** inArgv = new char*[pinArgs->size() + 10];
+        char **inArgv = new char*[pinArgs->size()+10];
 
         unsigned int idx = 0;
-        inArgv[idx++]    = (char*)pinBinary.c_str();
-        inArgv[idx++]    = (char*)"-pid";
-        inArgv[idx]      = (char*)malloc(10);
+        inArgv[idx++] = (char *)pinBinary.c_str();
+        inArgv[idx++] = (char*)"-pid";
+        inArgv[idx] = (char *)malloc(10);
         sprintf(inArgv[idx++], "%d", parent_pid);
 
         for (; pinArgIt != pinArgs->end(); pinArgIt++)
         {
-            inArgv[idx++] = (char*)pinArgIt->c_str();
+            inArgv[idx++]= (char *)pinArgIt->c_str();
         }
         inArgv[idx] = 0;
 
@@ -89,14 +91,15 @@ void AttachAndInstrument(list< string >* pinArgs)
     }
 }
 
+
 /*
  * Expected command line: <this exe> -pin $PIN -pinarg <pin args > -t tool <tool args>
  */
 
-void ParseCommandLine(int argc, char* argv[], list< string >* pinArgs)
+void ParseCommandLine(int argc, char *argv[], list < string>* pinArgs)
 {
     string pinBinary;
-    for (int i = 1; i < argc; i++)
+    for (int i=1; i<argc; i++)
     {
         string arg = string(argv[i]);
         if (arg == "-pin")
@@ -116,25 +119,31 @@ void ParseCommandLine(int argc, char* argv[], list< string >* pinArgs)
     pinArgs->push_front(pinBinary);
 }
 
-extern "C" int MainThreadReady(void) { return 0; }
 
-int main(int argc, char* argv[])
+
+extern "C" int MainThreadReady(void)
+{
+    return 0;
+}
+
+int main(int argc, char *argv[])
 {
     // save cwd
     char cwd[PATH_MAX];
     getcwd(cwd, PATH_MAX);
     main_cwd = cwd;
 
-    list< string > pinArgs;
-    ParseCommandLine(argc, argv, &pinArgs);
+   list <string> pinArgs;
+   ParseCommandLine(argc, argv, &pinArgs);
 
-    AttachAndInstrument(&pinArgs);
+   AttachAndInstrument(&pinArgs);
 
-    // Wait for pin to attach
-    while (!MainThreadReady())
-    {
-        sched_yield();
-    }
+   // Wait for pin to attach
+   while (!MainThreadReady())
+   {
+       sched_yield();
+   }
 
-    return 0;
+   return 0;
 }
+

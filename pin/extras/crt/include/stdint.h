@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -255,7 +255,6 @@ typedef int64_t       intmax_t;
 #  define PTRDIFF_MIN    INT64_MIN
 #  define PTRDIFF_MAX    INT64_MAX
 #  define SIZE_MAX       UINT64_MAX
-#  define RSIZE_MAX      SIZE_MAX >> 1  // restricted size max
 #else
 #  define INTPTR_MIN     INT32_MIN
 #  define INTPTR_MAX     INT32_MAX
@@ -263,7 +262,6 @@ typedef int64_t       intmax_t;
 #  define PTRDIFF_MIN    INT32_MIN
 #  define PTRDIFF_MAX    INT32_MAX
 #  define SIZE_MAX       UINT32_MAX
-#  define RSIZE_MAX      SIZE_MAX >> 1 // restricted size max
 #endif
 
 #endif /* _STDINT_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,13 +17,15 @@ using std::string;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "memalloc.out", "specify memalloc file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,    "pintool",
+    "o", "memalloc.out", "specify memalloc file name");
+
 
 /* ===================================================================== */
 /* Globals */
 /* ===================================================================== */
 
-FILE* out;
+FILE * out;
 
 /* ===================================================================== */
 // Specific Linux code -
@@ -45,8 +47,8 @@ typedef struct rlimit rlimit_t;
 UINT64 GetTotalSwap()
 {
     long long total = 0;
-    int res         = 0;
-    FILE* f         = fopen("/proc/meminfo", "r");
+    int res = 0;
+    FILE* f = fopen("/proc/meminfo", "r");
     if (NULL == f)
     {
         return 0;
@@ -63,20 +65,20 @@ UINT64 GetTotalSwap()
     while (res != 1);
 
     fclose(f);
-    return (UINT64)(1024LL * total);
+	return (UINT64)(1024LL * total);
 }
 
 #else
 UINT64 GetTotalSwap()
 {
-    // Not supported on macOS*
-    return 0;
+	// Not supported on macOS*
+	return 0;
 }
 #endif
 
 #include <sys/resource.h>
 
-#define TOP_LIMIT (1024 * 1024 * 1024)
+#define TOP_LIMIT (1024*1024*1024)
 
 void LimitAvailableSpace()
 {
@@ -84,16 +86,16 @@ void LimitAvailableSpace()
     rlimit_t rlim;
 
     // Get total swap in bytes (originally it is in mem units).
-    UINT64 totalswap = GetTotalSwap();
+	UINT64 totalswap = GetTotalSwap();
 
     // Make the limit at most 40% of total swap area or 400Mb
-    if (totalswap == 0)
+    if(totalswap == 0)
     {
         myLimit = (TOP_LIMIT / 10) * 4;
     }
     else
     {
-        if (totalswap > (UINT64)(TOP_LIMIT))
+        if(totalswap > (UINT64)(TOP_LIMIT))
         {
             myLimit = (TOP_LIMIT / 10) * 4;
         }
@@ -103,7 +105,7 @@ void LimitAvailableSpace()
         }
     }
 
-    if (GETRLIMIT(RLIMIT_AS, &rlim) < 0)
+    if(GETRLIMIT(RLIMIT_AS, &rlim) < 0)
     {
         fprintf(out, "failed to getrlimit: continue...\n");
         return;
@@ -114,7 +116,7 @@ void LimitAvailableSpace()
         rlim.rlim_cur = myLimit;
     }
 
-    if (SETRLIMIT(RLIMIT_AS, &rlim) < 0)
+    if(SETRLIMIT(RLIMIT_AS, &rlim) < 0)
     {
         fprintf(out, "failed to setrlimit: continue...\n");
         return;
@@ -122,16 +124,15 @@ void LimitAvailableSpace()
 }
 #endif
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
-    void* reserve = malloc(1024 * 1024); //Reserving enough memory to allow Pin to allocate memory while
-                                         //shutting down.
-    char* ptr;
+    void* reserve = malloc(1024*1024); //Reserving enough memory to allow Pin to allocate memory while
+								       //shutting down.
+    char *ptr;
     do
     {
-        ptr = (char*)malloc(1024);
-    }
-    while (ptr != NULL);
+        ptr = (char *)malloc(1024);
+    } while (ptr != NULL);
     free(reserve);
     fprintf(out, "Got NULL while trying to allocate memory, test successful.\n");
 
@@ -139,7 +140,7 @@ VOID Fini(INT32 code, VOID* v)
 
     for (size_t sz = alignmentForCompilerOptimization; sz < 0x100000; sz *= 2)
     {
-        void* ptr    = malloc(sz);
+        void* ptr = malloc(sz);
         ADDRINT addr = (ADDRINT)ptr;
         ASSERTX(0 == addr % alignmentForCompilerOptimization);
         free(ptr);
@@ -148,7 +149,7 @@ VOID Fini(INT32 code, VOID* v)
     fclose(out);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();

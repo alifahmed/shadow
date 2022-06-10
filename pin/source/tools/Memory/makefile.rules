@@ -21,18 +21,15 @@ TEST_TOOL_ROOTS := icache dcache allcache dcache_xscale_config footprint memalig
                    memory_limit malloc_stress
 
 # This defines the tests to be run that were not already defined in TEST_TOOL_ROOTS.
-TEST_ROOTS := memory_allocation_access_protection new_delete address_mapping_oom address_mapping_zero check_memory_access \
-              mid_trace_start_non_exec_page mid_trace_cross_exec_non_exec_pages start_trace_start_non_exec_page \
-              start_trace_mid_non_exec_page start_trace_cross_non_exec_exec_pages start_trace_cross_exec_non_exec_pages \
-              non_executable_code_with_tool
+TEST_ROOTS := memory_allocation_access_protection new_delete address_mapping_oom address_mapping_zero check_memory_access
 
 # This defines the tools which will be run during the the tests, and were not already defined in
 # TEST_TOOL_ROOTS.
 TOOL_ROOTS := memory_allocation_from_app_access_protection_tool memory_allocation_from_tool_access_protection_tool \
-              new_delete_tool check_memory_access_tool protection_test_tool
+              new_delete_tool check_memory_access_tool
 
 # This defines all the applications that will be run during the tests.
-APP_ROOTS := access_protection_app new_delete_app mmap_reader_app check_memory_access_app protection_test_app 
+APP_ROOTS := access_protection_app new_delete_app mmap_reader_app check_memory_access_app
 
 # This defines any additional object files that need to be compiled.
 OBJECT_ROOTS :=
@@ -61,53 +58,14 @@ endif
 # Windows
 ifeq ($(TARGET_OS),windows)
     TEST_TOOL_ROOTS += memalloc memalloc2
-    TEST_ROOTS += windows_mitigation_policy
-    APP_ROOTS += mitigation_policy_app
 endif
 
-###### Handle exceptions here (OS/arch related) ######
-
-# Filtered out from SLES_11 since the application print_stack buggy on this kernel version.
-# it causes segmentation fault after changing protection of some kernel segment instead of 
-# just returning failure as expected.
-ifeq ($(TARGET_OS),linux)
-	ifeq ($(TARGET),ia32)
-		ifeq ($(DIST_NAME_SLES),1)
-			DIST_VER_LT_12 := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion lt 12)
-			ifeq ($(DIST_VER_LT_12),1)
-				TEST_ROOTS := $(filter-out restrict_memory_stack, $(TEST_ROOTS))
-				APP_ROOTS := $(filter-out print_stack, $(APP_ROOTS))
-			endif
-		endif
-	endif
-endif
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
+###### Handle exceptions here ######
 
 # see mantis 4497
 ifeq ($(TARGET_DOCKER),1)
     TEST_TOOL_ROOTS := $(filter-out restrict_memory_vdso, $(TEST_TOOL_ROOTS))
     TEST_ROOTS := $(filter-out restrict_memory_stack, $(TEST_ROOTS))
-endif
-
-# See mantis 4878 (CET machine)
-ifeq ($(TARGET_OS),linux)
-    ifeq ($(TARGET),ia32)
-        HOSTNAME_MATCH := $(shell $(TOOLS_ROOT)/Utils/testHostName has bitl64-tgl-249)
-        ifeq ($(HOSTNAME_MATCH), 1)
-            TEST_TOOL_ROOTS := $(filter-out restrict_memory_vdso, $(TEST_TOOL_ROOTS))
-            TEST_ROOTS := $(filter-out restrict_memory_stack, $(TEST_ROOTS))
-        endif
-    endif
-endif
-
-###### Define the serial subset ######
-
-# Defines which tests need to be run serially as may cause issues when running in parallel 
-ifeq ($(TARGET_OS),windows)
-    SERIAL_SUBSET :=  memalloc allcache icache malloc_stress memalloc2 memory_allocation_access_protection memory_limit new_delete
 endif
 
 ###### Define the sanity subset ######
@@ -117,10 +75,9 @@ endif
 SANITY_SUBSET := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
 
 ifeq ($(TARGET_OS),windows)
-    # mantis 4914
+    # See Mantis 4437
     SANITY_SUBSET := $(filter-out malloc_stress, $(SANITY_SUBSET))
 endif
-
 
 ##############################################################
 #
@@ -134,68 +91,6 @@ endif
 
 check_memory_access.test: $(OBJDIR)check_memory_access_tool$(PINTOOL_SUFFIX) $(OBJDIR)check_memory_access_app$(EXE_SUFFIX)
 	$(PIN) -t $(OBJDIR)check_memory_access_tool$(PINTOOL_SUFFIX) -- $(OBJDIR)check_memory_access_app$(EXE_SUFFIX)
-	
-#Test execution prevention of non-executable code:
-#Instruction in the middle of a trace is not executable - Instruction in the beginning of the page 
-mid_trace_start_non_exec_page.test: $(OBJDIR)protection_test_app$(EXE_SUFFIX)
-	$(PIN) -- $(OBJDIR)protection_test_app$(EXE_SUFFIX) 1 > $(OBJDIR)mid_trace_start_non_exec_page.out 
-	$(QGREP) "Segmentation fault" $(OBJDIR)mid_trace_start_non_exec_page.out
-	$(RM) $(OBJDIR)mid_trace_start_non_exec_page.out
-
-#Test execution prevention of non-executable code:
-#Instruction in the middle of a trace is not executable - Instruction is in the middle of a cross page 
-# (first executable, second not executable)
-mid_trace_cross_exec_non_exec_pages.test: $(OBJDIR)protection_test_app$(EXE_SUFFIX)
-	$(PIN) -- $(OBJDIR)protection_test_app$(EXE_SUFFIX) 2 > $(OBJDIR)mid_trace_cross_exec_non_exec_pages.out 
-	$(QGREP) "Segmentation fault" $(OBJDIR)mid_trace_cross_exec_non_exec_pages.out
-	$(RM) $(OBJDIR)mid_trace_cross_exec_non_exec_pages.out	
-
-#Test execution prevention of non-executable code:	
-#First instruction of trace is not executable - Instruction in the beginning of the page.
-start_trace_start_non_exec_page.test: $(OBJDIR)protection_test_app$(EXE_SUFFIX)
-	$(PIN) -- $(OBJDIR)protection_test_app$(EXE_SUFFIX) 3 > $(OBJDIR)start_trace_start_non_exec_page.out 
-	$(QGREP) "Segmentation fault" $(OBJDIR)start_trace_start_non_exec_page.out
-	$(RM) $(OBJDIR)start_trace_start_non_exec_page.out	
-
-#Test execution prevention of non-executable code:
-#First instruction of trace is not executable - Instruction in the middle of the page.	
-start_trace_mid_non_exec_page.test: $(OBJDIR)protection_test_app$(EXE_SUFFIX)
-	$(PIN) -- $(OBJDIR)protection_test_app$(EXE_SUFFIX) 4 > $(OBJDIR)start_trace_mid_non_exec_page.out 
-	$(QGREP) "Segmentation fault" $(OBJDIR)start_trace_mid_non_exec_page.out
-	$(RM) $(OBJDIR)start_trace_mid_non_exec_page.out	
-	
-#Test execution prevention of non-executable code:	
-#First instruction of trace is not executable - Instruction in the middle of a cross page 
-# first page not executable, second page executable
-start_trace_cross_non_exec_exec_pages.test: $(OBJDIR)protection_test_app$(EXE_SUFFIX)
-	$(PIN) -- $(OBJDIR)protection_test_app$(EXE_SUFFIX) 5 > $(OBJDIR)start_trace_cross_non_exec_exec_pages.out 
-	$(QGREP) "Segmentation fault" $(OBJDIR)start_trace_cross_non_exec_exec_pages.out
-	$(RM) $(OBJDIR)start_trace_cross_non_exec_exec_pages.out	
-
-#Test execution prevention of non-executable code:
-#First instruction of trace is not executable - Instruction in the middle of a cross page 
-# first page executable, second page not executable
-start_trace_cross_exec_non_exec_pages.test: $(OBJDIR)protection_test_app$(EXE_SUFFIX)
-	$(PIN) -- $(OBJDIR)protection_test_app$(EXE_SUFFIX) 6 > $(OBJDIR)start_trace_cross_exec_non_exec_pages.out 
-	$(QGREP) "Segmentation fault" $(OBJDIR)start_trace_cross_exec_non_exec_pages.out
-	$(RM) $(OBJDIR)start_trace_cross_exec_non_exec_pages.out	
-	
-#Test if the tool catch the exception when execution a non-executable code:
-#Instruction in the middle of a trace is not executable - Instruction in the beginning of the page 		
-non_executable_code_with_tool.test: $(OBJDIR)protection_test_tool$(PINTOOL_SUFFIX) $(OBJDIR)protection_test_app$(EXE_SUFFIX)
-	$(PIN) -t $(OBJDIR)protection_test_tool$(PINTOOL_SUFFIX) -o $(OBJDIR)non_executable_code_with_tool.log \
-	-- $(OBJDIR)protection_test_app$(EXE_SUFFIX) 1 > $(OBJDIR)non_executable_code_with_tool.out 
-	$(QGREP) "Segmentation fault" $(OBJDIR)non_executable_code_with_tool.out
-	$(QGREP) "Tool: Start handling exception" $(OBJDIR)non_executable_code_with_tool.log
-	$(RM) $(OBJDIR)non_executable_code_with_tool.log $(OBJDIR)non_executable_code_with_tool.out
-
-# Test if Pin skips executable page permissions check when fetching code to execute when using PIN_AddFetchFunction() API.
-non_executable_code_with_tool_disable_check.test: $(OBJDIR)protection_test_tool$(PINTOOL_SUFFIX) $(OBJDIR)protection_test_app$(EXE_SUFFIX)
-	- $(PIN) -t $(OBJDIR)protection_test_tool$(PINTOOL_SUFFIX) -fetch_cb -o $(OBJDIR)non_executable_code_with_tool_disable_check_tool.log \
-	-- $(OBJDIR)protection_test_app$(EXE_SUFFIX) 1 > $(OBJDIR)non_executable_code_with_tool_disable_check.out 
-	$(CGREP) "Tool: Start handling exception" $(OBJDIR)non_executable_code_with_tool_disable_check_tool.log | $(QGREP) 0
-	$(QGREP) "App ended" $(OBJDIR)non_executable_code_with_tool_disable_check.out
-	$(RM) $(OBJDIR)non_executable_code_with_tool_disable_check_tool.log $(OBJDIR)non_executable_code_with_tool_disable_check.out
 
 # Checks the correctness of the APIs: PIN_CheckReadAccess and PIN_CheckWriteAccess.
 memory_allocation_access_protection.test: $(OBJDIR)memory_allocation_from_tool_access_protection_tool$(PINTOOL_SUFFIX) $(OBJDIR)memory_allocation_from_app_access_protection_tool$(PINTOOL_SUFFIX) $(OBJDIR)access_protection_app$(EXE_SUFFIX)
@@ -353,9 +248,6 @@ memory_limit.test: $(OBJDIR)memory_limit$(PINTOOL_SUFFIX) $(TESTAPP)
 	$(QGREP) "Failed to allocate dynamic memory with size" $(OBJDIR)$(@:.test=.out)
 	$(RM) -f $(OBJDIR)$(@:.test=.out) $(OBJDIR)$(@:.test=.makefile.copy)
 
-windows_mitigation_policy.test: $(OBJDIR)mitigation_policy_app$(EXE_SUFFIX)
-	$(PIN) -- $(OBJDIR)mitigation_policy_app$(EXE_SUFFIX) > $(OBJDIR)mitigation_policy_app.out
-	$(RM) $(OBJDIR)mitigation_policy_app.out
 
 ##############################################################
 #
@@ -377,6 +269,3 @@ $(OBJDIR)access_protection_app$(EXE_SUFFIX): access_protection_app.cpp
 
 $(OBJDIR)new_delete_app$(EXE_SUFFIX): new_delete_app.cpp $(THREADLIB)
 	$(APP_CXX) $(COMPONENT_INCLUDES) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LPATHS) $(APP_LIBS) $(APP_LIB_ATOMIC) $(CXX_LPATHS) $(CXX_LIBS)
-
-$(OBJDIR)mitigation_policy_app$(EXE_SUFFIX): mitigation_policy_app.cpp
-	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS)

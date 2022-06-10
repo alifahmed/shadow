@@ -5,12 +5,12 @@
 # All directories which contain tests should be placed here.
 # Please maintain alphabetical order.
 
-ALL_TEST_DIRS :=   AlignChk Amx AttachDetach Buffer ChildProcess  Cpp11Tests CrossIa32Intel64  Debugger	 \
+ALL_TEST_DIRS :=   AlignChk AttachDetach Buffer ChildProcess  Cpp11Tests CrossIa32Intel64  Debugger	 \
                  DebugInfo DebugTrace GracefulExit I18N IArg ImageTests InlinedFuncsOpt Insmix InstLibExamples           \
-                 InstructionTests InstrumentationOrderAndVersion  LinuxTests  ManualExamples \
+                 InstructionTests InstrumentationOrderAndVersion JitProfilingApiTests LinuxTests  ManualExamples \
                   Memory MemTrace MemTranslate Mix Mmx MyPinTool NonInlinedFuncsOpt Probes Regvalue Replay     \
                  RtnTests SegTrace SegmentsVirtualization SignalTests SimpleExamples Smc SyncTests SyscallsEmulation     \
-                 Tests ToolUnitTests  
+                 Tests ToolUnitTests 
 
 # All directories which contain utilities for the test system should be placed here.
 # Please maintain alphabetical order.
@@ -35,8 +35,6 @@ test: $(ALL_TEST_DIRS:%=%.test)
 
 sanity: $(ALL_TEST_DIRS:%=%.sanity)
 	Utils/testsummary
-
-serial: $(ALL_TEST_DIRS:%=%.serial)
 
 clean: $(ALL_UTILS_DIRS:%=%.clean) $(ALL_TEST_DIRS:%=%.clean)
 
@@ -63,13 +61,10 @@ $(ALL_TEST_DIRS:%=%.test):
 $(ALL_TEST_DIRS:%=%.sanity):
 	-$(MAKE) -k -C $(@:%.sanity=%) sanity
 
-$(ALL_TEST_DIRS:%=%.serial):
-	-$(MAKE) -k -C $(@:%.serial=%) serial
-
 $(ALL_TEST_DIRS:%=%.clean):
 	-$(MAKE) -k -C $(@:%.clean=%) clean
 
-.PHONY: all build install test sanity serial clean
+.PHONY: all build install test sanity clean
 .PHONY: $(ALL_UTILS_DIRS:%=%.build) $(ALL_UTILS_DIRS:%=%.install) $(ALL_UTILS_DIRS:%=%.clean)
 .PHONY: $(ALL_TEST_DIRS:%=%.build) $(ALL_TEST_DIRS:%=%.install) $(ALL_TEST_DIRS:%=%.test)
 .PHONY: $(ALL_TEST_DIRS:%=%.sanity) $(ALL_TEST_DIRS:%=%.clean)

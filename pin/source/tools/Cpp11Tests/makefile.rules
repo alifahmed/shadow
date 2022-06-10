@@ -55,17 +55,13 @@ ifeq ($(TARGET_OS),linux)
     APP_ROOTS += cpp11ThreadsApp
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 # If cpp11 flag is not supported by GCC, no test from this makefile should be run.
 ifeq (,$(findstring $(CPP11FLAGS),$(HELPOUT)))
     TEST_TOOL_ROOTS := 
     APP_ROOTS := 
 endif
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
 
 ###### Define the sanity subset ######
 

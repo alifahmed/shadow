@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -18,17 +18,6 @@ END_LEGAL */
 #if !defined(XED_OPERAND_CTYPE_ENUM_H)
 # define XED_OPERAND_CTYPE_ENUM_H
 #include "xed-common-hdrs.h"
-#define XED_OPERAND_CTYPE_INVALID_DEFINED 1
-#define XED_OPERAND_CTYPE_XED_BITS_T_DEFINED 1
-#define XED_OPERAND_CTYPE_XED_CHIP_ENUM_T_DEFINED 1
-#define XED_OPERAND_CTYPE_XED_ERROR_ENUM_T_DEFINED 1
-#define XED_OPERAND_CTYPE_XED_ICLASS_ENUM_T_DEFINED 1
-#define XED_OPERAND_CTYPE_XED_INT64_T_DEFINED 1
-#define XED_OPERAND_CTYPE_XED_REG_ENUM_T_DEFINED 1
-#define XED_OPERAND_CTYPE_XED_UINT16_T_DEFINED 1
-#define XED_OPERAND_CTYPE_XED_UINT64_T_DEFINED 1
-#define XED_OPERAND_CTYPE_XED_UINT8_T_DEFINED 1
-#define XED_OPERAND_CTYPE_LAST_DEFINED 1
 typedef enum {
   XED_OPERAND_CTYPE_INVALID,
   XED_OPERAND_CTYPE_XED_BITS_T,

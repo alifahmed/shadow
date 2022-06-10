@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,29 +23,31 @@
 #include <cassert>
 #include "pin.H"
 #include "atomic.hpp"
-using std::cerr;
-using std::endl;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
 
-KNOB< string > KnobOutFile(KNOB_MODE_WRITEONCE, "pintool", "o", "jit_instr_detach.out",
-                           "Specify file name for the tool's output.");
+
+KNOB<string> KnobOutFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "o", "jit_instr_detach.out", "Specify file name for the tool's output.");
 
 ofstream outfile;
 
 volatile UINT32 instrumentedInstructions = 0; // the number of instructions that were instrumented.
-volatile UINT32 runtimeCount             = 0; // the number of executed instructions until detaching.
-INT32 threadCounter                      = 0;
+volatile UINT32 runtimeCount = 0; // the number of executed instructions until detaching.
+INT32 threadCounter = 0;
 PIN_LOCK pinLock;
 volatile bool detached = false;
 
 VOID docount()
 {
     ASSERT(!detached, "Analysis function was called after detach ended");
-    ATOMIC::OPS::Increment< UINT32 >(&runtimeCount, (UINT32)1); // the instrumented application may be multi-threaded
+    ATOMIC::OPS::Increment<UINT32>(&runtimeCount, (UINT32)1); // the instrumented application may be multi-threaded
 }
 
-VOID Instruction(INS ins, VOID* v)
+    
+VOID Instruction(INS ins, VOID *v)
 {
     ASSERT(!detached, "Callback function was called after detach ended");
     ++instrumentedInstructions;
@@ -58,7 +60,8 @@ VOID Instruction(INS ins, VOID* v)
     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);
 }
 
-VOID Detach(VOID* v)
+
+VOID Detach(VOID *v)
 {
     if (detached) // sanity check
     {
@@ -72,7 +75,8 @@ VOID Detach(VOID* v)
     outfile.close();
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     ASSERT(!detached, "Callback function was called after detach ended");
     OS_THREAD_ID tid = PIN_GetTid();
@@ -82,7 +86,8 @@ VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
     PIN_ReleaseLock(&pinLock);
 }
 
-VOID ThreadEnd(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID* v)
+
+VOID ThreadEnd(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
     if (detached) // sanity check
     {
@@ -98,7 +103,8 @@ VOID ThreadEnd(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID* v)
     PIN_ReleaseLock(&pinLock);
 }
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
@@ -115,9 +121,9 @@ int main(int argc, char* argv[])
     PIN_AddThreadStartFunction(ThreadStart, 0);
     PIN_AddThreadFiniFunction(ThreadEnd, 0);
     PIN_AddDetachFunction(Detach, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

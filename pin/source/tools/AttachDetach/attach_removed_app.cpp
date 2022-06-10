@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,6 +25,7 @@
 using std::list;
 using std::string;
 
+
 /* Pin doesn't kill the process if if failed to attach, exit on SIGALRM */
 void ExitOnAlarm(int sig)
 {
@@ -32,12 +33,15 @@ void ExitOnAlarm(int sig)
     exit(0);
 }
 
-extern "C" int PinAttached() { return 0; }
+extern "C" int PinAttached()
+{
+    return 0;
+}
 
-void PrintArguments(char** inArgv)
+void PrintArguments(char **inArgv)
 {
     fprintf(stderr, "Going to run: ");
-    for (unsigned int i = 0; inArgv[i] != 0; ++i)
+    for(unsigned int i=0; inArgv[i] != 0; ++i)
     {
         fprintf(stderr, "%s ", inArgv[i]);
     }
@@ -48,10 +52,10 @@ void PrintArguments(char** inArgv)
  * Expected command line: <this exe> [-th_num NUM] -pin $PIN -pinarg <pin args > -t tool <tool args>
  */
 
-void ParseCommandLine(int argc, char* argv[], list< string >* pinArgs)
+void ParseCommandLine(int argc, char *argv[], list < string>* pinArgs)
 {
     string pinBinary;
-    for (int i = 1; i < argc; i++)
+    for (int i=1; i<argc; i++)
     {
         string arg = string(argv[i]);
         if (arg == "-pin")
@@ -71,11 +75,12 @@ void ParseCommandLine(int argc, char* argv[], list< string >* pinArgs)
     pinArgs->push_front(pinBinary);
 }
 
-void StartPin(list< string >* pinArgs)
+void StartPin(list <string>* pinArgs)
 {
     pid_t appPid = getpid();
-    pid_t child  = fork();
-    if (child != 0) return;
+    pid_t child = fork();
+    if (child != 0)
+        return;
 
     /* here is the child */
     // sleeping to give the parent time to diminish its privileges.
@@ -83,23 +88,23 @@ void StartPin(list< string >* pinArgs)
     printf("resumed child \n");
 
     // start Pin from child
-    char** inArgv = new char*[pinArgs->size() + 10];
+    char **inArgv = new char*[pinArgs->size()+10];
 
     // Pin binary in the first
-    list< string >::iterator pinArgIt = pinArgs->begin();
-    string pinBinary                  = *pinArgIt;
+    list <string>::iterator pinArgIt = pinArgs->begin();
+    string pinBinary = *pinArgIt;
     pinArgIt++;
 
     // build pin arguments:
     unsigned int idx = 0;
-    inArgv[idx++]    = (char*)pinBinary.c_str();
-    inArgv[idx++]    = (char*)"-pid";
-    inArgv[idx]      = (char*)malloc(10);
+    inArgv[idx++] = (char *)pinBinary.c_str();
+    inArgv[idx++] = (char*)"-pid";
+    inArgv[idx] = (char *)malloc(10);
     sprintf(inArgv[idx++], "%d", appPid);
 
     for (; pinArgIt != pinArgs->end(); pinArgIt++)
     {
-        inArgv[idx++] = (char*)pinArgIt->c_str();
+        inArgv[idx++]= (char *)pinArgIt->c_str();
     }
     inArgv[idx] = 0;
 
@@ -111,20 +116,22 @@ void StartPin(list< string >* pinArgs)
     exit(1);
 }
 
-extern "C" void* ThreadMain(void* arg) { return NULL; }
+extern "C" void* ThreadMain(void* arg)
+{
+    return NULL;
+}
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     //remove app binary file
     int res = remove(argv[0]);
-    if (res == -1)
-    {
+    if(res == -1){
         //file remove error
-        printf("file remove error : %s\n", strerror(errno));
+        printf ("file remove error : %s\n", strerror(errno));
         exit(1);
     }
 
-    list< string > pinArgs;
+    list <string> pinArgs;
 
     ParseCommandLine(argc, argv, &pinArgs);
 
@@ -142,9 +149,10 @@ int main(int argc, char* argv[])
         sleep(2);
     }
     printf("After pause, Pin attached successfully\n");
-
+    
     return 0;
 }
 /*
  *  eof
  */
+

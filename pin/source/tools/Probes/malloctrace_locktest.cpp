@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,16 +24,20 @@ using std::string;
 
 ofstream TraceFile;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "malloctrace_locktest.out", "specify trace file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "malloctrace_locktest.out", "specify trace file name");
 
-static VOID ImageLoad(IMG img, VOID* v);
-static void* MallocProbe(void* (*origMalloc)(size_t), UINT32 mallocNum, size_t size, ADDRINT appTP);
-static void FreeProbe(void (*origFree)(void*), UINT32 freeNum, void* ptr, ADDRINT appTP);
 
-int main(int argc, CHAR* argv[])
+static VOID ImageLoad(IMG img, VOID *v);
+static void *MallocProbe(void *(*origMalloc)(size_t), UINT32 mallocNum, size_t size, ADDRINT appTP);
+static void FreeProbe(void (*origFree)(void *), UINT32 freeNum, void *ptr, ADDRINT appTP);
+
+
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
-    if (PIN_Init(argc, argv)) return 1;
+    if (PIN_Init(argc,argv))
+        return 1;
 
     TraceFile.open(KnobOutputFile.Value().c_str());
 
@@ -43,38 +47,50 @@ int main(int argc, CHAR* argv[])
     return 0;
 }
 
-static VOID ImageLoad(IMG img, VOID* v)
+
+static VOID ImageLoad(IMG img, VOID *v)
 {
     static UINT32 mallocCount = 0;
 
-    PROTO protoMalloc = PROTO_Allocate(PIN_PARG(void*), CALLINGSTD_DEFAULT, "malloc", PIN_PARG(size_t), PIN_PARG_END());
+    PROTO protoMalloc = PROTO_Allocate(PIN_PARG(void *), CALLINGSTD_DEFAULT,
+        "malloc", PIN_PARG(size_t), PIN_PARG_END());
 
     RTN rtnMalloc = RTN_FindByName(img, C_MANGLE("malloc"));
     if (RTN_Valid(rtnMalloc))
     {
         TraceFile << "probing malloc #" << mallocCount << " in " << IMG_Name(img) << std::endl;
 
-        RTN_ReplaceSignatureProbed(rtnMalloc, AFUNPTR(MallocProbe), IARG_PROTOTYPE, protoMalloc, IARG_ORIG_FUNCPTR, IARG_UINT32,
-                                   static_cast< UINT32 >(mallocCount), IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_ADDRINT,
-                                   static_cast< ADDRINT >(0), IARG_END);
+        RTN_ReplaceSignatureProbed(rtnMalloc, AFUNPTR(MallocProbe),
+            IARG_PROTOTYPE, protoMalloc,
+            IARG_ORIG_FUNCPTR,
+            IARG_UINT32, static_cast<UINT32>(mallocCount),
+            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+            IARG_ADDRINT, static_cast<ADDRINT>(0),
+            IARG_END);
 
         mallocCount++;
     }
 
     PROTO_Free(protoMalloc);
 
+
     static UINT32 freeCount = 0;
 
-    PROTO protoFree = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT, "free", PIN_PARG(void*), PIN_PARG_END());
+    PROTO protoFree = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT,
+        "free", PIN_PARG(void *), PIN_PARG_END());
 
     RTN freeRtn = RTN_FindByName(img, C_MANGLE("free"));
     if (RTN_Valid(freeRtn))
     {
         TraceFile << "probing free #" << freeCount << " in " << IMG_Name(img) << std::endl;
 
-        RTN_ReplaceSignatureProbed(freeRtn, AFUNPTR(FreeProbe), IARG_PROTOTYPE, protoFree, IARG_ORIG_FUNCPTR, IARG_UINT32,
-                                   static_cast< UINT32 >(freeCount), IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_ADDRINT,
-                                   static_cast< ADDRINT >(0), IARG_END);
+        RTN_ReplaceSignatureProbed(freeRtn, AFUNPTR(FreeProbe),
+            IARG_PROTOTYPE, protoFree,
+            IARG_ORIG_FUNCPTR,
+            IARG_UINT32, static_cast<UINT32>(freeCount),
+            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+            IARG_ADDRINT, static_cast<ADDRINT>(0),
+            IARG_END);
 
         freeCount++;
     }
@@ -82,9 +98,10 @@ static VOID ImageLoad(IMG img, VOID* v)
     PROTO_Free(protoFree);
 }
 
-static void* MallocProbe(void* (*origMalloc)(size_t), UINT32 mallocNum, size_t size, ADDRINT appTP)
+
+static void *MallocProbe(void *(*origMalloc)(size_t), UINT32 mallocNum, size_t size, ADDRINT appTP)
 {
-    void* ptr = origMalloc(size);
+    void *ptr = origMalloc(size);
     PIN_LockClient();
     TraceFile << mallocNum << " malloc(" << size << ") returns " << ptr << std::endl;
     PIN_UnlockClient();
@@ -92,7 +109,7 @@ static void* MallocProbe(void* (*origMalloc)(size_t), UINT32 mallocNum, size_t s
     return ptr;
 }
 
-static void FreeProbe(void (*origFree)(void*), UINT32 freeNum, void* ptr, ADDRINT appTP)
+static void FreeProbe(void (*origFree)(void *), UINT32 freeNum, void *ptr, ADDRINT appTP)
 {
     origFree(ptr);
     PIN_LockClient();

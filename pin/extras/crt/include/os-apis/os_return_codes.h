@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -27,7 +27,7 @@
  */
 typedef enum
 {
-    OS_RETURN_CODE_NO_ERROR = 0,
+    OS_RETURN_CODE_NO_ERROR=0,
     OS_RETURN_CODE_INVALID_ARGS,
     OS_RETURN_CODE_MEMORY_MAP_FAILED,
     OS_RETURN_CODE_MEMORY_FREE_FAILED,
@@ -84,17 +84,18 @@ typedef struct _OS_RETURN_CODE_POSIX
 
 #ifdef __cplusplus
 
-extern "C++"
-{
-    inline bool operator==(const OS_RETURN_CODE_GENERIC& generic, const OS_RETURN_CODE& code)
-    {
-        return code.generic_err == generic;
-    }
+extern "C++" {
 
-    inline bool operator!=(const OS_RETURN_CODE_GENERIC& generic, const OS_RETURN_CODE& code)
-    {
-        return code.generic_err != generic;
-    }
+inline bool operator==(const OS_RETURN_CODE_GENERIC& generic, const OS_RETURN_CODE& code)
+{
+    return code.generic_err == generic;
+}
+
+inline bool operator!=(const OS_RETURN_CODE_GENERIC& generic, const OS_RETURN_CODE& code)
+{
+    return code.generic_err != generic;
+}
+
 }
 #endif
 
@@ -104,19 +105,17 @@ extern "C++"
 
 #define OS_RETURN_CODE_DECLARE(lvalue) OS_RETURN_CODE lvalue = {OS_RETURN_CODE_NO_ERROR, 0}
 
-#define OS_RETURN_CODE_ASSIGN_ERROR(lvalue, r, errno) \
-    {                                                 \
-        lvalue.generic_err     = r;                   \
-        lvalue.os_specific_err = (int)errno;          \
-    }
+#define OS_RETURN_CODE_ASSIGN_ERROR(lvalue,r,errno) { \
+                    lvalue.generic_err = r; \
+                    lvalue.os_specific_err = (int)errno; \
+        }
 
-#define OS_RETURN_CODE_RETURN_ERROR(r, errno) \
-    {                                         \
-        OS_RETURN_CODE tmpRet;                \
-        tmpRet.generic_err     = r;           \
-        tmpRet.os_specific_err = (int)errno;  \
-        return tmpRet;                        \
-    }
+#define OS_RETURN_CODE_RETURN_ERROR(r,errno) { \
+            OS_RETURN_CODE tmpRet; \
+            tmpRet.generic_err = r; \
+            tmpRet.os_specific_err = (int)errno; \
+            return tmpRet; \
+        }
 
 #define OS_RETURN_CODE_RETURN_SUCCESS OS_RETURN_CODE_RETURN_ERROR(OS_RETURN_CODE_NO_ERROR, 0)
 

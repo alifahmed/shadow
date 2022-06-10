@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,26 +18,29 @@
 
 BOOL ImageEntryWasCalled = FALSE;
 
-VOID MainImageEntry() { ImageEntryWasCalled = TRUE; }
+VOID MainImageEntry()
+{
+    ImageEntryWasCalled = TRUE;
+}
 
 // Pin calls this function every time a new img is loaded
 // It can instrument the image, but this example does not
 // Note that imgs (including shared libraries) are loaded lazily
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     if (IMG_IsVDSO(img))
     {
         return;
     }
-    RTN rtn = RTN_FindByName(img, "_start");
+    RTN rtn = RTN_FindByName(img,"_start");
     ASSERTX(RTN_Valid(rtn));
     RTN_Open(rtn);
     RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)MainImageEntry, IARG_END);
     RTN_Close(rtn);
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     if (0 == code && !ImageEntryWasCalled)
     {
@@ -47,7 +50,7 @@ VOID Fini(INT32 code, VOID* v)
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize symbol processing
     PIN_InitSymbols();
@@ -65,3 +68,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

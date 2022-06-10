@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -17,8 +17,9 @@
 #ifndef DEBUGGER_PROTOCOL_FORWARD_HPP
 #define DEBUGGER_PROTOCOL_FORWARD_HPP
 
-namespace DEBUGGER_PROTOCOL
-{
+
+namespace DEBUGGER_PROTOCOL {
+
 struct TCP_INFO;
 class IFRONTEND;
 class IBACKEND;
@@ -26,5 +27,5 @@ class ICOMMANDS;
 class INOTIFICATIONS;
 class ILOG_NOTIFICATIONS;
 
-} // namespace DEBUGGER_PROTOCOL
+} // namespace
 #endif // file guard

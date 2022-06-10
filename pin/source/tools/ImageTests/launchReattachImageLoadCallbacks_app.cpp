@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,10 +20,9 @@
 
 EXPORT_SYM bool AfterAttach2();
 
-enum ExitType
-{
-    RES_SUCCESS = 0, // 0
-    RES_LOAD_FAILED, // 1
+enum ExitType {
+    RES_SUCCESS = 0,      // 0
+    RES_LOAD_FAILED,      // 1
 };
 
 bool AfterAttach2()
@@ -32,9 +31,9 @@ bool AfterAttach2()
     return false;
 }
 
-int main(int argc, char* argv[])
+int main (int argc, char *argv[])
 {
-    void* handle = dlopen(argv[1], RTLD_LAZY);
+    void *handle = dlopen(argv[1], RTLD_LAZY);
     if (!handle)
     {
         fprintf(stderr, " Failed to load: %s because: %s\n", argv[1], dlerror());
@@ -42,7 +41,7 @@ int main(int argc, char* argv[])
         exit(RES_LOAD_FAILED);
     }
 
-    while (!AfterAttach2())
+    while(!AfterAttach2())
     {
         sleep(1);
     }
@@ -55,7 +54,7 @@ int main(int argc, char* argv[])
         exit(RES_LOAD_FAILED);
     }
 
-    while (1)
+    while(1)
     {
         // expected to be stopped by tool.
         sleep(1);

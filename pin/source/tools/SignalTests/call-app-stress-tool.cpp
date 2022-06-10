@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,13 +16,15 @@
 #include <stdio.h>
 #include "pin.H"
 
-static VOID OnImage(IMG, VOID*);
-static VOID OnFoo(CONTEXT*, THREADID);
+static VOID OnImage(IMG, VOID *);
+static VOID OnFoo(CONTEXT *, THREADID);
+
 
 BOOL FoundBar = FALSE;
 ADDRINT BarAddr;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -33,7 +35,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static VOID OnImage(IMG img, VOID*)
+static VOID OnImage(IMG img, VOID *)
 {
     RTN rtn = RTN_FindByName(img, "PIN_TEST_FOO");
     if (RTN_Valid(rtn))
@@ -46,12 +48,12 @@ static VOID OnImage(IMG img, VOID*)
     rtn = RTN_FindByName(img, "PIN_TEST_BAR");
     if (RTN_Valid(rtn))
     {
-        BarAddr  = RTN_Address(rtn);
+        BarAddr = RTN_Address(rtn);
         FoundBar = TRUE;
     }
 }
 
-static VOID OnFoo(CONTEXT* ctxt, THREADID tid)
+static VOID OnFoo(CONTEXT *ctxt, THREADID tid)
 {
     if (!FoundBar)
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -29,26 +29,29 @@
 
 #include <iostream>
 #include <fstream>
-using std::cerr;
-using std::endl;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
 
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "fork_jit_tool.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "fork_jit_tool.out", "specify file name");
 
 ofstream Out;
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This pin tool tests probe replacement.\n"
-            "\n";
+    cerr <<
+        "This pin tool tests probe replacement.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
 }
+
 
 pid_t childPid = 0;
 PIN_LOCK pinLock;
@@ -57,9 +60,9 @@ ofstream childOut;
 /*
  * To make sure that before-fork callback works
  */
-VOID BeforeFork(THREADID threadid, const CONTEXT* ctxt, VOID* arg)
+VOID BeforeFork(THREADID threadid, const CONTEXT* ctxt, VOID * arg)
 {
-    PIN_GetLock(&pinLock, threadid + 1);
+    PIN_GetLock(&pinLock, threadid+1);
     Out << "TOOL: Before fork." << endl;
     PIN_ReleaseLock(&pinLock);
 }
@@ -71,26 +74,26 @@ VOID BeforeFork(THREADID threadid, const CONTEXT* ctxt, VOID* arg)
  * The child pid value should be equal in after-fork and after-syscall
  * callbacks.
  */
-VOID AfterForkInParent(THREADID threadid, const CONTEXT* ctxt, VOID* arg)
+VOID AfterForkInParent(THREADID threadid, const CONTEXT* ctxt, VOID * arg)
 {
     pid_t parentPid = *(pid_t*)&arg;
-    PIN_GetLock(&pinLock, threadid + 1);
+    PIN_GetLock(&pinLock, threadid+1);
     Out << "TOOL: After fork in parent." << endl;
     PIN_ReleaseLock(&pinLock);
     if (PIN_GetPid() != parentPid)
     {
-        cerr << "PIN_GetPid() fails in parent process" << endl;
-        exit(-1);
+    	cerr << "PIN_GetPid() fails in parent process" << endl;
+		exit(-1);
     }
     else
     {
-        Out << "PIN_GetPid() is correct in parent process" << endl;
+    	Out << "PIN_GetPid() is correct in parent process" << endl;
     }
 
 #ifdef TARGET_BSD
     SYSCALL_STANDARD syscallStd = SYSCALL_STANDARD_IA32E_BSD;
 #else
-#if defined(TARGET_IA32E)
+#if defined (TARGET_IA32E)
     SYSCALL_STANDARD syscallStd = SYSCALL_STANDARD_IA32E_LINUX;
 #else
 #ifdef TARGET_MAC
@@ -108,8 +111,9 @@ VOID AfterForkInParent(THREADID threadid, const CONTEXT* ctxt, VOID* arg)
     }
     else if (childPid != afterForkChildPid)
     {
-        cerr << "Child pid received in syscall-after callback " << childPid << " and child Pid in after-fork callback "
-             << afterForkChildPid << " don't match " << endl;
+        cerr << "Child pid received in syscall-after callback " <<
+           childPid << " and child Pid in after-fork callback " <<
+           afterForkChildPid << " don't match " << endl;
         exit(-1);
     }
 }
@@ -118,20 +122,22 @@ VOID OpenChildOutput()
 {
     if (!childOut.is_open())
     {
-        char* outFileName = new char[KnobOutputFile.Value().size() + 10];
+        char *outFileName = new char[KnobOutputFile.Value().size()+10];
         sprintf(outFileName, "%s_%d", KnobOutputFile.Value().c_str(), PIN_GetPid());
         childOut.open(outFileName);
     }
 }
 
-VOID AfterForkInChild(THREADID threadid, const CONTEXT* ctxt, VOID* arg)
+VOID AfterForkInChild(THREADID threadid, const CONTEXT* ctxt, VOID * arg)
 {
+
     // After the fork, there is only one thread in the child process.  It's possible
     // that a different thread in the parent held this lock when the fork() happened.
     // Since that thread does not exist in the child, it will never release the lock.
     // Compensate by re-initializing the lock here in the child.
 
-    PIN_GetLock(&pinLock, threadid + 1);
+
+    PIN_GetLock(&pinLock, threadid+1);
     PIN_ReleaseLock(&pinLock);
 
     pid_t parentPid = *(pid_t*)&arg;
@@ -144,35 +150,38 @@ VOID AfterForkInChild(THREADID threadid, const CONTEXT* ctxt, VOID* arg)
 
     if ((currentPid == parentPid) || (getppid() != parentPid))
     {
-        cerr << "PIN_GetPid() fails in child process" << endl;
-        exit(-1);
+		cerr << "PIN_GetPid() fails in child process" << endl;
+		exit(-1);
     }
     else
     {
-        childOut << "PIN_GetPid() is correct in child process" << endl;
+    	childOut << "PIN_GetPid() is correct in child process" << endl;
     }
     childOut << "Child pid " << currentPid << endl;
+
 }
 
 UINT32 lastSyscall = (UINT32)(-1);
 
-VOID SyscallBefore(THREADID tid, CONTEXT* ctxt, SYSCALL_STANDARD scStd, VOID* arg)
+VOID SyscallBefore(THREADID tid, CONTEXT *ctxt, SYSCALL_STANDARD scStd,
+                  VOID *arg)
 {
     lastSyscall = (UINT32)PIN_GetSyscallNumber(ctxt, scStd);
 }
 
-VOID SyscallAfter(THREADID tid, CONTEXT* ctxt, SYSCALL_STANDARD scStd, VOID* arg)
+VOID SyscallAfter(THREADID tid, CONTEXT *ctxt, SYSCALL_STANDARD scStd,
+                  VOID *arg)
 {
-    pid_t parentPid  = *(pid_t*)&arg;
+    pid_t parentPid = *(pid_t*)&arg;
     pid_t currentPid = PIN_GetPid();
     if ((
-#if defined(TARGET_MAC) || defined(TARGET_BSD)
-            (lastSyscall == SYS_fork)
+#if defined (TARGET_MAC) || defined (TARGET_BSD)
+         (lastSyscall == SYS_fork)
 #else
-            (lastSyscall == SYS_fork) || (lastSyscall == SYS_clone)
+         (lastSyscall == SYS_fork) || (lastSyscall == SYS_clone)
 #endif
-                ) &&
-        (parentPid == currentPid))
+        )
+        && (parentPid == currentPid))
     {
         //We are looking at ater-fork in parent
         pid_t res = PIN_GetSyscallReturn(ctxt, scStd);
@@ -180,17 +189,19 @@ VOID SyscallAfter(THREADID tid, CONTEXT* ctxt, SYSCALL_STANDARD scStd, VOID* arg
         {
             if (res != childPid)
             {
-                cerr << "Child pid received in after fork callback " << childPid << " and child Pid in syscall-after callback "
-                     << res << " don't match " << endl;
-                exit(-1);
+                cerr << "Child pid received in after fork callback " <<
+                childPid << " and child Pid in syscall-after callback " <<
+                res << " don't match " << endl;
+               exit(-1);
             }
         }
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+
+int main(INT32 argc, CHAR **argv)
 {
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -201,8 +212,8 @@ int main(INT32 argc, CHAR** argv)
 
     unsigned long parentPid = (unsigned long)PIN_GetPid();
     PIN_AddForkFunction(FPOINT_BEFORE, BeforeFork, (VOID*)parentPid);
-    PIN_AddForkFunction(FPOINT_AFTER_IN_PARENT, AfterForkInParent, (VOID*)parentPid);
-    PIN_AddForkFunction(FPOINT_AFTER_IN_CHILD, AfterForkInChild, (VOID*)parentPid);
+    PIN_AddForkFunction(FPOINT_AFTER_IN_PARENT, AfterForkInParent, (VOID *)parentPid);
+	PIN_AddForkFunction(FPOINT_AFTER_IN_CHILD, AfterForkInChild, (VOID*)parentPid);
     PIN_AddSyscallEntryFunction(SyscallBefore, 0);
     PIN_AddSyscallExitFunction(SyscallAfter, (VOID*)parentPid);
     // Never returns

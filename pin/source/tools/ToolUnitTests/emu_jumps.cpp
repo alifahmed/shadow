@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,27 +18,31 @@
 #include <iostream>
 #include <set>
 #include "pin.H"
-using std::endl;
 using std::hex;
 using std::string;
+using std::endl;
 
-KNOB< UINT32 > KnobDetach(KNOB_MODE_WRITEONCE, "pintool", "d", "-1", "stop tracing at this point");
-KNOB< BOOL > KnobLog(KNOB_MODE_WRITEONCE, "pintool", "l", "0", "log all instructions");
+KNOB<UINT32> KnobDetach(KNOB_MODE_WRITEONCE, "pintool", "d", "-1", "stop tracing at this point");
+KNOB<BOOL> KnobLog(KNOB_MODE_WRITEONCE, "pintool", "l", "0", "log all instructions");
 
 static UINT32 scount = 0;
 static REG scratchReg;
-static std::set< ADDRINT > branchTakenIns;
-FILE* out = 0;
+static std::set<ADDRINT> branchTakenIns;
+FILE *out = 0;
 
-VOID PrintIns(void* p, const char* s)
+VOID PrintIns(void *p, const char *s)
 {
-    if (!out) return;
+    if(!out)
+        return;
 
     fprintf(out, "%6d: %p %s\n", scount, p, s);
     fflush(out);
 }
 
-ADDRINT EmuIndJmp(ADDRINT tgtip) { return tgtip; }
+ADDRINT EmuIndJmp(ADDRINT tgtip)
+{
+    return tgtip;
+}
 
 VOID BranchBefore(THREADID tid, ADDRINT pc)
 {
@@ -53,13 +57,14 @@ VOID BranchTaken(THREADID tid, ADDRINT pc, ADDRINT expected)
     branchTakenIns.erase(pc);
 }
 
-VOID Ins(INS ins, VOID* v)
+VOID Ins( INS ins, VOID *v )
 {
-    if (KnobDetach > 0 && scount > KnobDetach) return;
+    if (KnobDetach > 0 && scount > KnobDetach)
+        return;
 
     if (KnobLog)
     {
-        void* addr    = Addrint2VoidStar(INS_Address(ins));
+        void *addr = Addrint2VoidStar(INS_Address(ins));
         string disasm = INS_Disassemble(ins);
         PrintIns(addr, disasm.c_str());
     }
@@ -68,16 +73,19 @@ VOID Ins(INS ins, VOID* v)
 
     // call and return need also stack manipulation (see emu_stack.cpp)
     // conditional jumps need handling the condition (not supported yet)
-    if (INS_IsCall(ins) || INS_IsRet(ins) || INS_Category(ins) == XED_CATEGORY_COND_BR) return;
+    if (INS_IsCall(ins) || INS_IsRet(ins) || INS_Category(ins) == XED_CATEGORY_COND_BR)
+        return;
 
     if (INS_IsIndirectControlFlow(ins))
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(EmuIndJmp), IARG_BRANCH_TARGET_ADDR, IARG_RETURN_REGS, scratchReg, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE,
+            AFUNPTR(EmuIndJmp),
+            IARG_BRANCH_TARGET_ADDR,
+            IARG_RETURN_REGS, scratchReg, IARG_END);
 
         INS_InsertIndirectJump(ins, IPOINT_AFTER, scratchReg);
         INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)BranchBefore, IARG_THREAD_ID, IARG_INST_PTR, IARG_END);
-        INS_InsertCall(ins, IPOINT_TAKEN_BRANCH, (AFUNPTR)BranchTaken, IARG_THREAD_ID, IARG_INST_PTR, IARG_ADDRINT,
-                       INS_Address(ins), IARG_END);
+        INS_InsertCall(ins, IPOINT_TAKEN_BRANCH, (AFUNPTR)BranchTaken, IARG_THREAD_ID, IARG_INST_PTR, IARG_ADDRINT, INS_Address(ins), IARG_END);
 
         INS_Delete(ins);
     }
@@ -87,29 +95,28 @@ VOID Ins(INS ins, VOID* v)
 
         INS_InsertDirectJump(ins, IPOINT_AFTER, tgt);
         INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)BranchBefore, IARG_THREAD_ID, IARG_INST_PTR, IARG_END);
-        INS_InsertCall(ins, IPOINT_TAKEN_BRANCH, (AFUNPTR)BranchTaken, IARG_THREAD_ID, IARG_INST_PTR, IARG_ADDRINT,
-                       INS_Address(ins), IARG_END);
+        INS_InsertCall(ins, IPOINT_TAKEN_BRANCH, (AFUNPTR)BranchTaken, IARG_THREAD_ID, IARG_INST_PTR, IARG_ADDRINT, INS_Address(ins), IARG_END);
 
         INS_Delete(ins);
     }
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     if (!branchTakenIns.empty())
     {
-        for (std::set< ADDRINT >::iterator it = branchTakenIns.begin(); it != branchTakenIns.end(); it++)
+        for (std::set<ADDRINT>::iterator it = branchTakenIns.begin(); it != branchTakenIns.end(); it++)
         {
-            std::cerr << "Instrumentation for IPOINT_TAKEN_BRANCH for instruction at " << hex << *it << " wasn't executed"
-                      << endl;
+            std::cerr << "Instrumentation for IPOINT_TAKEN_BRANCH for instruction at " << hex << *it << " wasn't executed" << endl;
         }
         ASSERTX(FALSE);
     }
-    if (out) fclose(out);
+    if (out)
+        fclose(out);
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     PIN_Init(argc, argv);
@@ -117,14 +124,16 @@ int main(int argc, char* argv[])
     if (KnobLog)
     {
         out = fopen("emu_jumps.txt", "w");
-        if (!out) fprintf(stderr, "Can't open log file emu_jumps.txt\n");
+        if (!out)
+            fprintf(stderr, "Can't open log file emu_jumps.txt\n");
     }
 
     scratchReg = PIN_ClaimToolRegister();
     if (!REG_valid(scratchReg))
     {
-        if (out) fprintf(out, "Cannot allocate a scratch register.\n");
-        fprintf(stderr, "Cannot allocate a scratch register.\n");
+        if (out)
+            fprintf (out, "Cannot allocate a scratch register.\n");
+        fprintf (stderr, "Cannot allocate a scratch register.\n");
         return 1;
     }
 
@@ -133,9 +142,10 @@ int main(int argc, char* argv[])
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
+

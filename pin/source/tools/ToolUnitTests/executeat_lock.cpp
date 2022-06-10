@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,44 +20,47 @@
 #include "pin.H"
 #include <iostream>
 
+
 /* ===================================================================== */
 
-VOID Hello(CONTEXT* ctxt)
+VOID Hello(  CONTEXT * ctxt )
 {
     PIN_LockClient();
-
+    
     // This should produce a pin error.
     //
-    PIN_ExecuteAt(ctxt);
+    PIN_ExecuteAt( ctxt );
 
     PIN_UnlockClient();
 }
 
+
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    RTN rtn = RTN_FindByName(img, "hello");
+    RTN rtn  = RTN_FindByName(img, "hello");
     if (RTN_Valid(rtn))
     {
         RTN_Open(rtn);
-
-        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(Hello), IARG_CONTEXT, IARG_END);
+        
+        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(Hello),
+                       IARG_CONTEXT, IARG_END);
 
         RTN_Close(rtn);
-    }
+    }    
 }
 
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR* argv[])
+int main(INT32 argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
     PIN_Init(argc, argv);
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgram();
 
     return 0;
@@ -66,3 +69,4 @@ int main(INT32 argc, CHAR* argv[])
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,14 +17,17 @@
 #include <iostream>
 #include <fstream>
 #include "pin.H"
-using std::endl;
 using std::ofstream;
+using std::endl;
+
 
 // Global variables
+
 
 ofstream outFile; // The tool's output file for printing the loaded images.
 
 bool attached = false;
+
 
 static void OnDoRelease(ADDRINT doRelease)
 {
@@ -32,7 +35,8 @@ static void OnDoRelease(ADDRINT doRelease)
     *((bool*)doRelease) = true;
 }
 
-static VOID ImageLoad(IMG img, VOID* v)
+
+static VOID ImageLoad(IMG img, VOID *v)
 {
     outFile << IMG_Name(img) << endl;
     if (IMG_IsMainExecutable(img))
@@ -46,9 +50,13 @@ static VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-static VOID OnAppStart(VOID* v) { attached = true; }
 
-int main(INT32 argc, CHAR* argv[])
+static VOID OnAppStart(VOID *v)
+{
+    attached = true;
+}
+
+int main( INT32 argc, CHAR *argv[] )
 {
     // Initialization.
     PIN_InitSymbols();

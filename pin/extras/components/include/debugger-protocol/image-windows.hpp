@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -17,8 +17,8 @@
 #ifndef DEBUGGER_PROTOCOL_IMAGE_WINDOWS_HPP
 #define DEBUGGER_PROTOCOL_IMAGE_WINDOWS_HPP
 
-namespace DEBUGGER_PROTOCOL
-{
+namespace DEBUGGER_PROTOCOL {
+
 /*!
  * In the future, new image types may be added.  To retain backward compatibility,
  * clients should ignore types they don't recognize.
@@ -51,7 +51,7 @@ enum IMAGE_TYPE_WINDOWS
  */
 enum IMAGE_INFO_WINDOWS_VERSION
 {
-    IMAGE_INFO_WINDOWS_VERSION_0 ///< This is the only defined version currently.
+    IMAGE_INFO_WINDOWS_VERSION_0    ///< This is the only defined version currently.
 };
 
 /*!
@@ -59,12 +59,12 @@ enum IMAGE_INFO_WINDOWS_VERSION
  */
 struct /*<UTILITY>*/ IMAGE_INFO_WINDOWS
 {
-    IMAGE_INFO_WINDOWS_VERSION _version; ///< Tells which fields in this structure are valid.
-    IMAGE_TYPE_WINDOWS _type;            ///< The image type.
-    ANYADDR _base;                       ///< Base address at which the PE file is loaded into memory.
-    size_t _size;                        ///< Total size in bytes of the loaded image in memory.
-    std::string _name;                   ///< Absolute pathname to the PE file (UTF-8).
+    IMAGE_INFO_WINDOWS_VERSION _version;    ///< Tells which fields in this structure are valid.
+    IMAGE_TYPE_WINDOWS _type;               ///< The image type.
+    ANYADDR _base;                    ///< Base address at which the PE file is loaded into memory.
+    size_t _size;                           ///< Total size in bytes of the loaded image in memory.
+    std::string _name;                      ///< Absolute pathname to the PE file (UTF-8).
 };
 
-} // namespace DEBUGGER_PROTOCOL
+} // namespace
 #endif // file guard

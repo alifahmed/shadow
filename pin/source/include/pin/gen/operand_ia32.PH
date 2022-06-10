@@ -1,222 +1,94 @@
+//Groups: @ingroup\s+(API_REF|KNOBS|IMG_BASIC_API|INS_BASIC_API|INS_INST_API|INS_BASIC_API_GEN_IA32|INS_BASIC_API_IA32|INS_MOD_API_GEN_IA32|SEC_BASIC_API|RTN_BASIC_API|REG_BASIC_API|REG_CPU_GENERIC|REG_CPU_IA32|TRACE_BASIC_API|BBL_BASIC_API|SYM_BASIC_API|MISC_PRINT|MISC_PARSE|KNOB_API|KNOB_BASIC|KNOB_PRINT|LOCK|PIN_CONTROL|TRACE_VERSION_API|BUFFER_API|PROTO_API|PIN_PROCESS_API|PIN_THREAD_API|PIN_SYSCALL_API|WINDOWS_SYSCALL_API_UNDOC|DEBUG_API|ERROR_FILE_BASIC|TYPE_BASE|INSTLIB|ALARM|CHILD_PROCESS_API|UTILS|MISC|CONTEXT_API|PHYSICAL_CONTEXT_API|PIN_CALLBACKS|EXCEPTION_API|APPDEBUG_API|STOPPED_THREAD_API|BUFFER_API|PROTO|INST_ARGS|DEPRECATED_PIN_API|INTERNAL_EXCEPTION_PRIVATE_UNDOCUMENTED|PIN_THREAD_PRIVATE|CHILD_PROCESS_INTERNAL|BBL_BASIC|ROGUE_BASIC_API|MESSAGE_TYPE|MESSAGE_BASIC|ERRFILE|MISC_BASIC|ITC_INST_API|CONTEXT_API_UNDOC|EXCEPTION_API_UNDOC|UNDOCUMENTED_PIN_API|OPIN|TRACE_VERSIONS
+/* PIN API */
 
-#ifdef PIN_G_OPERAND_IA32_PH
-#error duplicate inclusion of operand_ia32
-#else
-#define PIN_G_OPERAND_IA32_PH
-/*! @file
-  ia32 specific stuff related to OPERAND
-*/
-/*! @ingroup INS_INSPECTION
- * Tells the number of operands for the instruction.  Several other APIs take
- * an operand index as a parameter.  Those APIs expect an index in the range
- * [0, n-1], where n is the value returned by INS_OperandCount().
- *
- *  @param[in] ins  The instruction.
- *
- * @return  The number of operands for the instruction.
- */
+/* THIS FILE IS AUTOMAGICALLY GENERATED - DO NOT CHANGE DIRECTLY*/
+
+
 extern UINT32 INS_OperandCount(INS ins);
 
-/*! @ingroup INS_INSPECTION
- */
+                                                                  /* DO NOT EDIT */
 extern UINT32 INS_OperandNameId(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return true if this operand is a memory reference
-
-  Note: this does not include LEA operands.
-*/
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandIsMemory(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return register used as base register in memory operand, or REG_INVALID()
-  Effective address = Displacement + BaseReg + IndexReg * Scale
-*/
+                                                                  /* DO NOT EDIT */
 extern REG INS_OperandMemoryBaseReg(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return register used as index register in memory operand, or REG_INVALID()
-  Effective address = Displacement + BaseReg + IndexReg * Scale
-*/
+                                                                  /* DO NOT EDIT */
 extern REG INS_OperandMemoryIndexReg(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return register used as segment register in memory operand, or REG_INVALID()
-*/
+                                                                  /* DO NOT EDIT */
 extern REG INS_OperandMemorySegmentReg(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return scale used for addressing in memory operand.
-  Effective address = Displacement + BaseReg + IndexReg * Scale
-*/
+                                                                  /* DO NOT EDIT */
 extern UINT32 INS_OperandMemoryScale(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-    @return The memory displacement of an instrucation with memory operand.
-    @note the displacement is a signed number.
-    Effective address = Displacement + BaseReg + IndexReg * Scale
-*/
+                                                                  /* DO NOT EDIT */
 extern ADDRDELTA INS_OperandMemoryDisplacement(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
- * @return TRUE if memory operand uses predefined base register and this register
- *         can not be changed
- * Example: movs %ds:(%esi), %es:(%edi)
- * There are two fixed operands
-*/
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandIsFixedMemop(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-*/
-extern VOID GetNumberAndSizeOfMemAccesses(INS ins, int* numAccesses, int* accessSize, int* indexSize);
+                                                                  /* DO NOT EDIT */
+extern VOID GetNumberAndSizeOfMemAccesses (INS ins, int *numAccesses, int *accessSize, int *indexSize);
 
-/*! @ingroup INS_INSPECTION
-  @return the number of memory operands.
-  Please note @ref INS_MemoryOperandElementCount for reading the number
-  of elements per memory operand.
-
-  @note     Segment prefix operands (i.e. %gs:0x14 ) are memory operands.
-*/
+                                                                  /* DO NOT EDIT */
 extern UINT32 INS_MemoryOperandCount(INS ins);
 
-/*! @ingroup INS_INSPECTION
-  @return the number of elements in the requested memory operand.
-  For instructions where the memory operands has not elemenets, returns 1.
-*/
-extern UINT32 INS_MemoryOperandElementCount(INS ins, UINT32 memoryOp);
-
-/*! @ingroup INS_INSPECTION
-  @return true if this operand generates an address, but the address does not
-  access memory (e.g. load effective address instruction)
-*/
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandIsAddressGenerator(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return true if this operand is a displacement
-  (e.g. branch offset)
-*/
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandIsBranchDisplacement(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return TRUE if memory operand memopIdx is read
-*/
-extern BOOL INS_MemoryOperandIsRead(INS ins, UINT32 memopIdx);
-
-/*! @ingroup INS_INSPECTION
-  @return TRUE if memory operand memopIdx is written
-*/
-extern BOOL INS_MemoryOperandIsWritten(INS ins, UINT32 memopIdx);
-
-/*! @ingroup INS_INSPECTION
- *  Convert a memory operand index into a simple operand index.
- *
- *  @param[in] ins       The instruction.
- *  @param[in] memopIdx  Memory operand's index in the range [0, n-1], where n is
- *                       from INS_MemoryOperandCount().
- *
- * @return operand index
-*/
-extern UINT32 INS_MemoryOperandIndexToOperandIndex(INS ins, UINT32 memopIdx);
-
-/*! @ingroup INS_INSPECTION
-  @return true if this operand is a register
-*/
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandIsReg(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return true if this operand is a segment register
-*/
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandIsSegmentReg(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return register name for this operand, may return REG_INVALID()
-*/
+                                                                  /* DO NOT EDIT */
 extern REG INS_OperandReg(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return true if this operand is an immediate
-*/
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandIsImmediate(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  Although return type is UINT64, on 32-bit systems only the lower
-  32 bits are utilized. To see how to retrieve immediate values
-  with correct width and sign information, see example in test
-  tool PinTools/SimpleExamples/oper-imm.cpp.
-  @return immediate value for operand
-*/
+                                                                  /* DO NOT EDIT */
 extern UINT64 INS_OperandImmediate(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  @return true if this operand is implied by the opcode
-  (e.g. the stack write in a push instruction)
-*/
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandIsImplicit(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
-  Assumes that reg is a PIN register
-  @return true if the ins has
-*/
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_RegIsImplicit(INS ins, REG reg);
 
-/*! @ingroup INS_INSPECTION
-  @return operand width in bits.
-*/
+                                                                  /* DO NOT EDIT */
 extern UINT32 INS_OperandWidth(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
- * Tells if an instruction operand is a source; it may also be a destination.
- *
- *  @param[in] ins  The instruction.
- *  @param[in] n    Operand's index in the range [0, n-1], where n is
- *                   from INS_OperandCount().
- *
- * @return  TRUE if the operand is a source.
- */
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandRead(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
- * Tells if an instruction operand is a destination; it may also be a source.
- *
- *  @param[in] ins  The instruction.
- *  @param[in] n    Operand's index in the range [0, n-1], where n is
- *                   from INS_OperandCount().
- *
- * @return  TRUE if the operand is a destination.
- */
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandWritten(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
- * Tells if an instruction operand is just a source (and not a destination).
- *
- *  @param[in] ins  The instruction.
- *  @param[in] n    Operand's index in the range [0, n-1], where n is
- *                   from INS_OperandCount().
- *
- * @return  TRUE if the operand is just a source.
- */
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandReadOnly(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
- * Tells if an instruction operand is just a destination (and not a source).
- *
- *  @param[in] ins  The instruction.
- *  @param[in] n    Operand's index in the range [0, n-1], where n is
- *                   from INS_OperandCount().
- *
- * @return  TRUE if the operand is just a destination.
- */
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandWrittenOnly(INS ins, UINT32 n);
 
-/*! @ingroup INS_INSPECTION
- * Tells if an instruction operand is both a source and a destination.
- *
- *  @param[in] ins  The instruction.
- *  @param[in] n    Operand's index in the range [0, n-1], where n is
- *                   from INS_OperandCount().
- *
- * @return  TRUE if the operand is both a source and a destination.
- */
+                                                                  /* DO NOT EDIT */
 extern BOOL INS_OperandReadAndWritten(INS ins, UINT32 n);
 
-#endif // PIN_G_OPERAND_IA32_PH
+                                                                  /* DO NOT EDIT */
+extern BOOL INS_MemoryOperandIsRead(INS ins, UINT32 memopIdx);
+
+                                                                  /* DO NOT EDIT */
+extern BOOL INS_MemoryOperandIsWritten(INS ins, UINT32 memopIdx);
+
+                                                                  /* DO NOT EDIT */
+extern UINT32 INS_MemoryOperandIndexToOperandIndex(INS ins, UINT32 memopIdx);
+
+                                                                  /* DO NOT EDIT */
+

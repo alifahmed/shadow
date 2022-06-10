@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,43 +13,49 @@
 #include <fstream>
 #include "pin.H"
 
-using std::cerr;
-using std::endl;
-using std::ios;
 using std::ofstream;
+using std::endl;
+using std::cerr;
 using std::string;
+using std::ios;
 
 ofstream OutFile;
 
 // The running count of instructions is kept here
 // make it static to help the compiler optimize docount
-static UINT64 icount1   = 0;
-static UINT64 icount2   = 0;
-static UINT64 icount3   = 0;
-static UINT64 icount4   = 0;
-static UINT64 icount5   = 0;
+static UINT64 icount1 = 0;
+static UINT64 icount2 = 0;
+static UINT64 icount3 = 0;
+static UINT64 icount4 = 0;
+static UINT64 icount5 = 0;
 static UINT64 thenCount = 0;
 
 VOID docount() { icount1++; }
-extern "C" VOID UpdateIcountByAdd(UINT64* icount_ptr);
-extern "C" VOID UpdateIcountByInc(UINT64* icount_ptr);
-extern "C" VOID UpdateIcountByDecInc(UINT64* icount_ptr);
-extern "C" VOID UpdateIcountBySub(UINT64* icount_ptr);
-extern "C" ADDRINT IfFuncWithAddThatCannotBeChangedToLea(UINT64* icount_ptr);
+extern "C" VOID UpdateIcountByAdd(UINT64 *icount_ptr);
+extern "C" VOID UpdateIcountByInc(UINT64 *icount_ptr);
+extern "C" VOID UpdateIcountByDecInc(UINT64 *icount_ptr);
+extern "C" VOID UpdateIcountBySub(UINT64 *icount_ptr);
+extern "C" ADDRINT IfFuncWithAddThatCannotBeChangedToLea(UINT64 *icount_ptr);
 
-VOID ThenFuncThatShouldNeverBeCalled() { thenCount++; }
+VOID ThenFuncThatShouldNeverBeCalled()
+{
+    thenCount++;
+}
 
 THREADID myThread = INVALID_THREADID;
 
-ADDRINT IfMyThread(THREADID threadId) { return threadId == myThread; }
+ADDRINT IfMyThread(THREADID threadId)
+{
+    return threadId == myThread;
+}
 
 ADDRINT myThreadIfFuncWithAddThatCannotBeChangedToLea(THREADID threadId)
 {
     return threadId == myThread && IfFuncWithAddThatCannotBeChangedToLea(NULL);
 }
-
-VOID Instruction(INS ins, VOID* v)
-{
+    
+VOID Instruction(INS ins, VOID *v)
+{    
     INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)IfMyThread, IARG_THREAD_ID, IARG_END);
     INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);
     INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)IfMyThread, IARG_THREAD_ID, IARG_END);
@@ -64,17 +70,19 @@ VOID Instruction(INS ins, VOID* v)
     INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)ThenFuncThatShouldNeverBeCalled, IARG_END);
 }
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "inscount_for_lea_opt.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "inscount_for_lea_opt.out", "specify output file name");
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
-    if (icount1 != icount2 || icount1 != icount3 || icount1 != icount4 || icount1 != icount5 || thenCount != 0)
+    if (icount1 != icount2 || icount1 != icount3 || icount1 != icount4 || icount1 != icount5
+        || thenCount!=0)
     {
         // Write to a file since cout and cerr maybe closed by the application
         OutFile.open(KnobOutputFile.Value().c_str());
         OutFile.setf(ios::showbase);
-        if (thenCount != 0)
+        if (thenCount!=0)
         {
             OutFile << "****ERROR thenCount was expected to be 0  not: " << thenCount << endl;
         }
@@ -88,11 +96,11 @@ VOID Fini(INT32 code, VOID* v)
             OutFile << "***ERROR - mismatch in icounts " << endl;
         }
         OutFile.close();
-        exit(1);
+        exit (1);
     }
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     if (myThread == INVALID_THREADID)
     {
@@ -117,21 +125,21 @@ INT32 Usage()
 /*   argc, argv are the entire command line: pin -t <toolname> -- ...    */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();
 
     PIN_AddThreadStartFunction(ThreadStart, NULL);
-
+    
     // Register Instruction to be called to instrument instructions
     INS_AddInstrumentFunction(Instruction, NULL);
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, NULL);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

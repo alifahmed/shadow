@@ -62,18 +62,14 @@ ifeq ($(TARGET_OS),mac)
     DLL_ROOTS += backtrace_dll
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 ifeq ($(TARGET_OS),linux)
-    DWARF4_NOT_SUPPORTED := $(shell $(TOOLS_ROOT)/Utils/testToolVersion $(CXXPATH) lt 4.5)
+    DWARF4_NOT_SUPPORTED := $(shell $(TOOLS_ROOT)/Utils/testGccVersion $(CXXPATH) 4.5)
     ifeq ($(DWARF4_NOT_SUPPORTED),1)
         TEST_ROOTS := $(filter-out debug_dwarf4_jit debug_dwarf4_probe, $(TEST_ROOTS))
     endif
 endif
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
 
 ###### Define the sanity subset ######
 

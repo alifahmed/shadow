@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,7 +11,7 @@
 
 #include "utils.h"
 #if defined(PIN_CRT) && defined(TARGET_LINUX)
-#include "pincrt_file_utils.h"
+# include "pincrt_file_utils.h"
 #endif
 
 #define PATH_MAX_SIZE 4096
@@ -32,18 +32,25 @@ size_t get_strlen(const char* str)
     return len;
 }
 
-char* appendPath(const char* s1, const char* s2, const char* s3)
+char* append3(const char* s1, const char* s2, const char* s3)
 {
-    int n   = 1;
+    int n = 1;
     char* p = 0;
-    if (s1) n += get_strlen(s1);
-    if (s2) n += get_strlen(s2);
-    if (s3) n += get_strlen(s3);
-    p = (char*)malloc(sizeof(char) * n);
-    if (p == NULL) abort();
-    if (s1) strcpy(p, s1);
-    if (s2) strcat(p, s2);
-    if (s3) strcat(p, s3);
+    if (s1)
+        n += get_strlen(s1);
+    if (s2)
+        n += get_strlen(s2);
+    if (s3)
+        n += get_strlen(s3);
+    p = (char*) malloc(sizeof(char) * n);
+    if( p == NULL )
+        abort();
+    if (s1)
+        strcpy(p, s1);
+    if (s2)
+        strcat(p, s2);
+    if (s3)
+        strcat(p, s3);
     return p;
 }
 
@@ -64,7 +71,8 @@ void check_retval(int retval, const char* str)
 unsigned int check_file_exists(const char* fn)
 {
     unsigned int okay = 1;
-    if (access(fn, R_OK) == -1) okay = 0;
+    if (access(fn, R_OK ) == -1)
+        okay = 0;
     return okay;
 }
 
@@ -77,7 +85,7 @@ void check_file(const char* fn)
     unsigned int okay = check_file_exists(fn);
     if (!okay)
     {
-        fprintf(stderr, "Error. File doesn't exist (%s)\n\n", fn);
+        fprintf(stderr, "Error. File doesn't exist (%s)\n\n",fn );
         exit(1);
     }
 }
@@ -94,7 +102,8 @@ unsigned int check_not_directory(const char* fn)
 #else
     unsigned int okay = 1;
     struct stat st;
-    if (stat(fn, &st) == -1 || !S_ISREG(st.st_mode)) okay = 0;
+    if (stat(fn, &st) == -1 || !S_ISREG(st.st_mode))
+        okay = 0;
     return okay;
 #endif
 }
@@ -106,9 +115,9 @@ unsigned int check_not_directory(const char* fn)
  * @param buff A buffer to create the complete path
  * @return 1 if file exist and not a directory
  */
-unsigned int check_file_in_dir(const char* fn, const char* dir, char* buff)
+unsigned int check_file_in_dir(const char* fn, const char *dir, char *buff)
 {
-    buff = appendPath(dir, "/", fn);
+    buff = append3(dir, "/", fn);
     return check_file_exists(buff) && check_not_directory(buff);
 }
 
@@ -118,7 +127,7 @@ unsigned int check_file_in_dir(const char* fn, const char* dir, char* buff)
  * @param exename The executable path
  * @return The directory it was found in, or null if not found.
  */
-char* search_in_path(const char* exename)
+char *search_in_path(const char *exename)
 {
     const char dirsepchar = ':';
     char* env_path;
@@ -126,7 +135,7 @@ char* search_in_path(const char* exename)
     char* buff;
     char* dir;
     char* dirsep;
-    char* path = 0;
+    char *path = 0;
 
     env_path = getenv("PATH");
     assert(env_path != NULL);
@@ -134,10 +143,10 @@ char* search_in_path(const char* exename)
     syspath = strdup(env_path);
     assert(syspath != NULL);
 
-    buff = (char*)malloc(get_strlen(syspath) + get_strlen(exename) + 2);
+    buff = (char*) malloc(get_strlen(syspath) + get_strlen(exename) + 2);
     assert(buff != NULL);
 
-    dir    = syspath;
+    dir = syspath;
     dirsep = strchr(dir, dirsepchar);
 
     while (dirsep)
@@ -150,7 +159,7 @@ char* search_in_path(const char* exename)
             free(buff);
             return path;
         }
-        dir    = dirsep + 1;
+        dir = dirsep + 1;
         dirsep = strchr(dir, dirsepchar);
     }
     if (check_file_in_dir(exename, dir, buff))
@@ -171,7 +180,7 @@ char* find_base_path(char* filename)
 {
     char* x;
     char* path = strdup(filename);
-    x          = strrchr(path, '/');
+    x = strrchr(path, '/');
     if (x)
     {
         *x = 0;

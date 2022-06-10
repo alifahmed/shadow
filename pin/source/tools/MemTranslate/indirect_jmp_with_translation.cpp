@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,18 +13,19 @@
 #include <fstream>
 #include <set>
 #include "pin.H"
-using std::cerr;
-using std::endl;
+using std::string;
 using std::hex;
 using std::ios;
+using std::cerr;
 using std::ofstream;
-using std::string;
+using std::endl;
 
 ofstream OutFile;
 ADDRINT newBranchTarget = 0xbeef;
 REG rewrite_reg;
-std::set< ADDRINT > ipointsCallbacks;
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "indirect_jmp_translation.out", "specify output file name");
+std::set<ADDRINT> ipointsCallbacks;
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "indirect_jmp_translation.out", "specify output file name");
 
 IPOINT allIpoints[] = {IPOINT_TAKEN_BRANCH, IPOINT_BEFORE};
 
@@ -32,19 +33,20 @@ VOID PIN_FAST_ANALYSIS_CALL IndirectJumpOrCall(ADDRINT ipoint, ADDRINT pc, ADDRI
 {
     if (isMemoryIndirect && translatedAddr == newBranchTarget)
     {
-        std::pair< std::set< ADDRINT >::iterator, bool > res = ipointsCallbacks.insert(ipoint);
+        std::pair<std::set<ADDRINT>::iterator,bool> res = ipointsCallbacks.insert(ipoint);
         if (!res.second)
         {
             // We expect all indirect branches through memory to go to the address at 'newBranchTarget'
-            ASSERT(translatedAddr == newBranchTarget, "At PC=" + hexstr(pc) + "Too many indirect branches at IPOINT " +
-                                                          decstr(ipoint) + " was reported to jump to " + hexstr(newBranchTarget) +
-                                                          "\n");
+            ASSERT(translatedAddr == newBranchTarget, "At PC=" + hexstr(pc) +
+                "Too many indirect branches at IPOINT " + decstr(ipoint) +
+                " was reported to jump to " + hexstr(newBranchTarget) + "\n");
         }
     }
 }
 
+
 /* Translate memory address 0xfed to the address of newBranchTarget */
-ADDRINT PIN_FAST_ANALYSIS_CALL memoryCallback(PIN_MEM_TRANS_INFO* memTransInfo, VOID* v)
+ADDRINT PIN_FAST_ANALYSIS_CALL memoryCallback(PIN_MEM_TRANS_INFO* memTransInfo, VOID *v) 
 {
     if (memTransInfo->memOpType == PIN_MEMOP_LOAD && memTransInfo->addr == 0xfed)
     {
@@ -67,7 +69,7 @@ static ADDRINT TranslateJmpMemRef(ADDRINT ea, ADDRINT stack_ptr)
 }
 
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     if (INS_IsIndirectControlFlow(ins))
     {
@@ -75,27 +77,36 @@ VOID Instruction(INS ins, VOID* v)
         BOOL explicitMemRef = INS_HasExplicitMemoryReference(ins);
         if (explicitMemRef)
         {
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)TranslateJmpMemRef, IARG_MEMORYOP_EA, 0, IARG_REG_VALUE, REG_STACK_PTR,
-                           IARG_RETURN_REGS, rewrite_reg, IARG_END);
+            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)TranslateJmpMemRef,
+                IARG_MEMORYOP_EA, 0,
+                IARG_REG_VALUE, REG_STACK_PTR,
+                IARG_RETURN_REGS, rewrite_reg,
+                IARG_END);
             INS_RewriteMemoryOperand(ins, 0, rewrite_reg);
         }
 
-        for (size_t i = 0; i < sizeof(allIpoints) / sizeof(allIpoints[0]); i++)
+        for (size_t i = 0; i < sizeof(allIpoints)/sizeof(allIpoints[0]); i++)
         {
-            INS_InsertCall(ins, allIpoints[i], (AFUNPTR)IndirectJumpOrCall, IARG_FAST_ANALYSIS_CALL, IARG_ADDRINT,
-                           (ADDRINT)allIpoints[i], IARG_INST_PTR, IARG_ADDRINT, (ADDRINT)explicitMemRef, IARG_BRANCH_TARGET_ADDR,
-                           IARG_END);
+            INS_InsertCall(ins,
+                    allIpoints[i],
+                    (AFUNPTR)IndirectJumpOrCall,
+                    IARG_FAST_ANALYSIS_CALL,
+                    IARG_ADDRINT, (ADDRINT)allIpoints[i],
+                    IARG_INST_PTR,
+                    IARG_ADDRINT, (ADDRINT)explicitMemRef,
+                    IARG_BRANCH_TARGET_ADDR,
+                    IARG_END);
         }
     }
 }
 
+
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
-    for (size_t i = 0; i < sizeof(allIpoints) / sizeof(allIpoints[0]); i++)
+    for (size_t i = 0; i < sizeof(allIpoints)/sizeof(allIpoints[0]); i++)
     {
-        ASSERT(ipointsCallbacks.count(allIpoints[i]) == 1,
-               "Encoutered no translated branches for IPOINT " + decstr((int)allIpoints[i]));
+        ASSERT(ipointsCallbacks.count(allIpoints[i]) == 1, "Encoutered no translated branches for IPOINT " + decstr((int)allIpoints[i]));
     }
     // Write to a file since cout and cerr maybe closed by the application
     OutFile.setf(ios::showbase);
@@ -118,7 +129,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();

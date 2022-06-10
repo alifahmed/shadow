@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,24 +17,30 @@
 using std::cout;
 using std::endl;
 
-/* ===================================================================== */
-VOID Fini(INT32 code, VOID* v) { cout << "End of tool" << endl; }
 
-BOOL FollowChild(CHILD_PROCESS cProcess, VOID* userData)
+/* ===================================================================== */
+VOID Fini(INT32 code, VOID *v)
 {
-    return TRUE; // run childProcess under Pin instrumentation
+    cout << "End of tool" << endl;
 }
 
+
+BOOL FollowChild(CHILD_PROCESS childProcess, VOID * userData)
+{
+    return TRUE; // run childProcess under Pin instrumentation
+}        
+
+
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
-
+    
     PIN_AddFollowChildProcessFunction(FollowChild, 0);
 
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Never returns
     PIN_StartProgram();
 

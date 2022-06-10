@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,7 +26,9 @@
 
 std::ofstream TraceFile;
 
-VOID BazArg(ADDRINT* arg1, ADDRINT* arg2, ADDRINT* arg3)
+
+
+VOID BazArg(ADDRINT * arg1, ADDRINT * arg2, ADDRINT * arg3)
 {
     *arg1 = 4;
     *arg2 = 5;
@@ -35,19 +37,18 @@ VOID BazArg(ADDRINT* arg1, ADDRINT* arg2, ADDRINT* arg3)
 
 /* ===================================================================== */
 
-VOID Image(IMG img, VOID* v)
+VOID Image(IMG img, VOID *v)
 {
     RTN bazRtn = RTN_FindByName(img, FUNC_PREFIX "baz");
     if (RTN_Valid(bazRtn))
     {
-        RTN_InsertCallProbed(bazRtn, IPOINT_BEFORE, AFUNPTR(BazArg), IARG_FUNCARG_ENTRYPOINT_REFERENCE, 0,
-                             IARG_FUNCARG_ENTRYPOINT_REFERENCE, 1, IARG_FUNCARG_ENTRYPOINT_REFERENCE, 2, IARG_END);
+        RTN_InsertCallProbed(bazRtn, IPOINT_BEFORE, AFUNPTR(BazArg), IARG_FUNCARG_ENTRYPOINT_REFERENCE, 0, IARG_FUNCARG_ENTRYPOINT_REFERENCE, 1, IARG_FUNCARG_ENTRYPOINT_REFERENCE, 2, IARG_END);
     }
 }
 
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
@@ -56,7 +57,7 @@ int main(int argc, char* argv[])
 
     // Never returns
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

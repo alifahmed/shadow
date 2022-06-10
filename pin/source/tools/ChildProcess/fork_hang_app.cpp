@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -29,8 +29,7 @@
  * It also tests behavior when a multi-threaded app forks and doesn't execv.
  */
 
-enum RESULT
-{
+enum RESULT {
     RES_SUCCESS = 0,
     RES_FORK_FAILED,
     RES_TIMEOUT,
@@ -38,42 +37,44 @@ enum RESULT
 };
 
 bool alarmRinged = false;
-
+ 
 /*
  * A signal handler for SIGALRM
  */
-void SigAlrmHandler(int signum, siginfo_t* siginfo, void* uctxt) { alarmRinged = true; }
-
-void* InfiniteLoop(void* ptr)
+void SigAlrmHandler( int signum, siginfo_t *siginfo, void *uctxt)
+{ 
+    alarmRinged = true;
+}
+ 
+void * InfiniteLoop(void *ptr)
 {
-    for (;;)
-        ;
+    for(;;);
 }
 
-int main()
-{
+int main() {
+
     /* Register the signal handler */
     struct sigaction sSigaction;
     sSigaction.sa_sigaction = SigAlrmHandler;
     sigaction(SIGALRM, &sSigaction, NULL);
     THREAD_HANDLE threads[MAXTHREADS];
-
+  
     for (int i = 0; i < NUM_TH; i++)
         CreateOneThread(&threads[i], InfiniteLoop, NULL);
 
     pid_t child = fork();
-
+    
     if (child < 0)
     {
         fprintf(stderr, "FAILED: unable to create the child process\n");
         exit(RES_FORK_FAILED);
     }
-
+  
     if (child > 0)
     {
         //in parent
         alarm(TIMEOUT); //send SIGALRM after TIMEOUT second.
-        while (1)
+        while(1)
         {
             if (waitpid(child, 0, 0) < 0)
             {
@@ -82,7 +83,7 @@ int main()
                 {
                     // failure was due to a signal
                     if (!alarmRinged) continue; // signal was not SIGALRM - continue to wait
-
+                    
                     // signal was SIGALRM - kill the child to avoid a hung test and exit
                     fprintf(stderr, "FAILED: the TIMEOUT has passed and the child process didn't terminate\n");
                     kill(child, 9);
@@ -94,7 +95,7 @@ int main()
                     fprintf(stderr, "FAILED: waitpid failed unexpectedly\n");
                     exit(RES_WAITPID_FAILED);
                 }
-            }
+            }   
             else
             {
                 // waitpid succeeded - child exited normally
@@ -102,11 +103,11 @@ int main()
             }
         }
     }
-
-    if (child == 0)
+  
+    if (child == 0) 
     {
         // child does nothing
     }
-
+  
     return RES_SUCCESS;
 }

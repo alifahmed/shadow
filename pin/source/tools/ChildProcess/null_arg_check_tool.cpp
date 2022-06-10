@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,19 +18,23 @@
 /* Command line Switches */
 /* ===================================================================== */
 
-BOOL FollowChild(CHILD_PROCESS cProcess, VOID* userData) { return TRUE; }
+
+BOOL FollowChild(CHILD_PROCESS childProcess, VOID * userData)
+{
+    return TRUE;
+}        
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    BOOL jitMode = (v == 0);
+    BOOL jitMode = (v==0);
     if (IMG_IsMainExecutable(img))
     {
-        fprintf(stdout, "Image %s is loaded in %s mode\n", IMG_Name(img).c_str(), (jitMode ? "JIT" : "PROBE"));
+        fprintf(stdout, "Image %s is loaded in %s mode\n", IMG_Name(img).c_str(), (jitMode?"JIT":"PROBE"));
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
 
@@ -41,7 +45,7 @@ int main(INT32 argc, CHAR** argv)
     // Never returns
     if (PIN_IsProbeMode())
     {
-        IMG_AddInstrumentFunction(ImageLoad, (VOID*)1);
+        IMG_AddInstrumentFunction(ImageLoad, (VOID *)1);
         PIN_StartProgramProbed();
     }
     else
@@ -51,3 +55,4 @@ int main(INT32 argc, CHAR** argv)
     }
     return 0;
 }
+

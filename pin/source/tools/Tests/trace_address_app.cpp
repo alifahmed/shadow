@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,9 +11,9 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
+#include<iostream>
 //cstdint is supported from cpp11
-#include <stdint.h>
+#include<stdint.h>
 
 int tstfunc1();
 int tstfunc2();
@@ -21,6 +21,7 @@ int tstfunc3(int k);
 
 int main()
 {
+
     std::cout << std::hex;
     std::cout.setf(std::ios::showbase);
     std::cout.setf(std::ios::uppercase);
@@ -29,9 +30,9 @@ int main()
     tstfunc2();
     tstfunc3(20);
 
-    std::cout << (uintptr_t)tstfunc1 << "\t";
-    std::cout << (uintptr_t)tstfunc2 << "\t";
-    std::cout << (uintptr_t)tstfunc3 << "\t";
+    std::cout << (uintptr_t) tstfunc1 << "\t";
+    std::cout << (uintptr_t) tstfunc2 << "\t";
+    std::cout << (uintptr_t) tstfunc3 << "\t";
 
     return 0;
 }
@@ -44,12 +45,13 @@ int tstfunc1()
 
 int tstfunc2()
 {
-    if (1 == 0) return 0;
+    if (1 == 0)
+        return 0;
     int j = 0;
     if (j > 0)
     {
         int k = 0;
-        j     = k;
+        j = k;
     }
     else
     {

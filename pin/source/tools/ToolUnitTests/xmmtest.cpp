@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,7 +14,7 @@
 
 #define READ 1
 #define WRITE 2
-FILE* outfile;
+FILE *outfile;
 
 extern "C" unsigned int xmmInitVals[];
 unsigned int xmmInitVals[64];
@@ -75,51 +75,63 @@ static void change_xmm_scratch_regs(unsigned int * xmm_reg)
 }
 */
 
-VOID TestXmm(ADDRINT ip, UINT8* reg_val, UINT8* reg_val1, unsigned int operation, unsigned int xmm_reg_index)
+VOID TestXmm(ADDRINT ip, UINT8 *reg_val, UINT8 *reg_val1, unsigned int operation, unsigned int xmm_reg_index)
 {
     // unsigned int dummy_values[4] = {1, 2, 3, 4};
     // change_xmm_scratch_regs(dummy_values);
 
-    fprintf(outfile, "ip %p xmm%d = ", (void*)(ip), xmm_reg_index);
-    for (int i = 0; i < 16; i++)
+    fprintf(outfile, "ip %p xmm%d = ", (void *)(ip), xmm_reg_index);
+    for (int i=0; i<16; i++)
     {
         fprintf(outfile, "0x%x ", reg_val[i]);
     }
-    fprintf(outfile, "operation %s\n", (operation == READ ? "read" : "write"));
+    fprintf(outfile, "operation %s\n", (operation==READ?"read":"write"));
     fprintf(outfile, "    xmm1 = ");
-    for (int i = 0; i < 16; i++)
+    for (int i=0; i<16; i++)
     {
         fprintf(outfile, "0x%x ", reg_val1[i]);
     }
     fprintf(outfile, "\n");
 }
-
-VOID Instruction(INS ins, VOID* v)
+    
+VOID Instruction(INS ins, VOID *v)
 {
-    for (REG reg = REG_XMM_BASE; reg <= REG_XMM_LAST; reg = static_cast< REG >((static_cast< INT32 >(reg) + 1)))
-    {
+    for (REG reg=REG_XMM_BASE; reg <= REG_XMM_LAST; 
+        reg=static_cast<REG>((static_cast<INT32>(reg)+1)))
+    {   
         if (INS_RegRContain(ins, reg))
         {
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(TestXmm), IARG_INST_PTR, IARG_REG_REFERENCE, reg, IARG_REG_REFERENCE,
-                           REG_XMM1, IARG_ADDRINT, READ, IARG_ADDRINT, (reg - REG_XMM_BASE), IARG_END);
-            fprintf(outfile, "Instrumented read  on ins %p %s\n", (void*)(INS_Address(ins)), INS_Disassemble(ins).c_str());
-            fflush(outfile);
+            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(TestXmm),
+                IARG_INST_PTR,
+                IARG_REG_REFERENCE, reg,
+                IARG_REG_REFERENCE, REG_XMM1,
+                IARG_ADDRINT, READ, 
+                IARG_ADDRINT, (reg-REG_XMM_BASE),
+                IARG_END);
+            fprintf(outfile,"Instrumented read  on ins %p %s\n", (void *)(INS_Address(ins)), INS_Disassemble(ins).c_str());
+            fflush (outfile);
         }
-
+        
         if (INS_RegWContain(ins, reg))
         {
-            INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(TestXmm), IARG_INST_PTR, IARG_REG_REFERENCE, reg, IARG_REG_REFERENCE,
-                           REG_XMM1, IARG_ADDRINT, WRITE, IARG_ADDRINT, (reg - REG_XMM_BASE), IARG_END);
-            fprintf(outfile, "Instrumented write on ins %p %s\n", (void*)(INS_Address(ins)), INS_Disassemble(ins).c_str());
-            fflush(outfile);
+            INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(TestXmm), 
+                IARG_INST_PTR,
+                IARG_REG_REFERENCE, reg,
+                IARG_REG_REFERENCE, REG_XMM1,
+                IARG_ADDRINT, WRITE, 
+                IARG_ADDRINT, (reg-REG_XMM_BASE),
+                IARG_END);
+            fprintf(outfile,"Instrumented write on ins %p %s\n", (void *)(INS_Address(ins)), INS_Disassemble(ins).c_str());
+            fflush (outfile);
         }
+        
     }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
-    // initialize memory area used to set values in xmm regss
-    for (int i = 0; i < 64; i++)
+	// initialize memory area used to set values in xmm regss
+    for (int i =0; i<64; i++)
     {
         xmmInitVals[i] = 0xdeadbeef;
     }
@@ -128,9 +140,10 @@ int main(int argc, char* argv[])
 
     outfile = fopen("xmmt.out", "w");
     INS_AddInstrumentFunction(Instruction, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
+

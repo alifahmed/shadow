@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,13 +11,12 @@
 
 #include <stdio.h>
 
-int main(int argc, char** argv)
-{
-    int i = 0, x = 0;
-    asm volatile("int3"); /*1 */
+int main(int argc, char** argv) {
+    int i=0,x=0;
+    asm volatile("int3");/*1 */
     asm volatile("int3"); /*2 */
-    for (i = 0; i < 10; i++)
+    for(i=0;i<10;i++)
         x = x + 1;
-    asm volatile("int3"); /*3 */
+    asm volatile("int3");/*3 */
     return 0;
 }

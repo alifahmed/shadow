@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -10,7 +10,7 @@
  */
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+# define _GNU_SOURCE
 #endif
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,13 +29,14 @@ using std::vector;
 // The executable filename of this program
 char progname[4096];
 
+
 /*
  * Iterate over all images known to the loader and print their memory regions
  */
-int dl_iterate(struct dl_phdr_info* info, size_t size, void* data)
+int dl_iterate(struct dl_phdr_info *info, size_t size, void *data)
 {
     const char* realname = info->dlpi_name;
-    vector< pair< void*, void* > > vecSegments;
+    vector<pair<void*, void*> > vecSegments;
     if (strstr(realname, "linux-gate.so") == realname || strstr(realname, "linux-vdso.so") == realname)
     {
         // Don't count VDSO, PIN doesn't repont it intentionally
@@ -45,9 +46,9 @@ int dl_iterate(struct dl_phdr_info* info, size_t size, void* data)
     {
         if (info->dlpi_phdr[j].p_type == PT_LOAD)
         {
-            void* start = (void*)(info->dlpi_addr + info->dlpi_phdr[j].p_vaddr);
-            void* end   = (void*)((char*)start + info->dlpi_phdr[j].p_memsz - 1);
-            vecSegments.push_back(pair< void*, void* >(start, end));
+            void* start = (void *) (info->dlpi_addr + info->dlpi_phdr[j].p_vaddr);
+            void* end = (void*)((char*)start + info->dlpi_phdr[j].p_memsz - 1);
+            vecSegments.push_back(pair<void*, void*>(start, end));
             if (*realname == 0 && (void*)dl_iterate >= start && (void*)dl_iterate < end)
             {
                 realname = progname;
@@ -56,7 +57,7 @@ int dl_iterate(struct dl_phdr_info* info, size_t size, void* data)
     }
     if (*realname != 0)
     {
-        for (vector< pair< void*, void* > >::iterator it = vecSegments.begin(); it != vecSegments.end(); it++)
+        for (vector<pair<void*, void*> >::iterator it = vecSegments.begin(); it != vecSegments.end(); it++)
         {
             printf("%s, %p-%p\n", realname, it->first, it->second);
         }

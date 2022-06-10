@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -269,21 +269,12 @@ XED_DLL_EXPORT xed_bool_t
 xed_operand_values_has_sib_byte(const xed_operand_values_t* p);
 //@}
 
-
-/// @ingroup OPERANDS
-/// Returns  true if 0x2E prefix on Jcc
+/// @ingroup OPERANDS    
 XED_DLL_EXPORT xed_bool_t
 xed_operand_values_branch_not_taken_hint(const xed_operand_values_t* p);
-
-/// @ingroup OPERANDS
-/// Returns  true if 0x3E prefix on Jcc
+/// @ingroup OPERANDS    
 XED_DLL_EXPORT xed_bool_t
 xed_operand_values_branch_taken_hint(const xed_operand_values_t* p);
-
-/// @ingroup OPERANDS
-/// Returns true for indirect call/jmp with 0x3E prefix (if the legacy prefix rules are obeyed)
-XED_DLL_EXPORT xed_bool_t
-xed_operand_values_cet_no_track(const xed_operand_values_t* p);
 
 /// @ingroup OPERANDS    
 XED_DLL_EXPORT xed_bool_t

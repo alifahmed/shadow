@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -21,8 +21,10 @@
 #include "atomic/nullstats.hpp"
 #include "atomic/private/backoff-impl.hpp"
 
-namespace ATOMIC
-{
+
+namespace ATOMIC {
+
+
 /*! @brief  Helper object for exponential delays.
  *
  * A helper object that implements an exponential backoff algorithm.  This is most often
@@ -46,20 +48,22 @@ namespace ATOMIC
  *  }
  *                                                                                          \endcode
  */
-template< typename STATS = NULLSTATS > class /*<UTILITY>*/ EXPONENTIAL_BACKOFF
+template<typename STATS=NULLSTATS> class /*<UTILITY>*/ EXPONENTIAL_BACKOFF
 {
   public:
     /*!
      * @param[in] freeIterations    Number of times through loop before Delay() does anything.
      * @param[in] stats             Object to keep track of statistics, or NULL
      */
-    EXPONENTIAL_BACKOFF(UINT32 freeIterations = 1, STATS* stats = 0)
-        : _freeIterations(freeIterations), _iteration(0), _stats(stats)
+    EXPONENTIAL_BACKOFF(UINT32 freeIterations = 1, STATS *stats = 0)
+    :
+        _freeIterations(freeIterations), _iteration(0), _stats(stats)
     {}
 
     ~EXPONENTIAL_BACKOFF()
     {
-        if (_stats && _iteration > _freeIterations) _stats->Backoff(_iteration - _freeIterations);
+        if (_stats && _iteration > _freeIterations)
+            _stats->Backoff(_iteration - _freeIterations);
     }
 
     /*!
@@ -67,7 +71,8 @@ template< typename STATS = NULLSTATS > class /*<UTILITY>*/ EXPONENTIAL_BACKOFF
      */
     void Reset()
     {
-        if (_stats && _iteration > _freeIterations) _stats->Backoff(_iteration - _freeIterations);
+        if (_stats && _iteration > _freeIterations)
+            _stats->Backoff(_iteration - _freeIterations);
         _iteration = 0;
     }
 
@@ -77,12 +82,13 @@ template< typename STATS = NULLSTATS > class /*<UTILITY>*/ EXPONENTIAL_BACKOFF
      */
     void Delay()
     {
-        if (_iteration++ < _freeIterations) return;
+        if (_iteration++ < _freeIterations)
+            return;
 
-        UINT32 fixed  = 1 << (_iteration - 1 - _freeIterations);
-        UINT32 mask   = fixed - 1;
-        UINT32 random = (reinterpret_cast< PTRINT >(&random) >> 4) & mask;
-        UINT32 delay  = fixed + random;
+        UINT32 fixed = 1 << (_iteration - 1 - _freeIterations);
+        UINT32 mask = fixed - 1;
+        UINT32 random = (reinterpret_cast<PTRINT>(&random) >> 4) & mask;
+        UINT32 delay = fixed + random;
 
         ATOMIC_SpinDelay(delay);
     }
@@ -90,13 +96,16 @@ template< typename STATS = NULLSTATS > class /*<UTILITY>*/ EXPONENTIAL_BACKOFF
     /*!
      * @return  The number of times Delay() has been called since the last Reset().
      */
-    UINT32 GetIterationCount() { return _iteration; }
+    UINT32 GetIterationCount()
+    {
+        return _iteration;
+    }
 
   private:
     const UINT32 _freeIterations; // number "free" iterations before we start to delay
     UINT32 _iteration;            // current iteration
-    STATS* _stats;                // points to object which collects statistics, or NULL
+    STATS *_stats;                      // points to object which collects statistics, or NULL
 };
 
-} // namespace ATOMIC
+} // namespace
 #endif // file guard

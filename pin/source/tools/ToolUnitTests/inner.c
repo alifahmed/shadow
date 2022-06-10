@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -10,7 +10,7 @@
  */
 
 
-// The tool callapp9.cpp and application inner.c showed a bug with the way REG_INST_G0
+// The tool callapp9.cpp and application inner.c showed a bug with the way REG_INST_G0 
 // is handled.  That register should have the value "1" when executing code
 // from PIN_CallApplicationFunction() and the value "0" when executing other
 // code. However, after execution returns from the replaced function, REG_INST_G0
@@ -29,8 +29,8 @@
 
 #include <stdio.h>
 
-#if defined(TARGET_WINDOWS)
-#define EXPORT_SYM __declspec(dllexport)
+#if defined (TARGET_WINDOWS)
+#define EXPORT_SYM __declspec( dllexport ) 
 #else
 #define EXPORT_SYM extern
 #endif
@@ -58,4 +58,7 @@ EXPORT_SYM int Replaced()
     return Glob;
 }
 
-EXPORT_SYM void Inner() { Glob++; }
+EXPORT_SYM void Inner()
+{
+    Glob++;
+}

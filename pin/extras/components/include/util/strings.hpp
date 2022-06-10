@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -21,8 +21,9 @@
 #include <iomanip>
 #include <cctype>
 
-namespace UTIL
-{
+
+namespace UTIL {
+
 /*!
  * Convert an integral value to a decimal string.
  *
@@ -32,7 +33,7 @@ namespace UTIL
  *
  * @return  String representation of \a val as a decimal integer.
  */
-template< typename T > std::string GetDecString(T val, int width = 0)
+template<typename T> std::string GetDecString(T val, int width = 0)
 {
     std::ostringstream s;
     s << std::dec << std::setfill('0') << std::setw(width) << val;
@@ -40,20 +41,6 @@ template< typename T > std::string GetDecString(T val, int width = 0)
 }
 
 /*!
- * Convert a pointer value to a decimal string.
- *
- *  @param[in] val      Pointer value.
- *  @param[in] width    If not zero, "0"'s are prefixed if the
- *                       number has less than \a width digits.
- *
- * @return  String representation of \a val as a decimal integer.
- */
-template< typename T > std::string GetDecString(T* val, int width = 0)
-{
-    return GetDecString(reinterpret_cast< uintptr_t >(val), width);
-}
-
-/*!
  * Convert an integral value to a decimal string.
  *
  *  @param[in] val      Integral value.
@@ -62,7 +49,7 @@ template< typename T > std::string GetDecString(T* val, int width = 0)
  *
  * @return  String representation of \a val as a decimal integer.
  */
-template< typename T > std::wstring GetDecStringW(T val, int width = 0)
+template<typename T> std::wstring GetDecStringW(T val, int width = 0)
 {
     std::wostringstream s;
     s << std::dec << std::setfill(L'0') << std::setw(width) << val;
@@ -70,20 +57,6 @@ template< typename T > std::wstring GetDecStringW(T val, int width = 0)
 }
 
 /*!
- * Convert a pointer value to a decimal string.
- *
- *  @param[in] val      Pointer value.
- *  @param[in] width    If not zero, "0"'s are prefixed if the
- *                       number has less than \a width digits.
- *
- * @return  String representation of \a val as a decimal integer.
- */
-template< typename T > std::wstring GetDecStringW(T* val, int width = 0)
-{
-    return GetDecStringW(reinterpret_cast< uintptr_t >(val), width);
-}
-
-/*!
  * Convert an integral value to a hex string.
  *
  *  @param[in] val          Integral value.
@@ -93,60 +66,34 @@ template< typename T > std::wstring GetDecStringW(T* val, int width = 0)
  *
  * @return  String representation of \a val as a hex string.
  */
-template< typename T > std::string GetHexString(T val, bool showBase = true, int width = 0)
-{
-    std::ostringstream s;
-    if (showBase) s << "0x";
-    s << std::hex << std::noshowbase << std::setfill('0') << std::setw(width) << val;
-    return s.str();
-}
-
-/*!
- * Convert a pointer value to a hex string.
- *
- *  @param[in] val          Pointer value.
- *  @param[in] showBase     If TRUE, the string is prefix with "0x".
- *  @param[in] width        If not zero, "0"'s are prefixed if the
- *                           number has less than \a width digits.
- *
- * @return  String representation of \a val as a hex string.
- */
-template< typename T > std::string GetHexString(T* val, bool showBase = true, int width = 0)
-{
-    return GetHexString(reinterpret_cast< uintptr_t >(val), showBase, width);
-}
-
-/*!
- * Convert an integral value to a hex string.
- *
- *  @param[in] val          Integral value.
- *  @param[in] showBase     If TRUE, the string is prefix with "0x".
- *  @param[in] width        If not zero, "0"'s are prefixed if the
- *                           number has less than \a width digits.
- *
- * @return  String representation of \a val as a hex string.
- */
-template< typename T > std::wstring GetHexStringW(T val, bool showBase = true, int width = 0)
+template<typename T> std::wstring GetHexStringW(T val, bool showBase = true,
+    int width = 0)
 {
     std::wostringstream s;
-    if (showBase) s << L"0x";
+    if (showBase)
+        s << L"0x";
     s << std::hex << std::noshowbase << std::setfill(L'0') << std::setw(width) << val;
     return s.str();
 }
 
 /*!
- * Convert a pointer value to a hex string.
+ * Convert an integral value to a hex string.
  *
- *  @param[in] val          Pointer value.
+ *  @param[in] val          Integral value.
  *  @param[in] showBase     If TRUE, the string is prefix with "0x".
  *  @param[in] width        If not zero, "0"'s are prefixed if the
  *                           number has less than \a width digits.
  *
  * @return  String representation of \a val as a hex string.
  */
-template< typename T > std::wstring GetHexStringW(T* val, bool showBase = true, int width = 0)
+template<typename T> std::string GetHexString(T val, bool showBase = true,
+    int width = 0)
 {
-    return GetHexStringW(reinterpret_cast< uintptr_t >(val), showBase, width);
+    std::ostringstream s;
+    if (showBase)
+        s << "0x";
+    s << std::hex << std::noshowbase << std::setfill('0') << std::setw(width) << val;
+    return s.str();
 }
 
 /*!
@@ -183,19 +130,21 @@ template< typename T > std::wstring GetHexStringW(T* val, bool showBase = true, 
 * @return  On success, an iterator that points to the first unparsed position in
 *           the sequence.  On failure, this function returns \a start.
 */
-template< typename InputIterator, typename T >
-InputIterator ParseUnsigned(InputIterator first, InputIterator last, unsigned base, T* val)
+template<typename InputIterator, typename T> InputIterator ParseUnsigned(
+    InputIterator first, InputIterator last, unsigned base, T *val)
 {
     // Make sure the radix is in range.
     //
-    if (base > 37) return first;
+    if (base > 37)
+        return first;
 
     // Skip initial whitespace.
     //
     InputIterator it = first;
     while (it != last && std::isspace(*it))
         it++;
-    if (it == last) return first;
+    if (it == last)
+        return first;
     InputIterator itAfterWs = it;
 
     // See if there is a leading zero (e.g. the prefix is "0x" or "0").
@@ -228,7 +177,8 @@ InputIterator ParseUnsigned(InputIterator first, InputIterator last, unsigned ba
         base = 16;
     }
 
-    if (base == 0) base = (zeroPending) ? 8 : 10;
+    if (base == 0)
+        base = (zeroPending) ? 8 : 10;
 
     // Parse each digit.
     //
@@ -243,22 +193,25 @@ InputIterator ParseUnsigned(InputIterator first, InputIterator last, unsigned ba
             digit = 10 + c - 'a';
         else
             break;
-        if (digit >= base) break;
+        if (digit >= base)
+            break;
         T newVal = myVal * base + digit;
 
         // Check for overflow.
         //
-        if (((newVal - digit) / base) != myVal) return first;
+        if (((newVal - digit) / base) != myVal)
+            return first;
         myVal = newVal;
         it++;
     }
 
     // We must parse at least one digit for success.
     //
-    if (it == itAfterWs) return first;
+    if (it == itAfterWs)
+        return first;
     *val = myVal;
     return it;
 }
 
-} // namespace UTIL
+} // namespace
 #endif // file guard

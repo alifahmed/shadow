@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,6 +16,7 @@
 #include <cstdio>
 #include "pin.H"
 
+
 /* ================================================================== */
 /* Global Variables                                                   */
 /* ================================================================== */
@@ -26,17 +27,19 @@
 
 /* ================================================================== */
 
+
+
 /* ================================================================== */
 /*
  Initialize and begin program execution under the control of Pin
 */
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
-    if (PIN_Init(argc, argv)) return 1;
+    if (PIN_Init(argc, argv) ) return 1;
 
     PIN_SetSmcSupport(SMC_DISABLE);
 
-    PIN_StartProgram(); // Never returns
+    PIN_StartProgram();  // Never returns
 
     return 0;
 }

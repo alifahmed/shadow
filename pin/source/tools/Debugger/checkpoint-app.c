@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,18 +11,19 @@
 
 #include <stdio.h>
 
+
 int A[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-int Sum   = 0;
+int Sum = 0;
 
 static void Done();
-void (*volatile pfDone)() = &Done;
+void (* volatile pfDone)() = &Done;
 
 int main()
 {
     int i;
 
     printf("Hello world\n");
-    for (i = 0; i < 10; i++)
+    for (i = 0;  i < 10;  i++)
         Sum += A[i];
 
     printf("Sum is %d\n", Sum);
@@ -31,4 +32,6 @@ int main()
     return 0;
 }
 
-static void Done() {}
+static void Done()
+{
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -33,23 +33,25 @@
 #include <setjmp.h>
 #include <sys/mman.h>
 
+
 // Possible results from running a single test.
 //
 enum TSTATUS
 {
-    TSTATUS_NOFAULT, // Test did not raise a fault
-    TSTATUS_DONE     // There are no more tests to run
+    TSTATUS_NOFAULT,    // Test did not raise a fault
+    TSTATUS_DONE        // There are no more tests to run
 };
 
 static sigjmp_buf JumpBuffer;
 static unsigned TestNumber = 0;
-static bool IsError        = false;
+static bool IsError = false;
 
 static bool Initialize();
-static void Handle(int, siginfo_t*, void*);
+static void Handle(int, siginfo_t *, void *);
 static TSTATUS DoTest(unsigned);
 
-extern bool CheckUContextRegisters(void*);
+
+extern bool CheckUContextRegisters(void *);
 extern "C" void DoFaultRetSp();
 extern "C" void DoFaultRetTarg();
 extern "C" void DoFaultRetImmSp();
@@ -80,7 +82,8 @@ extern "C" void DoFaultBadStore();
 extern "C" void DoFaultCmov();
 extern "C" char Unmapped;
 
-int main(int argc, char** argv)
+
+int main(int argc, char **argv)
 {
     if (!Initialize())
     {
@@ -100,14 +103,14 @@ int main(int argc, char** argv)
     }
     if (argc == 2)
     {
-        errno   = 0;
+        errno = 0;
         oneTest = std::strtoul(argv[1], 0, 10);
         if (errno)
         {
             std::cerr << "Invalid test number " << argv[1] << "\n";
             return 1;
         }
-        doOneTest  = true;
+        doOneTest = true;
         TestNumber = oneTest;
     }
 
@@ -115,7 +118,8 @@ int main(int argc, char** argv)
     // handler jumps back here after each test.
     //
     sigsetjmp(JumpBuffer, 1);
-    if (doOneTest && TestNumber != oneTest) return (IsError) ? 1 : 0;
+    if (doOneTest && TestNumber != oneTest)
+        return (IsError) ? 1 : 0;
 
     // Run all the tests.
     //
@@ -124,25 +128,27 @@ int main(int argc, char** argv)
         std::cout << "Starting test " << std::dec << TestNumber << " ..." << std::endl;
         switch (DoTest(TestNumber))
         {
-            case TSTATUS_DONE:
-                std::cout << "  Last test" << std::endl;
-                return (IsError) ? 1 : 0;
-            case TSTATUS_NOFAULT:
-                std::cout << "  *** Failed to raise signal" << std::endl;
-                IsError = true;
-                break;
-            default:
-                assert(0);
-                break;
+        case TSTATUS_DONE:
+            std::cout << "  Last test" << std::endl;
+            return (IsError) ? 1 : 0;
+        case TSTATUS_NOFAULT:
+            std::cout << "  *** Failed to raise signal" << std::endl;
+            IsError = true;
+            break;
+        default:
+            assert(0);
+            break;
         }
 
         TestNumber++;
-        if (doOneTest) return (IsError) ? 1 : 0;
+        if (doOneTest)
+            return (IsError) ? 1 : 0;
     }
 
     assert(0);
     return 1;
 }
+
 
 static bool Initialize()
 {
@@ -151,28 +157,32 @@ static bool Initialize()
     // handler.
     //
     stack_t ss;
-    ss.ss_sp    = new char[SIGSTKSZ];
+    ss.ss_sp = new char[SIGSTKSZ];
     ss.ss_flags = 0;
-    ss.ss_size  = SIGSTKSZ;
-    if (sigaltstack(&ss, 0) != 0) return false;
+    ss.ss_size = SIGSTKSZ;
+    if (sigaltstack(&ss, 0) != 0)
+        return false;
 
     struct sigaction act;
     act.sa_sigaction = Handle;
-    act.sa_flags     = SA_SIGINFO | SA_ONSTACK;
+    act.sa_flags = SA_SIGINFO | SA_ONSTACK;
     sigemptyset(&act.sa_mask);
-    if (sigaction(SIGSEGV, &act, 0) != 0) return false;
+    if (sigaction(SIGSEGV, &act, 0) != 0)
+        return false;
 
     // There is a page in the assembly file that should be unmapped.
     //
-    void* ptr = &Unmapped;
-    if (munmap(ptr, 4096) != 0) return false;
+    void *ptr = &Unmapped;
+    if (munmap(ptr, 4096) != 0)
+        return false;
 
     return true;
 }
 
+
 // This is the fault handler.
 //
-static void Handle(int sig, siginfo_t*, void* uctxt)
+static void Handle(int sig, siginfo_t *, void *uctxt)
 {
     // Make sure we got the expected signal.
     //
@@ -190,7 +200,8 @@ static void Handle(int sig, siginfo_t*, void* uctxt)
     // Make sure the fault happened at the expected PC.  Make sure the
     // other regiters in the fault context have the expected values.
     //
-    if (!CheckUContextRegisters(uctxt)) IsError = true;
+    if (!CheckUContextRegisters(uctxt))
+        IsError = true;
 
     // Advance to the next test.
     //
@@ -198,153 +209,154 @@ static void Handle(int sig, siginfo_t*, void* uctxt)
     siglongjmp(JumpBuffer, 1);
 }
 
+
 // Do a specific test.
 //
 static TSTATUS DoTest(unsigned num)
 {
     switch (num)
     {
-        case 0:
-            std::cout << "  Fault on RET (bad SP)\n";
-            DoFaultRetSp();
-            return TSTATUS_NOFAULT;
+    case 0:
+        std::cout << "  Fault on RET (bad SP)\n";
+        DoFaultRetSp();
+        return TSTATUS_NOFAULT;
 
-        case 1:
-            std::cout << "  Fault on RET (bad target)\n";
-            DoFaultRetTarg();
-            return TSTATUS_NOFAULT;
+    case 1:
+        std::cout << "  Fault on RET (bad target)\n";
+        DoFaultRetTarg();
+        return TSTATUS_NOFAULT;
 
-        case 2:
-            std::cout << "  Fault on RET <imm> (bad SP)\n";
-            DoFaultRetImmSp();
-            return TSTATUS_NOFAULT;
+    case 2:
+        std::cout << "  Fault on RET <imm> (bad SP)\n";
+        DoFaultRetImmSp();
+        return TSTATUS_NOFAULT;
 
-        case 3:
-            std::cout << "  Fault on RET <imm> (bad targ)\n";
-            DoFaultRetImmTarg();
-            return TSTATUS_NOFAULT;
+    case 3:
+        std::cout << "  Fault on RET <imm> (bad targ)\n";
+        DoFaultRetImmTarg();
+        return TSTATUS_NOFAULT;
 
-        case 4:
-            std::cout << "  Fault on CALL <imm> (bad SP)\n";
-            DoFaultCallSp();
-            return TSTATUS_NOFAULT;
+    case 4:
+        std::cout << "  Fault on CALL <imm> (bad SP)\n";
+        DoFaultCallSp();
+        return TSTATUS_NOFAULT;
 
-        case 5:
-            std::cout << "  Fault on CALL <imm> (bad target)\n";
-            DoFaultCallTarg();
-            return TSTATUS_NOFAULT;
+    case 5:
+        std::cout << "  Fault on CALL <imm> (bad target)\n";
+        DoFaultCallTarg();
+        return TSTATUS_NOFAULT;
 
-        case 6:
-            std::cout << "  Fault on CALL *%rx (bad SP)\n";
-            DoFaultCallRegSp();
-            return TSTATUS_NOFAULT;
+    case 6:
+        std::cout << "  Fault on CALL *%rx (bad SP)\n";
+        DoFaultCallRegSp();
+        return TSTATUS_NOFAULT;
 
-        case 7:
-            std::cout << "  Fault on CALL *%rx (bad target)\n";
-            DoFaultCallRegTarg();
-            return TSTATUS_NOFAULT;
+    case 7:
+        std::cout << "  Fault on CALL *%rx (bad target)\n";
+        DoFaultCallRegTarg();
+        return TSTATUS_NOFAULT;
 
-        case 8:
-            std::cout << "  Fault on CALL *[mem] (bad SP)\n";
-            DoFaultCallMemSp();
-            return TSTATUS_NOFAULT;
+    case 8:
+        std::cout << "  Fault on CALL *[mem] (bad SP)\n";
+        DoFaultCallMemSp();
+        return TSTATUS_NOFAULT;
 
-        case 9:
-            std::cout << "  Fault on CALL *[mem] (bad target)\n";
-            DoFaultCallMemTarg();
-            return TSTATUS_NOFAULT;
+    case 9:
+        std::cout << "  Fault on CALL *[mem] (bad target)\n";
+        DoFaultCallMemTarg();
+        return TSTATUS_NOFAULT;
 
-        case 10:
-            std::cout << "  Fault on CALL *[mem] (bad mem location)\n";
-            DoFaultCallMemBadMem();
-            return TSTATUS_NOFAULT;
+    case 10:
+        std::cout << "  Fault on CALL *[mem] (bad mem location)\n";
+        DoFaultCallMemBadMem();
+        return TSTATUS_NOFAULT;
 
-        case 11:
-            std::cout << "  Fault on MOV %gs:[mem], %rx (bad segment selector)\n";
-            DoFaultSegMov();
-            return TSTATUS_NOFAULT;
+    case 11:
+        std::cout << "  Fault on MOV %gs:[mem], %rx (bad segment selector)\n";
+        DoFaultSegMov();
+        return TSTATUS_NOFAULT;
 
-        case 12:
-            std::cout << "  Fault on MOVS\n";
-            DoFaultStringOp();
-            return TSTATUS_NOFAULT;
+    case 12:
+        std::cout << "  Fault on MOVS\n";
+        DoFaultStringOp();
+        return TSTATUS_NOFAULT;
 
-        case 13:
-            std::cout << "  Fault on PUSHF\n";
-            DoFaultPushF();
-            return TSTATUS_NOFAULT;
+    case 13:
+        std::cout << "  Fault on PUSHF\n";
+        DoFaultPushF();
+        return TSTATUS_NOFAULT;
 
-        case 14:
-            std::cout << "  Fault on POPF\n";
-            DoFaultPopF();
-            return TSTATUS_NOFAULT;
+    case 14:
+        std::cout << "  Fault on POPF\n";
+        DoFaultPopF();
+        return TSTATUS_NOFAULT;
 
-        case 15:
-            std::cout << "  Fault on PUSH\n";
-            DoFaultPush();
-            return TSTATUS_NOFAULT;
+    case 15:
+        std::cout << "  Fault on PUSH\n";
+        DoFaultPush();
+        return TSTATUS_NOFAULT;
 
-        case 16:
-            std::cout << "  Fault on POP\n";
-            DoFaultPop();
-            return TSTATUS_NOFAULT;
+    case 16:
+        std::cout << "  Fault on POP\n";
+        DoFaultPop();
+        return TSTATUS_NOFAULT;
 
-        case 17:
-            std::cout << "  Fault on PUSH [mem] (bad mem location)\n";
-            DoFaultPushMem();
-            return TSTATUS_NOFAULT;
+    case 17:
+        std::cout << "  Fault on PUSH [mem] (bad mem location)\n";
+        DoFaultPushMem();
+        return TSTATUS_NOFAULT;
 
-        case 18:
-            std::cout << "  Fault on POP [mem] (bad mem location)\n";
-            DoFaultPopMem();
-            return TSTATUS_NOFAULT;
+    case 18:
+        std::cout << "  Fault on POP [mem] (bad mem location)\n";
+        DoFaultPopMem();
+        return TSTATUS_NOFAULT;
 
-        case 19:
-            std::cout << "  Fault on ENTER\n";
-            DoFaultEnter();
-            return TSTATUS_NOFAULT;
+    case 19:
+        std::cout << "  Fault on ENTER\n";
+        DoFaultEnter();
+        return TSTATUS_NOFAULT;
 
-        case 20:
-            std::cout << "  Fault on LEAVE\n";
-            DoFaultLeave();
-            return TSTATUS_NOFAULT;
+    case 20:
+        std::cout << "  Fault on LEAVE\n";
+        DoFaultLeave();
+        return TSTATUS_NOFAULT;
 
-        case 21:
-            std::cout << "  Fault on MASKMOVDQU\n";
-            DoFaultMaskmovdqu();
-            return TSTATUS_NOFAULT;
+    case 21:
+        std::cout << "  Fault on MASKMOVDQU\n";
+        DoFaultMaskmovdqu();
+        return TSTATUS_NOFAULT;
 
-        case 22:
-            std::cout << "  Fault on BT [mem]\n";
-            DoFaultBitTest();
-            return TSTATUS_NOFAULT;
+    case 22:
+        std::cout << "  Fault on BT [mem]\n";
+        DoFaultBitTest();
+        return TSTATUS_NOFAULT;
 
-        case 23:
-            std::cout << "  Fault on MOV %seg, [mem] (bad mem location)\n";
-            DoFaultMovSegSelector();
-            return TSTATUS_NOFAULT;
+    case 23:
+        std::cout << "  Fault on MOV %seg, [mem] (bad mem location)\n";
+        DoFaultMovSegSelector();
+        return TSTATUS_NOFAULT;
 
-        case 24:
-            std::cout << "  Fault on JMP *[mem] (bad mem location)\n";
-            DoFaultJumpMemBadMem();
-            return TSTATUS_NOFAULT;
+    case 24:
+        std::cout << "  Fault on JMP *[mem] (bad mem location)\n";
+        DoFaultJumpMemBadMem();
+        return TSTATUS_NOFAULT;
 
-        case 25:
-            std::cout << "  Fault on MOV [mem], %rx (bad load location)\n";
-            DoFaultBadLoad();
-            return TSTATUS_NOFAULT;
+    case 25:
+        std::cout << "  Fault on MOV [mem], %rx (bad load location)\n";
+        DoFaultBadLoad();
+        return TSTATUS_NOFAULT;
 
-        case 26:
-            std::cout << "  Fault on MOV %rx, [mem] (bad store location)\n";
-            DoFaultBadStore();
-            return TSTATUS_NOFAULT;
+    case 26:
+        std::cout << "  Fault on MOV %rx, [mem] (bad store location)\n";
+        DoFaultBadStore();
+        return TSTATUS_NOFAULT;
 
-        case 27:
-            std::cout << "  Fault on CMOV [mem], %rx (bad load location)\n";
-            DoFaultCmov();
-            return TSTATUS_NOFAULT;
+    case 27:
+        std::cout << "  Fault on CMOV [mem], %rx (bad load location)\n";
+        DoFaultCmov();
+        return TSTATUS_NOFAULT;
 
-        default:
-            return TSTATUS_DONE;
+    default:
+        return TSTATUS_DONE;
     }
 }

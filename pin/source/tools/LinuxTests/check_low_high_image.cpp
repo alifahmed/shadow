@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,29 +26,33 @@ using namespace std;
 
 /* ===================================================================== */
 
-int ValidEhdr(Elf64_Ehdr* ehdr)
+int ValidEhdr(Elf64_Ehdr *ehdr)
 {
-    if (sizeof(Elf64_Ehdr) != ehdr->e_ehsize) return 0;
-
-    if ((ehdr->e_ident[EI_MAG0] != ELFMAG0) || (ehdr->e_ident[EI_MAG1] != ELFMAG1) || (ehdr->e_ident[EI_MAG2] != ELFMAG2) ||
-        (ehdr->e_ident[EI_MAG3] != ELFMAG3))
+    if (sizeof(Elf64_Ehdr) != ehdr->e_ehsize)
+        return 0;
+    
+    if ((ehdr->e_ident[ EI_MAG0 ] !=  ELFMAG0 ) ||
+        (ehdr->e_ident[ EI_MAG1 ] !=  ELFMAG1 ) ||
+        (ehdr->e_ident[ EI_MAG2 ] !=  ELFMAG2 ) ||
+        (ehdr->e_ident[ EI_MAG3 ] !=  ELFMAG3 ))
         return 0;
 
     // supports only 64 bits
-    return (ehdr->e_machine == EM_X86_64);
+    return(ehdr->e_machine == EM_X86_64);
 }
 
-INT64 CalcSize(const char* imgname, BOOL text_only)
+INT64 CalcSize(const char *imgname, BOOL text_only)
 {
     ADDRINT baseAddr = 0;
-    BOOL set         = false;
-    INT64 memSize    = 0;
+    BOOL set = false;
+    INT64 memSize = 0;
     Elf64_Ehdr ehdr;
-    Elf64_Phdr* phdr;
+    Elf64_Phdr *phdr;
     int res, i, fd;
 
     fd = open(imgname, O_RDONLY, 0);
-    if (fd < 0) return 0;
+    if (fd < 0)
+        return 0;
 
     res = read(fd, &ehdr, sizeof(ehdr));
     if (res != sizeof(ehdr) || !ValidEhdr(&ehdr))
@@ -59,7 +63,7 @@ INT64 CalcSize(const char* imgname, BOOL text_only)
     }
 
     // Read program headers
-    phdr = (Elf64_Phdr*)malloc(sizeof(Elf64_Phdr) * ehdr.e_phnum);
+    phdr = (Elf64_Phdr *)malloc(sizeof(Elf64_Phdr) * ehdr.e_phnum);
     lseek(fd, ehdr.e_phoff, SEEK_SET);
     read(fd, phdr, ehdr.e_phnum * sizeof(phdr[0]));
 
@@ -68,10 +72,11 @@ INT64 CalcSize(const char* imgname, BOOL text_only)
     {
         if (phdr[i].p_type == PT_LOAD)
         {
-            if (text_only && (phdr[i].p_flags & PF_W) != 0) continue;
+            if (text_only && (phdr[i].p_flags & PF_W)!=0)
+                continue;
             if (!set || phdr[i].p_vaddr < baseAddr)
             {
-                set      = true;
+                set = true;
                 baseAddr = phdr[i].p_vaddr;
             }
         }
@@ -83,7 +88,8 @@ INT64 CalcSize(const char* imgname, BOOL text_only)
         if (phdr[i].p_type == PT_LOAD)
         {
             ADDRINT endAddr = phdr[i].p_vaddr + phdr[i].p_memsz;
-            if (text_only && (phdr[i].p_flags & PF_W) != 0) continue;
+            if (text_only && (phdr[i].p_flags & PF_W)!=0)
+                continue;
 
             if (memSize < (INT64)(endAddr - baseAddr))
             {
@@ -94,44 +100,45 @@ INT64 CalcSize(const char* imgname, BOOL text_only)
 
     free(phdr);
     close(fd);
-    return memSize - 1;
+    return memSize-1;
 }
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    ADDRINT imgLow  = IMG_LowAddress(img);
+    ADDRINT imgLow = IMG_LowAddress(img);
     ADDRINT imgHigh = IMG_HighAddress(img);
-    string imgName  = IMG_Name(img);
+    string imgName = IMG_Name(img);
     INT64 calc_size = 0;
 
-    if (imgName.find("vdso") != string::npos) return;
+    if (imgName.find("vdso") != string::npos)
+        return;
 
     if (IMG_NumRegions(img) == 1)
     {
         calc_size = CalcSize(imgName.c_str(), false);
-        //        fprintf(stderr, "Img: %-30s: 1 Region: %p %p expected size: %lld got %lld\n",
-        //                imgName.c_str(), (void*)imgLow, (void*)imgHigh, (long long)calc_size, (long long)(imgHigh-imgLow));
+//        fprintf(stderr, "Img: %-30s: 1 Region: %p %p expected size: %lld got %lld\n",
+//                imgName.c_str(), (void*)imgLow, (void*)imgHigh, (long long)calc_size, (long long)(imgHigh-imgLow));
     }
     else
     {
         calc_size = CalcSize(imgName.c_str(), true);
-        //        fprintf(stderr, "Img: %-30s: %d Region: %p %p expected size: %lld got %lld\n", imgName.c_str(),
-        //                IMG_NumRegions(img), (void*)imgLow, (void*)imgHigh, (long long)calc_size, (long long)(imgHigh-imgLow));
+//        fprintf(stderr, "Img: %-30s: %d Region: %p %p expected size: %lld got %lld\n", imgName.c_str(), 
+//                IMG_NumRegions(img), (void*)imgLow, (void*)imgHigh, (long long)calc_size, (long long)(imgHigh-imgLow));
     }
 
-    if (calc_size != (INT64)(imgHigh - imgLow))
+    if (calc_size != (INT64)(imgHigh-imgLow))
     {
-        fprintf(stderr, "ERROR: Img: %-30s: expected size: %lld got %lld\n", imgName.c_str(), (long long)calc_size,
-                (long long)(imgHigh - imgLow));
+        fprintf(stderr, "ERROR: Img: %-30s: expected size: %lld got %lld\n", imgName.c_str(), 
+                (long long)calc_size, (long long)(imgHigh-imgLow));
     }
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     IMG_AddInstrumentFunction(ImageLoad, NULL);
 

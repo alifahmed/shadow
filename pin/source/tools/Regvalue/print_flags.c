@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,9 +21,9 @@ int main()
         unsigned long long ull;
         void* voidp;
     } flags;
-
+    
     memset(&flags, 0, sizeof(flags));
-
+    
     // Call getFlags which in turn sets the flags register to 7,
     // call modifyFlags(), and return the value of the flags register
     // returned from modifyFlags()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -29,13 +29,15 @@
 using std::cerr;
 using std::endl;
 
+
 #ifdef TARGET_WINDOWS
-#define ASMNAME(name)
-#define ALIGN64 __declspec(align(64))
+# define ASMNAME(name)
+# define ALIGN64 __declspec(align(64))
 #else
-#define ASMNAME(name) asm(name)
-#define ALIGN64 __attribute__((aligned(64)))
+# define ASMNAME(name) asm(name)
+# define ALIGN64 __attribute__ ((aligned (64)))
 #endif
+
 
 /////////////////////
 // EXTERNAL FUNCTIONS
@@ -43,15 +45,17 @@ using std::endl;
 
 extern "C" void DoXsave() ASMNAME("DoXsave");
 
+
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
 
 extern "C"
 {
-    unsigned char ALIGN64 xsaveArea[832] ASMNAME("xsaveArea");
-    unsigned int flags ASMNAME("flags");
+unsigned char ALIGN64 xsaveArea[832] ASMNAME("xsaveArea");
+unsigned int flags ASMNAME("flags");
 }
+
 
 /////////////////////
 // UTILITY FUNCTIONS
@@ -63,6 +67,7 @@ static bool IsOn(TEST_REG_CLASS regClass)
     return (xstateBv & xstateBvMasks[regClass]);
 }
 
+
 static void GetRegValue(unsigned char* buf, TEST_REG_CLASS regClass)
 {
     unsigned int size = testRegSize[regClass];
@@ -70,12 +75,13 @@ static void GetRegValue(unsigned char* buf, TEST_REG_CLASS regClass)
     {
         // First get the upper half
         regClass = TEST_REG_CLASS_SSE;
-        size     = testRegSize[regClass];
+        size = testRegSize[regClass];
         memcpy(buf + size, &xsaveArea[testRegLocation[TEST_REG_CLASS_AVX]], size);
         // Now get the lower half (xmm)
     }
     memcpy(buf, &xsaveArea[testRegLocation[regClass]], testRegSize[regClass]);
 }
+
 
 // This is a placeholder for the tool to change the register values.
 extern "C" void ChangeRegisterValue() ASMNAME("ChangeRegisterValue");
@@ -84,12 +90,14 @@ void ChangeRegisterValue()
     // does nothing
 }
 
+
 // This is a placeholder for the tool to start execution after changing the register.
 extern "C" void ExecuteAt() ASMNAME("ExecuteAt");
 void ExecuteAt()
 {
     // does nothing
 }
+
 
 /////////////////////
 // MAIN FUNCTION
@@ -104,7 +112,7 @@ int main(int argc, const char* argv[])
     // Verify one command line argument - component
     if (argc != 2)
     {
-        cerr << "ERROR: Expected 1 command line argument, got " << argc - 1 << ". Aborting test." << endl;
+        cerr << "ERROR: Expected 1 command line argument, got " << argc-1 << ". Aborting test." << endl;
         return 1;
     }
 
@@ -117,9 +125,9 @@ int main(int argc, const char* argv[])
     }
 
     // Perform the test.
-    unsigned char before[32] = {0}; // empty buffer large enough to hold any context register up to AVX.
-    unsigned char after[32]  = {0}; // empty buffer large enough to hold any context register up to AVX.
-    flags                    = 7;
+    unsigned char before[32] = { 0 }; // empty buffer large enough to hold any context register up to AVX.
+    unsigned char after[32] = { 0 }; // empty buffer large enough to hold any context register up to AVX.
+    flags = 7;
     DoXsave(); // get the register value before the change
     if (IsOn(regClass))
     {
@@ -132,7 +140,7 @@ int main(int argc, const char* argv[])
     ExecuteAt();
 
     bool success = true;
-    flags        = 7;
+    flags = 7;
     DoXsave(); // get the register value after the change
     if (!IsOn(regClass))
     {

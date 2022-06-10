@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,25 +14,25 @@
 #include <Windows.h>
 #include <iostream>
 #include <string>
-using std::cout;
 using std::endl;
+using std::cout;
 using std::string;
 //Wait for a process completion
 //Verify it returned the expected exit code
 bool WaitAndVerify(HANDLE process)
 {
-    if (WaitForSingleObject(process, INFINITE) == WAIT_FAILED)
+    if(WaitForSingleObject( process, INFINITE ) == WAIT_FAILED)
     {
         cout << "WaitForSingleObject failed" << endl;
         return FALSE;
     }
     DWORD processExitCode;
-    if (GetExitCodeProcess(process, &processExitCode) == FALSE)
+    if(GetExitCodeProcess (process, &processExitCode) == FALSE)
     {
         cout << "GetExitCodeProcess Failed" << endl;
         return FALSE;
     }
-    if (processExitCode != 0)
+    if(processExitCode != 0)
     {
         cout << "Got unexpected exit code" << endl;
         return FALSE;
@@ -43,18 +43,19 @@ bool WaitAndVerify(HANDLE process)
 int main()
 {
     char cmd1[] = "win_child_process.exe \"param1 param2\" param3"; //"dir create*";
-    STARTUPINFO startupInfo;
-    PROCESS_INFORMATION processInfo;
+    STARTUPINFO         startupInfo;
+    PROCESS_INFORMATION  processInfo;
     memset(&startupInfo, 0, sizeof(startupInfo));
     startupInfo.cb = sizeof(STARTUPINFO);
     memset(&processInfo, 0, sizeof(processInfo));
 
-    if (!CreateProcess(NULL, cmd1, NULL, NULL, TRUE, NULL, NULL, NULL, &startupInfo, &processInfo))
+    if (!CreateProcess(NULL, cmd1, NULL, NULL, TRUE, NULL, 
+        NULL, NULL, &startupInfo, &processInfo))
     {
-        cout << "CreateProcess failed for " << string(cmd1) << endl;
+        cout <<  "CreateProcess failed for " << string(cmd1) << endl;
         exit(0);
     }
-    if (WaitAndVerify(processInfo.hProcess) == FALSE)
+    if(WaitAndVerify(processInfo.hProcess) == FALSE)
     {
         exit(1);
     }

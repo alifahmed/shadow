@@ -1,45 +1,13 @@
+//Groups: @ingroup\s+(API_REF|KNOBS|IMG_BASIC_API|INS_BASIC_API|INS_INST_API|INS_BASIC_API_GEN_IA32|INS_BASIC_API_IA32|INS_MOD_API_GEN_IA32|SEC_BASIC_API|RTN_BASIC_API|REG_BASIC_API|REG_CPU_GENERIC|REG_CPU_IA32|TRACE_BASIC_API|BBL_BASIC_API|SYM_BASIC_API|MISC_PRINT|MISC_PARSE|KNOB_API|KNOB_BASIC|KNOB_PRINT|LOCK|PIN_CONTROL|TRACE_VERSION_API|BUFFER_API|PROTO_API|PIN_PROCESS_API|PIN_THREAD_API|PIN_SYSCALL_API|WINDOWS_SYSCALL_API_UNDOC|DEBUG_API|ERROR_FILE_BASIC|TYPE_BASE|INSTLIB|ALARM|CHILD_PROCESS_API|UTILS|MISC|CONTEXT_API|PHYSICAL_CONTEXT_API|PIN_CALLBACKS|EXCEPTION_API|APPDEBUG_API|STOPPED_THREAD_API|BUFFER_API|PROTO|INST_ARGS|DEPRECATED_PIN_API|INTERNAL_EXCEPTION_PRIVATE_UNDOCUMENTED|PIN_THREAD_PRIVATE|CHILD_PROCESS_INTERNAL|BBL_BASIC|ROGUE_BASIC_API|MESSAGE_TYPE|MESSAGE_BASIC|ERRFILE|MISC_BASIC|ITC_INST_API|CONTEXT_API_UNDOC|EXCEPTION_API_UNDOC|UNDOCUMENTED_PIN_API|OPIN|TRACE_VERSIONS
+/* PIN API */
 
-#ifdef PIN_G_PROBE_INSTRUMENT_PH
-#error duplicate inclusion of probe_instrument
-#else
-#define PIN_G_PROBE_INSTRUMENT_PH
-/*! @file
- Unix-specific instrumentation in probe mode
-*/
-#if defined(TARGET_LINUX) || defined(TARGET_MAC)
-/*! @ingroup PIN_CONTROL
- * Call-back function in probe mode for fork notification.
- *
- *    @param[in] childPid  Process id of the child process, available after fork in parent
- *    @param[in] v         The tool's call-back value.
- */
-typedef VOID (*FORK_PROBE_MODE_CALLBACK)(UINT32 childPid, VOID* v);
+/* THIS FILE IS AUTOMAGICALLY GENERATED - DO NOT CHANGE DIRECTLY*/
 
-/*! @ingroup PIN_CONTROL
- * Register a notification handler that is called when the application
- * forks a new process.
- * If vfork() is called in application, Pin replaces it with fork().
- * This replacement is needed to keep Pin/Tool state consistent and prevent memory
- * overlap in callbacks following the fork/vfork. The function can only be used on Linux, and macOS*.
- *
- *    @param[in] where       Tells when to make the call-back and tells
- *                            whether the parent or child makes the call-back.
- *    @param[in] fun         Call-back function to execute.
- *    @param[in] v           Value passed as final parameter to call-back.
- *
- *    @return PIN_CALLBACK A handle to a callback that can be used to further modify this callback's properties
- *
- * If the fork function fails, the FPOINT_AFTER_IN_PARENT function, if it exists,
- * is still called.
- *
- * @note The pin client lock is obtained during the call of this API.
- *
- * @par Availability:
- * \b Mode:  Probe\n
- * \b O/S:   Linux, and macOS*\n
- * \b CPU:   All\n
- */
-extern PIN_CALLBACK PIN_AddForkFunctionProbed(FPOINT point, FORK_PROBE_MODE_CALLBACK fun, VOID* val);
 
-#endif //defined(TARGET_LINUX)
-#endif // PIN_G_PROBE_INSTRUMENT_PH
+typedef VOID (*FORK_PROBE_MODE_CALLBACK)(UINT32 childPid, VOID *v);
+
+                                                                  /* DO NOT EDIT */
+extern PIN_CALLBACK PIN_AddForkFunctionProbed(FPOINT point, FORK_PROBE_MODE_CALLBACK fun, VOID *val);
+
+                                                                  /* DO NOT EDIT */
+

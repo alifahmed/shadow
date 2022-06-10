@@ -62,19 +62,6 @@ ifeq ($(TARGET_OS),windows)
     OBJECT_ROOTS += assy-support-$(TARGET)
 endif
 
-###### Handle exceptions here (OS/arch related) ######
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
-
-###### Define the serial subset ######
-
-# Defines which tests need to be run serially as may cause issues when running in parallel 
-ifeq ($(TARGET_OS),windows)
-    SERIAL_SUBSET := mix-mt
-endif
-
 ###### Define the sanity subset ######
 
 # This defines the list of tests that should run in sanity. It should include all the tests listed in

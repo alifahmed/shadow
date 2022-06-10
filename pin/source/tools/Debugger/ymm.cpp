@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,8 +13,9 @@
 #include <cstdlib>
 #include <signal.h>
 
+
 static void HandleSigill(int);
-extern "C" void LoadYmm0(const unsigned char*);
+extern "C" void LoadYmm0(const unsigned char *);
 
 int main()
 {
@@ -23,13 +24,13 @@ int main()
     //
     struct sigaction act;
     act.sa_handler = HandleSigill;
-    act.sa_flags   = 0;
+    act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
     sigaction(SIGILL, &act, 0);
 
     unsigned char ymmVal[32];
-    for (unsigned i = 0; i < sizeof(ymmVal); i++)
-        ymmVal[i] = static_cast< unsigned char >(i + 1);
+    for (unsigned i = 0;  i < sizeof(ymmVal);  i++)
+        ymmVal[i] = static_cast<unsigned char>(i+1);
 
     // If the processor supports AVX, the debugger stops at a breakpoint
     // immediately after loading YMM0.  Otherwise, the debugger stops at
@@ -39,6 +40,7 @@ int main()
 
     return 0;
 }
+
 
 static void HandleSigill(int sig)
 {

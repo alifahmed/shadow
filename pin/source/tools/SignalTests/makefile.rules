@@ -94,7 +94,7 @@ ifeq ($(TARGET_OS),linux)
     endif
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 # Windows does not have signals, therefore don't test this directory on that OS.
 ifeq ($(TARGET_OS),windows)
@@ -108,37 +108,20 @@ ifeq ($(TARGET_OS),windows)
     LIB_ROOTS := 
 endif
 
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
-
 # The following tests are disabled. See Mantis #443.
 TEST_TOOL_ROOTS := $(filter-out sigsuspend double recursive setcontext sigusr2, $(TEST_TOOL_ROOTS))
-
-# See Mantis 4053
-ifeq ($(TARGET_OS),linux)
-    TEST_ROOTS := $(filter-out mtstress, $(TEST_ROOTS))
-    APP_ROOTS := $(filter-out mtstress, $(APP_ROOTS))
-endif
-
-BINUTILS_GE_235 := $(shell $(TOOLS_ROOT)/Utils/testToolVersion `which ld` ge 2.35)
-
-# Mantis 4874
-ifeq ($(TARGET_OS),linux)
-    ifeq ($(TARGET),intel64)
-        ifeq ($(BINUTILS_GE_235),1)
-            TEST_ROOTS := $(filter-out faultcheck-pressure faultcheck-intel64 \
-                            raise-exception-intel64 raise-exception-intel64-const-context , $(TEST_ROOTS))
-            APP_ROOTS := $(filter-out faultcheck-intel64, $(APP_ROOTS))
-        endif
-    endif
-endif
 
 ###### Define the sanity subset ######
 
 # This defines the list of tests that should run in sanity. It should include all the tests listed in
 # TEST_TOOL_ROOTS and TEST_ROOTS excluding only unstable tests.
 SANITY_SUBSET := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
+
+ifeq ($(TARGET_OS),linux)
+    # See Mantis 4053
+    SANITY_SUBSET := $(filter-out mtstress, $(SANITY_SUBSET))
+endif
+
 
 ##############################################################
 #
@@ -301,16 +284,16 @@ double.test: $(OBJDIR)double$(EXE_SUFFIX)
 	$(RM) $(OBJDIR)double.out $(OBJDIR)double.pin.out
 
 hlt.test: $(OBJDIR)hlt$(EXE_SUFFIX)
-	$(OBJDIR)hlt$(EXE_SUFFIX) > $(OBJDIR)$(@:.test=.app.out)
-	$(PIN) -- $(OBJDIR)hlt$(EXE_SUFFIX) > $(OBJDIR)$(@:.test=.out)
-	$(CMP) $(OBJDIR)$(@:.test=.app.out) $(OBJDIR)$(@:.test=.out)
-	$(RM) $(OBJDIR)$(@:.test=.app.out) $(OBJDIR)$(@:.test=.out)
+	$(OBJDIR)hlt$(EXE_SUFFIX) > $(OBJDIR)hlt.out
+	$(PIN) -- $(OBJDIR)hlt$(EXE_SUFFIX) > $(OBJDIR)hlt.pin.out
+	$(CMP) $(OBJDIR)hlt.out $(OBJDIR)hlt.pin.out
+	$(RM) $(OBJDIR)hlt.out $(OBJDIR)hlt.pin.out
 
 hlt_pie.test: $(OBJDIR)hlt_pie$(EXE_SUFFIX)
-	$(DISABLE_ASLR) $(OBJDIR)hlt_pie$(EXE_SUFFIX) > $(OBJDIR)$(@:.test=.app.out)
-	$(DISABLE_ASLR) $(PIN) -- $(OBJDIR)hlt_pie$(EXE_SUFFIX) > $(OBJDIR)$(@:.test=.out)
-	$(CMP) $(OBJDIR)$(@:.test=.app.out) $(OBJDIR)$(@:.test=.out)
-	$(RM) $(OBJDIR)$(@:.test=.app.out) $(OBJDIR)$(@:.test=.out)
+	$(DISABLE_ASLR) $(OBJDIR)hlt_pie$(EXE_SUFFIX) > $(OBJDIR)hlt.out
+	$(DISABLE_ASLR) $(PIN) -- $(OBJDIR)hlt_pie$(EXE_SUFFIX) > $(OBJDIR)hlt.pin.out
+	$(CMP) $(OBJDIR)hlt.out $(OBJDIR)hlt.pin.out
+	$(RM) $(OBJDIR)hlt.out $(OBJDIR)hlt.pin.out
 
 recursive.test: $(OBJDIR)recursive$(EXE_SUFFIX)
 	$(OBJDIR)recursive$(EXE_SUFFIX) > $(OBJDIR)recursive.out

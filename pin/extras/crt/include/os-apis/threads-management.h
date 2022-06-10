@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -47,3 +47,4 @@ VOID OS_DeregisterThread(NATIVE_TID ntid);
 VOID OS_DeregisterCurrentThread(void);
 
 #endif // OS_APIS_THREAD_MANAGEMENT_H_INCLUDED__
+

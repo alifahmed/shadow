@@ -58,24 +58,6 @@ ifeq ($(TARGET_OS),linux)
     endif
 endif
 
-###### Handle exceptions here (OS/arch related) ######
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
-
-BINUTILS_GE_235 := $(shell $(TOOLS_ROOT)/Utils/testToolVersion `which ld` ge 2.35)
-
-# Mantis 4874
-ifeq ($(TARGET_OS),linux)
-    ifeq ($(TARGET),intel64)
-        ifeq ($(BINUTILS_GE_235),1)
-            TEST_ROOTS := $(filter-out load_far_pointer, $(TEST_ROOTS))
-            APP_ROOTS := $(filter-out load_far_pointer, $(APP_ROOTS))
-        endif
-    endif
-endif
-
 ###### Define the sanity subset ######
 
 # This defines the list of tests that should run in sanity. It should include all the tests listed in

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,9 +13,9 @@
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
-using std::endl;
-using std::hex;
 using std::ios;
+using std::hex;
+using std::endl;
 
 #if defined(TARGET_MAC)
 #define FUNC_PREFIX "_"
@@ -37,7 +37,10 @@ VOID MmapArgs(ADDRINT ra, ADDRINT arg1, ADDRINT arg2, ADDRINT arg3, ADDRINT arg4
     TraceFile << "  called from " << ra << endl;
 }
 
-VOID CallArgs(ADDRINT arg1) { TraceFile << "Call(" << arg1 << ")" << endl; }
+VOID CallArgs(ADDRINT arg1)
+{
+    TraceFile << "Call(" << arg1 << ")" << endl;
+}
 
 VOID FoobarArgs(ADDRINT arg1, ADDRINT arg2)
 {
@@ -49,7 +52,7 @@ VOID FoobarArgs(ADDRINT arg1, ADDRINT arg2)
     }
 }
 
-VOID BazArg(ADDRINT* arg1, ADDRINT* arg2, ADDRINT* arg3)
+VOID BazArg(ADDRINT * arg1, ADDRINT * arg2, ADDRINT * arg3)
 {
     TraceFile << "Baz(" << *arg1 << "," << *arg2 << "," << *arg3 << ")" << endl;
     *arg1 = 4;
@@ -57,15 +60,18 @@ VOID BazArg(ADDRINT* arg1, ADDRINT* arg2, ADDRINT* arg3)
     *arg3 = 6;
 }
 
-static ADDRINT foobarAddress = 0;
+LOCALVAR ADDRINT foobarAddress = 0;
 
 /* ===================================================================== */
 
-VOID Ins(INS ins, VOID* v)
+VOID Ins(INS ins, VOID *v)
 {
-    if (!INS_IsCall(ins)) return;
+    if (!INS_IsCall(ins))
+        return;
 
-    if (foobarAddress != 0 && INS_IsDirectControlFlow(ins) && INS_DirectControlFlowTargetAddress(ins) == foobarAddress)
+    if (foobarAddress != 0
+        && INS_IsDirectControlFlow(ins)
+        && INS_DirectControlFlowTargetAddress(ins) == foobarAddress)
     {
         TraceFile << "Instrument call to foobar" << endl;
         INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(FoobarArgs), IARG_FUNCARG_CALLSITE_VALUE, 0, IARG_FUNCARG_CALLSITE_VALUE, 1,
@@ -74,31 +80,34 @@ VOID Ins(INS ins, VOID* v)
 
     static BOOL first = true;
 
-    if (!first) return;
+    if (!first)
+        return;
 
     first = false;
 
-    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CallArgs), IARG_FUNCARG_CALLSITE_VALUE, 0, IARG_END);
+    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CallArgs),  IARG_FUNCARG_CALLSITE_VALUE, 0, IARG_END);
+    
 }
 
 /* ===================================================================== */
 
-VOID Image(IMG img, VOID* v)
+VOID Image(IMG img, VOID *v)
 {
     RTN mmapRtn = RTN_FindByName(img, FUNC_PREFIX "mmap");
     if (RTN_Valid(mmapRtn))
     {
         RTN_Open(mmapRtn);
-        RTN_InsertCall(mmapRtn, IPOINT_BEFORE, AFUNPTR(MmapArgs), IARG_RETURN_IP, IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-                       IARG_FUNCARG_ENTRYPOINT_VALUE, 1, IARG_FUNCARG_ENTRYPOINT_VALUE, 2, IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
-                       IARG_FUNCARG_ENTRYPOINT_VALUE, 4, IARG_FUNCARG_ENTRYPOINT_VALUE, 5, IARG_END);
+        RTN_InsertCall(mmapRtn, IPOINT_BEFORE, AFUNPTR(MmapArgs), IARG_RETURN_IP,
+                       IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_FUNCARG_ENTRYPOINT_VALUE, 1, IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+                       IARG_FUNCARG_ENTRYPOINT_VALUE, 3, IARG_FUNCARG_ENTRYPOINT_VALUE, 4, IARG_FUNCARG_ENTRYPOINT_VALUE, 5,
+                       IARG_END);
         RTN_Close(mmapRtn);
     }
     RTN foobarRtn = RTN_FindByName(img, FUNC_PREFIX "foobar");
     if (RTN_Valid(foobarRtn))
     {
         foobarAddress = RTN_Address(foobarRtn);
-
+        
         RTN_Open(foobarRtn);
         RTN_InsertCall(foobarRtn, IPOINT_BEFORE, AFUNPTR(FoobarArgs), IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
                        IARG_FUNCARG_ENTRYPOINT_VALUE, 1, IARG_END);
@@ -109,19 +118,24 @@ VOID Image(IMG img, VOID* v)
     if (RTN_Valid(bazRtn))
     {
         RTN_Open(bazRtn);
-        RTN_InsertCall(bazRtn, IPOINT_BEFORE, AFUNPTR(BazArg), IARG_FUNCARG_ENTRYPOINT_REFERENCE, 0,
-                       IARG_FUNCARG_ENTRYPOINT_REFERENCE, 1, IARG_FUNCARG_ENTRYPOINT_REFERENCE, 2, IARG_END);
+        RTN_InsertCall(bazRtn, IPOINT_BEFORE, AFUNPTR(BazArg),
+                       IARG_FUNCARG_ENTRYPOINT_REFERENCE, 0, IARG_FUNCARG_ENTRYPOINT_REFERENCE, 1,
+                       IARG_FUNCARG_ENTRYPOINT_REFERENCE, 2, IARG_END);
         RTN_Close(bazRtn);
     }
+
 }
 
 /* ===================================================================== */
 
-VOID Fini(INT32 code, VOID* v) { TraceFile.close(); }
+VOID Fini(INT32 code, VOID *v)
+{
+    TraceFile.close();
+}
 
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
@@ -137,7 +151,7 @@ int main(int argc, char* argv[])
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
 

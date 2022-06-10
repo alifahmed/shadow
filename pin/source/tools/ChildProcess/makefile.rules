@@ -101,7 +101,7 @@ ifeq ($(TARGET_OS),windows)
     DLL_ROOTS += win_terminate_process_dll
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 ifeq ($(TARGET_OS),linux)
     ifeq ($(shell $(TOOLS_ROOT)/Utils/testStaticLibs),1)
@@ -120,43 +120,23 @@ ifeq ($(TARGET_OS),linux)
 endif
 
 # If System Integrity Protection is enabled, filter out tests which are trying to instrument system processes.
-# Below tests use system() which execl() /bis/sh which is SIP protected, therefore we can't run them.
 ifeq ($(TARGET_OS),mac)
-    ifeq ($(SIP_ENABLED),1)
+    ifeq ($(shell if [ -x /usr/bin/csrutil ]; then /usr/bin/csrutil status | $(AWK) '{print $$5}'; fi),enabled.)
         TEST_ROOTS := $(filter-out null_argument null_argument_probed follow_popen_probe follow_popen, $(TEST_ROOTS))
     endif
 endif
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
 
 # See Mantis 2603
 ifeq ($(TARGET_OS),windows)
     TEST_ROOTS := $(filter-out win_early_termination_debugged win_early_termination_probed_debugged, $(TEST_ROOTS))
 endif
 
-# see mantis 4772
-ifeq ($(TARGET_OS),linux)
-    ifeq ($(DIST_NAME_FEDORA),1)
-        DIST_VER_GE_30 := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion ge 30)
-        ifeq ($(DIST_VER_GE_30),1)
-            TEST_ROOTS := $(filter-out null_argument_probed, $(TEST_ROOTS))
-        endif
-    endif
-    ifeq ($(DIST_NAME_UBUNTU),1)
-        DIST_VER_GE_1904 := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion ge 19.04)
-        ifeq ($(DIST_VER_GE_1904),1)
-            TEST_ROOTS := $(filter-out null_argument_probed, $(TEST_ROOTS))
-        endif
-    endif
-endif
-
-
 ###### Define the sanity subset ######
+
 # This defines the list of tests that should run in sanity. It should include all the tests listed in
 # TEST_TOOL_ROOTS and TEST_ROOTS excluding only unstable tests.
 SANITY_SUBSET := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
+
 
 ##############################################################
 #

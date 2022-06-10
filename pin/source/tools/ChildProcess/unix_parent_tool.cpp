@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -28,14 +28,16 @@
 /* ===================================================================== */
 
 //Pin command line
-KNOB< string > KnobPin(KNOB_MODE_WRITEONCE, "pintool", "pin", "", "pin full path");
+KNOB<string> KnobPin(KNOB_MODE_WRITEONCE, "pintool", "pin", "", "pin full path");
 
 //Parent configuration - Application name
-KNOB< string > KnobApplication(KNOB_MODE_WRITEONCE, "pintool", "app", "", "application name");
+KNOB<string> KnobApplication(KNOB_MODE_WRITEONCE, "pintool", "app", "", "application name");
 
-KNOB< BOOL > KnobToolProbeMode(KNOB_MODE_WRITEONCE, "pintool", "probe", "0", "invoke tool in probe mode");
+KNOB<BOOL> KnobToolProbeMode(KNOB_MODE_WRITEONCE, "pintool", "probe", "0",
+        "invoke tool in probe mode");
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "unix_parent_tool.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "unix_parent_tool.out",
+        "specify output file name");
 
 ofstream OutFile;
 
@@ -50,15 +52,15 @@ INT32 Usage()
 }
 
 /*
- * FollowChild(CHILD_PROCESS cProcess, VOID * userData) - child process configuration
+ * FollowChild(CHILD_PROCESS childProcess, VOID * userData) - child process configuration
  * Sets pin command line for a child that should be created
  */
-BOOL FollowChild(CHILD_PROCESS cProcess, VOID* userData)
+BOOL FollowChild(CHILD_PROCESS childProcess, VOID * userData)
 {
     INT appArgc;
-    CHAR const* const* appArgv;
+    CHAR const * const * appArgv;
 
-    CHILD_PROCESS_GetCommandLine(cProcess, &appArgc, &appArgv);
+    CHILD_PROCESS_GetCommandLine(childProcess, &appArgc, &appArgv);
     ARGUMENTS_LIST appCmd(appArgc, appArgv);
     string childApp(appArgv[0]);
 
@@ -71,8 +73,8 @@ BOOL FollowChild(CHILD_PROCESS cProcess, VOID* userData)
             newPinCmd.Add(KnobPin.Value());
             newPinCmd.Add("--");
 
-            CHILD_PROCESS_SetPinCommandLine(cProcess, newPinCmd.Argc(), newPinCmd.Argv());
-            OutFile << "Process to execute: " << newPinCmd.String() << endl;
+            CHILD_PROCESS_SetPinCommandLine(childProcess, newPinCmd.Argc(), newPinCmd.Argv());
+            OutFile << "Process to execute: " << newPinCmd.String()  << endl;
         }
         else
         {
@@ -87,7 +89,7 @@ BOOL FollowChild(CHILD_PROCESS cProcess, VOID* userData)
 }
 
 /* ===================================================================== */
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     OutFile << "In unix_parent_tool PinTool" << endl;
     OutFile.close();
@@ -104,17 +106,17 @@ VOID ExitInProbeMode(INT code)
 
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     RTN exitRtn = RTN_FindByName(img, C_MANGLE("_exit"));
     if (RTN_Valid(exitRtn) && RTN_IsSafeForProbedReplacement(exitRtn))
     {
-        origExit = (EXITFUNCPTR)RTN_ReplaceProbed(exitRtn, AFUNPTR(ExitInProbeMode));
+        origExit = (EXITFUNCPTR) RTN_ReplaceProbed(exitRtn, AFUNPTR(ExitInProbeMode));
     }
 }
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     if (PIN_Init(argc, argv)) return Usage();
     PIN_InitSymbols();
@@ -139,3 +141,4 @@ int main(INT32 argc, CHAR** argv)
     }
     return 0;
 }
+

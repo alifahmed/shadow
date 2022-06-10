@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,22 +17,26 @@ When running the tool with the application: "memory_displacment_app", the output
 When running the application natively( without the tool), the output, which is the displacement value, should be 4.
 */
 
+
 #include "pin.H"
 #include <string.h>
 #include <iostream>
 #include <fstream>
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::ios;
-using std::ofstream;
 using std::string;
+using std::ios;
+using std::cerr;
+using std::ofstream;
+using std::endl;
+using std::cout;
+
+
 
 /* ===================================================================== */
-//  Commandline Switches
+//  Commandline Switches 
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "w_malloctrace.out", "specify trace file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+	"o", "w_malloctrace.out", "specify trace file name");
 
 /* ===================================================================== */
 // Finals
@@ -44,33 +48,32 @@ KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "w_malloctrac
 #define NEG_DISP "neg_disp"
 #endif
 
+
 /* ================================================================== */
-// Global variables
+// Global variables 
 /* ================================================================== */
 
-ADDRDELTA disp; // hold memory displacement value of the first instruction of the instrumented function.
+ADDRDELTA disp;// hold memory displacement value of the first instruction of the instrumented function. 
 
 /* ===================================================================== */
 // Instrumentation callbacks
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
-{   // Pin callback. Registered by IMG_AddInstrumentFunction
-    // Instrument the neg_disp () function which resides in memory_displacement_app.s
-
-    // Find the negDispRtn() function.
-    RTN negDispRtn = RTN_FindByName(img, NEG_DISP);
-    if (RTN_Valid(negDispRtn))
-    {
-        RTN_Open(negDispRtn);
-        INS ins;
-        ins = RTN_InsHead(negDispRtn); // First instruction of negDispRtn
-        if (INS_Valid(ins))
-        {
-            disp = INS_MemoryDisplacement(ins);
-        }
-        RTN_Close(negDispRtn);
-    }
+VOID ImageLoad(IMG img, VOID *v) { // Pin callback. Registered by IMG_AddInstrumentFunction
+	// Instrument the neg_disp () function which resides in memory_displacement_app.s 
+	
+		// Find the negDispRtn() function.
+		RTN negDispRtn = RTN_FindByName(img, NEG_DISP);
+		if (RTN_Valid(negDispRtn))
+		{
+			RTN_Open(negDispRtn);
+			INS ins;
+			ins = RTN_InsHead(negDispRtn);// First instruction of negDispRtn
+			if(INS_Valid(ins)){
+					disp = INS_MemoryDisplacement(ins);			
+			}			
+			RTN_Close(negDispRtn);
+		}	
 }
 
 /*
@@ -82,15 +85,17 @@ VOID ImageLoad(IMG img, VOID* v)
  *                              PIN_AddFiniFunction function cal
  */
 
-VOID Fini(INT32 code, VOID* v)
-{
-    // Write to a file
-    ofstream OutFile;
-    OutFile.open(KnobOutputFile.Value().c_str());
-    OutFile.setf(ios::showbase);
-    cout << disp << endl;
-    OutFile.close();
+VOID Fini(INT32 code, VOID *v)
+{  
+	// Write to a file 
+	ofstream OutFile;
+	OutFile.open(KnobOutputFile.Value().c_str());
+	OutFile.setf(ios::showbase);
+	cout<<disp<<endl;
+	OutFile.close();
 }
+
+
 
 /* ===================================================================== */
 // Utilities
@@ -102,15 +107,14 @@ VOID Fini(INT32 code, VOID* v)
 
 INT32 Usage()
 {
-    cerr << "This tool check the correctness of INS_MemoryDisplacement(INS ins) function, which return the displacement as a "
-            "sign number"
-         << endl;
+	cerr << "This tool check the correctness of INS_MemoryDisplacement(INS ins) function, which return the displacement as a sign number" << endl;
 
-    //Knobs automate the parsing and management of command line switches. A command line contains switches for Pin, the tool, and the application. The knobs parsing code understands how to separate them.
-    cerr << KNOB_BASE::StringKnobSummary() << endl; //   Print out a summary of all the knobs declare
+	//Knobs automate the parsing and management of command line switches. A command line contains switches for Pin, the tool, and the application. The knobs parsing code understands how to separate them. 
+	cerr << KNOB_BASE::StringKnobSummary() << endl; //   Print out a summary of all the knobs declare
 
-    return -1;
+	return -1;
 }
+
 
 /*
  * The main procedure of the tool.
@@ -120,21 +124,21 @@ INT32 Usage()
  *                              including pin -t <toolname> -- ...
  */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    PIN_InitSymbols();
+	PIN_InitSymbols();
+	
+	// Initialize PIN library.
+	if( PIN_Init(argc,argv) )
+	{
+		return Usage();
+	}		
+	IMG_AddInstrumentFunction(ImageLoad, 0);
 
-    // Initialize PIN library.
-    if (PIN_Init(argc, argv))
-    {
-        return Usage();
-    }
-    IMG_AddInstrumentFunction(ImageLoad, 0);
+	// Register function to be called when the application exits
+	PIN_AddFiniFunction(Fini, 0);
 
-    // Register function to be called when the application exits
-    PIN_AddFiniFunction(Fini, 0);
-
-    // Start the program, never returns
-    PIN_StartProgram();
-    return 0;
+	// Start the program, never returns
+	PIN_StartProgram(); 
+	return 0;
 }

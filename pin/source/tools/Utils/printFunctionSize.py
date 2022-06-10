@@ -35,7 +35,7 @@ def read_func_size_linux(bin, func_name):
                 return None
                 
     if (err): print("ERROR {0}".format(err.decode().rstrip().lstrip()))
-    print ("ERROR: Failed to find function \"{0}\" in {1}".format(func_name, bin))
+    print ("ERROR: Failed to find function \"{0}\" in {1}".format(func_name, path_to_bin))
     return None
 
 def read_func_size_osx(bin, func_name):
@@ -86,65 +86,8 @@ def read_func_size_osx(bin, func_name):
     return None
 
 
-def read_func_size_windows(bin, func_name):
-    # Use dumpbin /DISASM:NOBYTES
-    # This will print the disassembly of the binary with addresses.
-    # We will be searching for a label of the func_name, and then RET instruction,
-    # and calculate the function size as the number of bytes between the two addresses.
-    
-    command = "dumpbin /DISASM:NOBYTES {0}".format(bin)
-    popen_obj = subprocess.Popen(   command,
-                                    shell=True,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE
-                                )
-    (out, err) = popen_obj.communicate()
-    if (popen_obj.returncode == 0):
-        out = out.decode("utf-8", "ignore")
-        lines = out.split('\n')
-        lines1 = ""
-        for line in lines:
-            line.strip()
-            if line.startswith(("{0}:".format(func_name), "_{0}:".format(func_name))):
-                # record the line with the first instruction after the function label
-                idx = lines.index(line)+1
-                lines1 = lines[idx:]
-                break
-
-        lines2 = None
-        for line in lines1:
-            if " ret" in line:
-                # record the line with RET instruction
-                idx = lines1.index(line)+1
-                lines2 = lines1[:idx]
-                break
-
-        if (lines2):
-            # address of the first instruction after the function label
-            addr1 = lines2[0].lstrip().split(':')[0]
-            # address of RET instruction in this function
-            addr2 = lines2[-1].lstrip().split(':')[0]
-            try:
-                addr1 = int(addr1, 16)
-            except ValueError:
-                print ("ERROR: Failed to convert \"{0}\" to int".format(addr1))
-                return None
-            try:
-                addr2 = int(addr2, 16)
-            except ValueError:
-                print ("ERROR: Failed to convert \"{0}\" to int".format(addr2))
-                return None
-
-            # assume size of RET instruction is 1
-            return (addr2-addr1+1)
-            
-    if (err): print("ERROR {0}".format(err.decode().rstrip().lstrip()))
-    print ("ERROR: Failed to find function \"{0}\" in {1}".format(func_name, bin))
-    return None
-
-
 def main():
-    if (sys.platform != 'linux') and (sys.platform != 'darwin') and (sys.platform != 'win32'):
+    if (sys.platform != 'linux') and (sys.platform != 'darwin'):
         print("This script does not support {0}".format(sys.platform))
         return 1
 
@@ -163,8 +106,6 @@ def main():
         size = read_func_size_linux(path_to_bin, func_name)
     elif (sys.platform == 'darwin'):
         size = read_func_size_osx(path_to_bin, func_name)
-    elif (sys.platform == 'win32'):
-        size = read_func_size_windows(path_to_bin, func_name)
         
     if size:
         print(size)

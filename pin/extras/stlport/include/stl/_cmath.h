@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -467,7 +467,7 @@ _STLP_DEF_MATH_INLINE(tan, tan)
 _STLP_DEF_MATH_INLINE(tanh, tanh)
 _STLP_DEF_MATH_INLINE2(pow, pow)
 
-#  if defined(PIN_CRT) || !defined(_STLP_MSVC) /* || (_STLP_MSVC > 1300) */ || defined(_STLP_WCE) || !defined (_MSC_EXTENSIONS) /* && !defined(_STLP_WCE_NET) */
+#  if defined(__PIN__) || !defined(_STLP_MSVC) /* || (_STLP_MSVC > 1300) */ || defined(_STLP_WCE) || !defined (_MSC_EXTENSIONS) /* && !defined(_STLP_WCE_NET) */
 #    ifndef _STLP_NO_VENDOR_MATH_F
 #      ifndef __sun
 inline float pow(float __x, int __y) { return _STLP_CMATH_FUNC_NAMESPACE::powf(__x, __STATIC_CAST(float,__y)); }
@@ -504,7 +504,7 @@ inline long double pow(long double __x, int __y) { return (_Pow_int(__x, __y)); 
 #  endif
 #endif
 
-#if (defined (_STLP_MSVC) && !defined (_STLP_WCE) && !defined(PIN_CRT))
+#if (defined (_STLP_MSVC) && !defined (_STLP_WCE) && !defined(__PIN__))
 #  if defined (_STLP_MSVC) && (_STLP_MSVC >= 1400)
 #    pragma warning (push)
 #    pragma warning (disable : 4996) // hypot is deprecated.

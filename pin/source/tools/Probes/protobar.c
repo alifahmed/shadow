@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,6 +13,12 @@
 //
 #include <stdio.h>
 
-void Bar(int a, int b, int c, int d) { printf("Bar: %d, %d, %d, %d\n", a, b, c, d); }
+void Bar( int a, int b, int c, int d )
+{
+    printf( "Bar: %d, %d, %d, %d\n", a,b,c,d );
+}
 
-void Baz(int a) { printf("Baz: %d\n", a); }
+void Baz( int a)
+{
+    printf( "Baz: %d\n", a);
+}

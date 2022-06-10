@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,27 +18,30 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <tool_macros.h>
+using std::ofstream;
+using std::string;
+using std::ios;
+using std::hex;
 using std::cerr;
 using std::dec;
 using std::endl;
-using std::hex;
-using std::ios;
-using std::ofstream;
-using std::string;
+
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "jit_tool.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "jit_tool.out", "specify file name");
 
 ofstream TraceFile;
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This pin tool tests MT attach in JIT mode.\n"
-            "\n";
+    cerr <<
+        "This pin tool tests MT attach in JIT mode.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
@@ -53,15 +56,19 @@ VOID DetachPinFromMTApplication(unsigned int numOfThreads)
     PIN_Detach();
 }
 
-int HoldAppThread() { return 1; }
+int HoldAppThread()
+{
+	return 1;
+}
 
-UINT32 threadCounter = 0;
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+UINT32  threadCounter=0;
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
-    TraceFile << "Thread counter is updated to " << dec << (threadCounter + 1) << endl;
+    TraceFile << "Thread counter is updated to " << dec <<  (threadCounter+1) << endl;
     ++threadCounter;
     PIN_ReleaseLock(&pinLock);
+
 }
 BOOL AllThreadsNotifed(unsigned int numOfThreads)
 {
@@ -78,36 +85,38 @@ BOOL AllThreadsNotifed(unsigned int numOfThreads)
     return FALSE;
 }
 
-VOID ImageLoad(IMG img, void* v)
+
+VOID ImageLoad(IMG img, void *v)
 {
-    RTN rtn = RTN_FindByName(img, C_MANGLE("DetachPin"));
-    if (RTN_Valid(rtn))
-    {
-        TraceFile << "DetachPin instrumented " << endl;
-        RTN_Replace(rtn, AFUNPTR(DetachPinFromMTApplication));
-    }
+	RTN rtn = RTN_FindByName(img, C_MANGLE("DetachPin"));
+	if (RTN_Valid(rtn))
+	{
+	    TraceFile << "DetachPin instrumented " << endl;
+		RTN_Replace(rtn, AFUNPTR(DetachPinFromMTApplication));
+	}
+	
+	rtn = RTN_FindByName(img, C_MANGLE("ThreadHoldByPin"));
+	if (RTN_Valid(rtn))
+	{
+	    TraceFile << "ThreadHoldByPin instrumented " << endl;
+		RTN_Replace(rtn, AFUNPTR(HoldAppThread));
+	}
+	
+	rtn = RTN_FindByName(img, C_MANGLE("ThreadsReady"));
+	if (RTN_Valid(rtn))
+	{
+	    TraceFile << "ThreadsReady instrumented " << endl;
+		RTN_Replace(rtn, AFUNPTR(AllThreadsNotifed));
+	}
 
-    rtn = RTN_FindByName(img, C_MANGLE("ThreadHoldByPin"));
-    if (RTN_Valid(rtn))
-    {
-        TraceFile << "ThreadHoldByPin instrumented " << endl;
-        RTN_Replace(rtn, AFUNPTR(HoldAppThread));
-    }
-
-    rtn = RTN_FindByName(img, C_MANGLE("ThreadsReady"));
-    if (RTN_Valid(rtn))
-    {
-        TraceFile << "ThreadsReady instrumented " << endl;
-        RTN_Replace(rtn, AFUNPTR(AllThreadsNotifed));
-    }
-}
+}	
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -121,7 +130,7 @@ int main(int argc, CHAR* argv[])
     IMG_AddInstrumentFunction(ImageLoad, 0);
     PIN_AddThreadStartFunction(ThreadStart, 0);
     PIN_StartProgram();
-
+    
     return 0;
 }
 

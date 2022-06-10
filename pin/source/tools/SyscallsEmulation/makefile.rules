@@ -75,11 +75,7 @@ ifeq ($(TARGET_OS),windows)
 endif
 
 
-###### Handle exceptions here (OS/arch related) ######
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
+###### Handle exceptions here ######
 
 ifeq ($(TARGET_OS),mac)
     # See mantis 4671
@@ -179,9 +175,7 @@ syscall_tracing_compare.test: $(OBJDIR) $(TESTAPP)
 	  -- $(TESTAPP) makefile $(OBJDIR)syscall_tracing_compare_dbg.makefile.copy
 	$(CMP) makefile $(OBJDIR)syscall_tracing_compare_dbg.makefile.copy
 	$(GREP) "syscall number =" $(OBJDIR)syscall_tracing_compare_dbg.log | $(SED) 's/trace ended.*syscall/syscall/' > $(OBJDIR)syscall_numbers_dbg.log
-	$(SED) 's/\[tid:.*\]/\[\]/' $(OBJDIR)syscall_numbers_seh.log > $(OBJDIR)syscall_numbers_seh_filtered.log
-	$(SED) 's/\[tid:.*\]/\[\]/' $(OBJDIR)syscall_numbers_dbg.log > $(OBJDIR)syscall_numbers_dbg_filtered.log
-	$(CMP) $(OBJDIR)syscall_numbers_seh_filtered.log $(OBJDIR)syscall_numbers_dbg_filtered.log
+	$(CMP) $(OBJDIR)syscall_numbers_seh.log $(OBJDIR)syscall_numbers_dbg.log
 	$(RM) $(OBJDIR)syscall_tracing_compare_*.makefile.copy $(OBJDIR)syscall_tracing_compare_*.log $(OBJDIR)syscall_numbers_*.log
 
 pin_clone.test: $(OBJDIR)pin_clone_app$(EXE_SUFFIX)

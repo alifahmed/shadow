@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,17 +19,18 @@
 #include <cstdlib>
 #include "pin.H"
 
-static VOID OnImage(IMG, VOID*);
-static VOID OnSignal(THREADID, CONTEXT_CHANGE_REASON, const CONTEXT*, CONTEXT*, INT32, VOID*);
-static VOID ReplayHandled(THREADID, CONTEXT*);
-static VOID ReplayFatal(THREADID, CONTEXT*);
-static void OnExit(INT32, VOID*);
+static VOID OnImage(IMG, VOID *);
+static VOID OnSignal(THREADID, CONTEXT_CHANGE_REASON, const CONTEXT *, CONTEXT *, INT32, VOID *);
+static VOID ReplayHandled(THREADID, CONTEXT *);
+static VOID ReplayFatal(THREADID, CONTEXT *);
+static void OnExit(INT32, VOID *);
 
 static CONTEXT RecordedContext;
 static int RecordedSignal = 0;
-static int SignalCount    = 0;
+static int SignalCount = 0;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -42,7 +43,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static VOID OnImage(IMG img, VOID*)
+static VOID OnImage(IMG img, VOID *)
 {
 #if defined(TARGET_MAC)
     RTN rtn = RTN_FindByName(img, "_ReplaySignal1");
@@ -68,46 +69,46 @@ static VOID OnImage(IMG img, VOID*)
     }
 }
 
-static VOID OnSignal(THREADID, CONTEXT_CHANGE_REASON reason, const CONTEXT*, CONTEXT* to, INT32 sig, VOID*)
+static VOID OnSignal(THREADID, CONTEXT_CHANGE_REASON reason, const CONTEXT *, CONTEXT *to, INT32 sig, VOID *)
 {
-    if (reason == CONTEXT_CHANGE_REASON_SIGRETURN) return;
+    if (reason == CONTEXT_CHANGE_REASON_SIGRETURN)
+        return;
 
     SignalCount++;
     switch (SignalCount)
     {
-        case 1:
-            std::cout << "Notified of real signal, recording" << std::endl;
-            PIN_SaveContext(to, &RecordedContext);
-            RecordedSignal = sig;
-            break;
+    case 1:
+        std::cout << "Notified of real signal, recording" << std::endl;
+        PIN_SaveContext(to, &RecordedContext);
+        RecordedSignal = sig;
+        break;
 
-        case 2:
-            std::cout << "Notified of first replayed signal" << std::endl;
-            if (reason != CONTEXT_CHANGE_REASON_SIGNAL)
-            {
-                std::cout << "Wrong 'reason' in signal notification, expected "
-                          << static_cast< int >(CONTEXT_CHANGE_REASON_SIGNAL) << " (CONTEXT_CHANGE_REASON_SIGNAL), but got "
-                          << reason << std::endl;
-                std::exit(1);
-            }
-            break;
-
-        case 3:
-            std::cout << "Notified of second replayed signal" << std::endl;
-            if (reason != CONTEXT_CHANGE_REASON_FATALSIGNAL)
-            {
-                std::cout << "Wrong 'reason' in signal notification" << std::endl;
-                std::exit(1);
-            }
-            break;
-
-        default:
-            std::cout << "Notified of too many signals" << std::endl;
+    case 2:
+        std::cout << "Notified of first replayed signal" << std::endl;
+        if (reason != CONTEXT_CHANGE_REASON_SIGNAL)
+        {
+            std::cout << "Wrong 'reason' in signal notification, expected " << static_cast<int>(CONTEXT_CHANGE_REASON_SIGNAL)
+                << " (CONTEXT_CHANGE_REASON_SIGNAL), but got " << reason << std::endl;
             std::exit(1);
+        }
+        break;
+
+    case 3:
+        std::cout << "Notified of second replayed signal" << std::endl;
+        if (reason != CONTEXT_CHANGE_REASON_FATALSIGNAL)
+        {
+            std::cout << "Wrong 'reason' in signal notification" << std::endl;
+            std::exit(1);
+        }
+        break;
+
+    default:
+        std::cout << "Notified of too many signals" << std::endl;
+        std::exit(1);
     }
 }
 
-static VOID ReplayHandled(THREADID tid, CONTEXT* here)
+static VOID ReplayHandled(THREADID tid, CONTEXT *here)
 {
     if (RecordedSignal == 0)
     {
@@ -120,7 +121,7 @@ static VOID ReplayHandled(THREADID tid, CONTEXT* here)
     /* does not return */
 }
 
-static VOID ReplayFatal(THREADID tid, CONTEXT* here)
+static VOID ReplayFatal(THREADID tid, CONTEXT *here)
 {
     if (RecordedSignal == 0)
     {
@@ -133,7 +134,7 @@ static VOID ReplayFatal(THREADID tid, CONTEXT* here)
     /* does not return */
 }
 
-static VOID OnExit(INT32, VOID*)
+static VOID OnExit(INT32, VOID *)
 {
     if (SignalCount != 3)
     {

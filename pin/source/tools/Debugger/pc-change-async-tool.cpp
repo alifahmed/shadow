@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,17 +12,17 @@
 /*
  * This tool is meant to run on the application "pc-change-async.cpp".
  */
-
+ 
 #include <iostream>
 #include <cstdlib>
 #include "pin.H"
 
 BOOL FoundBreakpointFunction = FALSE;
 BOOL FoundBreakpointLocation = FALSE;
-BOOL FoundOneFunction        = FALSE;
-BOOL FoundTwoFunction        = FALSE;
-BOOL FoundOneRtn             = FALSE;
-BOOL AllowBreakpoint         = FALSE;
+BOOL FoundOneFunction = FALSE;
+BOOL FoundTwoFunction = FALSE;
+BOOL FoundOneRtn = FALSE;
+BOOL AllowBreakpoint = FALSE;
 
 ADDRINT BreakpointFunction;
 ADDRINT BreakpointLocation;
@@ -31,13 +31,15 @@ ADDRINT TwoFunction;
 
 PIN_LOCK Lock;
 
-static VOID OnImage(IMG, VOID*);
-static VOID InstrumentRtn(RTN rtn, VOID*);
-static VOID AtOne();
-static BOOL Intercept(THREADID, DEBUGGING_EVENT, CONTEXT*, VOID*);
-static VOID OnExit(INT32, VOID*);
 
-int main(int argc, char* argv[])
+static VOID OnImage(IMG, VOID *);
+static VOID InstrumentRtn(RTN rtn, VOID *);
+static VOID AtOne();
+static BOOL Intercept(THREADID, DEBUGGING_EVENT, CONTEXT *, VOID *);
+static VOID OnExit(INT32, VOID *);
+
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -52,34 +54,35 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static VOID OnImage(IMG img, VOID*)
+
+static VOID OnImage(IMG img, VOID *)
 {
-    for (SYM sym = IMG_RegsymHead(img); SYM_Valid(sym); sym = SYM_Next(sym))
+    for (SYM sym = IMG_RegsymHead(img);  SYM_Valid(sym);  sym = SYM_Next(sym))
     {
         if (SYM_Name(sym) == "Breakpoint")
         {
             FoundBreakpointFunction = TRUE;
-            BreakpointFunction      = SYM_Address(sym);
+            BreakpointFunction = SYM_Address(sym);
         }
         if (SYM_Name(sym) == "BreakpointLocation")
         {
             FoundBreakpointLocation = TRUE;
-            BreakpointLocation      = SYM_Address(sym);
+            BreakpointLocation = SYM_Address(sym);
         }
         if (SYM_Name(sym) == "One")
         {
             FoundOneFunction = TRUE;
-            OneFunction      = SYM_Address(sym);
+            OneFunction = SYM_Address(sym);
         }
         if (SYM_Name(sym) == "Two")
         {
             FoundTwoFunction = TRUE;
-            TwoFunction      = SYM_Address(sym);
+            TwoFunction = SYM_Address(sym);
         }
     }
 }
 
-static VOID InstrumentRtn(RTN rtn, VOID*)
+static VOID InstrumentRtn(RTN rtn, VOID *)
 {
     if (RTN_Name(rtn) == "One")
     {
@@ -89,6 +92,7 @@ static VOID InstrumentRtn(RTN rtn, VOID*)
         RTN_Close(rtn);
     }
 }
+
 
 static VOID AtOne()
 {
@@ -106,7 +110,8 @@ static VOID AtOne()
     AllowBreakpoint = TRUE;
 }
 
-static BOOL Intercept(THREADID tid, DEBUGGING_EVENT eventType, CONTEXT* ctxt, VOID*)
+
+static BOOL Intercept(THREADID tid, DEBUGGING_EVENT eventType, CONTEXT *ctxt, VOID *)
 {
     if (eventType == DEBUGGING_EVENT_BREAKPOINT)
     {
@@ -163,7 +168,8 @@ static BOOL Intercept(THREADID tid, DEBUGGING_EVENT eventType, CONTEXT* ctxt, VO
     std::exit(1);
 }
 
-static VOID OnExit(INT32, VOID*)
+
+static VOID OnExit(INT32, VOID *)
 {
     if (!FoundBreakpointFunction)
     {

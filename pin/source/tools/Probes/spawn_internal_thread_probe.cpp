@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,6 +25,7 @@ using std::string;
 using std::cerr;
 using std::endl;
 
+
 // UID of the internal thread. It is created in the application thread by the
 // main() tool's procedure.
 PIN_THREAD_UID intThreadUid;
@@ -32,7 +33,7 @@ PIN_THREAD_UID intThreadUid;
 /*!
  * Print out the error message and exit the process.
  */
-static void AbortProcess(const string& msg, unsigned long code)
+static void AbortProcess(const string & msg, unsigned long code)
 {
     cerr << "Test aborted: " << msg << " with code " << code << endl;
     PIN_WriteErrorMessage(msg.c_str(), 1002, PIN_ERR_FATAL, 0);
@@ -41,7 +42,10 @@ static void AbortProcess(const string& msg, unsigned long code)
 
 BOOL isInternalThreadCreated = FALSE;
 
-BOOL MyIsInternalThreadCreated() { return isInternalThreadCreated; }
+BOOL MyIsInternalThreadCreated()
+{
+    return isInternalThreadCreated;
+}
 
 BOOL isAppTerminated = FALSE;
 
@@ -49,7 +53,7 @@ BOOL isAppTerminated = FALSE;
  * Internal tool's thread. It is created in the application thread by the
  * main() tool's procedure.
  */
-VOID IntThread(VOID* arg)
+VOID IntThread(VOID *arg)
 {
     isInternalThreadCreated = TRUE;
 
@@ -90,8 +94,9 @@ VOID PrepareForFini()
     cerr << "Tool's thread finished successfully." << endl;
 }
 
-typedef void (*FUNCPTR)(int status);
-static void (*pf_exit)(int status);
+
+typedef void  (*FUNCPTR)(int status);
+static void  (*pf_exit)(int status);
 
 VOID MyExit(int arg)
 {
@@ -100,20 +105,20 @@ VOID MyExit(int arg)
     (pf_exit)(arg);
 }
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     RTN rtn;
-#if defined(TARGET_WINDOWS)
-    rtn = RTN_FindByName(img, "exit");
-#else
-    rtn = RTN_FindByName(img, "_exit");
-#endif
+    #if defined(TARGET_WINDOWS)
+        rtn = RTN_FindByName(img, "exit");
+    #else
+        rtn = RTN_FindByName(img, "_exit");
+    #endif
 
-    if (RTN_Valid(rtn))
+    if ( RTN_Valid(rtn))
     {
         if (RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION))
         {
-            pf_exit = (FUNCPTR)RTN_ReplaceProbedEx(rtn, PROBE_MODE_ALLOW_RELOCATION, AFUNPTR(MyExit));
+            pf_exit = (FUNCPTR)RTN_ReplaceProbedEx( rtn, PROBE_MODE_ALLOW_RELOCATION, AFUNPTR(MyExit));
         }
         else
         {
@@ -145,7 +150,7 @@ VOID ImageLoad(IMG img, VOID* v)
 /*!
  * The main procedure of the tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();

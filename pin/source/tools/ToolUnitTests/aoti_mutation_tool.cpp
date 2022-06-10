@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,14 +25,15 @@ static int instrumentationCount = 0;
 
 static BOOL INS_HasImmediateOperand(INS ins)
 {
-    for (unsigned int i = 0; i < INS_OperandCount(ins); i++)
-        if (INS_OperandIsImmediate(ins, i)) return TRUE;
+    for (unsigned int i=0; i< INS_OperandCount(ins); i++)
+        if (INS_OperandIsImmediate(ins, i))
+            return TRUE;
 
     return FALSE;
 }
 
 // Delete the first mov immediate
-static VOID deleteMov(RTN rtn)
+static VOID deleteMov (RTN rtn)
 {
     for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
     {
@@ -46,7 +47,7 @@ static VOID deleteMov(RTN rtn)
 }
 
 // Insert a direct branch over the first mov immediate
-static VOID insertJump(RTN rtn)
+static VOID insertJump (RTN rtn)
 {
     for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
     {
@@ -59,16 +60,21 @@ static VOID insertJump(RTN rtn)
     }
 }
 
-static ADDRINT returnValue(ADDRINT arg) { return arg; }
+static ADDRINT returnValue (ADDRINT arg)
+{
+    return arg;
+}
 
 // Insert an indirect branch over the first mov immediate
-static VOID insertIndirectJump(RTN rtn)
+static VOID insertIndirectJump (RTN rtn)
 {
     for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
     {
         if (INS_IsMov(ins) && INS_HasImmediateOperand(ins))
         {
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(returnValue), IARG_ADDRINT, INS_Address(ins) + INS_Size(ins),
+            INS_InsertCall(ins, IPOINT_BEFORE,
+                           AFUNPTR(returnValue),
+                           IARG_ADDRINT, INS_Address(ins) + INS_Size(ins),
                            IARG_RETURN_REGS, scratchReg, IARG_END);
 
             INS_InsertIndirectJump(ins, IPOINT_BEFORE, scratchReg);
@@ -78,37 +84,49 @@ static VOID insertIndirectJump(RTN rtn)
     }
 }
 
-static ADDRINT returnValueMinus4(ADDRINT arg)
+static ADDRINT returnValueMinus4 (ADDRINT arg)
 {
-    ADDRINT retVal = arg - 4;
+    ADDRINT retVal = arg-4;
 
-    printf("returnValueMinus4 returns %x\n", retVal);
+    printf ("returnValueMinus4 returns %x\n", retVal);
     return (retVal);
 }
 
-VOID AddrValueA(ADDRINT address) { printf("AddrValueA is %x\n", address); }
+VOID AddrValueA (ADDRINT address)
+{
+    printf ("AddrValueA is %x\n", address);
+}
 
-VOID AddrValueB(ADDRINT address) { printf("AddrValueB is %x\n", address); }
+VOID AddrValueB (ADDRINT address)
+{
+    printf ("AddrValueB is %x\n", address);
+}
 
 // Offset the addressing of the first "or" instruction back by 4 bytes.
-static VOID modifyAddressing(RTN rtn)
+static VOID modifyAddressing (RTN rtn)
 {
     for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
     {
         if (INS_Opcode(ins) == XED_ICLASS_OR)
         {
-            printf("Rewriting address of ins\n%x: %s\n", INS_Address(ins), INS_Disassemble(ins).c_str());
+            printf ("Rewriting address of ins\n%x: %s\n", INS_Address(ins), INS_Disassemble(ins).c_str());
 
             // pass the original memory address accessed by the app instruction (i.e. before the rewrite) to AddrValueA
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(AddrValueA), IARG_MEMORYOP_EA, 0, IARG_END);
+            INS_InsertCall(ins, IPOINT_BEFORE,
+                           AFUNPTR(AddrValueA),
+                           IARG_MEMORYOP_EA, 0, IARG_END);
 
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(returnValueMinus4), IARG_MEMORYOP_EA, 0, IARG_RETURN_REGS, scratchReg,
-                           IARG_END);
+            INS_InsertCall(ins, IPOINT_BEFORE,
+                           AFUNPTR(returnValueMinus4),
+                           IARG_MEMORYOP_EA, 0,
+                           IARG_RETURN_REGS, scratchReg, IARG_END);
 
             INS_RewriteMemoryOperand(ins, 0, scratchReg);
 
             // pass the original memory address accessed by the app instruction (i.e. before the rewrite) to AddrValueB
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(AddrValueB), IARG_MEMORYOP_EA, 0, IARG_END);
+            INS_InsertCall(ins, IPOINT_BEFORE,
+                           AFUNPTR(AddrValueB),
+                           IARG_MEMORYOP_EA, 0, IARG_END);
 
             instrumentationCount++;
             return;
@@ -116,20 +134,21 @@ static VOID modifyAddressing(RTN rtn)
     }
 }
 
-static struct
-{
-    const char* rtnName;
+static struct {
+    const char * rtnName;
     void (*instrumentFunction)(RTN);
-} functionInstrumentation[] = {{"deleteMov", deleteMov},
-                               {"insertJump", insertJump},
-                               {"insertIndirectJump", insertIndirectJump},
-                               {"modifyAddressing", modifyAddressing}};
+} functionInstrumentation[] = {
+    {"deleteMov",         deleteMov },
+    {"insertJump",        insertJump},
+    {"insertIndirectJump",insertIndirectJump},
+    {"modifyAddressing",  modifyAddressing}
+};
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    for (UINT32 i = 0; i < sizeof(functionInstrumentation) / sizeof(functionInstrumentation[0]); i++)
+    for (UINT32 i=0; i<sizeof(functionInstrumentation)/sizeof(functionInstrumentation[0]); i++)
     {
-        RTN rtn = RTN_FindByName(img, functionInstrumentation[i].rtnName);
+        RTN rtn = RTN_FindByName (img, functionInstrumentation[i].rtnName);
 
         if (RTN_Valid(rtn))
         {
@@ -141,10 +160,10 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     // Check that we ran all the tests we expected!
-    if (instrumentationCount != sizeof(functionInstrumentation) / sizeof(functionInstrumentation[0]))
+    if (instrumentationCount != sizeof(functionInstrumentation)/sizeof(functionInstrumentation[0]))
     {
         exit(1);
     }
@@ -154,7 +173,7 @@ VOID Fini(INT32 code, VOID* v)
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // prepare for image instrumentation mode
     PIN_InitSymbols();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,11 +18,10 @@
 #define THREADLIB_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-    typedef int BOOL;
+typedef int BOOL;
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -32,22 +31,22 @@ extern "C"
 
 #define MAXTHREADS 1000
 
-    typedef void* THREAD_HANDLE;
-    typedef void* THREAD_RTN(void* arg);
-    typedef THREAD_RTN* THREAD_RTN_PTR;
+typedef void * THREAD_HANDLE;
+typedef void * THREAD_RTN(void * arg);
+typedef THREAD_RTN * THREAD_RTN_PTR;
 
-    BOOL CreateOneThread(THREAD_HANDLE* pThreadHandle, THREAD_RTN_PTR threadRtn, void* arg);
+BOOL CreateOneThread(THREAD_HANDLE * pThreadHandle, THREAD_RTN_PTR threadRtn, void * arg);
 
-    BOOL JoinOneThread(THREAD_HANDLE threadHandle);
+BOOL JoinOneThread(THREAD_HANDLE threadHandle);
 
-    void ExitCurrentThread();
+void ExitCurrentThread();
 
-    void DelayCurrentThread(unsigned int millisec);
+void DelayCurrentThread(unsigned int millisec);
 
-    unsigned long GetTid();
+unsigned long GetTid();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // #ifndef THREADLIB_H
+#endif  // #ifndef THREADLIB_H

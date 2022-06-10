@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,19 +16,20 @@
 #include <iostream>
 #include <fstream>
 #include "pin.H"
-using std::cerr;
-using std::cout;
-using std::endl;
 using std::ostream;
+using std::cout;
+using std::cerr;
 using std::string;
+using std::endl;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "", "specify output file name");
 
 INT32 numThreads = 0;
 ostream* OutFile = NULL;
 
 // key for accessing TLS storage in the threads. initialized once in main()
-static TLS_KEY tls_key = INVALID_TLS_KEY;
+static  TLS_KEY tls_key = INVALID_TLS_KEY;
 
 // a running count of the instructions
 union thread_data_t
@@ -47,31 +48,34 @@ union thread_data_t
 #ifdef TARGET_WINDOWS
 extern "C" unsigned __int64 __rdtsc();
 #pragma intrinsic(__rdtsc)
-static inline UINT64 rdtsc() { return __rdtsc(); }
+static inline UINT64 rdtsc()
+{
+    return __rdtsc();
+}
 #else
 static inline UINT64 rdtsc()
 {
     UINT32 hi, lo;
-    __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
-    return (((UINT64)lo) + (((UINT64)hi) << 32));
+    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ( ((UINT64)lo) + (((UINT64)hi)<<32) );
 }
 #endif
 
-VOID SyscallEntry(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
+VOID SyscallEntry(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
 {
-    thread_data_t* tdata = static_cast< thread_data_t* >(PIN_GetThreadData(tls_key, threadIndex));
+    thread_data_t* tdata = static_cast<thread_data_t*>(PIN_GetThreadData(tls_key, threadIndex));
     ASSERTX(0 == tdata->_data._lastSyscallStart);
     tdata->_data._lastSyscallStart = rdtsc();
 }
 
-VOID SyscallExit(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
+VOID SyscallExit(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
 {
-    thread_data_t* tdata           = static_cast< thread_data_t* >(PIN_GetThreadData(tls_key, threadIndex));
+    thread_data_t* tdata = static_cast<thread_data_t*>(PIN_GetThreadData(tls_key, threadIndex));
     tdata->_data._totalAccumulated = rdtsc() - tdata->_data._lastSyscallStart;
     tdata->_data._lastSyscallStart = 0;
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     numThreads++;
     thread_data_t* tdata = new thread_data_t;
@@ -84,15 +88,14 @@ VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
 }
 
 // This function is called when the thread exits
-VOID ThreadFini(THREADID threadIndex, const CONTEXT* ctxt, INT32 code, VOID* v)
+VOID ThreadFini(THREADID threadIndex, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
-    thread_data_t* tdata = static_cast< thread_data_t* >(PIN_GetThreadData(tls_key, threadIndex));
-    *OutFile << "Thread " << decstr(threadIndex) << " spent " << tdata->_data._totalAccumulated
-             << " processor cycles in system calls" << endl;
+    thread_data_t* tdata = static_cast<thread_data_t*>(PIN_GetThreadData(tls_key, threadIndex));
+    *OutFile << "Thread " << decstr(threadIndex) << " spent " << tdata->_data._totalAccumulated << " processor cycles in system calls" << endl;
     delete tdata;
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     if (OutFile != &cout) delete OutFile;
 }
@@ -103,7 +106,8 @@ VOID Fini(INT32 code, VOID* v)
 
 INT32 Usage()
 {
-    PIN_ERROR("This tool prints a log of system calls" + KNOB_BASE::StringKnobSummary() + "\n");
+    PIN_ERROR("This tool prints a log of system calls"
+                + KNOB_BASE::StringKnobSummary() + "\n");
     return -1;
 }
 
@@ -111,7 +115,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (PIN_Init(argc, argv)) return Usage();
 

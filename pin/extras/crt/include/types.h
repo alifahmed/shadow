@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -29,23 +29,23 @@
 #ifndef ASM_ONLY
 
 #if defined(__GNUC__)
-#include <stdint.h>
+#   include <stdint.h>
 #endif
 
 /*! @ingroup OS_APIS_TYPES
  * Data type for boolean
  */
-#ifdef __cplusplus
+#ifdef  __cplusplus
 typedef bool BOOL_T;
 #else
 typedef unsigned char BOOL_T;
 #endif
 
 #if !defined(TRUE)
-#define TRUE 1
+#   define TRUE 1
 #endif
 #if !defined(FALSE)
-#define FALSE 0
+#   define FALSE 0
 #endif
 
 #if !defined(VOID)
@@ -53,14 +53,14 @@ typedef void VOID;
 #endif
 
 #if !defined(NULL) && !defined(__ICL)
-#define NULL ((void*)0)
+#    define NULL ((void*)0)
 #endif
 
-typedef char CHAR;
-typedef unsigned int UINT;
-typedef int INT;
-typedef double FLT64;
-typedef float FLT32;
+typedef char            CHAR;
+typedef unsigned int    UINT;
+typedef int             INT;
+typedef double          FLT64;
+typedef float           FLT32;
 /*! @ingroup OS_APIS_TYPES
  * Generic type for three-state logic.
  */
@@ -72,11 +72,11 @@ enum TRI
 };
 
 #if defined(_MSC_VER)
-typedef unsigned __int8 UINT8;
+typedef unsigned __int8 UINT8 ;
 typedef unsigned __int16 UINT16;
 typedef unsigned __int32 UINT32;
 typedef unsigned __int64 UINT64;
-typedef signed __int8 INT8;
+typedef signed __int8 INT8 ;
 typedef signed __int16 INT16;
 typedef signed __int32 INT32;
 typedef signed __int64 INT64;
@@ -88,16 +88,16 @@ typedef __int64 INT64;
 typedef __int32 INT32;
 
 #else
-typedef uint8_t UINT8;
+typedef uint8_t  UINT8;
 typedef uint16_t UINT16;
 typedef uint32_t UINT32;
 typedef uint64_t UINT64;
-typedef int8_t INT8;
+typedef int8_t  INT8;
 typedef int16_t INT16;
 typedef int32_t INT32;
 typedef int64_t INT64;
-#endif
-typedef UINT64 ANYADDR;
+# endif
+typedef UINT64  ANYADDR;
 
 /*
  * Unsigned integer of the same size as a pointer on the TARGET architecture.
@@ -127,7 +127,7 @@ typedef INT64 ADDRDELTA;
 #error "Unsupported target architecture"
 #endif
 
-typedef ADDRINT USIZE;
+typedef ADDRINT    USIZE;
 
 #if defined(HOST_IA32)
 typedef UINT32 VOIDINT;
@@ -151,9 +151,9 @@ typedef UINT32 REG_SUBCLASS_BITS;
  */
 
 #if defined(_MSC_VER)
-#define ALIGNMENT_OF(t) __alignof(t)
+# define ALIGNMENT_OF(t) __alignof(t)
 #else
-#define ALIGNMENT_OF(t) __alignof__(t)
+# define ALIGNMENT_OF(t) __alignof__(t)
 #endif
 
 /*! @ingroup OS_APIS_TYPES

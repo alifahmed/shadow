@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,24 +25,21 @@ using std::endl;
 
 HANDLE hEvent; // the secondary threads will wait on this event
 
+
 // main function of the secondary threads
-static DWORD WINAPI SecondaryThread(LPVOID lpParameter)
-{
+static DWORD WINAPI SecondaryThread(LPVOID lpParameter) {
     // The threads will wait in a blocking system call until released for the first time.
     // Then, the event stays signaled, so we get a busy wait. Every iteration, the threads
     // enter the kernel and exit immediately, causing them to race back in to the VM.
-    while (TRUE)
-    {
+    while (TRUE) {
         WaitForSingleObject(hEvent, INFINITE);
     }
 }
 
-int main()
-{
+int main() {
     hEvent = CreateEvent(NULL, TRUE, FALSE, NULL); // manual reset event
     cerr << "APP: Creating threads." << endl;
-    for (int i = 0; i < 10; ++i)
-    {
+    for (int i = 0; i < 10; ++i) {
         DWORD tid;
         assert(CreateThread(NULL, 0, SecondaryThread, NULL, 0, &tid));
     }

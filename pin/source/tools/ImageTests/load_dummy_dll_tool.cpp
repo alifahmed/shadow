@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,31 +18,34 @@
 #include <fstream>
 #include <stdio.h>
 
-using std::cout;
-using std::endl;
-using std::ofstream;
 using std::string;
+using std::endl;
+using std::cout;
+using std::ofstream;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "load_dummy.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "load_dummy.out", "specify file name");
 
 ofstream TraceFile;
 
 // Pin calls this function every time a new img is loaded
-VOID ImageLoad(IMG img, VOID* v) { TraceFile << IMG_Name(img).c_str() << " loaded" << endl; }
+VOID ImageLoad(IMG img, VOID *v)
+{
+    TraceFile << IMG_Name(img).c_str() << " loaded" << endl;
+}
 
 // Pin calls this function every time an img is unloaded
-VOID ImageUnload(IMG img, VOID* v)
+VOID ImageUnload(IMG img, VOID *v)
 {
-    TraceFile << IMG_Name(img).c_str() << " unloaded" << endl;
-    ;
+    TraceFile << IMG_Name(img).c_str() << " unloaded" << endl;;
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize symbol processing
     PIN_InitSymbols();
-
+    
     // Initialize pin
     if (PIN_Init(argc, argv) != 0)
     {
@@ -58,12 +61,12 @@ int main(int argc, char* argv[])
     IMG_AddUnloadFunction(ImageUnload, 0);
 
     // Start the program, never returns
-    if (PIN_IsProbeMode())
+    if (PIN_IsProbeMode()) 
     {
         PIN_StartProgramProbed();
     }
-
-    else
+    
+    else 
     {
         PIN_StartProgram();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,17 +21,17 @@
 #define LIBCLOSE "libclose1.so"
 #endif
 
-void Load(const char* name)
+void Load(const char * name)
 {
-    void* handle;
-
+    void * handle;
+    
     handle = dlopen(name, RTLD_LAZY);
     if (handle == 0)
     {
-        fprintf(stderr, "Load of %s failed\n", name);
+        fprintf(stderr,"Load of %s failed\n",name);
         exit(1);
     }
-
+    
     dlclose(handle);
 }
 

@@ -57,7 +57,7 @@ ifeq ($(TARGET_OS),linux)
     DLL_ROOTS += ifunc_complex_resolver_lib_app
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 # Linux
 ifeq ($(TARGET_OS),linux)
@@ -69,10 +69,6 @@ ifeq ($(TARGET_OS),linux)
         DLL_ROOTS := $(filter-out ifunc_complex_resolver_lib_app, $(DLL_ROOTS))
     endif
 endif
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
 
 # See mantis 4439
 # Disabled for libc 2.26

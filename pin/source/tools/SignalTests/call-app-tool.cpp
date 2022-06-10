@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,13 +19,15 @@
 #include <unistd.h>
 #include "pin.H"
 
-static VOID OnImage(IMG, VOID*);
-static VOID OnFoo(CONTEXT*, THREADID);
+static VOID OnImage(IMG, VOID *);
+static VOID OnFoo(CONTEXT *, THREADID);
+
 
 BOOL FoundBar = FALSE;
 ADDRINT BarAddr;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -36,7 +38,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static VOID OnImage(IMG img, VOID*)
+static VOID OnImage(IMG img, VOID *)
 {
 #ifdef TARGET_MAC
     RTN rtn = RTN_FindByName(img, "_PIN_TEST_FOO");
@@ -57,12 +59,12 @@ static VOID OnImage(IMG img, VOID*)
 #endif
     if (RTN_Valid(rtn))
     {
-        BarAddr  = RTN_Address(rtn);
+        BarAddr = RTN_Address(rtn);
         FoundBar = TRUE;
     }
 }
 
-static VOID OnFoo(CONTEXT* ctxt, THREADID tid)
+static VOID OnFoo(CONTEXT *ctxt, THREADID tid)
 {
     // Sending a signal to ourself here will cause the signal to remain pending in Pin until this analysis
     // routine returns.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,41 +24,41 @@
 // 1 - PIN_LOCK
 // 2 - PIN_RWMUTEX
 // 3 - CLIENT LOCK
-KNOB< UINT > KnobLockType(KNOB_MODE_WRITEONCE, "pintool", "lock_type", "0", "lock_type");
-
+KNOB<UINT> KnobLockType(KNOB_MODE_WRITEONCE, "pintool", "lock_type", "0", "lock_type");
+ 
 volatile bool isLockAcquired = false;
 
 PIN_LOCK _lock;
-
+ 
 PIN_RWMUTEX _rw_mutex;
-
+ 
 VOID Replacement_AcquireAndReleaseLock()
 {
-    switch (KnobLockType)
+    switch(KnobLockType)
     {
-        case (1):
+        case(1):
         {
             PIN_InitLock(&_lock);
             PIN_GetLock(&_lock, 1);
             break;
         }
-        case (2):
+        case(2):
         {
             PIN_RWMutexInit(&_rw_mutex);
             PIN_RWMutexWriteLock(&_rw_mutex);
             break;
         }
-        case (3):
+        case(3):
         {
             PIN_LockClient();
             break;
         }
         default:
-        {
+		{
             break;
-        }
+	    }
     }
-
+	
     // Notify the application that the lock has been acquired.
     isLockAcquired = true;
 
@@ -66,40 +66,39 @@ VOID Replacement_AcquireAndReleaseLock()
     // while t2 holds the lock.
     sleep(20);
 
-    switch (KnobLockType)
+    switch(KnobLockType)
     {
-        case (1):
-        {
+         case(1):
+         {
             PIN_ReleaseLock(&_lock);
             break;
-        }
-        case (2):
-        {
+         }
+         case(2):
+         {
             PIN_RWMutexUnlock(&_rw_mutex);
             break;
-        }
-        case (3):
-        {
+         }
+         case(3):
+         {
             PIN_UnlockClient();
             break;
-        }
-        default:
-            break;
+         }
+         default:
+             break;
     }
 }
-
+ 
 VOID Replacement_WaitThread2AcquireLock()
 {
-    while (!isLockAcquired)
-        sched_yield();
+    while(!isLockAcquired) sched_yield();
 }
-
-VOID ImageLoad(IMG img, void* v)
+ 
+VOID ImageLoad(IMG img, void *v)
 {
-    if (IMG_IsMainExecutable(img))
+    if(IMG_IsMainExecutable(img))
     {
         RTN rtn = RTN_Invalid();
-
+ 
         rtn = RTN_FindByName(img, "WaitThread2AcquireLock");
         if (RTN_Valid(rtn))
         {
@@ -114,19 +113,20 @@ VOID ImageLoad(IMG img, void* v)
     }
 }
 /* ===================================================================== */
-
-int main(int argc, CHAR* argv[])
+ 
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
-    PIN_Init(argc, argv);
-
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    PIN_Init(argc,argv);
+ 
+    IMG_AddInstrumentFunction(ImageLoad,0);
+ 
     PIN_StartProgramProbed();
-
+ 
     return 0;
 }
 
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
+ 

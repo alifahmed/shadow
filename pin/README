@@ -1,4 +1,4 @@
-Pin 3.19 Release Notes
+Pin 3.11 Release Notes
 =====================
 
 Pin is a tool for the instrumentation of programs. It supports the Linux*, macOS*
@@ -9,26 +9,9 @@ For license information, see the EULA.txt file and the licensing directory.
 
 For information on how to use Pin, read the manual in doc/html/index.html.
 
-For questions and bug reports please visit https://groups.io/g/pinheads
+For questions and bug reports please visit http://tech.groups.yahoo.com/group/pinheads/
 
 For downloading Intel(R) X86 Encoder Decoder please visit http://www.intel.com/software/xed
-
-Installation
-============
-
-To install a kit, unpack a kit and change to the directory.
-
-Linux / macOS*:
-
-   $ tar zxf pin-3.2-81205-gcc-linux.tar.gz
-   $ cd pin-3.2-81205-gcc-linux
-   Use the macOS* kit names respectively.
-
-Windows: Unzip the installation files, extracting all files in the kit.
-
-   $ cd  pin-3.2-81205-msvc-windows
-
-For better security, be advised to install on secure location.
 
 Example usage
 =============
@@ -129,11 +112,10 @@ Additional information for PinTool writers
         RTTI (Run-Time Type Information).
      Tools are obliged to use (link with) PinCRT instead of any system runtime. Tools
      must refrain from using any native system calls, and use PinCRT APIs for any
-     needed functionality.
-     Note: PinCRT implements a consistent interface across all supported operating systems, based
-     on the Bionic runtime. As such, the PinCRT API may differ from the native system API. For additional
-     information see the OS APIs user guide in extras/crt/docs/html and the PinCRT documentation at
-     http://pintool.intel.com.
+     needed functionality. Note that PinCRT APIs may differ from the native system APIs.
+     For additional information see the OS APIs user guide in extras/crt/docs/html
+     and the PinCRT documentation at
+     https://software.intel.com/sites/default/files/managed/8e/f5/PinCRT.pdf
 
    o PinCRT currently does not support the Boost C++ libraries due to lack of RTTI. 
 
@@ -165,7 +147,7 @@ Additional information for PinTool writers
      a list of the deprecated APIs and their replacements.
      Also note that such deprecated APIs may be completely removed in future
      versions of Pin without prior notice.
-    
+
 Additional information for using Pin on Windows*
 ===============================================
 
@@ -208,6 +190,7 @@ Additional information for using Pin on macOS*
 
 General issues
 
+   o Pin documentation is not yet updated with the macOS* support information.
    o Pin must be run from either a developer account, or an administrator account.
    o If you’re running Pin on a GUI session – an authentication popup might be shown when Pin starts to work.
      This pop up will appear only once for the entire session.
@@ -223,136 +206,16 @@ General issues
      - Pin will be able to do detach/re-attach
      - A debugger will be able to attach to the application process and debug Pin/tool
      - Pin ADX will be able to attach to the application process and debug it while running under Pin
-     Note: Pin is currently unable to attach to an application which already executed ptrace with PT_DENY_ATTACH request.
-   o Note that if SIP (System integrity Protection) is an enabled on the machine then Pin will not be able to run
-     system files. The only way to run system files will be to disable SIP on that machine.
-     More information about SIP and how to disable it can be found online.
-     - Some runtime functions may run indirectly system binaries which are SIP protected that Pin cannot run.
-       Example for it is system() function which calls /bin/sh which is SIP protected.
+     Note: Pin is currently unable to attach to an application which already executed ptrace with PT_DENY_ATTACH request. 
 
 
 ******************************* Recent Changes *******************************
 
-Changes added _After_ Pin 3.18 / 98329
-===========================================
-   o AMX support - Added REG_TILECONFIG. Can be used with IARG_REG_REFERENCE/IARG_REG_CONST_REFERENCE
-   o Removed REG_FPTAG_FULL from pin regs.
-     REG_ConvertX87AbridgedTagToFull() can be used instead.
-     - see Regvalue/fptag_conversion.test
-   o Removed PIN_ReplayImageUnload from Pin API, use IMG_ReplayImageUnload instead
-   o Removed PIN_ReplayImageLoad from Pin API, use IMG_ReplayImageLoad instead
-   o Added safe implementation of the following functions to Pin-CRT
-     strcat()   -> strcat_s()
-     snprintf() -> snprintf_s()
-     vsprintf() -> vsprintf_s()
-     strtok()   -> strtok_s()
-   o Added stat(), fstat() and lstat() functions to Pin-CRT. The stat family functions use to obtain information
-     about a file, and it is now supported for all operating systems.
-   o Removed Pin behavior of adding suffix for tools which are passed to Pin without extension. Users now
-     must specify tool name with extension (i.e., ".so" in Linux, ".dylib" in macOS and ".dll" on Windows).  
-
-Changes added _After_ Pin 3.17 / 98312
-===========================================
-   o Changed the behavior of INS_MemoryOperandCount to return the actual number of arch operands for vscatter/vgather
-   o Changed the behavior of INS_MemoryOperandSize to be blocked with assert for vscatter/vgather
-   o Deprecated INS_MemoryWriteSize and INS_MemoryReadSize
-   o Added new function INS_HasScatteredMemoryAccess
-   o Added new functions INS_MemoryOperandElementSize and INS_MemoryOperandElementCount
-   o Removed INS_hasKnownMemorySize from Pin API
-   o Initial support for Intel AMX (Advanced Matrix Extensions) architecture has been added.
-     Added ability to examine a tile register in a tool.
-     - Added tile registers enumeration.
-     - Added support for IARG_REG_CONST_REFERENCE and IARG_REG_REFERENCE for tile registers.
-       Note: Trying to read a tile register value when AMX is in init state (not in use) will 
-             currently generate a #UD exception
-     - No support for querying tile config at the moment.
-     - No support for getting effective address for AMX instructions with memory operand at the moment.
-     - Added INS_IsAmx() and REG_is_tmm() API.
-     - Added PIN_WIDE_REGISTER which is a container for holding tile registers.
-     - Currently not preserving tile registers when calling analysis routines.
-       Note: It's the tool developer responsibility to make sure these registers are preserved 
-             inside analysis routines unless the developer is interested in modifying them.
-     - More support for AMX will be added in the future
-
-
-Changes added _After_ Pin 3.16 / 98275
-===========================================
-   o Updated RTN_ReplaceProbed() API documentation with additional info to the user in order to
-     guarantee that the stack is properly aligned for the analysis routine on 32bit Linux.
-   o Added REG_ConvertX87FullTagToAbridged and REG_ConvertX87AbridgedTagToFull that convert from 
-     16 bit version of FPU state tag register (fptag) to 8 bit version and
-     vice versa, respectively.
-   o For Linux systems with kernel 5.3 and above, branching to vsyscall area is treated like a regular system call.
-     As a result, all system call callbacks (registered via PIN_AddSyscallEntryFunction() and PIN_AddSyscallExitFunction())
-     are to be called, accordingly. Note that INS_IsSyscall() still returns false on instruction which branches to vsyscall. 
-
-Changes added _After_ Pin 3.15 / 98253
-===========================================
-   o Pin now supports build of PinTools with only dynamic PinCRT on Windows.
-     See detailed information in the Pin CRT documentation.
-   o Pin redistribution policy was changed. All materials contained in the Pin kit may now be redistributed,
-     subject to the Pin EULA. See the licensing directory for detailed info.
-
-Changes added _After_ Pin 3.14 / 98223
-===========================================
-   o Pin now supports only 64 bits applications on macOS
-   o Fixed the issue in which Pin wasn't able to run regular applications on SIP enabled machines.
-     Note - Pin can't run system binaries protected by SIP.
-
-Changes added _After_ Pin 3.13 / 98177
-===========================================
-   o Added support for macOS 10.15.
-   o Starting from next release Pin will discontinue its support for 32 bits applications on macOS.
-   o Added safe implementation of the following functions to Pin-CRT - 
-     strncat() -> strncat_s()
-     memcpy()  -> memcpy_s()
-     strcpy()  -> strcpy_s()
-     wcslen()  -> wcsnlen_s()
-     strncpy() -> strncpy_s()
-   o Added new API IMG_DynamicRawData that returns the raw data
-     associated with a dynamic image.
-   o Added INS_XedExactMapFromPinReg API that convert a Pin REG type
-     to an Intel(R) X86 Encoder Decoder xed_reg_enum_t register.
-   o INS_XedExactMapToPinReg(unsigned int r) is deprecated - use
-     INS_XedExactMapToPinReg(xed_reg_enum_t xed_reg) instead.
-   o Updated documentation about Pin support on SIP enabled macOS system inside "Additional information 
-     for using Pin on macOS*" section (in this README file) and inside the User Guide.
-   o Enable Pin to use files with network paths, like \\<network>\\<path> (Windows)
-
-Changes added _After_ Pin 3.12 / 98018
-===========================================
-   o PinCRT now supports -faligned-new compiler flag (for GCC 7.X and newer) for dynamically allocated objects that 
-     require alignment that is greater than the default of the system.
-   o Changed KNOB::AddValue API behavior:
-     - AddValue() now return true when it successfully changes the knob value, false otherwise.
-     - SetByUser() returns true if the user set the knob from command line, false otherwise.
-     - A knob of type KNOB_MODE_OVERWRITE that was set from command line cannot be altered from within the tool. 
-       KNOB::AddValue() will return false if the tool tries to do it.
-     Note: If the knob wasn't set from command line the tool can still set it as many times as it wants.
-   o Starting from Linux kernel ~5.3.1 vsyscall area legacy code page (64 bit - ffffffffff600000-ffffffffff601000) will 
-     be execute only. This means that the tool cannot instrument this page.
-     Pin will maintain the control flow correctly.
-   o Removed support for PinADX for Visual Studio 2010.
-   o Implement JIT Profiling new API (ittnotify).
-     Pin processes the dynamically generated ELF images created by the application.
-     The JIT Profiling API headers are no longer provided by Pin, and need to be obtained
-     from the open source project https://github.com/intel/ittapi .
-
-Changes added _After_ Pin 3.11 / 98004
-===========================================
-   o Enabled JitProfiling feature on Windows.
-   
 Changes added _After_ Pin 3.10 / 97984
 ===========================================
    o Restored the PIN_PRODUCT_VERSION_MAJOR, PIN_PRODUCT_VERSION_MINOR and PIN_BUILD_NUMBER constants
      and added a new constant - PIN_COMMIT_HASH. See the Misc section in the user guide for details.
-   o The following APIs and types have been removed:
-     RTN_CodeRangesProbed
-     RIN_AddProbesInsertedFunction
-     PROBES_INSERTED_CALLBACK
-     PROBES_INSERTED_CALLBACKVAL
-     PROBES_INSERTED_CALLBACKFUNS
-     
+
 Changes added _After_ Pin 3.9 / 97939
 ===========================================
    o Added a new API to retrieve dynamic functions Method Id attribute: RTN_DynamicMethodId.
@@ -457,9 +320,9 @@ Changes added _After_ Pin 3.7 / 97619
       o Compilation error when building a PinTool with gcc version 7.0 or newer.
       o Running child process natively if Pin fails on follow child due to permissions.
       o Issue with Pin warning messages not being displayed.
-      o MyPinTool Visual Studio solution is broken (https://groups.io/g/pinheads/message/12634,
-        https://groups.io/g/pinheads/message/12763)
-      o Application extended state gets corrupted after Pin_Detach (https://groups.io/g/pinheads/message/12593)
+      o MyPinTool Visual Studio solution is broken (https://groups.yahoo.com/neo/groups/pinheads/conversations/messages/12865,
+        https://groups.yahoo.com/neo/groups/pinheads/conversations/messages/12997)
+      o Application extended state gets corrupted after Pin_Detach (https://groups.yahoo.com/neo/groups/pinheads/conversations/messages/12833)
         (Fixed on macOS)
       o Potential key duplication with PIN_CreateThreadDataKey
       o Potential wrong result from PIN_CheckWriteAccess
@@ -970,6 +833,6 @@ of Sun Microsystems, Inc. in the U.S. and other countries.
 
 *Other names and brands may be claimed as the property of others.
 
-Copyright 2004-2020 Intel Corporation.
+Copyright 2004-2019 Intel Corporation.
 
 Intel Corporation, 2200 Mission College Blvd., Santa Clara, CA 95052-8119, USA.

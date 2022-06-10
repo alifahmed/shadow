@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,9 +13,16 @@
 #include <stdio.h>
 #include <windows.h>
 
-__declspec(dllexport) void SetSystemError(DWORD errorCode) { SetLastError(errorCode); }
+__declspec(dllexport) void  SetSystemError(DWORD errorCode)
+{
+    SetLastError(errorCode);
+}
 
-__declspec(dllexport) DWORD GetSystemError() { return GetLastError(); }
+__declspec(dllexport) DWORD GetSystemError()
+{
+    return GetLastError();
+}
+
 
 int main()
 {
@@ -28,16 +35,16 @@ int main()
     useTheStack[0] = 'a';
 
     SetSystemError(errorCode);
-    if (GetSystemError() != errorCode)
+    if(GetSystemError() != errorCode)
     {
         fprintf(stderr, "Error: Bad value returned from GetSystemError\n");
         fflush(stderr);
         exit(1);
-    }
-    else
+    } else
     {
         fprintf(stderr, "Success - GetSystemError\n");
     }
 
     return 0;
 }
+

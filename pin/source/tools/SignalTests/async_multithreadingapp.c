@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -40,7 +40,8 @@
 #include <sys/wait.h>
 #include <errno.h>
 
-#define COUNT 10
+
+#define COUNT   10
 #define USLEEP_TIME 25000
 
 #define DEADLOCK_TIMEOUT 10
@@ -51,66 +52,64 @@ volatile unsigned SigCount = 0;
 
 static void Handle(int);
 static void TimeoutHandler(int);
-static void* DoSysCallTillSignalsDone(void*);
+static void *DoSysCallTillSignalsDone(void *);
 void DoToolAnalysis();
 void sig_hand(int);
+
 
 int main()
 {
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGCHLD);
-    if (sigprocmask(SIG_BLOCK, &sigset, NULL) < 0)
-    {
+    if (sigprocmask(SIG_BLOCK, &sigset, NULL) < 0) {
         fprintf(stderr, "Unable to mask SIGCHLD");
         return 1;
     }
     signal(SIGCHLD, sig_hand);
-
+    
     int fd[2];
-    if (pipe(fd) == -1)
-    {
+    if (pipe(fd) == -1){
         fprintf(stderr, "Unable to open pipe ");
         return 1;
     }
     pid_t child = fork();
-    if (child)
+    if (child) 
     {
         // Parent proc
-        close(fd[1]); // Close unused write end
+        close(fd[1]);          // Close unused write end 
 
         struct timespec timeout;
-        timeout.tv_sec  = 1200; //20 mins
+        timeout.tv_sec = 1200; //20 mins
         timeout.tv_nsec = 0;
         char buf[2];
-
-        read(fd[0], &buf, 1); // wait until child activate timer
+        
+        read(fd[0], &buf, 1); // wait until child activate timer 
         close(fd[0]);
-
+        
         // This process waits enough for the child process to complete
-        if (sigtimedwait(&sigset, NULL, &timeout) < 0)
+        if (sigtimedwait(&sigset, NULL, &timeout) < 0) 
         {
-            if (errno == EAGAIN)
+            if (errno == EAGAIN) 
             {
                 fprintf(stderr, "Timeout, killing child\n");
-                kill(child, SIGKILL);
+                kill (child, SIGKILL);
                 return 1;
             }
-            else
+            else 
             {
                 fprintf(stderr, "Error in sigtimedwait");
                 return 1;
             }
         }
         int status;
-
+        
         // In case child process is still running the test fails (assuming deadlock occurred)
-        if (waitpid(child, &status, 0) < 0)
-        {
+        if (waitpid(child, &status, 0) < 0) {
             fprintf(stderr, "Error on waitpid");
             return 1;
         }
-        if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+        if(WIFEXITED(status) && WEXITSTATUS(status)==0)
         {
             fprintf(stderr, "Parent - terminate OK\n");
             return 0;
@@ -120,13 +119,13 @@ int main()
     else
     {
         // inside child
-        close(fd[0]); // Close unused read end
+        close(fd[0]);          // Close unused read end 
         struct sigaction sigact;
         struct itimerval itval;
         pthread_t tid;
 
         sigact.sa_handler = Handle;
-        sigact.sa_flags   = 0;
+        sigact.sa_flags = 0;
         sigemptyset(&sigact.sa_mask);
 
         if (sigaction(SIGVTALRM, &sigact, 0) == -1)
@@ -137,7 +136,7 @@ int main()
 
         struct sigaction sigact_timeout;
         sigact_timeout.sa_handler = TimeoutHandler;
-        sigact_timeout.sa_flags   = 0;
+        sigact_timeout.sa_flags = 0;
         sigfillset(&sigact_timeout.sa_mask);
 
         if (sigaction(SIGALRM, &sigact_timeout, 0) == -1)
@@ -145,6 +144,7 @@ int main()
             fprintf(stderr, "Child - Unable to set up timeout handler\n");
             return 1;
         }
+
 
         // Create a new thread that calls a system call in a loop
         if (pthread_create(&tid, 0, DoSysCallTillSignalsDone, 0) != 0)
@@ -154,18 +154,18 @@ int main()
         }
 
         // Set timer to create an async signals
-        itval.it_interval.tv_sec  = 0;
+        itval.it_interval.tv_sec = 0;
         itval.it_interval.tv_usec = USLEEP_TIME;
-        itval.it_value.tv_sec     = 0;
-        itval.it_value.tv_usec    = USLEEP_TIME;
+        itval.it_value.tv_sec = 0;
+        itval.it_value.tv_usec = USLEEP_TIME;
         if (setitimer(ITIMER_VIRTUAL, &itval, 0) == -1)
         {
             fprintf(stderr, "Child - Unable to set up timer\n");
             return 1;
         }
-
+       
         close(fd[1]); // send EOF to signal parent that timer is on
-
+       
         alarm(DEADLOCK_TIMEOUT);
 
         /*
@@ -177,7 +177,7 @@ int main()
             doToolAnalysis();
         }
 
-        itval.it_value.tv_sec  = 0;
+        itval.it_value.tv_sec = 0;
         itval.it_value.tv_usec = 0;
         if (setitimer(ITIMER_VIRTUAL, &itval, 0) == -1)
         {
@@ -202,13 +202,11 @@ static void Handle(int sig)
 
 static void TimeoutHandler(int a)
 {
-    printf(
-        "Deadlock timeout occured, it seems that PIN couldn't get the app and tool out of a deadlock situation. SigCount: %u\n",
-        SigCount);
+    printf("Deadlock timeout occured, it seems that PIN couldn't get the app and tool out of a deadlock situation. SigCount: %u\n", SigCount);
     exit(1);
 }
 
-static void* DoSysCallTillSignalsDone(void* v)
+static void *DoSysCallTillSignalsDone(void *v)
 {
     /*
      * Call a system call in the loop .

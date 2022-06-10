@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,26 +17,26 @@
 #include <utility>
 #include <cstdlib>
 #include "pin.H"
+using std::ostream;
 using std::cerr;
+using std::string;
 using std::endl;
 using std::ofstream;
-using std::ostream;
-using std::string;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,        "pintool",
+    "o", "", "specify output file name");
 
-const UINT32 FXSAVE_AREA_SIZE = 512;
-static ostream* out           = NULL;
+static ostream* out = NULL;
 
-#define DELETE_OUT \
-    if (&cerr != out) delete out
+#define DELETE_OUT if (&cerr != out) delete out
 
 /* =====================================================================
  * Called upon bad command line argument
  * ===================================================================== */
 INT32 Usage()
 {
-    cerr << "This tool performs IARG_MEMORYXX_SIZE check on fxsave and fxrstor" << endl;
+    cerr <<
+        "This tool performs IARG_MEMORYXX_SIZE check on fxsave and fxrstor" << endl;
 
     cerr << KNOB_BASE::StringKnobSummary() << endl;
 
@@ -46,7 +46,7 @@ INT32 Usage()
 /* =====================================================================
  * Called upon program finish
  * ===================================================================== */
-VOID Fini(int, VOID* v)
+VOID Fini(int, VOID * v)
 {
     *out << "Fini" << endl;
     DELETE_OUT;
@@ -57,7 +57,7 @@ VOID Fini(int, VOID* v)
  * ===================================================================== */
 VOID MemOpAnalysisFXSAVE(const UINT32 size)
 {
-    if (FXSAVE_AREA_SIZE != size)
+    if (FPSTATE_SIZE_FXSAVE != size)
     {
         *out << "mismatch of fxsave size. exiting..." << endl;
         DELETE_OUT;
@@ -71,7 +71,7 @@ VOID MemOpAnalysisFXSAVE(const UINT32 size)
  * ===================================================================== */
 VOID MemOpAnalysisFXRSTOR(const UINT32 size)
 {
-    if (FXSAVE_AREA_SIZE != size)
+    if (FPSTATE_SIZE_FXSAVE != size)
     {
         *out << "mismatch of fxsave size. exiting..." << endl;
         DELETE_OUT;
@@ -83,20 +83,24 @@ VOID MemOpAnalysisFXRSTOR(const UINT32 size)
 /* =====================================================================
  * Iterate over a trace and instrument its memory related instructions
  * ===================================================================== */
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
     for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
     {
         for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
         {
             OPCODE oc = INS_Opcode(ins);
-            if (INS_IsMemoryWrite(ins) && (XED_ICLASS_FXSAVE == oc || XED_ICLASS_FXSAVE64 == oc))
+            if (INS_IsMemoryWrite(ins) &&
+                (XED_ICLASS_FXSAVE == oc || XED_ICLASS_FXSAVE64 == oc))
             {
-                INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(MemOpAnalysisFXSAVE), IARG_MEMORYWRITE_SIZE, IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(MemOpAnalysisFXSAVE),
+                               IARG_MEMORYWRITE_SIZE, IARG_END);
             }
-            if (INS_IsMemoryRead(ins) && (XED_ICLASS_FXRSTOR == oc || XED_ICLASS_FXRSTOR64 == oc))
+            if (INS_IsMemoryRead(ins) &&
+                (XED_ICLASS_FXRSTOR == oc || XED_ICLASS_FXRSTOR64 == oc))
             {
-                INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(MemOpAnalysisFXRSTOR), IARG_MEMORYREAD_SIZE, IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(MemOpAnalysisFXRSTOR),
+                               IARG_MEMORYREAD_SIZE, IARG_END);
             }
         }
     }
@@ -105,7 +109,7 @@ VOID Trace(TRACE trace, VOID* v)
 /* =====================================================================
  * Entry point for the tool
  * ===================================================================== */
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     if (PIN_Init(argc, argv))
     {
@@ -114,7 +118,7 @@ int main(int argc, CHAR* argv[])
 
     // Initialize the output stream.
     const string fileName = KnobOutputFile.Value();
-    out                   = (fileName.empty()) ? &cerr : new ofstream(fileName.c_str());
+    out = (fileName.empty()) ? &cerr : new ofstream(fileName.c_str());
     if (NULL == out || out->fail())
     {
         cerr << "TOOL ERROR: Unable to open " << fileName << " for writing." << endl;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,13 +12,14 @@
 #include <iostream>
 #include <fstream>
 #include "pin.H"
-using std::cerr;
-using std::cout;
-using std::endl;
 using std::ostream;
+using std::cout;
+using std::cerr;
 using std::string;
+using std::endl;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "", "specify output file name");
 
 INT32 numThreads = 0;
 ostream* OutFile = NULL;
@@ -26,7 +27,7 @@ ostream* OutFile = NULL;
 // Force each thread's data to be in its own data cache line so that
 // multiple threads do not contend for the same data cache line.
 // This avoids the false sharing problem.
-#define PADSIZE 56 // 64 byte line size: 64-8
+#define PADSIZE 56  // 64 byte line size: 64-8
 
 // a running count of the instructions
 class thread_data_t
@@ -38,16 +39,16 @@ class thread_data_t
 };
 
 // key for accessing TLS storage in the threads. initialized once in main()
-static TLS_KEY tls_key = INVALID_TLS_KEY;
+static  TLS_KEY tls_key = INVALID_TLS_KEY;
 
 // This function is called before every block
 VOID PIN_FAST_ANALYSIS_CALL docount(UINT32 c, THREADID threadid)
 {
-    thread_data_t* tdata = static_cast< thread_data_t* >(PIN_GetThreadData(tls_key, threadid));
+    thread_data_t* tdata = static_cast<thread_data_t*>(PIN_GetThreadData(tls_key, threadid));
     tdata->_count += c;
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     numThreads++;
     thread_data_t* tdata = new thread_data_t;
@@ -58,30 +59,34 @@ VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
     }
 }
 
+
 // Pin calls this function every time a new basic block is encountered.
 // It inserts a call to docount.
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
     // Visit every basic block  in the trace
     for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
     {
         // Insert a call to docount for every bbl, passing the number of instructions.
 
-        BBL_InsertCall(bbl, IPOINT_ANYWHERE, (AFUNPTR)docount, IARG_FAST_ANALYSIS_CALL, IARG_UINT32, BBL_NumIns(bbl),
-                       IARG_THREAD_ID, IARG_END);
+        BBL_InsertCall(bbl, IPOINT_ANYWHERE, (AFUNPTR)docount, IARG_FAST_ANALYSIS_CALL,
+                       IARG_UINT32, BBL_NumIns(bbl), IARG_THREAD_ID, IARG_END);
     }
 }
 
 // This function is called when the thread exits
-VOID ThreadFini(THREADID threadIndex, const CONTEXT* ctxt, INT32 code, VOID* v)
+VOID ThreadFini(THREADID threadIndex, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
-    thread_data_t* tdata = static_cast< thread_data_t* >(PIN_GetThreadData(tls_key, threadIndex));
+    thread_data_t* tdata = static_cast<thread_data_t*>(PIN_GetThreadData(tls_key, threadIndex));
     *OutFile << "Count[" << decstr(threadIndex) << "] = " << tdata->_count << endl;
     delete tdata;
 }
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v) { *OutFile << "Total number of threads = " << numThreads << endl; }
+VOID Fini(INT32 code, VOID *v)
+{
+    *OutFile << "Total number of threads = " << numThreads << endl;
+}
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
@@ -98,11 +103,12 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     PIN_InitSymbols();
-    if (PIN_Init(argc, argv)) return Usage();
+    if (PIN_Init(argc, argv))
+        return Usage();
 
     OutFile = KnobOutputFile.Value().empty() ? &cout : new std::ofstream(KnobOutputFile.Value().c_str());
 

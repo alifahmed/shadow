@@ -373,6 +373,8 @@ def ApplyPintoolsToSource(pinhome, pintools, includes, defines, libs):
         files.append({'library': pinhome + '/External/pindwarf/$(TARGETOS)/$(TARGETCPU)/libpindwarf.a', 'selector': sel.TargetLinux})
 
         files.append({'library': pinhome + '/build/Source/pin/pin-$TARGETOS-$TARGETCPU/pinvm.lib', 'selector': sel.TargetWindows})
+        files.append({'library': pinhome + '/External/Ntdll/Lib_ia32_windows/ntdll-32.lib', 'selector': sel.TargetWindowsIA32})
+        files.append({'library': pinhome + '/External/Ntdll/Lib_intel64_windows/ntdll-64.lib', 'selector': sel.TargetWindowsIntel64})
 
         opts.append({'option': 'linker_flags=-Wl,--version-script=$PATH(' + pinhome + '/PinTools/Include/pintool.ver)',
             'selector': sel.TargetLinux + ' or ' + sel.TargetBsd})
@@ -431,6 +433,8 @@ def ApplyPintoolsToKit(pinhome, pintools, includes, defines, libs):
         files.append({'library': pinhome + '/External/pindwarf/$(TARGETOS)/$(TARGETCPU)/libpindwarf.a', 'selector': sel.TargetLinux})
 
         files.append({'library': pinhome + '/$TARGETCPU/lib/pinvm.lib', 'selector': sel.TargetWindows})
+        files.append({'library': pinhome + '/$TARGETCPU/lib-ext/ntdll-32.lib', 'selector': sel.TargetWindowsIA32})
+        files.append({'library': pinhome + '/$TARGETCPU/lib-ext/ntdll-64.lib', 'selector': sel.TargetWindowsIntel64})
 
         # On Unix targets, limit the symbols that are exported from the tool's shared library.
         #

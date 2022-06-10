@@ -56,11 +56,15 @@ ifeq ($(TARGET_OS),linux)
     endif
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
+# These tests fail - fix and remove the following:
+# Mantis 3159 - alignchk
+ifeq ($(TARGET_OS),windows)
+    ifeq ($(TARGET),intel64)
+        TEST_TOOL_ROOTS := $(filter-out alignchk, $(TEST_TOOL_ROOTS))
+    endif
+endif
 
 ###### Define the sanity subset ######
 

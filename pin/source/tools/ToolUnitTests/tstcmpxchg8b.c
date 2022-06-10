@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #if defined(__GNUC__)
-#include <stdlib.h>
+# include <stdlib.h>
 #endif
 
 #ifdef TARGET_WINDOWS
@@ -21,9 +21,9 @@
 #define ASMNAME(name) asm(name)
 #endif
 
-extern int cmpxchg8_base(int* buff) ASMNAME("cmpxchg8_base");
-extern int cmpxchg8_plus8(int* buff) ASMNAME("cmpxchg8_plus8");
-extern int cmpxchg8_esp(int* buff) ASMNAME("cmpxchg8_esp");
+extern int cmpxchg8_base(int *buff) ASMNAME("cmpxchg8_base");
+extern int cmpxchg8_plus8(int *buff) ASMNAME("cmpxchg8_plus8");
+extern int cmpxchg8_esp(int *buff) ASMNAME("cmpxchg8_esp");
 
 int main()
 {

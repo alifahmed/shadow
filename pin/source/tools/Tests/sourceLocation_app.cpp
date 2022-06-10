@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -30,39 +30,32 @@
 using std::cerr;
 using std::endl;
 
-void* DLopen(const char* filename)
-{
+void* DLopen(const char* filename) {
     void* handle = dlopen(filename, RTLD_LAZY);
-    if (handle == NULL)
-    {
+    if (handle == NULL) {
         cerr << "APP ERROR: failed to open " << filename << " - " << dlerror() << endl;
         exit(-1);
     }
     return handle;
 }
 
-void* DLsym(void* handle, const char* symname)
-{
+void* DLsym(void* handle, const char* symname) {
     dlerror(); // clear errors
-    void* sym   = dlsym(handle, symname);
+    void* sym = dlsym(handle, symname);
     char* error = dlerror();
-    if (error != NULL)
-    {
+    if (error != NULL) {
         cerr << "APP ERROR: failed to get address for symbol " << symname << " - " << error << endl;
         exit(-1);
     }
     return sym;
 }
 
-void DLcloseBoth(void* first, void* second)
-{
-    if (dlclose(first) != 0)
-    {
+void DLcloseBoth(void* first, void* second) {
+    if (dlclose(first) != 0) {
         cerr << "APP ERROR: failed to close image at " << first << " - " << dlerror() << endl;
         exit(-1);
     }
-    if (dlclose(second) != 0)
-    {
+    if (dlclose(second) != 0) {
         cerr << "APP ERROR: failed to close image at " << second << " - " << dlerror() << endl;
         exit(-1);
     }
@@ -73,20 +66,18 @@ void DLcloseBoth(void* first, void* second)
  * [1] image1
  * [2] image2
  */
-int main(int argc, char* argv[])
-{
-    void* handle1 = DLopen(argv[1]);          // open image1
-    void* handle2 = DLopen(argv[2]);          // open image2
-    void* dummy1  = DLsym(handle1, "dummy1"); // get address from image1
-    void* dummy2  = DLsym(handle2, "dummy2"); // get address from image2
+int main(int argc, char* argv[]) {
+    
+    void* handle1 = DLopen(argv[1]);            // open image1
+    void* handle2 = DLopen(argv[2]);            // open image2
+    void* dummy1 = DLsym(handle1, "dummy1");    // get address from image1
+    void* dummy2 = DLsym(handle2, "dummy2");    // get address from image2
 
     // unload images - higher addressed image first
-    if (dummy1 > dummy2)
-    {
+    if (dummy1 > dummy2) {
         DLcloseBoth(handle1, handle2);
     }
-    else
-    {
+    else {
         DLcloseBoth(handle2, handle1);
     }
     return 0;

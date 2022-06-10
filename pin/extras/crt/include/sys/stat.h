@@ -39,96 +39,97 @@
 __BEGIN_DECLS
 
 #if defined(__aarch64__)
-#define __STAT64_BODY           \
-  unsigned long st_dev;         \
-  unsigned long st_ino;         \
-  unsigned int st_mode;         \
-  unsigned int st_nlink;        \
-  uid_t st_uid;                 \
-  gid_t st_gid;                 \
-  unsigned long st_rdev;        \
-  unsigned long __pad1;         \
-  long st_size;                 \
-  int st_blksize;               \
-  int __pad2;                   \
-  long st_blocks;               \
-  long st_atime;                \
-  unsigned long st_atime_nsec;  \
-  long st_mtime;                \
-  unsigned long st_mtime_nsec;  \
-  long st_ctime;                \
-  unsigned long st_ctime_nsec;  \
-  unsigned int __unused4;       \
-  unsigned int __unused5;       \
+#define __STAT64_BODY \
+  unsigned long st_dev; \
+  unsigned long st_ino; \
+  unsigned int st_mode; \
+  unsigned int st_nlink; \
+  uid_t st_uid; \
+  gid_t st_gid; \
+  unsigned long st_rdev; \
+  unsigned long __pad1; \
+  long st_size; \
+  int st_blksize; \
+  int __pad2; \
+  long st_blocks; \
+  long st_atime; \
+  unsigned long st_atime_nsec; \
+  long st_mtime; \
+  unsigned long st_mtime_nsec; \
+  long st_ctime; \
+  unsigned long st_ctime_nsec; \
+  unsigned int __unused4; \
+  unsigned int __unused5; \
 
 #elif defined(__mips__)
-#define __STAT64_BODY           \
-  unsigned int st_dev;          \
-  unsigned int __pad0[3];       \
-  unsigned long long st_ino;    \
-  unsigned int st_mode;         \
-  unsigned int st_nlink;        \
-  uid_t st_uid;                 \
-  gid_t st_gid;                 \
-  unsigned int st_rdev;         \
-  unsigned int __pad1[3];       \
-  long long st_size;            \
-  unsigned int st_atime;        \
-  unsigned int st_atime_nsec;   \
-  unsigned int st_mtime;        \
-  unsigned int st_mtime_nsec;   \
-  unsigned int st_ctime;        \
-  unsigned int st_ctime_nsec;   \
-  unsigned int st_blksize;      \
-  unsigned int __pad2;          \
+#define __STAT64_BODY \
+  unsigned int st_dev; \
+  unsigned int __pad0[3]; \
+  unsigned long long st_ino; \
+  unsigned int st_mode; \
+  unsigned int st_nlink; \
+  uid_t st_uid; \
+  gid_t st_gid; \
+  unsigned int st_rdev; \
+  unsigned int __pad1[3]; \
+  long long st_size; \
+  unsigned int st_atime; \
+  unsigned int st_atime_nsec; \
+  unsigned int st_mtime; \
+  unsigned int st_mtime_nsec; \
+  unsigned int st_ctime; \
+  unsigned int st_ctime_nsec; \
+  unsigned int st_blksize; \
+  unsigned int __pad2; \
   unsigned long long st_blocks; \
 
-#elif defined(TARGET_IA32E)
-#define __STAT64_BODY           \
-  unsigned long st_dev;         \
-  unsigned long st_ino;         \
-  unsigned long st_nlink;       \
-  unsigned int st_mode;         \
-  uid_t st_uid;                 \
-  gid_t st_gid;                 \
-  unsigned int __pad0;          \
-  unsigned long st_rdev;        \
-  long st_size;                 \
-  long st_blksize;              \
-  long st_blocks;               \
-  unsigned long st_atime;       \
-  unsigned long st_atime_nsec;  \
-  unsigned long st_mtime;       \
-  unsigned long st_mtime_nsec;  \
-  unsigned long st_ctime;       \
-  unsigned long st_ctime_nsec;  \
-  long __pad3[3];               \
+#elif defined(__x86_64__)
+#define __STAT64_BODY \
+  unsigned long st_dev; \
+  unsigned long st_ino; \
+  unsigned long st_nlink; \
+  unsigned int st_mode; \
+  uid_t st_uid; \
+  gid_t st_gid; \
+  unsigned int __pad0; \
+  unsigned long st_rdev; \
+  long st_size; \
+  long st_blksize; \
+  long st_blocks; \
+  unsigned long st_atime; \
+  unsigned long st_atime_nsec; \
+  unsigned long st_mtime; \
+  unsigned long st_mtime_nsec; \
+  unsigned long st_ctime; \
+  unsigned long st_ctime_nsec; \
+  long __pad3[3]; \
 
 #else
-#define __STAT64_BODY           \
-  unsigned long long st_dev;    \
-  unsigned char __pad0[4];      \
-  unsigned long __st_ino;       \
-  unsigned int st_mode;         \
-  unsigned int st_nlink;        \
-  uid_t st_uid;                 \
-  gid_t st_gid;                 \
-  unsigned long long st_rdev;   \
-  unsigned char __pad3[4];      \
-  long long st_size;            \
-  unsigned long st_blksize;     \
+#define __STAT64_BODY \
+  unsigned long long st_dev; \
+  unsigned char __pad0[4]; \
+  unsigned long __st_ino; \
+  unsigned int st_mode; \
+  unsigned int st_nlink; \
+  uid_t st_uid; \
+  gid_t st_gid; \
+  unsigned long long st_rdev; \
+  unsigned char __pad3[4]; \
+  long long st_size; \
+  unsigned long st_blksize; \
   unsigned long long st_blocks; \
-  unsigned long st_atime;       \
-  unsigned long st_atime_nsec;  \
-  unsigned long st_mtime;       \
-  unsigned long st_mtime_nsec;  \
-  unsigned long st_ctime;       \
-  unsigned long st_ctime_nsec;  \
-  unsigned long long st_ino;    \
+  unsigned long st_atime; \
+  unsigned long st_atime_nsec; \
+  unsigned long st_mtime; \
+  unsigned long st_mtime_nsec; \
+  unsigned long st_ctime; \
+  unsigned long st_ctime_nsec; \
+  unsigned long long st_ino; \
 
 #endif
 
-struct stat   { __STAT64_BODY };
+struct stat { __STAT64_BODY };
+struct stat64 { __STAT64_BODY };
 
 #undef __STAT64_BODY
 
@@ -143,47 +144,18 @@ struct stat   { __STAT64_BODY };
 #define DEFFILEMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) /* 0666 */
 #endif
 
-
 extern int chmod(const char*, mode_t);
 extern int fchmod(int, mode_t);
 extern int mkdir(const char*, mode_t);
 
-/*
- * stat() retrieve information about the file pointed to by pathname
- * and return the information in the buffer pointed to by statbuf.
- * No permissions are required on the file itself, but execute (search) permission
- * is required on all of the directories in pathname that lead to the file.
- * This version is similar to stat64() and supports large file.
- *
- * Note: the following members have hard-coded values in Windows -
- * st_uid (0), st_gid (0), st_ino (0), st_ctime (0) and st_nlink (1).
- * st_dev and st_rdev represents in Windows the drive number of the disk containing the file.
- */
-extern int stat(const char *pathname, struct stat *statbuf);
-
-/*
- * fstat() retrieve information about the file specified by the file descriptor fd
- * and return the information in the buffer pointed to by statbuf.
- * No permissions are required on the file itself, but execute (search) permission
- * is required on all of the directories in pathname that lead to the file.
- * This version is similar to fstat64() and supports large file.
- *
- * Note: the following members have hard-coded values in Windows -
- * st_uid (0), st_gid (0), st_ino (0), st_ctime (0) and st_nlink (1).
- *
- * Note: if st_dev represents a device then st_dev will hold the device file-descriptor, otherwise - 0.
- *
- */
-extern int fstat(int fd, struct stat *statbuf);
-
-/*
- * lstat() is identical to stat(), except that if pathname is a symbolic link, then
- * it returns information about the link itself, not the file that the link refers to.
- * This version is similar to lstat64() and supports large file
- */
-extern int lstat(const char *pathname, struct stat *statbuf);
-
+extern int fstat(int, struct stat*);
+extern int fstat64(int, struct stat64*);
 extern int fstatat(int, const char*, struct stat*, int);
+extern int fstatat64(int, const char*, struct stat64*, int);
+extern int lstat(const char*, struct stat*);
+extern int lstat64(const char*, struct stat64*);
+extern int stat(const char*, struct stat*);
+extern int stat64(const char*, struct stat64*);
 
 extern int mknod(const char*, mode_t, dev_t);
 extern mode_t umask(mode_t);

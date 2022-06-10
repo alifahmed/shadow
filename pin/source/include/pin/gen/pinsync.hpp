@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -21,14 +21,13 @@
 #include <map>
 #include <string>
 
-namespace PINVM
-{
+namespace PINVM {
 /*!
  * Interface for generic lock
  */
 class ILOCK /*<INTERFACE>*/
 {
-  public:
+public:
     /*!
      * Destructor
      */
@@ -57,7 +56,7 @@ class ILOCK /*<INTERFACE>*/
  */
 class PINSYNC_LOCK /*<UTILITY>*/
 {
-  public:
+public:
     /*!
      * The initial sate of the lock is "not locked".
      */
@@ -68,11 +67,7 @@ class PINSYNC_LOCK /*<UTILITY>*/
      *
      * @return  Always returns TRUE.
      */
-    bool Initialize()
-    {
-        OS_MutexInit(&_impl);
-        return true;
-    }
+    bool Initialize() { OS_MutexInit(&_impl); return true; }
 
     /*!
      * Destroy a mutex
@@ -100,9 +95,9 @@ class PINSYNC_LOCK /*<UTILITY>*/
      *
      * @return  Returns TRUE if the lock is acquired, FALSE if not.
      */
-    bool TryLock() { return OS_MutexTryLock(&_impl); }
+    bool TryLock() {return OS_MutexTryLock(&_impl); }
 
-  private:
+private:
     OS_MUTEX_TYPE _impl;
 };
 
@@ -111,17 +106,13 @@ class PINSYNC_LOCK /*<UTILITY>*/
  */
 typedef struct
 {
-  public:
+public:
     /*!
      * It is not necessary to call this method.  It is provided only for symmetry.
      *
      * @return  Always returns TRUE.
      */
-    bool Initialize()
-    {
-        OS_MutexInit(&_impl);
-        return true;
-    }
+    bool Initialize() { OS_MutexInit(&_impl); return true; }
 
     /*!
      * Destroy a mutex
@@ -149,7 +140,7 @@ typedef struct
      *
      * @return  Returns TRUE if the lock is acquired, FALSE if not.
      */
-    bool TryLock() { return OS_MutexTryLock(&_impl); }
+    bool TryLock() {return OS_MutexTryLock(&_impl); }
 
     OS_MUTEX_TYPE _impl;
 } PINSYNC_POD_LOCK;
@@ -164,7 +155,7 @@ typedef PINSYNC_POD_LOCK PINSYNC_SAFEPOD_LOCK;
  */
 class PINSYNC_RWLOCK /*<UTILITY>*/
 {
-  public:
+public:
     /*!
      * The new lock is initially not acquired
      */
@@ -180,11 +171,7 @@ class PINSYNC_RWLOCK /*<UTILITY>*/
      *
      * @return  Always returns TRUE.
      */
-    bool Initialize()
-    {
-        OS_RWLockInitialize(&_impl);
-        return true;
-    }
+    bool Initialize() { OS_RWLockInitialize(&_impl); return true;}
 
     /*!
      * Destroy a read-writer lock
@@ -195,11 +182,7 @@ class PINSYNC_RWLOCK /*<UTILITY>*/
      * Set the state of the lock to "not locked", even if the calling thread
      * does not own the lock.
      */
-    void Reset()
-    {
-        Destroy();
-        Initialize();
-    }
+    void Reset() { Destroy(); Initialize(); }
 
     /*!
      * Acquire the lock for "read" access.  Multiple "reader" threads may
@@ -235,7 +218,7 @@ class PINSYNC_RWLOCK /*<UTILITY>*/
      */
     bool TryWriteLock() { return OS_RWLockTryAcquireWrite(&_impl); }
 
-  private:
+private:
     OS_APIS_RW_LOCK_T _impl;
 };
 
@@ -244,17 +227,13 @@ class PINSYNC_RWLOCK /*<UTILITY>*/
  */
 typedef struct
 {
-  public:
+public:
     /*!
      * It is not necessary to call this method.  It is provided only for symmetry.
      *
      * @return  Always returns TRUE.
      */
-    bool Initialize()
-    {
-        OS_RWLockInitialize(&_impl);
-        return true;
-    }
+    bool Initialize() { OS_RWLockInitialize(&_impl); return true;}
 
     /*!
      * Destroy a read-writer lock
@@ -304,26 +283,28 @@ typedef struct
     OS_APIS_RW_LOCK_T _impl;
 } PINSYNC_POD_RWLOCK;
 
+
 #ifdef CC_FAST_LOOKUP
 /*!
  * Recursive Read-writer lock.
  */
-template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
+template <int MaxThreads>
+class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
 {
-  public:
+public:
     /*!
      * The new lock is initially not acquired
      */
     PINSYNC_RECURSIVE_RWLOCK()
     {
-        _writer_tid            = INVALID_NATIVE_TID;
+        _writer_tid = INVALID_NATIVE_TID;
         _write_recursion_level = 0;
         _read_recursion_level.ClearNonAtomic();
         _impl.Initialize();
         _mutex.Initialize();
         _snapshots.clear();
         _pausedInAtLeastOneThread = false;
-        _dependent_lock           = NULL;
+        _dependent_lock = NULL;
     }
 
     virtual ~PINSYNC_RECURSIVE_RWLOCK()
@@ -332,11 +313,14 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
         _mutex.Destroy();
     }
 
-    /*!
+     /*!
      * Define a hierarchy between this lock and another lock.
      * This lock must not be acquired if the dependent lock is already locked.
      */
-    void SetDependentLock(PINSYNC_RECURSIVE_RWLOCK* dependent_lock) { _dependent_lock = dependent_lock; }
+    void SetDependentLock(PINSYNC_RECURSIVE_RWLOCK* dependent_lock)
+    {
+        _dependent_lock = dependent_lock;
+    }
 
     /*!
      * Set the state of the lock to "not locked", even if the calling thread
@@ -344,14 +328,14 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
       */
     void Reset()
     {
-        _writer_tid            = INVALID_NATIVE_TID;
+        _writer_tid = INVALID_NATIVE_TID;
         _write_recursion_level = 0;
         _read_recursion_level.ClearNonAtomic();
         _impl.Reset();
         _mutex.Reset();
         _snapshots.clear();
         _pausedInAtLeastOneThread = false;
-        _dependent_lock           = NULL;
+        _dependent_lock = NULL;
     }
 
     /*!
@@ -362,10 +346,11 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
     virtual void ReadLock(NATIVE_TID tid)
     {
         int recursion_level;
-        ASSERTXSLOW(IsPaused(tid) == false);
-        ASSERTXSLOW(IsLegalLockChain(tid));
-        ASSERTX(MayAcquireReadLock(tid, &recursion_level));
-        if (recursion_level == 0) _impl.ReadLock();
+        ASSERTXSLOW( IsPaused(tid) == false );
+        ASSERTXSLOW( IsLegalLockChain(tid) );
+        ASSERTX( MayAcquireReadLock(tid, &recursion_level) );
+        if (recursion_level == 0)
+            _impl.ReadLock();
         RegisterReadLock(tid);
     }
 
@@ -379,10 +364,11 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
     virtual void WriteLock(NATIVE_TID tid)
     {
         int recursion_level;
-        ASSERTXSLOW(IsPaused(tid) == false);
-        ASSERTXSLOW(IsLegalLockChain(tid));
-        ASSERTX(MayAcquireWriteLock(tid, &recursion_level));
-        if (recursion_level == 0) _impl.WriteLock();
+        ASSERTXSLOW( IsPaused(tid) == false );
+        ASSERTXSLOW( IsLegalLockChain(tid) );
+        ASSERTX( MayAcquireWriteLock(tid, &recursion_level) );
+        if (recursion_level == 0)
+            _impl.WriteLock();
         RegisterWriteLock(tid);
     }
 
@@ -391,8 +377,8 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     virtual void Unlock(NATIVE_TID tid)
     {
-        ASSERTXSLOW(IsPaused(tid) == false);
-        ASSERTXSLOW(IsLegalLockChain(tid));
+        ASSERTXSLOW( IsPaused(tid) == false );
+        ASSERTXSLOW( IsLegalLockChain(tid) );
         Unlock(tid, true);
     }
 
@@ -401,8 +387,8 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     virtual void UnlockIfLocked(NATIVE_TID tid)
     {
-        ASSERTXSLOW(IsPaused(tid) == false);
-        ASSERTXSLOW(IsLegalLockChain(tid));
+        ASSERTXSLOW( IsPaused(tid) == false );
+        ASSERTXSLOW( IsLegalLockChain(tid) );
         Unlock(tid, false);
     }
 
@@ -414,12 +400,12 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     virtual void PauseLock(NATIVE_TID tid)
     {
-        ASSERTXSLOW(IsPaused(tid) == false);
-        ASSERTXSLOW(IsLegalLockChain(tid));
+        ASSERTXSLOW( IsPaused(tid) == false );
+        ASSERTXSLOW( IsLegalLockChain(tid) );
         int* rd_recursion_ptr = _read_recursion_level.Find(tid);
-        int rd_recursion      = (NULL == rd_recursion_ptr) ? 0 : *rd_recursion_ptr;
-        int wr_recursion      = (_writer_tid == tid) ? _write_recursion_level : 0;
-        if ((rd_recursion == 0) && (wr_recursion == 0))
+        int rd_recursion = (NULL==rd_recursion_ptr) ? 0 : *rd_recursion_ptr;
+        int wr_recursion = (_writer_tid == tid) ? _write_recursion_level : 0;
+        if ((rd_recursion==0) && (wr_recursion==0))
         {
             return;
         }
@@ -431,11 +417,13 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
         if (wr_recursion >= 1)
         {
             _write_recursion_level = 1;
-            if (rd_recursion_ptr != NULL) *rd_recursion_ptr = 0;
+            if (rd_recursion_ptr != NULL)
+                *rd_recursion_ptr = 0;
         }
         else
         {
-            if (rd_recursion_ptr != NULL) *rd_recursion_ptr = 1;
+            if (rd_recursion_ptr != NULL)
+                *rd_recursion_ptr = 1;
         }
         _mutex.Unlock();
         Unlock(tid);
@@ -448,7 +436,7 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     virtual void ResumeLock(NATIVE_TID tid)
     {
-        ASSERTXSLOW(IsLegalLockChain(tid));
+        ASSERTXSLOW( IsLegalLockChain(tid) );
         _mutex.Lock();
         typename SNAPSHOTS_MAP::iterator it_snp = _snapshots.find(tid);
         if (it_snp == _snapshots.end())
@@ -459,7 +447,7 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
         int rd_recursion = (it_snp->second)->read_recursion_level;
         int wr_recursion = (it_snp->second)->write_recursion_level;
         _snapshots.erase(it_snp);
-        _pausedInAtLeastOneThread = _snapshots.size() > 0;
+        _pausedInAtLeastOneThread = _snapshots.size()>0;
         _mutex.Unlock();
 
         if (wr_recursion)
@@ -473,10 +461,10 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
             rd_recursion--;
         }
 
-        for (int i = 0; i < wr_recursion; i++)
+        for (int i=0; i < wr_recursion; i++)
             RegisterWriteLock(tid);
 
-        for (int i = 0; i < rd_recursion; i++)
+        for (int i=0; i < rd_recursion; i++)
             RegisterReadLock(tid);
     }
 
@@ -489,11 +477,12 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
     virtual bool TryReadLock(NATIVE_TID tid)
     {
         int recursion_level;
-        ASSERTXSLOW(IsPaused(tid) == false);
-        ASSERTXSLOW(IsLegalLockChain(tid));
-        ASSERTX(MayAcquireReadLock(tid, &recursion_level));
+        ASSERTXSLOW( IsPaused(tid) == false );
+        ASSERTXSLOW( IsLegalLockChain(tid) );
+        ASSERTX( MayAcquireReadLock(tid, &recursion_level) );
         if (recursion_level == 0)
-            if (!_impl.TryReadLock()) return false;
+            if (! _impl.TryReadLock())
+                return false;
 
         RegisterReadLock(tid);
         return true;
@@ -507,12 +496,13 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     virtual bool TryWriteLock(NATIVE_TID tid)
     {
-        ASSERTXSLOW(IsPaused(tid) == false);
-        ASSERTXSLOW(IsLegalLockChain(tid));
+        ASSERTXSLOW( IsPaused(tid) == false );
+        ASSERTXSLOW( IsLegalLockChain(tid) );
         int recursion_level;
-        ASSERTX(MayAcquireWriteLock(tid, &recursion_level));
+        ASSERTX( MayAcquireWriteLock(tid, &recursion_level) );
         if (recursion_level == 0)
-            if (!_impl.TryWriteLock()) return false;
+            if (! _impl.TryWriteLock())
+                return false;
 
         RegisterWriteLock(tid);
         return true;
@@ -536,22 +526,25 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
         }
     }
 
-  private:
+private:
+
     void Unlock(NATIVE_TID tid, bool assert_is_locked)
     {
-        int recursion_level = 0;
+        int recursion_level=0;
         // Unregister Read locks first because only Write can be at the top of the lock chain
         bool lock_unregistered = UnregisterReadLock(tid, &recursion_level);
-        if (lock_unregistered)
+        if (lock_unregistered )
         {
-            if (recursion_level == 0) recursion_level = GetWriteRecursionLevel(tid);
+            if (recursion_level==0)
+                recursion_level = GetWriteRecursionLevel(tid);
         }
         else
         {
             lock_unregistered = UnregisterWriteLock(tid, &recursion_level);
         }
-        ASSERTX((assert_is_locked == false) || lock_unregistered);
-        if (lock_unregistered && (recursion_level == 0)) _impl.Unlock();
+        ASSERTX( (assert_is_locked==false) || lock_unregistered );
+        if (lock_unregistered && (recursion_level==0))
+            _impl.Unlock();
     }
 
     /*!
@@ -570,8 +563,9 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
     bool MayAcquireReadLock(NATIVE_TID tid, int* recursionLevel)
     {
         int* recursion_level_ptr = _read_recursion_level.Find(tid);
-        *recursionLevel          = (NULL == recursion_level_ptr) ? 0 : *recursion_level_ptr;
-        if (tid == _writer_tid) *recursionLevel += _write_recursion_level;
+        *recursionLevel = (NULL == recursion_level_ptr) ? 0 : *recursion_level_ptr;
+        if (tid == _writer_tid)
+            *recursionLevel += _write_recursion_level;
         return true;
     }
 
@@ -587,12 +581,14 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     bool MayAcquireWriteLock(NATIVE_TID tid, int* recursionLevel)
     {
-        *recursionLevel          = 0;
+        *recursionLevel = 0;
         int* recursion_level_ptr = _read_recursion_level.Find(tid);
-        if ((tid == _writer_tid) || (NULL == recursion_level_ptr) || (*recursion_level_ptr == 0))
+        if ((tid == _writer_tid) || (NULL == recursion_level_ptr) || (*recursion_level_ptr==0))
         {
-            if (tid == _writer_tid) *recursionLevel += _write_recursion_level;
-            if (NULL != recursion_level_ptr) *recursionLevel += *recursion_level_ptr;
+            if (tid == _writer_tid)
+                *recursionLevel += _write_recursion_level;
+            if (NULL != recursion_level_ptr)
+                *recursionLevel += *recursion_level_ptr;
             return true;
         }
         return false;
@@ -603,7 +599,7 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     void RegisterReadLock(NATIVE_TID tid)
     {
-        int* recursion_level_ptr = _read_recursion_level.Find(tid);
+        int *recursion_level_ptr = _read_recursion_level.Find(tid);
         if (NULL != recursion_level_ptr)
             ATOMIC::OPS::Increment(recursion_level_ptr, 1);
         else
@@ -620,13 +616,14 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     bool UnregisterReadLock(NATIVE_TID tid, int* recursionLevel)
     {
-        *recursionLevel          = 0;
-        int* recursion_level_ptr = _read_recursion_level.Find(tid);
+        *recursionLevel = 0;
+        int *recursion_level_ptr = _read_recursion_level.Find(tid);
         if (NULL != recursion_level_ptr)
         {
             *recursionLevel = ATOMIC::OPS::Increment(recursion_level_ptr, -1) - 1;
             ASSERTX(*recursionLevel >= 0);
-            if (*recursionLevel == 0) _read_recursion_level.Remove(tid);
+            if (*recursionLevel == 0)
+                _read_recursion_level.Remove(tid);
             return true;
         }
         return false;
@@ -672,7 +669,10 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      *
      * @return  Return 0 if tid has no active write lock, otherwise returns the write lock recursion level.
      */
-    int GetWriteRecursionLevel(NATIVE_TID tid) { return (_writer_tid == tid) ? _write_recursion_level : 0; }
+    int GetWriteRecursionLevel(NATIVE_TID tid)
+    {
+        return (_writer_tid == tid) ? _write_recursion_level : 0;
+    }
 
     /*!
      * Checks whether the lock for tid is in paused state.
@@ -681,11 +681,12 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     bool IsPaused(NATIVE_TID tid)
     {
-        if (!_pausedInAtLeastOneThread) return false;
+        if (! _pausedInAtLeastOneThread)
+            return false;
 
         _mutex.Lock();
         typename SNAPSHOTS_MAP::const_iterator it = _snapshots.find(tid);
-        bool is_paused                            = (it != _snapshots.end());
+        bool is_paused = (it != _snapshots.end());
         _mutex.Unlock();
         return is_paused;
     }
@@ -702,16 +703,19 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
      */
     bool IsLegalLockChain(NATIVE_TID tid)
     {
-        if (_dependent_lock == NULL) return true;
-        if (IsLockedByThread(tid)) return true;
-        if (_dependent_lock->IsLockedByThread(tid) == false) return true;
+        if (_dependent_lock==NULL)
+            return true;
+        if (IsLockedByThread(tid))
+            return true;
+        if (_dependent_lock->IsLockedByThread(tid)==false)
+            return true;
         return false;
     }
 
-    PINSYNC_POD_RWLOCK _impl;
+    PINSYNC_POD_RWLOCK  _impl;
     NATIVE_TID _writer_tid;
     int _write_recursion_level;
-    typedef ATOMIC::FIXED_MULTIMAP< NATIVE_TID, int, INVALID_NATIVE_TID, NATIVE_TID_CURRENT, MaxThreads > READERS_MAP;
+    typedef ATOMIC::FIXED_MULTIMAP<NATIVE_TID, int, INVALID_NATIVE_TID, NATIVE_TID_CURRENT, MaxThreads> READERS_MAP;
     READERS_MAP _read_recursion_level;
     PINSYNC_POD_LOCK _mutex;
     struct Snapshot
@@ -720,12 +724,14 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
         int write_recursion_level;
         Snapshot(int rd_rec, int wr_rec) : read_recursion_level(rd_rec), write_recursion_level(wr_rec) {}
     };
-    typedef std::map< NATIVE_TID, Snapshot* > SNAPSHOTS_MAP;
+    typedef std::map<NATIVE_TID, Snapshot*> SNAPSHOTS_MAP;
     SNAPSHOTS_MAP _snapshots;
     bool _pausedInAtLeastOneThread;
     PINSYNC_RECURSIVE_RWLOCK* _dependent_lock;
-};
+ };
 #endif
+
+
 
 /*!
  * Binary semaphore.
@@ -733,15 +739,11 @@ template< int MaxThreads > class PINSYNC_RECURSIVE_RWLOCK /*<UTILITY>*/
  */
 class PINSYNC_SEMAPHORE /*<UTILITY>*/
 {
-  public:
+public:
     /*!
      * The initial state of the semaphore is "clear".
      */
-    PINSYNC_SEMAPHORE()
-    {
-        OS_MutexInit(&_impl);
-        Clear();
-    }
+    PINSYNC_SEMAPHORE() { OS_MutexInit(&_impl); Clear(); }
 
     /*!
      * Destructor
@@ -753,17 +755,12 @@ class PINSYNC_SEMAPHORE /*<UTILITY>*/
      *
      * @return  Always returns TRUE.
      */
-    bool Initialize()
-    {
-        OS_MutexInit(&_impl);
-        Clear();
-        return true;
-    }
+    bool Initialize() { OS_MutexInit(&_impl); Clear(); return true; }
 
     /*!
      * Destroy a semaphore
      */
-    void Destroy() { OS_MutexDestroy(&_impl); }
+    void Destroy() {OS_MutexDestroy(&_impl); }
 
     /*!
      * Change the semaphore to "set" state and tell any waiters in Wait() or
@@ -771,20 +768,12 @@ class PINSYNC_SEMAPHORE /*<UTILITY>*/
      * Wait() or TimedWait() only if the semaphore is still "set" when they
      * actually do resume running.
      */
-    void Set()
-    {
-        _isSet = true;
-        OS_MutexUnlock(&_impl);
-    }
+    void Set() { _isSet = true; OS_MutexUnlock(&_impl); }
 
     /*!
      * Change the semaphore to "clear" state.
      */
-    void Clear()
-    {
-        _isSet = false;
-        OS_MutexTryLock(&_impl);
-    }
+    void Clear() { _isSet = false; OS_MutexTryLock(&_impl); }
 
     /*!
      * Check whether the semaphore's state is "set".  This method always returns
@@ -798,11 +787,7 @@ class PINSYNC_SEMAPHORE /*<UTILITY>*/
      * Block the calling thread until the semaphore's state is "set".  This
      * method returns immediately if the state is already "set".
      */
-    void Wait()
-    {
-        OS_MutexLock(&_impl);
-        OS_MutexUnlock(&_impl);
-    }
+    void Wait() { OS_MutexLock(&_impl); OS_MutexUnlock(&_impl); }
 
     /*!
      * Block the calling thread until the semaphore's state is "set" or until
@@ -821,7 +806,7 @@ class PINSYNC_SEMAPHORE /*<UTILITY>*/
         return res;
     }
 
-  private:
+private:
     OS_MUTEX_TYPE _impl;
 
     /*!
@@ -840,27 +825,18 @@ class PINSYNC_SEMAPHORE /*<UTILITY>*/
  */
 typedef struct
 {
-  public:
+public:
     /*!
      * Initialize a semaphore
      *
      * @return  Always returns TRUE.
      */
-    bool Initialize()
-    {
-        OS_MutexInit(&_impl);
-        Clear();
-        return true;
-    }
+    bool Initialize() { OS_MutexInit(&_impl); Clear(); return true; }
 
     /*!
      * Destroy a semaphore
      */
-    void Destroy()
-    {
-        OS_MutexDestroy(&_impl);
-        Clear();
-    }
+    void Destroy() {OS_MutexDestroy(&_impl); Clear(); }
 
     /*!
      * Change the semaphore to "set" state and tell any waiters in Wait() or
@@ -887,11 +863,7 @@ typedef struct
      * Block the calling thread until the semaphore's state is "set".  This
      * method returns immediately if the state is already "set".
      */
-    void Wait()
-    {
-        OS_MutexLock(&_impl);
-        OS_MutexUnlock(&_impl);
-    }
+    void Wait() { OS_MutexLock(&_impl); OS_MutexUnlock(&_impl); }
 
     /*!
      * Block the calling thread until the semaphore's state is "set" or until
@@ -913,6 +885,6 @@ typedef struct
     OS_MUTEX_TYPE _impl;
 } PINSYNC_POD_SEMAPHORE;
 
-} // namespace PINVM
+} // namespace
 
 #endif // file guard

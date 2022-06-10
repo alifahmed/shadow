@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,7 +19,8 @@
 #include <signal.h>
 using std::string;
 
-int main(int argc, char** argv)
+
+int main(int argc, char **argv)
 {
     printf("parent:%u-%u\n", getppid(), getpid());
 
@@ -29,22 +30,22 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
-    string commandLine(argv[1]);
-    char pidArg[10];
-    sprintf(pidArg, " %d", getpid());
-    commandLine += pidArg;
-
+	string commandLine(argv[1]);
+	char pidArg[10];
+	sprintf(pidArg, " %d", getpid());
+	commandLine += pidArg;
+	
     int res = system(commandLine.c_str());
-    if (res != 0)
+    if (res !=0)
     {
         fprintf(stderr, "command %s failed\n", commandLine.c_str());
         exit(-1);
     }
-
+	
     if (execv(argv[1], NULL) == -1)
     {
-        fprintf(stderr, "%d:%s\n", errno, strerror(errno));
+	    fprintf(stderr, "%d:%s\n", errno, strerror(errno));
     }
-
+        
     return 0;
 }

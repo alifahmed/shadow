@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -18,12 +18,6 @@ END_LEGAL */
 #if !defined(XED_OPERAND_CONVERT_ENUM_H)
 # define XED_OPERAND_CONVERT_ENUM_H
 #include "xed-common-hdrs.h"
-#define XED_OPERAND_CONVERT_INVALID_DEFINED 1
-#define XED_OPERAND_CONVERT_ZEROSTR_DEFINED 1
-#define XED_OPERAND_CONVERT_SAESTR_DEFINED 1
-#define XED_OPERAND_CONVERT_ROUNDC_DEFINED 1
-#define XED_OPERAND_CONVERT_BCASTSTR_DEFINED 1
-#define XED_OPERAND_CONVERT_LAST_DEFINED 1
 typedef enum {
   XED_OPERAND_CONVERT_INVALID,
   XED_OPERAND_CONVERT_ZEROSTR,

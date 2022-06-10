@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,8 +17,8 @@
 #include <iostream>
 
 using std::cerr;
-using std::cout;
 using std::endl;
+using std::cout;
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
@@ -26,8 +26,9 @@ using std::endl;
 
 INT32 Usage()
 {
-    cerr << "This tool just check that attach to a process succeeds.\n"
-            "\n";
+    cerr <<
+        "This tool just check that attach to a process succeeds.\n"
+        "\n";
 
     cerr << KNOB_BASE::StringKnobSummary();
 
@@ -36,27 +37,31 @@ INT32 Usage()
     return -1;
 }
 
+
 /* ===================================================================== */
 
-VOID Fini(INT32 code, VOID* v) { cout << "Tool success!" << endl; }
+VOID Fini(INT32 code, VOID *v)
+{
+    cout <<  "Tool success!"  << endl;    
+}
 
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
-    cout << "Tool start" << endl;
+    cout <<  "Tool start"  << endl;        
 
     PIN_AddFiniFunction(Fini, 0);
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
 

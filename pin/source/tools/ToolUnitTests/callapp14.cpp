@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,57 +24,71 @@
 #include <iostream>
 #include <stdlib.h>
 #include <fstream>
-using std::cerr;
-using std::endl;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
 
-static KNOB< string > KnobOutput(KNOB_MODE_WRITEONCE, "pintool", "o", "callapp14.out", "output file");
+static KNOB<string> KnobOutput(KNOB_MODE_WRITEONCE, "pintool", "o", "callapp14.out", "output file");
 
-ADDRINT functionCalledByFunctionToBeReplacedAddr               = 0;
-ADDRINT functionToBeReplacedAddr                               = 0;
-BOOL replacementFunctionCalled                                 = FALSE;
-BOOL replacementDone                                           = FALSE;
-BOOL functionToBeReplacedInstrumented                          = FALSE;
-BOOL functionToBeReplacedInstrumentationCalled                 = FALSE;
-BOOL functionCalledByFunctionToBeReplacedInstrumented          = FALSE;
+ADDRINT functionCalledByFunctionToBeReplacedAddr = 0;
+ADDRINT functionToBeReplacedAddr = 0;
+BOOL replacementFunctionCalled = FALSE;
+BOOL replacementDone = FALSE;
+BOOL functionToBeReplacedInstrumented = FALSE;
+BOOL functionToBeReplacedInstrumentationCalled = FALSE;
+BOOL functionCalledByFunctionToBeReplacedInstrumented = FALSE;
 BOOL functionCalledByFunctionToBeReplacedInstrumentationCalled = FALSE;
 static ofstream out;
 
+
+
 /* ===================================================================== */
 
-int MyReplacementFunction(CONTEXT* ctxt, AFUNPTR origPtr, int one, int two)
+int MyReplacementFunction( CONTEXT * ctxt,  AFUNPTR origPtr, int one, int two )
 {
-    out << " MyReplacementFunction: PIN_CallApplicationFunction Replaced Function at address " << hexstr(ADDRINT(origPtr))
-        << endl;
+    out << " MyReplacementFunction: PIN_CallApplicationFunction Replaced Function at address " << hexstr(ADDRINT(origPtr)) << endl;
 
     int res;
 
     replacementFunctionCalled = TRUE;
-    PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT, origPtr, NULL, PIN_PARG(int), &res, PIN_PARG(int), one,
-                                PIN_PARG(int), two, PIN_PARG_END());
+    PIN_CallApplicationFunction( ctxt, PIN_ThreadId(),
+                                 CALLINGSTD_DEFAULT, origPtr, NULL,
+                                 PIN_PARG(int), &res,
+                                 PIN_PARG(int), one,
+                                 PIN_PARG(int), two,
+                                 PIN_PARG_END() );
 
     out << " MyReplacementFunction: Returned from Replaced Function res = " << res << endl;
 
     return res;
 }
 
-/* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
-{
-    PROTO proto =
-        PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "FunctionToBeReplaced", PIN_PARG(int), PIN_PARG(int), PIN_PARG_END());
 
+/* ===================================================================== */
+VOID ImageLoad(IMG img, VOID *v)
+{
+    PROTO proto = PROTO_Allocate( PIN_PARG(int), CALLINGSTD_DEFAULT,
+                                      "FunctionToBeReplaced", PIN_PARG(int), PIN_PARG(int),
+                                      PIN_PARG_END() );
+    
     RTN rtn = RTN_FindByName(img, "FunctionToBeReplaced");
     if (RTN_Valid(rtn))
     {
-        out << " RTN_ReplaceSignature " << RTN_Name(rtn) << " in " << IMG_Name(img) << " at address " << hexstr(RTN_Address(rtn))
-            << " with MyReplacementFunction" << endl;
+        out << " RTN_ReplaceSignature " << RTN_Name(rtn) << " in " << IMG_Name(img) << " at address "
+             << hexstr(RTN_Address(rtn)) << " with MyReplacementFunction" << endl;
 
         functionToBeReplacedAddr = RTN_Address(rtn);
+        
+        RTN_ReplaceSignature(
+                rtn, AFUNPTR(MyReplacementFunction),
+                IARG_PROTOTYPE, proto,
+                IARG_CONTEXT,
+                IARG_ORIG_FUNCPTR,
+                IARG_UINT32, 1,
+                IARG_UINT32, 2,
+                IARG_END);
 
-        RTN_ReplaceSignature(rtn, AFUNPTR(MyReplacementFunction), IARG_PROTOTYPE, proto, IARG_CONTEXT, IARG_ORIG_FUNCPTR,
-                             IARG_UINT32, 1, IARG_UINT32, 2, IARG_END);
 
         RTN rtn2 = RTN_FindByName(img, "FunctionCalledByFunctionToBeReplaced");
         if (RTN_Valid(rtn2))
@@ -83,15 +97,23 @@ VOID ImageLoad(IMG img, VOID* v)
         }
 
         replacementDone = TRUE;
-    }
-    PROTO_Free(proto);
+    }    
+    PROTO_Free( proto );
 }
 
-VOID FunctionToBeReplacedAnalysisFunc() { functionToBeReplacedInstrumentationCalled = TRUE; }
 
-VOID FunctionCalledByFunctionToBeReplacedAnalysisFunc() { functionCalledByFunctionToBeReplacedInstrumentationCalled = TRUE; }
+VOID FunctionToBeReplacedAnalysisFunc()
+{
+    functionToBeReplacedInstrumentationCalled = TRUE;
+}
 
-VOID Instruction(INS ins, VOID* v)
+
+VOID FunctionCalledByFunctionToBeReplacedAnalysisFunc()
+{
+    functionCalledByFunctionToBeReplacedInstrumentationCalled = TRUE;
+}
+
+VOID Instruction(INS ins, VOID *v)
 {
     if (INS_Address(ins) == functionToBeReplacedAddr)
     {
@@ -105,7 +127,7 @@ VOID Instruction(INS ins, VOID* v)
     }
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     BOOL hadError = FALSE;
     if (!replacementDone)
@@ -136,7 +158,7 @@ VOID Fini(INT32 code, VOID* v)
     if (hadError)
     {
         out << "***Error hadError" << endl;
-        exit(-1);
+        exit (-1);
     }
 }
 
@@ -152,7 +174,7 @@ INT32 Usage()
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR* argv[])
+int main(INT32 argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
@@ -165,7 +187,7 @@ int main(INT32 argc, CHAR* argv[])
     INS_AddInstrumentFunction(Instruction, 0);
 
     PIN_AddFiniFunction(Fini, 0);
-
+    
     PIN_StartProgram();
 
     return 0;

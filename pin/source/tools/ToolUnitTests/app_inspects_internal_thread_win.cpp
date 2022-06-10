@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -33,9 +33,9 @@ using std::string;
 
 // UID of the internal thread. It is created in the application thread by the
 // main() tool's procedure.
-PIN_THREAD_UID intThreadUid;
+PIN_THREAD_UID intThreadUid; 
 // Pointer to TID of internal thread. Imported from application.
-unsigned int* pTid;
+unsigned int * pTid;
 
 //==========================================================================
 // Utilities
@@ -44,7 +44,7 @@ unsigned int* pTid;
 /*!
  * Print out the error message and exit the process.
  */
-static void AbortProcess(const string& msg, unsigned long code)
+static void AbortProcess(const string & msg, unsigned long code)
 {
     cerr << "Test aborted: " << msg << " with code " << code << endl;
     PIN_WriteErrorMessage(msg.c_str(), 1002, PIN_ERR_FATAL, 0);
@@ -54,10 +54,10 @@ static void AbortProcess(const string& msg, unsigned long code)
  * Internal tool's thread. It is created in the application thread by the
  * main() tool's procedure.
  */
-static VOID IntThread(VOID* arg)
+static VOID IntThread(VOID * arg)
 {
     WIND::HMODULE exeHandle = WIND::GetModuleHandle(NULL);
-    pTid                    = (unsigned int*)WIND::GetProcAddress(exeHandle, "tid");
+    pTid = (unsigned int *)WIND::GetProcAddress(exeHandle, "tid");
 
     // Sets current TID in imported variable, makes it available to application.
     *pTid = WIND::GetCurrentThreadId();
@@ -78,7 +78,7 @@ static VOID IntThread(VOID* arg)
 /*!
  * Process exit callback (unlocked).
  */
-static VOID PrepareForFini(VOID* v)
+static VOID PrepareForFini(VOID *v)
 {
     BOOL waitStatus;
     INT32 threadExitCode;
@@ -105,7 +105,7 @@ static VOID PrepareForFini(VOID* v)
 /*!
  * Process exit callback.
  */
-static VOID Fini(INT32 code, VOID* v)
+static VOID Fini(INT32 code, VOID *v)
 {
     if (code != 0)
     {
@@ -116,7 +116,7 @@ static VOID Fini(INT32 code, VOID* v)
 /*!
  * The main procedure of the tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitSymbols();
 

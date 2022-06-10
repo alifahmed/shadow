@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -104,7 +104,6 @@ _STLP_STATIC_ASSERT(sizeof(size_t)==sizeof(void*))
 template <class _StateT> class fpos {
 public:                         // From table 88 of the C++ standard.
   fpos(streamoff __pos) : _M_pos(__pos), _M_st(_STLP_NULL_CHAR_INIT(_StateT)) {}
-  fpos(const fpos& __fpos) : _M_pos(__fpos._M_pos), _M_st(__fpos._M_st) {}
   fpos() : _M_pos(0), _M_st(_STLP_NULL_CHAR_INIT(_StateT)) {}
 
   operator streamoff() const { return _M_pos; }

@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -18,29 +18,6 @@ END_LEGAL */
 #if !defined(XED_FLAG_ENUM_H)
 # define XED_FLAG_ENUM_H
 #include "xed-common-hdrs.h"
-#define XED_FLAG_INVALID_DEFINED 1
-#define XED_FLAG_of_DEFINED 1
-#define XED_FLAG_sf_DEFINED 1
-#define XED_FLAG_zf_DEFINED 1
-#define XED_FLAG_af_DEFINED 1
-#define XED_FLAG_pf_DEFINED 1
-#define XED_FLAG_cf_DEFINED 1
-#define XED_FLAG_df_DEFINED 1
-#define XED_FLAG_vif_DEFINED 1
-#define XED_FLAG_iopl_DEFINED 1
-#define XED_FLAG_if_DEFINED 1
-#define XED_FLAG_ac_DEFINED 1
-#define XED_FLAG_vm_DEFINED 1
-#define XED_FLAG_rf_DEFINED 1
-#define XED_FLAG_nt_DEFINED 1
-#define XED_FLAG_tf_DEFINED 1
-#define XED_FLAG_id_DEFINED 1
-#define XED_FLAG_vip_DEFINED 1
-#define XED_FLAG_fc0_DEFINED 1
-#define XED_FLAG_fc1_DEFINED 1
-#define XED_FLAG_fc2_DEFINED 1
-#define XED_FLAG_fc3_DEFINED 1
-#define XED_FLAG_LAST_DEFINED 1
 typedef enum {
   XED_FLAG_INVALID,
   XED_FLAG_of, ///<< overflow flag

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -20,8 +20,10 @@
 #include "atomic/ops.hpp"
 #include "atomic/nullstats.hpp"
 
-namespace ATOMIC
-{
+
+namespace ATOMIC {
+
+
 /*! @brief  Maintains a set of unique IDs.
  *
  * A non-blocking utility that maintains a set of small integral IDs.  Clients
@@ -45,7 +47,7 @@ namespace ATOMIC
  *  }
  *                                                                                          \endcode
  */
-template< UINT32 MaxID, typename STATS = NULLSTATS > class /*<UTILITY>*/ IDSET
+template<UINT32 MaxID, typename STATS=NULLSTATS> class /*<UTILITY>*/ IDSET
 {
   public:
     /*!
@@ -53,9 +55,9 @@ template< UINT32 MaxID, typename STATS = NULLSTATS > class /*<UTILITY>*/ IDSET
      *
      *  @param[in] stats    The new statistics collection object.
      */
-    IDSET(STATS* stats = 0) : _stats(stats)
+    IDSET(STATS *stats=0) : _stats(stats)
     {
-        for (UINT32 i = 0; i < _numElements; i++)
+        for (UINT32 i = 0;  i < _numElements;  i++)
             _bits[i] = 0;
 
         // If MaxID is not an even multiple of the number of bits in a UINT32,
@@ -63,7 +65,8 @@ template< UINT32 MaxID, typename STATS = NULLSTATS > class /*<UTILITY>*/ IDSET
         // extra bit positions so GetID() never returns an ID greater than MaxID.
         //
         const UINT32 MaxIDMod32 = MaxID % 32;
-        if (MaxIDMod32) _bits[_numElements - 1] = ((1 << ((32 - MaxIDMod32) % 32)) - 1) << MaxIDMod32;
+        if (MaxIDMod32)
+            _bits[_numElements-1] = ( (1<<((32-MaxIDMod32)%32)) - 1) << MaxIDMod32;
     }
 
     /*!
@@ -71,7 +74,10 @@ template< UINT32 MaxID, typename STATS = NULLSTATS > class /*<UTILITY>*/ IDSET
      *
      *  @param[in] stats    The new statistics collection object.
      */
-    void SetStatsNonAtomic(STATS* stats) { _stats = stats; }
+    void SetStatsNonAtomic(STATS *stats)
+    {
+        _stats = stats;
+    }
 
     /*!
      * Request a new ID that is not currently in use.
@@ -81,20 +87,21 @@ template< UINT32 MaxID, typename STATS = NULLSTATS > class /*<UTILITY>*/ IDSET
      */
     UINT32 GetID()
     {
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
 
-        for (UINT32 i = 0; i < _numElements; i++)
+        for (UINT32 i = 0;  i < _numElements;  i++)
         {
             UINT32 val = OPS::Load(&_bits[i]);
 
             while (val != 0xffffffff)
             {
                 UINT32 bit = 0;
-                for (UINT32 tval = val; tval & 1; tval >>= 1)
+                for (UINT32 tval = val;  tval & 1;  tval >>= 1)
                     bit++;
 
                 UINT32 newval = val | (1 << bit);
-                if (OPS::CompareAndDidSwap(&_bits[i], val, newval)) return i * sizeof(UINT32) * 8 + bit + 1;
+                if (OPS::CompareAndDidSwap(&_bits[i], val, newval))
+                    return i*sizeof(UINT32)*8 + bit + 1;
 
                 backoff.Delay();
                 val = OPS::Load(&_bits[i]);
@@ -112,20 +119,18 @@ template< UINT32 MaxID, typename STATS = NULLSTATS > class /*<UTILITY>*/ IDSET
     void ReleaseID(UINT32 id)
     {
         id--;
-        UINT32 i   = id >> 5;
+        UINT32 i = id >> 5;
         UINT32 bit = 1 << (id & 0x1f);
 
         UINT32 val;
         UINT32 newval;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
 
-        do
-        {
+        do {
             backoff.Delay();
-            val    = OPS::Load(&_bits[i]);
+            val = OPS::Load(&_bits[i]);
             newval = val & ~bit;
-        }
-        while (!OPS::CompareAndDidSwap(&_bits[i], val, newval));
+        } while (!OPS::CompareAndDidSwap(&_bits[i], val, newval));
     }
 
     /*!
@@ -135,19 +140,19 @@ template< UINT32 MaxID, typename STATS = NULLSTATS > class /*<UTILITY>*/ IDSET
     */
     bool IsIDInUse(UINT32 id)
     {
-        id--;
-        UINT32 i   = id >> 5;
-        UINT32 bit = 1 << (id & 0x1f);
-        UINT32 val = OPS::Load(&_bits[i]);
-        return ((val & bit) != 0);
+      id--;
+      UINT32 i = id >> 5;
+      UINT32 bit = 1 << (id & 0x1f);
+      UINT32 val = OPS::Load(&_bits[i]);
+      return ((val&bit) != 0);
     }
 
   private:
-    static const UINT32 _numElements = (MaxID + 8 * sizeof(UINT32) - 1) / (8 * sizeof(UINT32));
+    static const UINT32 _numElements = (MaxID + 8*sizeof(UINT32)-1) / (8*sizeof(UINT32));
     volatile UINT32 _bits[_numElements];
 
-    STATS* _stats; // Object which collects statistics, or NULL
+    STATS *_stats;  // Object which collects statistics, or NULL
 };
 
-} // namespace ATOMIC
+} // namespace
 #endif // file guard

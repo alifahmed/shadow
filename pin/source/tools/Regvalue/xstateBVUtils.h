@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,6 +16,7 @@
 
 using std::string;
 
+
 /////////////////////
 // TYPE DEFINITIONS
 /////////////////////
@@ -29,23 +30,27 @@ enum TEST_REG_CLASS
     TEST_REG_CLASS_INVALID = TEST_REG_CLASS_SIZE
 };
 
+
 extern "C"
 {
-    /////////////////////
-    // GLOBAL VARIABLES
-    /////////////////////
 
-    extern const unsigned int testRegSize[TEST_REG_CLASS_SIZE];
-    extern const unsigned int testRegLocation[TEST_REG_CLASS_SIZE];
-    extern const unsigned char xstateBvMasks[TEST_REG_CLASS_SIZE];
-    extern const string componentStrings[TEST_REG_CLASS_SIZE];
-    extern const unsigned char* toolRegisterValues[TEST_REG_CLASS_SIZE];
+/////////////////////
+// GLOBAL VARIABLES
+/////////////////////
 
-    /////////////////////
-    // UTILITY FUNCTIONS
-    /////////////////////
 
-    extern TEST_REG_CLASS GetTestReg(const string& arg);
+extern const unsigned int testRegSize[TEST_REG_CLASS_SIZE];
+extern const unsigned int testRegLocation[TEST_REG_CLASS_SIZE];
+extern const unsigned char xstateBvMasks[TEST_REG_CLASS_SIZE];
+extern const string componentStrings[TEST_REG_CLASS_SIZE];
+extern const unsigned char* toolRegisterValues[TEST_REG_CLASS_SIZE];
+
+
+/////////////////////
+// UTILITY FUNCTIONS
+/////////////////////
+
+extern TEST_REG_CLASS GetTestReg(const string& arg);
 
 } // extern "C"
 

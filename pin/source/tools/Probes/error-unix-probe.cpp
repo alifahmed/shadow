@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,6 +20,7 @@
 // in libc and libpthread point to the same actual location (in a TLS),
 // but this assumption is fragile and may change at some time int he future.
 
+
 #include "pin.H"
 #include <iostream>
 #include <stdlib.h>
@@ -28,21 +29,23 @@
 using std::cerr;
 using std::endl;
 
+
 #if defined(TARGET_MAC)
 #define ERRNO_SYMBOL ("___error")
 #else
 #define ERRNO_SYMBOL ("__errno_location")
 #endif
 
-typedef ADDRINT* (*ERRNO_LOCATION_FUNPTR)();
+typedef ADDRINT * (*ERRNO_LOCATION_FUNPTR)();
 ADDRINT pf_errno_location = 0;
+
 
 /* ===================================================================== */
 VOID ToolCheckError()
 {
-    if (pf_errno_location != 0)
+    if ( pf_errno_location != 0 )
     {
-        ADDRINT* err_loc = (*(ERRNO_LOCATION_FUNPTR)pf_errno_location)();
+        ADDRINT * err_loc = (*(ERRNO_LOCATION_FUNPTR)pf_errno_location)();
 
         int err_value = *err_loc;
 
@@ -50,32 +53,37 @@ VOID ToolCheckError()
     }
     else
         cerr << "Tool: __errno_location() not found." << endl;
+
 }
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
+
     RTN errno_location_rtn = RTN_FindByName(img, ERRNO_SYMBOL);
     if (RTN_Valid(errno_location_rtn))
     {
         pf_errno_location = RTN_Address(errno_location_rtn);
     }
 
-    if (IMG_IsMainExecutable(img))
+    if ( IMG_IsMainExecutable( img ))
     {
-        PROTO proto = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT, "CheckError", PIN_PARG_END());
+        PROTO proto = PROTO_Allocate( PIN_PARG(void), CALLINGSTD_DEFAULT,
+                                      "CheckError", PIN_PARG_END() );
 
         RTN rtn = RTN_FindByName(img, C_MANGLE("CheckError"));
         if (RTN_Valid(rtn) && RTN_IsSafeForProbedReplacement(rtn))
         {
-            RTN_ReplaceSignatureProbed(rtn, AFUNPTR(ToolCheckError), IARG_PROTOTYPE, proto, IARG_END);
+            RTN_ReplaceSignatureProbed(rtn, AFUNPTR(ToolCheckError),
+                                       IARG_PROTOTYPE, proto,
+                                       IARG_END);
         }
-        PROTO_Free(proto);
+        PROTO_Free( proto );
     }
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR* argv[])
+int main(INT32 argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
@@ -91,3 +99,5 @@ int main(INT32 argc, CHAR* argv[])
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
+
+

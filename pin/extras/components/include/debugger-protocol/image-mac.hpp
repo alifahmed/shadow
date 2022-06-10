@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -17,8 +17,8 @@
 #ifndef DEBUGGER_PROTOCOL_IMAGE_MAC_HPP
 #define DEBUGGER_PROTOCOL_IMAGE_MAC_HPP
 
-namespace DEBUGGER_PROTOCOL
-{
+namespace DEBUGGER_PROTOCOL {
+
 /*!
  * In the future, new image types may be added.  To retain backward compatibility,
  * clients should ignore types they don't recognize.
@@ -43,7 +43,7 @@ enum IMAGE_TYPE_MAC
  */
 enum IMAGE_INFO_MAC_VERSION
 {
-    IMAGE_INFO_MAC_VERSION_0 ///< This is the only defined version currently.
+    IMAGE_INFO_MAC_VERSION_0    ///< This is the only defined version currently.
 };
 
 /*!
@@ -51,11 +51,11 @@ enum IMAGE_INFO_MAC_VERSION
  */
 struct /*<UTILITY>*/ IMAGE_INFO_MAC
 {
-    IMAGE_INFO_MAC_VERSION _version; ///< Define which fields are valid.
-    IMAGE_TYPE_MAC _type;            ///< The image type.
-    std::string _name;               ///< Absolute pathname to the ELF file (UTF-8).
-    ANYADDR _offset;                 ///< Offset from ELF file's link-time address to it's loaded address.
+    IMAGE_INFO_MAC_VERSION _version;  ///< Define which fields are valid.
+    IMAGE_TYPE_MAC _type;             ///< The image type.
+    std::string _name;                ///< Absolute pathname to the ELF file (UTF-8).
+    ANYADDR _offset;            ///< Offset from ELF file's link-time address to it's loaded address.
 };
 
-} // namespace DEBUGGER_PROTOCOL
+} // namespace
 #endif // file guard

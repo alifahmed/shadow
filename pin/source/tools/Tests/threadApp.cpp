@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,7 +16,10 @@
 #include <unistd.h>
 #include <pthread.h>
 
-void* DoNothing(void* arg) { return NULL; }
+void *DoNothing(void* arg) 
+{
+    return NULL;
+}
 
 int main()
 {
@@ -24,3 +27,4 @@ int main()
     pthread_create(&tid, 0, DoNothing, 0);
     pthread_join(tid, 0);
 }
+

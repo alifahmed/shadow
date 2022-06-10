@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,12 +13,13 @@
 #include <cstdio>
 
 #ifdef TARGET_WINDOWS
-#define ASMNAME(name)
-#define ALIGN64 __declspec(align(64))
+# define ASMNAME(name)
+# define ALIGN64 __declspec(align(64))
 #else
-#define ASMNAME(name) asm(name)
-#define ALIGN64 __attribute__((aligned(64)))
+# define ASMNAME(name) asm(name)
+# define ALIGN64 __attribute__ ((aligned (64)))
 #endif
+
 
 /////////////////////
 // EXTERNAL FUNCTIONS
@@ -33,8 +34,9 @@ extern "C" void Do_Fxrstor() ASMNAME("Do_Fxrstor");
 
 extern "C"
 {
-    unsigned char ALIGN64 xsaveArea[1000] ASMNAME("xsaveArea");
+unsigned char ALIGN64 xsaveArea[1000] ASMNAME("xsaveArea");
 }
+
 
 int main(int argc, const char* argv[])
 {

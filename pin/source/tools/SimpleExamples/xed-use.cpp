@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,18 +16,17 @@
  */
 
 #include "pin.H"
-extern "C"
-{
+extern "C" {
 #include "xed-interface.h"
 }
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-using std::cerr;
-using std::dec;
-using std::endl;
 using std::hex;
+using std::dec;
 using std::setw;
+using std::cerr;
+using std::endl;
 
 std::ofstream* out = 0;
 
@@ -42,7 +41,7 @@ INT32 Usage()
     return -1;
 }
 
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     xed_decoded_inst_t* xedd = INS_XedDec(ins);
     // To print out the gory details uncomment this:
@@ -50,14 +49,15 @@ VOID Instruction(INS ins, VOID* v)
     // xed_decoded_inst_dump(xedd, buf, 2048);
     // *out << buf << endl;
 
-    xed_syntax_enum_t syntax = XED_SYNTAX_INTEL; // XED_SYNTAX_ATT, XED_SYNTAX_XED
-    const UINT32 BUFLEN      = 100;
+    xed_syntax_enum_t syntax = XED_SYNTAX_INTEL;  // XED_SYNTAX_ATT, XED_SYNTAX_XED
+    const UINT32 BUFLEN = 100;
     char buffer[BUFLEN];
     ADDRINT addr = INS_Address(ins);
-    BOOL ok      = xed_format_context(syntax, xedd, buffer, BUFLEN, static_cast< UINT64 >(addr), 0, 0);
+    BOOL ok = xed_format_context(syntax, xedd, buffer, BUFLEN, static_cast<UINT64>(addr), 0, 0);
     if (ok)
     {
-        *out << setw(sizeof(ADDRINT) * 2) << hex << addr << dec << " " << buffer << endl;
+        *out << setw(sizeof(ADDRINT)*2) 
+             << hex << addr << dec << " "  << buffer << endl;
     }
     else
     {
@@ -69,11 +69,13 @@ VOID Instruction(INS ins, VOID* v)
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     out = new std::ofstream("xed-use.out");
-    if (PIN_Init(argc, argv)) return Usage();
+    if( PIN_Init(argc,argv) )
+        return Usage();
     INS_AddInstrumentFunction(Instruction, 0);
-    PIN_StartProgram(); // Never returns
+    PIN_StartProgram();    // Never returns
     return 0;
 }
+

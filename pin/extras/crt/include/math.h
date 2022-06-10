@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -115,25 +115,14 @@ CONST_COMDATVAR(union __nan_un,__nan,__NAN_UN__UC);
     ((sizeof (x) == sizeof (float)) ? __isfinitef(x)	\
     : (sizeof (x) == sizeof (double)) ? __isfinite(x)	\
     : __isfinitel(x))
-#if defined(PIN_MS_COMPATIBLE)
-#define isinf(x)                    \
-    ((sizeof (x) == sizeof (float)) ? __isinff(x)   \
-    : (sizeof (x) == sizeof (double)) ? __isinf(x)    \
-    : __isinfl(x))
-#define isnan(x)                    \
-    ((sizeof (x) == sizeof (float)) ? __isnanf(x)   \
-    : (sizeof (x) == sizeof (double)) ? __isnan(x)    \
-    : __isnanl(x))
-#else
 #define	isinf(x)					\
     ((sizeof (x) == sizeof (float)) ? __isinff(x)	\
-    : (sizeof (x) == sizeof (double)) ? isinf(x)	\
+    : (sizeof (x) == sizeof (double)) ? __isinf(x)	\
     : __isinfl(x))
 #define	isnan(x)					\
     ((sizeof (x) == sizeof (float)) ? __isnanf(x)	\
-    : (sizeof (x) == sizeof (double)) ? isnan(x)	\
+    : (sizeof (x) == sizeof (double)) ? __isnan(x)	\
     : __isnanl(x))
-#endif
 #define	isnormal(x)					\
     ((sizeof (x) == sizeof (float)) ? __isnormalf(x)	\
     : (sizeof (x) == sizeof (double)) ? __isnormal(x)	\

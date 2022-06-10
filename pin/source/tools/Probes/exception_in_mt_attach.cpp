@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,27 +18,31 @@
 #include <stdlib.h>
 #include <sched.h>
 #include <assert.h>
+using std::ofstream;
+using std::string;
+using std::ios;
+using std::hex;
 using std::cerr;
 using std::dec;
 using std::endl;
-using std::hex;
-using std::ios;
-using std::ofstream;
-using std::string;
+
+
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "probe_tool.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "probe_tool.out", "specify file name");
 
 ofstream TraceFile;
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This pin tool tests MT attach in probe mode.\n"
-            "\n";
+    cerr <<
+        "This pin tool tests MT attach in probe mode.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
@@ -46,10 +50,10 @@ INT32 Usage()
 
 PIN_LOCK pinLock;
 
-UINT32 threadCounter    = 0;
-BOOL isAppStartReceived = FALSE;
+UINT32 threadCounter=0;
+BOOL   isAppStartReceived = FALSE;
 
-VOID AppStart(VOID* v)
+VOID AppStart(VOID *v)
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
     TraceFile << "Application Start Callback is called from thread " << dec << PIN_GetTid() << endl;
@@ -57,10 +61,10 @@ VOID AppStart(VOID* v)
     PIN_ReleaseLock(&pinLock);
 }
 
-VOID AttachedThreadStart(VOID* sigmask, VOID* v)
+VOID AttachedThreadStart(VOID *sigmask, VOID *v)
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
-    TraceFile << "Thread counter is updated to " << dec << (threadCounter + 1) << endl;
+    TraceFile << "Thread counter is updated to " << dec <<  (threadCounter+1) << endl;
     ++threadCounter;
     PIN_ReleaseLock(&pinLock);
 }
@@ -68,8 +72,8 @@ VOID AttachedThreadStart(VOID* sigmask, VOID* v)
 int PinReady(unsigned int numOfThreads)
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
-    // Check that we don't have any extra thread
-    assert(threadCounter <= numOfThreads);
+	// Check that we don't have any extra thread
+	assert(threadCounter <= numOfThreads);
     if ((threadCounter == numOfThreads) && isAppStartReceived)
     {
         TraceFile.close();
@@ -80,7 +84,7 @@ int PinReady(unsigned int numOfThreads)
     return 0;
 }
 
-typedef int (*foo_t)();
+typedef int (* foo_t)();
 
 static int foo_rep(foo_t orig_foo, ADDRINT returnIp)
 {
@@ -94,34 +98,40 @@ static int foo_rep(foo_t orig_foo, ADDRINT returnIp)
     return res;
 }
 
-VOID ImageLoad(IMG img, void* v)
+VOID ImageLoad(IMG img, void *v)
 {
-    RTN rtn = RTN_FindByName(img, "ThreadsReady");
-    if (RTN_Valid(rtn))
-    {
-        RTN_ReplaceProbed(rtn, AFUNPTR(PinReady));
-    }
-
+	RTN rtn = RTN_FindByName(img, "ThreadsReady");
+	if (RTN_Valid(rtn))
+	{
+		RTN_ReplaceProbed(rtn, AFUNPTR(PinReady));
+	}
+    
     if (IMG_IsMainExecutable(img))
     {
         RTN routine = RTN_FindByName(img, "foo");
-        if (RTN_Valid(routine))
+         if (RTN_Valid(routine))
         {
-            PROTO foo_proto = PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "foo", PIN_PARG_END());
-            AFUNPTR foo_ptr = RTN_ReplaceSignatureProbed(routine, (AFUNPTR)foo_rep, IARG_PROTOTYPE, foo_proto, IARG_ORIG_FUNCPTR,
-                                                         IARG_RETURN_IP, IARG_END);
+            PROTO foo_proto = PROTO_Allocate( PIN_PARG(int), CALLINGSTD_DEFAULT,
+                                              "foo", PIN_PARG_END() );
+            AFUNPTR foo_ptr = RTN_ReplaceSignatureProbed(routine, (AFUNPTR)foo_rep,
+                    IARG_PROTOTYPE, foo_proto,
+                    IARG_ORIG_FUNCPTR,
+                    IARG_RETURN_IP,
+                    IARG_END);
             ASSERTX(foo_ptr != 0);
         }
     }
-}
+
+}	
+
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -130,13 +140,13 @@ int main(int argc, CHAR* argv[])
     TraceFile << hex;
     TraceFile.setf(ios::showbase);
 
-    PIN_InitLock(&pinLock);
-
+	PIN_InitLock(&pinLock);
+	
     IMG_AddInstrumentFunction(ImageLoad, 0);
     PIN_AddApplicationStartFunction(AppStart, 0);
     PIN_AddThreadAttachProbedFunction(AttachedThreadStart, 0);
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

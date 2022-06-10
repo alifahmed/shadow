@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -145,7 +145,6 @@ extern wchar_t          *wcscpy(wchar_t *, const wchar_t *);
 extern size_t            wcscspn(const wchar_t *, const wchar_t *);
 extern size_t            wcsftime(wchar_t *, size_t, const wchar_t *, const struct tm *) __LIBC_ABI_PUBLIC__;
 extern size_t            wcslen(const wchar_t *);
-extern size_t            wcsnlen_s(const wchar_t *,size_t);
 extern int               wcsncasecmp(const wchar_t *, const wchar_t *, size_t);
 extern wchar_t          *wcsncat(wchar_t *, const wchar_t *, size_t);
 extern int               wcsncmp(const wchar_t *, const wchar_t *, size_t);

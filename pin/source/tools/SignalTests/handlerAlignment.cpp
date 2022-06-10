@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,10 +23,11 @@
 #include <iostream>
 #include <string>
 
-using std::cerr;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::string;
+
 
 /////////////////////
 // TYPE DEFINITIONS
@@ -47,28 +48,33 @@ enum TestResult
     TR_UNKNOWN_ERROR
 };
 
+
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
 
 const size_t altStackSize = 0x1000;
-unsigned long resumeIp    = 0;
+unsigned long resumeIp = 0;
 jmp_buf jumpBuffer;
 stack_t theAltStack;
 bool simpleHandlerCalled = false;
 bool actionHandlerCalled = false;
 
-string resultStrings[] = {"Test completed successfully",
-                          "Invalid number of arguments",
-                          "Invalid argument: ",
-                          "Failed to set up an alternate signal stack (sigaltstack failed)",
-                          "Failed to set up the signal handler (sigaction failed)",
-                          "Expected SimpleHandler to be used as the signal handler, but ActionHandler was called instead",
-                          "Expected ActionHandler to be used as the signal handler, but SimpleHandler was called instead",
-                          "Both SimpleHandler and ActionHandler were not called, expected SimpleHandler",
-                          "Both SimpleHandler and ActionHandler were not called, expected ActionHandler",
-                          "Received unexpected value from setjmp: ",
-                          "Unexpected error encountered"};
+string resultStrings[] =
+{
+    "Test completed successfully",
+    "Invalid number of arguments",
+    "Invalid argument: ",
+    "Failed to set up an alternate signal stack (sigaltstack failed)",
+    "Failed to set up the signal handler (sigaction failed)",
+    "Expected SimpleHandler to be used as the signal handler, but ActionHandler was called instead",
+    "Expected ActionHandler to be used as the signal handler, but SimpleHandler was called instead",
+    "Both SimpleHandler and ActionHandler were not called, expected SimpleHandler",
+    "Both SimpleHandler and ActionHandler were not called, expected ActionHandler",
+    "Received unexpected value from setjmp: ",
+    "Unexpected error encountered"
+};
+
 
 /////////////////////
 // UTILITY FUNCTIONS
@@ -82,28 +88,30 @@ void DoSegv() __attribute__((noinline));
 // It also sets the resumeIp variable with a recovery address.
 void DoSegv()
 {
-    //    cout << "In DoSegv" << endl; // for debug
-    asm volatile("movl $resume, %0;"
-                 "mov  $0, %%eax;"
-                 "mov  %%eax, (%%eax);"
-                 "resume:"
-                 : "=m"(resumeIp)::"%eax");
+//    cout << "In DoSegv" << endl; // for debug
+    asm volatile (
+            "movl $resume, %0;"
+            "mov  $0, %%eax;"
+            "mov  %%eax, (%%eax);"
+            "resume:"
+            : "=m"(resumeIp) :: "%eax"
+                 );
 }
 
 static void SimpleHandler(int sig)
 {
-    //    cout << "In SimpleHandler" << endl; // for debug
+//    cout << "In SimpleHandler" << endl; // for debug
     TestAlignment();
     simpleHandlerCalled = true;
     longjmp(jumpBuffer, 1);
 }
 
-static void ActionHandler(int sig, siginfo_t* info, void* uctxt)
+static void ActionHandler(int sig, siginfo_t *info, void *uctxt)
 {
-    //    cout << "In ActionHandler" << endl; // for debug
+//    cout << "In ActionHandler" << endl; // for debug
     TestAlignment();
-    actionHandlerCalled              = true;
-    ucontext_t* ctxt                 = (ucontext_t*)uctxt;
+    actionHandlerCalled = true;
+    ucontext_t* ctxt = (ucontext_t *)uctxt;
     ctxt->uc_mcontext.gregs[REG_EIP] = resumeIp;
 }
 
@@ -120,7 +128,8 @@ static void TestError(TestResult res)
     exit(res);
 }
 
-template< class T > static void TestError(TestResult res, T val)
+template <class T>
+static void TestError(TestResult res, T val)
 {
     cerr << "ERROR: " << resultStrings[res] << val << endl;
     exit(res);
@@ -132,12 +141,12 @@ static void InstallSignalHandler(bool useSigaction, bool useAltStack)
     if (useSigaction)
     {
         sigact.sa_sigaction = ActionHandler;
-        sigact.sa_flags     = SA_SIGINFO;
+        sigact.sa_flags = SA_SIGINFO;
     }
     else
     {
         sigact.sa_handler = SimpleHandler;
-        sigact.sa_flags   = 0;
+        sigact.sa_flags = 0;
     }
 
     if (useAltStack)
@@ -145,7 +154,7 @@ static void InstallSignalHandler(bool useSigaction, bool useAltStack)
         sigact.sa_flags |= SA_ONSTACK;
 
         // Set up the alternate stack.
-        theAltStack.ss_sp   = new char[altStackSize];
+        theAltStack.ss_sp = new char[altStackSize];
         theAltStack.ss_size = altStackSize;
         if (sigaltstack(&theAltStack, NULL) != 0) SysError(TR_SIGALTSTACK_FAILED);
     }
@@ -169,22 +178,16 @@ static void DoTest(bool useSigaction, bool useAltStack)
         // DoSegv (below) returns only if ActionHandler is used. When SimpleHandler is used, we jump back up
         // as if setjmp returned 1.
         DoSegv();
-        if (simpleHandlerCalled)
-            TestError(TR_HANDLER_INSTEADOF_ACTION);
-        else if (actionHandlerCalled)
-            success = true;
-        else
-            TestError(TR_NOHANDLER_EXPECTED_ACTION);
+        if (simpleHandlerCalled) TestError(TR_HANDLER_INSTEADOF_ACTION);
+        else if (actionHandlerCalled) success = true;
+        else TestError(TR_NOHANDLER_EXPECTED_ACTION);
     }
     else if (res == 1)
     {
         // SimpleHandler finished successfully and jumped to this location.
-        if (actionHandlerCalled)
-            TestError(TR_ACTION_INSTEADOF_HANDLER);
-        else if (simpleHandlerCalled)
-            success = true;
-        else
-            TestError(TR_NOHANDLER_EXPECTED_HANDLER);
+        if (actionHandlerCalled) TestError(TR_ACTION_INSTEADOF_HANDLER);
+        else if (simpleHandlerCalled) success = true;
+        else TestError(TR_NOHANDLER_EXPECTED_HANDLER);
     }
     else
     {
@@ -193,6 +196,7 @@ static void DoTest(bool useSigaction, bool useAltStack)
     }
     if (!success) TestError(TR_UNKNOWN_ERROR);
 }
+
 
 /////////////////////
 // MAIN FUNCTION
@@ -204,7 +208,7 @@ int main(int argc, const char** argv)
 {
     if (argc != 2)
     {
-        cerr << "ERROR: Invalid number of arguments, " << argc - 1 << "." << endl;
+        cerr << "ERROR: Invalid number of arguments, " << argc-1 << "." << endl;
         cerr << "\tUsage:" << endl << "\t\thandlerAlignment <Test # (1-4)>" << endl;
         return TR_INVALID_ARG_NUM;
     }
@@ -231,8 +235,7 @@ int main(int argc, const char** argv)
         cout << "Testing ActionHandler on the alternate stack" << endl;
         DoTest(/*useSigaction*/ true, /*useAltStack*/ true);
     }
-    else
-        TestError(TR_INVALID_ARGUMENT, argv[1]);
+    else TestError(TR_INVALID_ARGUMENT, argv[1]);
 
     cout << "Test completed successfully" << endl;
     return TR_SUCCESS;

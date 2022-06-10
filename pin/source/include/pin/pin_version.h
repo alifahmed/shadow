@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -24,24 +24,24 @@
 #define PIN_VERSION_H
 
 
-/*! @ingroup VERSION
+/*! @ingroup MISC
  * The Pin major version number.
  */
 #define PIN_PRODUCT_VERSION_MAJOR 3
 
-/*! @ingroup VERSION
+/*! @ingroup MISC
  * The Pin minor version number.
  */
-#define PIN_PRODUCT_VERSION_MINOR 19
+#define PIN_PRODUCT_VERSION_MINOR 11
 
-/*! @ingroup VERSION
+/*! @ingroup MISC
  * The Pin kit build number. This is unique for every Pin kit.
  */
-#define PIN_BUILD_NUMBER 98425
+#define PIN_BUILD_NUMBER 97998
 
-/*! @ingroup VERSION
+/*! @ingroup MISC
  * The git hash for this Pin build. This is unique for every Pin kit.
  */
-#define PIN_COMMIT_HASH "d666b2bee"
+#define PIN_COMMIT_HASH "7ecce2dac"
 
 #endif // PIN_VERSION_H

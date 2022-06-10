@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,23 +17,28 @@
 #include <signal.h>
 #include <fcntl.h>
 
-extern char** environ;
+extern char **environ;
 
-using std::cerr;
+using std::string;
 using std::cout;
 using std::endl;
-using std::string;
+using std::cerr;
 
 //Wait for a process completion
 //Verify it returned the expected exit code
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     posix_spawnattr_t attr;
     posix_spawn_file_actions_t file_actions;
     pid_t pid;
     int pip[2];
-    const char* appArgv[] = {argv[1], "/dev/stdin", "/dev/stdout", NULL};
+    const char* appArgv[] = {
+            argv[1],
+            "/dev/stdin",
+            "/dev/stdout",
+            NULL
+    };
     if (0 != pipe(pip))
     {
         cout << "pipe failed: " << errno << endl;
@@ -58,8 +63,8 @@ int main(int argc, char* argv[])
         write(pip[1], "OK\n", 3);
         close(pip[1]);
         waitpid(pid, &status, 0);
-        if (status != 0)
-            cout << "Parent report: Child process failed. Status of the child process is " << WEXITSTATUS(status) << endl;
+        if (status !=0)
+            cout << "Parent report: Child process failed. Status of the child process is "<< WEXITSTATUS(status) << endl;
         else
             cout << "Parent report: Child process exited successfully" << endl;
     }

@@ -1,64 +1,16 @@
+//Groups: @ingroup\s+(API_REF|KNOBS|IMG_BASIC_API|INS_BASIC_API|INS_INST_API|INS_BASIC_API_GEN_IA32|INS_BASIC_API_IA32|INS_MOD_API_GEN_IA32|SEC_BASIC_API|RTN_BASIC_API|REG_BASIC_API|REG_CPU_GENERIC|REG_CPU_IA32|TRACE_BASIC_API|BBL_BASIC_API|SYM_BASIC_API|MISC_PRINT|MISC_PARSE|KNOB_API|KNOB_BASIC|KNOB_PRINT|LOCK|PIN_CONTROL|TRACE_VERSION_API|BUFFER_API|PROTO_API|PIN_PROCESS_API|PIN_THREAD_API|PIN_SYSCALL_API|WINDOWS_SYSCALL_API_UNDOC|DEBUG_API|ERROR_FILE_BASIC|TYPE_BASE|INSTLIB|ALARM|CHILD_PROCESS_API|UTILS|MISC|CONTEXT_API|PHYSICAL_CONTEXT_API|PIN_CALLBACKS|EXCEPTION_API|APPDEBUG_API|STOPPED_THREAD_API|BUFFER_API|PROTO|INST_ARGS|DEPRECATED_PIN_API|INTERNAL_EXCEPTION_PRIVATE_UNDOCUMENTED|PIN_THREAD_PRIVATE|CHILD_PROCESS_INTERNAL|BBL_BASIC|ROGUE_BASIC_API|MESSAGE_TYPE|MESSAGE_BASIC|ERRFILE|MISC_BASIC|ITC_INST_API|CONTEXT_API_UNDOC|EXCEPTION_API_UNDOC|UNDOCUMENTED_PIN_API|OPIN|TRACE_VERSIONS
+/* PIN API */
 
-#ifdef PIN_G_VERSIONS_CLIENT_PH
-#error duplicate inclusion of versions_client
-#else
-#define PIN_G_VERSIONS_CLIENT_PH
-/*! @file
- *
- * Pin client interfaces for trace versioning
- */
-/*! @ingroup TRACE_VERSION
- *
- * Set the versioning for traces that can be reached from this basic
- * block. Overrides the versioning from previous basic blocks. It is an
- * error to set the versioning for the same basic block more than
- * once.
- *
- * @param[in]   bbl     BBL to mark for versioning
- * @param[in]   version make BBL have this version
- * 
- * @par Availability:
- * \b Mode:  JIT\n
- * \b O/S:   All\n
- * \b CPU:   All\n
- *
- */
+/* THIS FILE IS AUTOMAGICALLY GENERATED - DO NOT CHANGE DIRECTLY*/
+
+
 extern VOID BBL_SetTargetVersion(BBL bbl, ADDRINT version);
 
-/*! @ingroup TRACE_VERSION
- *
- * Returns the version for this trace. See @ref BBL_SetTargetVersion
- * 
- * @par Availability:
- * \b Mode:  JIT\n
- * \b O/S:   All\n
- * \b CPU:   All\n
- *
- */
+                                                                  /* DO NOT EDIT */
 extern ADDRINT TRACE_Version(TRACE trace);
 
-/*! @ingroup TRACE_VERSION
- *
- *  Insert a dynamic test to switch between versions before \a ins. If the
- *  value in \a reg matches \a case_value, then continue execution at \a
- *  ins with version \a version. Switching to a new version will cause
- *  execution to continue at a new trace starting with \a ins. This API can
- *  be called multiple times for the same instruction, creating a
- *  switch/case construct to select the version.
- *
- * @param[in]   ins         Insert case test before this instruction
- * @param[in]   reg         Virtual register used to select case.
- * @param[in]   case_value  Go to new version if reg contains case_value
- * @param[in]   version     New version to use
- * @param[in]   ...         List of additional arguments (see @ref IARG_TYPE), terminated with IARG_END.
- *                          Currently, only IARG_CALL_ORDER is supported. For more information, see @ref CALL_ORDER.
- * 
- * @par Availability:
- * \b Mode:  JIT\n
- * \b O/S:   All\n
- * \b CPU:   IA-32 and Intel(R) 64 architectures\n
- *
- */
+                                                                  /* DO NOT EDIT */
 extern VOID INS_InsertVersionCase(INS ins, REG reg, INT32 case_value, ADDRINT version, ...);
 
-#endif // PIN_G_VERSIONS_CLIENT_PH
+                                                                  /* DO NOT EDIT */
+

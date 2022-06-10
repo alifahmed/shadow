@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -27,11 +27,12 @@
  *  a range of compact indices [0..N],
  *  such that the same input value always produces the same index.
  */
-template< class KEY, class INDEX > class COMPRESSOR
+template <class KEY, class INDEX>
+class COMPRESSOR
 {
   protected:
-    typedef std::pair< const KEY, INDEX > PAIR;
-    typedef std::map< KEY, INDEX > MAP;
+    typedef std::pair<const KEY, INDEX> PAIR;
+    typedef std::map<KEY, INDEX> MAP;
 
     MAP _map;
     INDEX _nextIndex;
@@ -42,16 +43,16 @@ template< class KEY, class INDEX > class COMPRESSOR
     COMPRESSOR() { _nextIndex = 0; }
 
     // accessors
-    std::string StringLong() const
+    std::string StringLong () const
     {
         std::string os;
 
         os += "COMPRESSOR BEGIN\n";
         os += "# " + _nextIndex.str() + " counters\n";
-        os += "# " + _keyName + ": index\n";
+        os += "# " + _keyName +  ": index\n";
         for (typename MAP::const_iterator it = _map.begin(); it != _map.end(); it++)
         {
-            os += it->first.str() + ": " + decstr(it->second, 12) + "\n";
+            os += it->first.str() + ": " + decstr(it->second,12) + "\n";
         }
         os += "COMPRESSOR END\n";
 
@@ -59,12 +60,15 @@ template< class KEY, class INDEX > class COMPRESSOR
     }
 
     // modifiers
-    VOID SetKeyName(const std::string& keyName) { _keyName = keyName; }
+    VOID SetKeyName(const std::string & keyName)
+    {
+        _keyName = keyName;
+    }
 
     INDEX Map(KEY key)
     {
         typename MAP::const_iterator it = _map.find(key);
-
+        
         if (it != _map.end())
         {
             // key found: return index
@@ -81,6 +85,7 @@ template< class KEY, class INDEX > class COMPRESSOR
     }
 };
 
+
 /*!
  *  Class to provide a counter for each compresses index. Counters are
  *  accessed similar to standard library classes with array syntax [] for
@@ -89,11 +94,12 @@ template< class KEY, class INDEX > class COMPRESSOR
  *  contain as many entries as have been mapped.
  */
 
-template< class KEY, class INDEX, class COUNTER > class COMPRESSOR_COUNTER : public COMPRESSOR< KEY, INDEX >
+template <class KEY, class INDEX, class COUNTER>
+class COMPRESSOR_COUNTER : public COMPRESSOR<KEY, INDEX>
 {
   private:
-    typedef std::vector< COUNTER > VECTOR;
-    static const UINT32 defaultInitCounterSize = 8 * 1024;
+    typedef std::vector<COUNTER> VECTOR;
+    static const UINT32 defaultInitCounterSize = 8*1024;
 
     VECTOR _counters;
     std::string _counterName;
@@ -101,34 +107,36 @@ template< class KEY, class INDEX, class COUNTER > class COMPRESSOR_COUNTER : pub
 
   public:
     // constructors/destructors
-    COMPRESSOR_COUNTER(UINT32 initCounterSize = defaultInitCounterSize) : COMPRESSOR< KEY, INDEX >(), _counters(initCounterSize)
+    COMPRESSOR_COUNTER(UINT32 initCounterSize = defaultInitCounterSize)
+      : COMPRESSOR<KEY,INDEX>(),
+        _counters(initCounterSize)
     {}
 
     // accessors
-    std::string StringLong() const
+    std::string StringLong () const
     {
         std::string os;
 
         INDEX num_counters = 0;
 
-        for (typename COMPRESSOR< KEY, INDEX >::MAP::const_iterator it = this->_map.begin(); it != this->_map.end(); it++)
+        for (typename COMPRESSOR<KEY,INDEX>::MAP::const_iterator it = this->_map.begin(); it != this->_map.end(); it++)
         {
             const COUNTER& counter = _counters[it->second];
-
-            if (_threshold <= counter) num_counters++;
+            
+            if ( _threshold <= counter ) num_counters++;
         }
 
-        os += "NumItems " + decstr(num_counters) + "\n";
+        os += "NumItems " + decstr(num_counters)  +"\n";
         os += "DATA:START\n";
         os += "#  counters\n";
         os += "# " + this->_keyName + ": " + _counterName + "\n";
 
-        for (typename COMPRESSOR< KEY, INDEX >::MAP::const_iterator it = this->_map.begin(); it != this->_map.end(); it++)
+        for (typename COMPRESSOR<KEY,INDEX>::MAP::const_iterator it = this->_map.begin(); it != this->_map.end(); it++)
         {
             const COUNTER& counter = _counters[it->second];
-            if (_threshold <= counter)
+            if ( _threshold <=  counter)
             {
-                os += hexstr(it->first, 8) + ": " + counter.str() + "\n";
+                os += hexstr(it->first,8) + ": " + counter.str() + "\n";
             }
         }
         os += "DATA:END\n";
@@ -137,14 +145,20 @@ template< class KEY, class INDEX, class COUNTER > class COMPRESSOR_COUNTER : pub
     }
 
     // modifiers
-    VOID SetCounterName(const std::string& counterName) { _counterName = counterName; }
+    VOID SetCounterName(const std::string & counterName)
+    {
+        _counterName = counterName;
+    }
 
-    VOID SetThreshold(const COUNTER& threshold) { _threshold = threshold; }
+    VOID SetThreshold(const COUNTER& threshold)
+    {
+        _threshold = threshold;
+    }
 
     INDEX Map(KEY key)
     {
         // use compressor to map
-        const INDEX Idx = COMPRESSOR< KEY, INDEX >::Map(key);
+        const INDEX Idx = COMPRESSOR<KEY,INDEX>::Map(key);
 
         // ... and check if need to add more counters
         if (Idx + 1 >= _counters.capacity())
@@ -155,12 +169,13 @@ template< class KEY, class INDEX, class COUNTER > class COMPRESSOR_COUNTER : pub
         return Idx;
     }
 
-    const COUNTER& operator[](INDEX index) const { return _counters[index]; }
-    COUNTER& operator[](INDEX index) { return _counters[index]; }
+    const COUNTER & operator[] (INDEX index) const { return _counters[index]; }
+    COUNTER & operator[] (INDEX index) { return _counters[index]; }
 
-    const COUNTER& at(INDEX index) const { return _counters.at(index); }
-    COUNTER& at(INDEX index) { return _counters.at(index); }
+    const COUNTER & at(INDEX index) const { return _counters.at(index); }
+    COUNTER & at(INDEX index) { return _counters.at(index); }
 };
+
 
 /*!
  *  Class to provide an array of counters for use with COMPRESSOR_COUNTER
@@ -170,11 +185,12 @@ template< class KEY, class INDEX, class COUNTER > class COMPRESSOR_COUNTER : pub
  *  accesses. The array of counters is auto-extending as necessary and is
  *  guaranteed to contain as many entries as have been mapped.
  */
-template< class NUMTYPE, UINT32 NUM_COUNTERS > class COUNTER_ARRAY
+template <class NUMTYPE, UINT32 NUM_COUNTERS>
+class COUNTER_ARRAY
 {
   private:
     NUMTYPE _counters[NUM_COUNTERS];
-
+    
   public:
     // accessors
     std::string str() const
@@ -184,7 +200,7 @@ template< class NUMTYPE, UINT32 NUM_COUNTERS > class COUNTER_ARRAY
         for (UINT32 i = 0; i < NUM_COUNTERS; i++)
         {
             if (i != 0) os += " ";
-            os += decstr(_counters[i], 12);
+            os += decstr(_counters[i],12);
         }
 
         return os;
@@ -200,7 +216,7 @@ template< class NUMTYPE, UINT32 NUM_COUNTERS > class COUNTER_ARRAY
 
         return true;
     }
-    bool operator!=(const COUNTER_ARRAY& x) const { return !operator==(x); }
+    bool operator!=(const COUNTER_ARRAY& x) const { return ! operator==(x); }
 
     bool operator<=(const COUNTER_ARRAY& x) const
     {
@@ -211,24 +227,27 @@ template< class NUMTYPE, UINT32 NUM_COUNTERS > class COUNTER_ARRAY
 
         return true;
     }
+    
 
     // modifiers
-    const NUMTYPE& operator[](UINT32 index) const { return _counters[index]; }
-    NUMTYPE& operator[](UINT32 index) { return _counters[index]; }
+    const NUMTYPE & operator[] (UINT32 index) const { return _counters[index]; }
+    NUMTYPE & operator[] (UINT32 index) { return _counters[index]; }
 
-    const NUMTYPE& at(UINT32 index) const
+    const NUMTYPE & at(UINT32 index) const
     {
         assert(index < NUM_COUNTERS);
         return _counters[index];
     }
 
-    NUMTYPE& at(UINT32 index)
-    {
+    NUMTYPE & at(UINT32 index)
+    { 
         assert(index < NUM_COUNTERS);
         return _counters[index];
     }
+
 };
 
-#define PROFILE(n) COMPRESSOR_COUNTER< ADDRINT, UINT32, COUNTER_ARRAY< UINT32, n > >
+
+#define PROFILE(n) COMPRESSOR_COUNTER<ADDRINT, UINT32, COUNTER_ARRAY<UINT32, n> >
 
 #endif // PIN_PROFILE_H

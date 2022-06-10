@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -54,13 +54,14 @@ enum PRIORITY
 
 typedef void (*VOIDFUNPTR)();
 
+
 // Synchronization used to wait for the worker thread to initialize itself
 // before the scheduler thread starts the test.
 //
 pthread_mutex_t Lock;
 pthread_cond_t WorkerInitialized;
 bool WorkerIsInitialized = false;
-pid_t WorkerTid; // O/S thread ID of the worker.
+pid_t WorkerTid;                    // O/S thread ID of the worker.
 
 // Ensures that error messages are not printed simultaneously by two threads.
 //
@@ -71,11 +72,12 @@ pthread_mutex_t ErrorLock;
 int PriorityLow;
 int PriorityHigh;
 
-bool IsError       = false; // Set true if a system call fails in worker / scheduler thread.
+bool IsError = false;       // Set true if a system call fails in worker / scheduler thread.
 volatile bool Done = false; // Asynchronously set by scheduler to terminate worker loop.
 
-static void* Worker(void*);
-static void* Scheduler(void*);
+
+static void *Worker(void *);
+static void *Scheduler(void *);
 extern "C" void DoWorkInstrumentedWithPin();
 extern "C" void DoGetLockWithPin();
 extern "C" void TellPinNotSupported();
@@ -83,6 +85,7 @@ static bool SetPriority(pid_t, PRIORITY);
 static bool SetAffinity(pid_t);
 static bool CheckSupported();
 static pid_t GetTid();
+
 
 int main()
 {
@@ -104,7 +107,8 @@ int main()
     // Figure out the priority levels to use for "high" and "low".
     //
     PriorityLow = sched_get_priority_min(SCHED_RR);
-    if (PriorityLow < 1) PriorityLow = 1;
+    if (PriorityLow < 1)
+        PriorityLow = 1;
     PriorityHigh = PriorityLow + 1;
     if (PriorityHigh > sched_get_priority_max(SCHED_RR))
     {
@@ -115,7 +119,8 @@ int main()
     // The main thread runs at high priority to ensure that it can wait for
     // the other threads to complete.
     //
-    if (!SetPriority(GetTid(), PRIORITY_HIGH)) return 1;
+    if (!SetPriority(GetTid(), PRIORITY_HIGH))
+        return 1;
 
     // Create the worker and scheduler threads.
     //
@@ -138,10 +143,12 @@ int main()
     return (IsError) ? 1 : 0;
 }
 
-static void* Worker(void*)
+
+static void *Worker(void *)
 {
     WorkerTid = GetTid();
-    if (!SetPriority(WorkerTid, PRIORITY_HIGH) || !SetAffinity(WorkerTid)) IsError = true;
+    if (!SetPriority(WorkerTid, PRIORITY_HIGH) || !SetAffinity(WorkerTid))
+        IsError = true;
 
     pthread_mutex_lock(&Lock);
     WorkerIsInitialized = true;
@@ -157,9 +164,10 @@ static void* Worker(void*)
     return 0;
 }
 
-static void* Scheduler(void*)
+static void *Scheduler(void *)
 {
-    if (!SetPriority(GetTid(), PRIORITY_HIGH) || !SetAffinity(GetTid())) IsError = true;
+    if (!SetPriority(GetTid(), PRIORITY_HIGH) || !SetAffinity(GetTid()))
+        IsError = true;
 
     // Wait for the worker to initialize itself.
     //
@@ -172,21 +180,24 @@ static void* Scheduler(void*)
     // the PIN_LOCK.
     //
     volatile VOIDFUNPTR doGetLockWithPin = DoGetLockWithPin;
-    for (unsigned long i = 0; i < NUM_SCHEDULES && !IsError; i++)
+    for (unsigned long i = 0;  i < NUM_SCHEDULES && !IsError;  i++)
     {
         // Lower the priority, then try to acquire the PIN_LOCK.  We want
         // to attempt to acuire the lock here while the worker has the
         // lock and is running at low priority.
         //
-        if (!SetPriority(WorkerTid, PRIORITY_LOW)) IsError = true;
+        if (!SetPriority(WorkerTid, PRIORITY_LOW))
+            IsError = true;
         doGetLockWithPin();
 
-        if ((i % (NUM_SCHEDULES / 10)) == 0) std::cout << "Iterations: " << std::dec << i << std::endl;
+        if ((i % (NUM_SCHEDULES / 10)) == 0)
+            std::cout << "Iterations: " << std::dec << i << std::endl;
 
         // Raise the worker priority and yield the processor to it.  Let the
         // worker start running again before the next attempt.
         //
-        if (!SetPriority(WorkerTid, PRIORITY_HIGH)) IsError = true;
+        if (!SetPriority(WorkerTid, PRIORITY_HIGH))
+            IsError = true;
         sched_yield();
     }
 
@@ -199,8 +210,7 @@ extern "C" void DoWorkInstrumentedWithPin()
     // This is the worker loop that is instrumented by Pin.  This loop
     // continually acquires and releases a PIN_LOCK.
     //
-    while (!Done)
-        ;
+    while (!Done);
 }
 
 extern "C" void DoGetLockWithPin()
@@ -225,7 +235,8 @@ static bool SetPriority(pid_t tid, PRIORITY priority)
     if (sched_setscheduler(tid, SCHED_RR, &param) != 0)
     {
         pthread_mutex_lock(&ErrorLock);
-        std::cerr << "Error from sched_setscheduler(0x" << std::hex << tid << "), errno=" << std::dec << errno << std::endl;
+        std::cerr << "Error from sched_setscheduler(0x" << std::hex << tid << "), errno=" <<
+            std::dec << errno << std::endl;
         pthread_mutex_unlock(&ErrorLock);
         return false;
     }
@@ -243,7 +254,8 @@ static bool SetAffinity(pid_t tid)
     if (sched_setaffinity(tid, sizeof(cpus), &cpus) != 0)
     {
         pthread_mutex_lock(&ErrorLock);
-        std::cerr << "Error from sched_setaffinity(0x" << std::hex << tid << "), errno=" << std::dec << errno << std::endl;
+        std::cerr << "Error from sched_setaffinity(0x" << std::hex << tid << "), errno=" <<
+            std::dec << errno << std::endl;
         pthread_mutex_unlock(&ErrorLock);
         return false;
     }

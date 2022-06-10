@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -18,14 +18,6 @@ END_LEGAL */
 #if !defined(XED_REG_ROLE_ENUM_H)
 # define XED_REG_ROLE_ENUM_H
 #include "xed-common-hdrs.h"
-#define XED_REG_ROLE_INVALID_DEFINED 1
-#define XED_REG_ROLE_NORMAL_DEFINED 1
-#define XED_REG_ROLE_SEGREG0_DEFINED 1
-#define XED_REG_ROLE_SEGREG1_DEFINED 1
-#define XED_REG_ROLE_BASE0_DEFINED 1
-#define XED_REG_ROLE_BASE1_DEFINED 1
-#define XED_REG_ROLE_INDEX_DEFINED 1
-#define XED_REG_ROLE_LAST_DEFINED 1
 typedef enum {
   XED_REG_ROLE_INVALID,
   XED_REG_ROLE_NORMAL, ///< Register is a normal register

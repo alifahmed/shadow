@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -18,16 +18,15 @@
 #define OS_APIS_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-    /*! @mainpage OS_APIS library
+/*! @mainpage OS_APIS library
  *
  * The OS_APIS library provides a consistent api for calling system calls.
  */
 
-    /*! @brief The OS_APIS library. */
+/*! @brief The OS_APIS library. */
 
 #if !defined(__cplusplus) && defined(__GNUC__) && !defined(_GNU_SOURCE)
 // This tells GCC to define more structs it wouldn't define otherwise
@@ -49,10 +48,11 @@ extern "C"
 #include "os-apis/rw-lock.h"
 #include "os-apis/ipc-pipe.h"
 #ifdef TARGET_WINDOWS
-#include "windows/util-windows.h"
+# include "windows/gcc_compat.h"
+# include "windows/util-windows.h"
 #else
-#include "os-apis/signals.h"
-#include "os-apis/ipc.h"
+# include "os-apis/signals.h"
+# include "os-apis/ipc.h"
 #endif
 
 #ifdef __cplusplus

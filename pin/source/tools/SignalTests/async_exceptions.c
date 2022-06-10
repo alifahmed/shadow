@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,16 +26,17 @@
 #include <assert.h>
 
 volatile int signalsReceived = 0; // Signal bitwise flag
-#define ALL_SYNC_SIGNALS ((1 << SIGFPE) | (1 << SIGSEGV) | (1 << SIGILL) | (1 << SIGBUS) | (1 << SIGTRAP))
+#define ALL_SYNC_SIGNALS ((1<<SIGFPE)|(1<<SIGSEGV)|(1<<SIGILL)|(1<<SIGBUS)|(1<<SIGTRAP))
 
-void Handler(int signum, siginfo_t* siginfo, void* _uctxt);
+void Handler(int signum, siginfo_t *siginfo, void *_uctxt);
 
 int CheckBlockedAysncExceptions()
 {
     struct sigaction act;
     bzero(&act, sizeof(act));
-    act.sa_flags     = SA_SIGINFO;
+    act.sa_flags = SA_SIGINFO;
     act.sa_sigaction = Handler;
+
 
     sigaction(SIGFPE, &act, NULL);
     sigaction(SIGSEGV, &act, NULL);
@@ -60,8 +61,8 @@ int CheckBlockedAysncExceptions()
     raise(SIGBUS);
 
     // Verify SIGFPE and SIGSEGV were not received in handler
-    assert((signalsReceived & (1 << SIGFPE)) == 0);
-    assert((signalsReceived & (1 << SIGSEGV)) == 0);
+    assert((signalsReceived & (1<<SIGFPE)) == 0);
+    assert((signalsReceived & (1<<SIGSEGV)) == 0);
 
     // Remove SIGSEGV from the mask and unblock with mask (unblock SIGFPE)
     sigdelset(&sigMask, SIGSEGV);
@@ -69,7 +70,7 @@ int CheckBlockedAysncExceptions()
     assert(0 == ret);
 
     // Verify SIGFPE was received in handler
-    assert((signalsReceived & (1 << SIGFPE)));
+    assert((signalsReceived & (1<<SIGFPE)));
 
     // Unblock SIGSEGV
     sigemptyset(&sigMask);
@@ -78,7 +79,7 @@ int CheckBlockedAysncExceptions()
     assert(0 == ret);
 
     // Verify SIGSEGV was received in handler
-    assert((signalsReceived & (1 << SIGSEGV)));
+    assert((signalsReceived & (1<<SIGSEGV)));
 
     // Block SIGTRAP (after that raise it)
     sigemptyset(&sigMask);
@@ -89,7 +90,7 @@ int CheckBlockedAysncExceptions()
     raise(SIGTRAP);
 
     // Verify SIGTRAP wasn't not received in handler
-    assert((signalsReceived & (1 << SIGTRAP)) == 0);
+    assert((signalsReceived & (1<<SIGTRAP)) == 0);
 
     // Retrieve current mask
     ret = pthread_sigmask(SIG_SETMASK, NULL, &sigMask);
@@ -102,7 +103,8 @@ int CheckBlockedAysncExceptions()
     assert(0 == ret);
 
     // Verify SIGTRAP was received in handler
-    assert((signalsReceived & (1 << SIGTRAP)));
+    assert((signalsReceived & (1<<SIGTRAP)));
+
 
     // Verify All signals received by handler
     if (signalsReceived == ALL_SYNC_SIGNALS)
@@ -114,6 +116,7 @@ int CheckBlockedAysncExceptions()
         printf("Not all signals were received in first phase\n");
         return 1;
     }
+
 
     //
     // Phase 2, raise a few signals more than once  before unblocking (Another case we want to check)
@@ -142,6 +145,7 @@ int CheckBlockedAysncExceptions()
 
     raise(SIGFPE);
 
+
     // Check again
     if (signalsReceived == ALL_SYNC_SIGNALS)
     {
@@ -153,13 +157,14 @@ int CheckBlockedAysncExceptions()
         printf("Not all signals were received in second phase\n");
         return 1;
     }
+
 }
 
 int CheckAysncExceptions()
 {
     struct sigaction act;
     bzero(&act, sizeof(act));
-    act.sa_flags     = SA_SIGINFO;
+    act.sa_flags = SA_SIGINFO;
     act.sa_sigaction = Handler;
 
     sigaction(SIGFPE, &act, NULL);
@@ -175,7 +180,7 @@ int CheckAysncExceptions()
     raise(SIGTRAP);
 
     if (signalsReceived == ALL_SYNC_SIGNALS)
-    { //Verifying all signals were handled by the handler
+    {   //Verifying all signals were handled by the handler
         printf("All signals were received\n");
         return 0;
     }
@@ -184,13 +189,15 @@ int CheckAysncExceptions()
         printf("Not all signals were received\n");
         return 1;
     }
+
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
+
     if (argc > 1)
     {
-        if (atoi(argv[1]) == 1)
+        if ( atoi(argv[1]) == 1)
         {
             return CheckBlockedAysncExceptions();
         }
@@ -203,8 +210,9 @@ int main(int argc, char* argv[])
     return CheckAysncExceptions();
 }
 
-void Handler(int signum, siginfo_t* siginfo, void* _uctxt)
+
+void Handler(int signum, siginfo_t *siginfo, void *_uctxt)
 {
-    signalsReceived |= (1 << signum);
+    signalsReceived |=(1<<signum);
     printf("received signal %d\n", signum);
 }

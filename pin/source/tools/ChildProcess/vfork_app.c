@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-int main(int argc, const char** argv)
+int main(int argc, const char **argv)
 {
     if (argc < 2)
     {
@@ -22,10 +22,10 @@ int main(int argc, const char** argv)
         return -1;
     }
     const char* childStr = "APPLICATION: After vfork in child\n";
-    size_t childStrLen   = strlen(childStr);
+    size_t childStrLen = strlen(childStr);
 
-    char* newArg[2];
-    newArg[0] = (char*)argv[1];
+    char *newArg[2];
+    newArg[0] = (char *)argv[1];
     newArg[1] = NULL;
 
     pid_t child_id = vfork();

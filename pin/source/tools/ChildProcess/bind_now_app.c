@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,7 +19,7 @@
 
 void check_ld_bind()
 {
-    const char* bind = getenv("LD_BIND_NOW");
+    const char *bind = getenv("LD_BIND_NOW");
     if (bind)
     {
         fprintf(stderr, "Found LD_BIND_NOW, exiting...\n");
@@ -27,7 +27,7 @@ void check_ld_bind()
     }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int status = 0;
     pid_t pid;
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
         if (argc > 1 && strcmp(argv[1], "-child") == 0)
         {
             // execute the same application but without params
-            char* childArgvArray[2];
+            char *childArgvArray[2];
             childArgvArray[0] = argv[0];
             childArgvArray[1] = NULL;
             fprintf(stderr, "Going to execv...\n");
@@ -61,5 +61,5 @@ int main(int argc, char* argv[])
     }
 
     fprintf(stderr, "LD_BIND_NOW was not found in %d\n", getpid());
-    return (0);
+    return(0);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,51 +15,65 @@
 #include <stdio.h>
 #include "pin.H"
 
-ADDRINT globalIpAtReadBefore                        = 0;
-ADDRINT globalEaReadBefore                          = 0;
-ADDRINT globalRegInstPtrAtReadBefore                = 0;
-ADDRINT globalIpOfReadRecordedAtInstrumentationTime = 0;
-ADDRINT globalRegInstPtrAtReadAfter                 = 0;
-int globalReadInsSize                               = 0;
+ADDRINT globalIpAtReadBefore=0;
+ADDRINT globalEaReadBefore=0;
+ADDRINT globalRegInstPtrAtReadBefore=0;
+ADDRINT globalIpOfReadRecordedAtInstrumentationTime=0;
+ADDRINT globalRegInstPtrAtReadAfter = 0;
+int globalReadInsSize=0;
 
-ADDRINT globalIpAtWriteBefore                        = 0;
-ADDRINT globalEaWriteBefore                          = 0;
-ADDRINT globalRegInstPtrAtWriteBefore                = 0;
-ADDRINT globalIpOfWriteRecordedAtInstrumentationTime = 0;
-ADDRINT globalRegInstPtrAtWriteAfter                 = 0;
-int globalWriteInsSize                               = 0;
+ADDRINT globalIpAtWriteBefore=0;
+ADDRINT globalEaWriteBefore=0;
+ADDRINT globalRegInstPtrAtWriteBefore=0;
+ADDRINT globalIpOfWriteRecordedAtInstrumentationTime=0;
+ADDRINT globalRegInstPtrAtWriteAfter = 0;
+int globalWriteInsSize=0;
 
-BOOL instrumentedReadFromIpWithNoOffset  = FALSE;
+BOOL instrumentedReadFromIpWithNoOffset = FALSE;
 BOOL instrumentedWriteFromIpWithNoOffset = FALSE;
 
-static void IpReadBefore(ADDRINT ip, ADDRINT ea, ADDRINT rip)
+static void
+IpReadBefore(ADDRINT ip, ADDRINT ea, ADDRINT rip)
 {
-    globalIpAtReadBefore         = ip;
-    globalEaReadBefore           = ea;
+    globalIpAtReadBefore = ip;
+    globalEaReadBefore = ea;
     globalRegInstPtrAtReadBefore = rip;
 }
 
-static void IpWriteBefore(ADDRINT ip, ADDRINT ea, ADDRINT rip)
+static void
+IpWriteBefore(ADDRINT ip, ADDRINT ea, ADDRINT rip)
 {
-    globalIpAtWriteBefore         = ip;
-    globalEaWriteBefore           = ea;
+    globalIpAtWriteBefore = ip;
+    globalEaWriteBefore = ea;
     globalRegInstPtrAtWriteBefore = rip;
 }
 
-static void IpReadAfter(ADDRINT rip) { globalRegInstPtrAtReadAfter = rip; }
-
-static void IpWriteAfter(ADDRINT rip) { globalRegInstPtrAtWriteAfter = rip; }
-
-VOID Instruction(INS ins, VOID* v)
+static void
+IpReadAfter(ADDRINT rip)
 {
+    globalRegInstPtrAtReadAfter = rip;
+}
+
+static void
+IpWriteAfter(ADDRINT rip)
+{
+    globalRegInstPtrAtWriteAfter = rip;
+}
+
+VOID Instruction(INS ins, VOID *v)
+{
+    
     if (INS_IsMemoryRead(ins) && !instrumentedReadFromIpWithNoOffset)
     {
+        
         BOOL readsFromIpWithNoOffset = FALSE;
         for (UINT32 i = 0; i < INS_OperandCount(ins); i++)
         {
-            if (!INS_OperandIsMemory(ins, i)) continue;
+            if (!INS_OperandIsMemory(ins, i))
+                continue;
+        
 
-            if (INS_OperandMemoryBaseReg(ins, i) == REG_INST_PTR && INS_OperandMemoryDisplacement(ins, i) == 0)
+            if (INS_OperandMemoryBaseReg(ins, i) == REG_INST_PTR && INS_OperandMemoryDisplacement(ins, i)==0)
             {
                 readsFromIpWithNoOffset = TRUE;
                 break;
@@ -70,13 +84,20 @@ VOID Instruction(INS ins, VOID* v)
             return;
         }
         instrumentedReadFromIpWithNoOffset = TRUE; // only instrument one of these
-        printf("Instrumenting [ip] read   %p   %s\n", INS_Address(ins), INS_Disassemble(ins).c_str());
-        fflush(stdout);
+        printf ("Instrumenting [ip] read   %p   %s\n", INS_Address(ins), INS_Disassemble(ins).c_str());
+        fflush (stdout);
         globalIpOfReadRecordedAtInstrumentationTime = INS_Address(ins);
-        globalReadInsSize                           = INS_Size(ins);
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)IpReadBefore, IARG_INST_PTR, IARG_MEMORYREAD_EA, IARG_REG_VALUE, REG_INST_PTR,
+        globalReadInsSize = INS_Size(ins);
+        INS_InsertCall(ins,IPOINT_BEFORE, 
+                       (AFUNPTR)IpReadBefore,
+                       IARG_INST_PTR,
+                       IARG_MEMORYREAD_EA,
+                       IARG_REG_VALUE, REG_INST_PTR,
                        IARG_END);
-        INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)IpReadAfter, IARG_REG_VALUE, REG_INST_PTR, IARG_END);
+		INS_InsertCall(ins,IPOINT_AFTER, 
+                       (AFUNPTR)IpReadAfter,
+                       IARG_REG_VALUE, REG_INST_PTR,
+                       IARG_END);
     }
     else if (INS_IsMemoryWrite(ins) && !instrumentedWriteFromIpWithNoOffset)
     {
@@ -92,9 +113,11 @@ VOID Instruction(INS ins, VOID* v)
         BOOL writesFromIpWithNoOffset = FALSE;
         for (UINT32 i = 0; i < INS_OperandCount(ins); i++)
         {
-            if (!INS_OperandIsMemory(ins, i)) continue;
+            if (!INS_OperandIsMemory(ins, i))
+                continue;
+        
 
-            if (INS_OperandMemoryBaseReg(ins, i) == REG_INST_PTR && INS_OperandMemoryDisplacement(ins, i) == 0)
+            if (INS_OperandMemoryBaseReg(ins, i) == REG_INST_PTR && INS_OperandMemoryDisplacement(ins, i)==0)
             {
                 writesFromIpWithNoOffset = TRUE;
                 break;
@@ -105,81 +128,80 @@ VOID Instruction(INS ins, VOID* v)
             return;
         }
         instrumentedReadFromIpWithNoOffset = TRUE; // only instrument one of these
-        printf("Instrumenting [ip] write  %p   %s\n", INS_Address(ins), INS_Disassemble(ins).c_str());
-        fflush(stdout);
+        printf ("Instrumenting [ip] write  %p   %s\n", INS_Address(ins), INS_Disassemble(ins).c_str());
+        fflush (stdout);
         globalIpOfWriteRecordedAtInstrumentationTime = INS_Address(ins);
-        globalWriteInsSize                           = INS_Size(ins);
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)IpWriteBefore, IARG_INST_PTR, IARG_MEMORYWRITE_EA, IARG_REG_VALUE,
-                       REG_INST_PTR, IARG_END);
-        INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)IpWriteAfter, IARG_REG_VALUE, REG_INST_PTR, IARG_END);
+        globalWriteInsSize = INS_Size(ins);
+        INS_InsertCall(ins,IPOINT_BEFORE, 
+                       (AFUNPTR)IpWriteBefore,
+                       IARG_INST_PTR,
+                       IARG_MEMORYWRITE_EA,
+                       IARG_REG_VALUE, REG_INST_PTR,
+                       IARG_END);
+		INS_InsertCall(ins,IPOINT_AFTER, 
+                       (AFUNPTR)IpWriteAfter,
+                       IARG_REG_VALUE, REG_INST_PTR,
+                       IARG_END);
     }
+    
+
 }
 
-VOID PrintFinalInfo(INT32 code, VOID* v)
+VOID PrintFinalInfo(INT32 code, VOID *v)
 {
-    printf("globalIpAtReadBefore %p globalEaReadBefore %p globalRegInstPtrAtReadBefore %p "
-           "globalIpOfReadRecordedAtInstrumentationTime %p globalRegInstPtrAtReadAfter %p globalReadInsSize %d\n",
-           globalIpAtReadBefore, globalEaReadBefore, globalRegInstPtrAtReadBefore, globalIpOfReadRecordedAtInstrumentationTime,
-           globalRegInstPtrAtReadAfter, globalReadInsSize);
-    printf("globalIpAtWriteBefore %p globalEaWriteBefore %p globalRegInstPtrAtWriteBefore %p "
-           "globalIpOfWriteRecordedAtInstrumentationTime %p globalRegInstPtrAtWriteAfter %p globalWriteInsSize %d\n",
-           globalIpAtWriteBefore, globalEaWriteBefore, globalRegInstPtrAtWriteBefore,
-           globalIpOfWriteRecordedAtInstrumentationTime, globalRegInstPtrAtWriteAfter, globalWriteInsSize);
+    printf ("globalIpAtReadBefore %p globalEaReadBefore %p globalRegInstPtrAtReadBefore %p globalIpOfReadRecordedAtInstrumentationTime %p globalRegInstPtrAtReadAfter %p globalReadInsSize %d\n", 
+            globalIpAtReadBefore, globalEaReadBefore, globalRegInstPtrAtReadBefore, globalIpOfReadRecordedAtInstrumentationTime, globalRegInstPtrAtReadAfter, globalReadInsSize);
+    printf ("globalIpAtWriteBefore %p globalEaWriteBefore %p globalRegInstPtrAtWriteBefore %p globalIpOfWriteRecordedAtInstrumentationTime %p globalRegInstPtrAtWriteAfter %p globalWriteInsSize %d\n", 
+            globalIpAtWriteBefore, globalEaWriteBefore, globalRegInstPtrAtWriteBefore, globalIpOfWriteRecordedAtInstrumentationTime, globalRegInstPtrAtWriteAfter, globalWriteInsSize);
     BOOL hadError = FALSE;
-    if (globalIpAtReadBefore == 0 || globalEaReadBefore == 0 || globalRegInstPtrAtReadBefore == 0 ||
-        globalIpOfReadRecordedAtInstrumentationTime == 0 || globalReadInsSize == 0)
+    if (globalIpAtReadBefore==0 || globalEaReadBefore==0 || globalRegInstPtrAtReadBefore==0 || globalIpOfReadRecordedAtInstrumentationTime==0 || globalReadInsSize==0)
     {
-        printf("Error on handling read from [REG_INST_PTR] appears to not have been instrumented\n");
+        printf ("Error on handling read from [REG_INST_PTR] appears to not have been instrumented\n");
         hadError = TRUE;
     }
-    if (globalIpAtWriteBefore == 0 || globalEaWriteBefore == 0 || globalRegInstPtrAtWriteBefore == 0 ||
-        globalIpOfWriteRecordedAtInstrumentationTime == 0 || globalWriteInsSize == 0)
+    if (globalIpAtWriteBefore==0 || globalEaWriteBefore==0 || globalRegInstPtrAtWriteBefore==0 || globalIpOfWriteRecordedAtInstrumentationTime==0 || globalWriteInsSize==0)
     {
-        printf("Error on handling write to [REG_INST_PTR] appears to not have been instrumented\n");
+        printf ("Error on handling write to [REG_INST_PTR] appears to not have been instrumented\n");
         hadError = TRUE;
     }
-    if (globalIpAtReadBefore != globalRegInstPtrAtReadBefore ||
-        globalIpAtReadBefore != globalIpOfReadRecordedAtInstrumentationTime)
+    if (globalIpAtReadBefore != globalRegInstPtrAtReadBefore || globalIpAtReadBefore != globalIpOfReadRecordedAtInstrumentationTime)
     {
-        printf("Error on handling read from [REG_INST_PTR] appears that the rip value received is not correct\n");
+        printf ("Error on handling read from [REG_INST_PTR] appears that the rip value received is not correct\n");
         hadError = TRUE;
     }
-    if (globalIpAtWriteBefore != globalRegInstPtrAtWriteBefore ||
-        globalIpAtWriteBefore != globalIpOfWriteRecordedAtInstrumentationTime)
+    if (globalIpAtWriteBefore != globalRegInstPtrAtWriteBefore || globalIpAtWriteBefore != globalIpOfWriteRecordedAtInstrumentationTime)
     {
-        printf("Error on handling write to [REG_INST_PTR] appears that the rip value received is not correct\n");
+        printf ("Error on handling write to [REG_INST_PTR] appears that the rip value received is not correct\n");
         hadError = TRUE;
     }
-    if (globalEaReadBefore != globalIpAtReadBefore + globalReadInsSize)
+    if (globalEaReadBefore != globalIpAtReadBefore+globalReadInsSize)
     {
-        printf("Error on handling read from [REG_INST_PTR] appears that the effective address value received is not correct\n");
+        printf ("Error on handling read from [REG_INST_PTR] appears that the effective address value received is not correct\n");
         hadError = TRUE;
     }
-    if (globalEaWriteBefore != globalIpAtWriteBefore + globalWriteInsSize)
+    if (globalEaWriteBefore != globalIpAtWriteBefore+globalWriteInsSize)
     {
-        printf("Error on handling write to [REG_INST_PTR] appears that the effective address value received is not correct\n");
+        printf ("Error on handling write to [REG_INST_PTR] appears that the effective address value received is not correct\n");
         hadError = TRUE;
     }
-    if (globalRegInstPtrAtReadAfter != globalIpAtReadBefore + globalReadInsSize)
+	if (globalRegInstPtrAtReadAfter != globalIpAtReadBefore+globalReadInsSize)
     {
-        printf(
-            "Error on handling read from [REG_INST_PTR] appears that REG_INST_PTR received on the IPOINT_AFTER is not correct\n");
+        printf ("Error on handling read from [REG_INST_PTR] appears that REG_INST_PTR received on the IPOINT_AFTER is not correct\n");
         hadError = TRUE;
     }
-    if (globalRegInstPtrAtWriteAfter != globalIpAtWriteBefore + globalWriteInsSize)
+    if (globalRegInstPtrAtWriteAfter != globalIpAtWriteBefore+globalWriteInsSize)
     {
-        printf(
-            "Error on handling write to [REG_INST_PTR] appears that REG_INST_PTR received on the IPOINT_AFTER is not correct\n");
+        printf ("Error on handling write to [REG_INST_PTR] appears that REG_INST_PTR received on the IPOINT_AFTER is not correct\n");
         hadError = TRUE;
     }
     if (!hadError)
     {
-        printf("SUCCESS\n");
+        printf ("SUCCESS\n");
     }
     fflush(stdout);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
@@ -189,6 +211,6 @@ int main(int argc, char* argv[])
     PIN_AddFiniFunction(PrintFinalInfo, 0);
 
     PIN_StartProgram();
-
+    
     return 0;
 }

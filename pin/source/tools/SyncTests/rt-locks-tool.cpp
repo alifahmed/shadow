@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,28 +13,29 @@
  * This tool is designed to run with the "rt-locks-app.cpp" application.  See
  * that source file for a description.
  */
-
+ 
 #include <iostream>
 #include <cstdlib>
 #include "pin.H"
 #include <sched.h>
 
-static void InstrumentIns(INS, VOID*);
-static void InstrumentRtn(RTN, VOID*);
-static void OnExit(INT32, VOID*);
+static void InstrumentIns(INS, VOID *);
+static void InstrumentRtn(RTN, VOID *);
+static void OnExit(INT32, VOID *);
 static void UseLocksWorker();
 static void UseLocksScheduler();
 static void CannotRunTest();
 
-static BOOL FoundDoWork    = FALSE;
+static BOOL FoundDoWork = FALSE;
 static BOOL FoundDoGetLock = FALSE;
-static BOOL TestNotRun     = FALSE;
+static BOOL TestNotRun = FALSE;
 
 static PIN_LOCK Lock;
-static unsigned long UseLockWorkerCount    = 0;
+static unsigned long UseLockWorkerCount = 0;
 static unsigned long UseLockSchedulerCount = 0;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -47,7 +48,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static void InstrumentIns(INS ins, VOID*)
+
+static void InstrumentIns(INS ins, VOID *)
 {
     RTN rtn = INS_Rtn(ins);
     if (RTN_Valid(rtn) && RTN_Name(rtn) == "DoWorkInstrumentedWithPin")
@@ -57,7 +59,7 @@ static void InstrumentIns(INS ins, VOID*)
     }
 }
 
-static void InstrumentRtn(RTN rtn, VOID*)
+static void InstrumentRtn(RTN rtn, VOID *)
 {
     if (RTN_Name(rtn) == "DoGetLockWithPin")
     {
@@ -75,7 +77,7 @@ static void InstrumentRtn(RTN rtn, VOID*)
     }
 }
 
-static void OnExit(INT32, VOID*)
+static void OnExit(INT32, VOID *)
 {
     if (!TestNotRun && (!FoundDoWork || !FoundDoGetLock))
     {
@@ -111,4 +113,7 @@ static void UseLocksScheduler()
     PIN_ReleaseLock(&Lock);
 }
 
-static void CannotRunTest() { TestNotRun = TRUE; }
+static void CannotRunTest()
+{
+    TestNotRun = TRUE;
+}

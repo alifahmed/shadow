@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,12 +15,12 @@
 
 namespace WINDOWS
 {
-#include <windows.h>
+    #include <windows.h>
 }
 
 using std::cout;
-using std::endl;
 using std::vector;
+using std::endl;
 //=======================================================================
 // This is a tool that instruments the GetLastError() function and changes
 // TEB.LastErrorValue. This change should not be seen in the application.
@@ -30,23 +30,27 @@ using std::vector;
 //=======================================================================
 
 // Address of the GetLastError API.
-ADDRINT pfnGetLastError = 0;
+ADDRINT pfnGetLastError = 0; 
+
 
 typedef UINT64 COUNTER;
-const UINT32 MAX_INDEX = 8000;
-const UINT32 VECT_SIZE = 4;
+const UINT32 MAX_INDEX = 8000; 
+const UINT32 VECT_SIZE = 4; 
 
 struct CSTATS
 {
-    CSTATS() { memset(counters, 0, sizeof(COUNTER) * MAX_INDEX); }
+    CSTATS() 
+    {
+        memset(counters, 0, sizeof(COUNTER)*MAX_INDEX);
+    }
     COUNTER counters[MAX_INDEX];
 };
 
 // very big static object initialized before main()
-vector< CSTATS > MyGlobalVect(VECT_SIZE);
+vector<CSTATS> MyGlobalVect(VECT_SIZE); 
 
 //=======================================================================
-//
+// 
 VOID InGetLastError()
 {
     static BOOL first = TRUE;
@@ -55,22 +59,22 @@ VOID InGetLastError()
         cout << "In GetLastError" << endl;
         // test very big variables on stack
         first = FALSE;
-        vector< CSTATS > myVect(VECT_SIZE);
+        vector<CSTATS> myVect(VECT_SIZE); 
         myVect[0].counters[0] = 1;
-        MyGlobalVect          = myVect;
+        MyGlobalVect = myVect;
 
         CSTATS myStat;
         myStat.counters[0] = 2;
-        MyGlobalVect[1]    = myStat;
+        MyGlobalVect[1] = myStat;
     }
     // Change TEB.LastErrorValue to something different from 777
     WINDOWS::SetLastError(999);
 }
 
 //=======================================================================
-// This function is called for every instruction and instruments the
+// This function is called for every instruction and instruments the 
 // GetLastError() function
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     if (INS_Address(ins) == pfnGetLastError)
     {
@@ -79,12 +83,14 @@ VOID Instruction(INS ins, VOID* v)
 }
 
 //=======================================================================
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
-    pfnGetLastError = (ADDRINT)WINDOWS::GetProcAddress(WINDOWS::GetModuleHandle("kernel32.dll"), "GetLastError");
-    PIN_Init(argc, argv);
+    pfnGetLastError = (ADDRINT)WINDOWS::GetProcAddress(
+                               WINDOWS::GetModuleHandle("kernel32.dll"), "GetLastError");
+    PIN_Init( argc, argv );
     INS_AddInstrumentFunction(Instruction, 0);
     PIN_StartProgram();
-
+    
     return 0;
 }
+

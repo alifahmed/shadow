@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,14 +13,19 @@
 #include "pin.H"
 #include "tool_macros.h"
 
-using std::cerr;
 using std::cout;
+using std::cerr;
 using std::endl;
 
 const char* checkFlagsFuncName = C_MANGLE("CheckFlags");
-const char* toolRtnName        = C_MANGLE("ToolRtn");
+const char* toolRtnName = C_MANGLE("ToolRtn");
 
-void PushfAnalysis() { cout << "TOOL INFO: In PushfAnalysis." << endl; }
+
+void PushfAnalysis()
+{
+    cout << "TOOL INFO: In PushfAnalysis." << endl;
+}
+
 
 VOID Image(IMG img, VOID* v)
 {
@@ -66,15 +71,15 @@ VOID Image(IMG img, VOID* v)
     }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialization.
     PIN_InitSymbols();
-    PIN_Init(argc, argv);
-
+    PIN_Init(argc,argv);
+    
     // Add instrumentation.
     IMG_AddInstrumentFunction(Image, 0);
-
+    
     // Start the application.
     PIN_StartProgramProbed(); // never returns
     return 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -10,7 +10,7 @@
  */
 
 #ifdef NDEBUG
-#undef NDEBUG
+# undef NDEBUG
 #endif
 #include <assert.h>
 #include <unistd.h>
@@ -24,7 +24,7 @@ char* myExe = NULL;
 void executeChildProcess(int pip)
 {
     int my_ppid = getppid();
-    size_t res  = (int)write(pip, &my_ppid, sizeof(my_ppid));
+    size_t res = (int)write(pip, &my_ppid, sizeof(my_ppid));
     assert(res == sizeof(my_ppid));
     close(pip);
 }
@@ -32,12 +32,11 @@ void executeChildProcess(int pip)
 void executeParentProcess(pid_t child, int pip)
 {
     int reported_pid = -1;
-    int status       = -1;
-    int res          = (int)read(pip, &reported_pid, sizeof(reported_pid));
+    int status = -1;
+    int res = (int)read(pip, &reported_pid, sizeof(reported_pid));
     assert(res == sizeof(reported_pid));
     close(pip);
-    while (0 > (res = waitpid(child, &status, 0)) && errno == EINTR)
-        ;
+    while (0 > (res = waitpid(child, &status, 0)) && errno == EINTR);
     assert(res == child);
     assert(status == 0);
     printf("my pid %d, ppid reported from child: %d\n", (int)getpid(), reported_pid);
@@ -81,10 +80,10 @@ int main(int argc, char* argv[])
     myExe = argv[0];
     if (argc == 2)
     {
-        char* endptr;
-        errno         = 0;
+        char *endptr;
+        errno = 0;
         const int pip = (int)strtol(argv[1], &endptr, 10);
-        assert(*endptr == 0 && pip >= 0 && 0 == errno);
+        assert (*endptr == 0 && pip >= 0 && 0 == errno);
         executeChildProcess(pip);
     }
     else

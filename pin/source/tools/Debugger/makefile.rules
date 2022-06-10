@@ -52,12 +52,10 @@ LIB_ROOTS :=
 
 ###### Place OS-specific definitions here ######
 
-
-
 # Linux
 ifeq ($(TARGET_OS),linux)
     TEST_TOOL_ROOTS += stop-resume-when-suspended check-if-thread-stopped
-    TEST_ROOTS += check-ftag simple-pindb-launch pindb-start-fini pindb-noprompt-kill pindb-detach pindb-abrupt-disconnect \
+    TEST_ROOTS += simple-pindb-launch pindb-start-fini pindb-noprompt-kill pindb-detach pindb-abrupt-disconnect \
                   pindb-kill-like-gdb pindb-simple-command pindb-step-custom-break pindb-simultaneous-toolbreak \
                   pindb-simultaneous-toolbreak-serialize pindb-simultaneous-toolbreak-squash pindb-invalidate-regs \
                   pindb-simultaneous-toolbreak-change pindb-simultaneous-toolbreak-step pindb-simple-simultaneous-multi \
@@ -81,20 +79,26 @@ ifeq ($(TARGET_OS),linux)
                   set_xmm_scratches set_xmm_scratches_before_breakpoint set_xmm_scratches_before_breakpoint_and_set_xmm_reg \
                   set_xmm_scratches_for_ymmtest null-emulator-$(TARGET) \
                   app-pause-in-app-thread-tool app-pause-in-int-thread-tool library-load-tool
-    APP_ROOTS += check-ftag simple-pindb simple simple-static exec fork action-pending-app thread checkpoint-app bptest-$(TARGET) \
+    APP_ROOTS += simple-pindb simple simple-static exec fork action-pending-app thread checkpoint-app bptest-$(TARGET) \
                  watchpoint-app callerapp fibonacci sleep-unix intercept-app pc-change-bp pc-change-async xmm-$(TARGET) \
                  mt-exit signal-catch reattach-loop pthread-bare-exit pthread-bare-exitgroup thread-$(OS_TYPE) \
                  ymm-$(TARGET) zmm-$(TARGET) debugger-shell-app-$(TARGET) app-pause-app pick-random-port bphandler_app \
                  dlopen-dlclose
-    OBJECT_ROOTS += check-ftag_asm simple-pindb-asm-$(TARGET) zmm-asm-$(TARGET)
+    OBJECT_ROOTS += simple-pindb-asm-$(TARGET) zmm-asm-$(TARGET)
     ifeq ($(TARGET),ia32)
         TEST_ROOTS += access-64-on-32
+    endif
+
+    ifeq ($(shell $(TOOLS_ROOT)/Utils/testStaticLibs), 1)
+        TEST_ROOTS := $(filter-out bp-icount, $(TEST_ROOTS))
+        TOOL_ROOTS := $(filter-out int3-count, $(TOOL_ROOTS))
+        APP_ROOTS := $(filter-out simple-static, $(APP_ROOTS))
     endif
 endif
 
 # macOS*
 ifeq ($(TARGET_OS),mac)
-    TEST_ROOTS += check-ftag app-pause-in-app-thread app-pause-in-int-thread \
+    TEST_ROOTS += app-pause-in-app-thread app-pause-in-int-thread \
                   simple-pindb-launch pindb-start-fini pindb-noprompt-kill pindb-detach pindb-abrupt-disconnect \
                   pindb-kill-like-gdb pindb-simple-command pindb-step-custom-break pindb-simultaneous-toolbreak \
                   pindb-simultaneous-toolbreak-serialize pindb-simultaneous-toolbreak-squash pindb-invalidate-regs \
@@ -105,9 +109,9 @@ ifeq ($(TARGET_OS),mac)
 # pindb-attach-after-custom-stop pindb-simultaneous-toolbreak-attach
     TOOL_ROOTS += app-pause-in-app-thread-tool app-pause-in-int-thread-tool default_mac_tool simple-command-tool \
                   invalidate-regs use-debugger-shell breaktool bphandler stack-debugger debugger-type
-    APP_ROOTS += check-ftag app-pause-app simple simple-pindb thread-$(OS_TYPE) pthread-bare-exit pthread-bare-exitgroup \
+    APP_ROOTS += app-pause-app simple simple-pindb thread-$(OS_TYPE) pthread-bare-exit pthread-bare-exitgroup \
     			 zmm-$(TARGET) bphandler_app fibonacci
-    OBJECT_ROOTS += check-ftag_asm simple-pindb-asm-$(TARGET) zmm-asm-$(TARGET)
+    OBJECT_ROOTS += simple-pindb-asm-$(TARGET) zmm-asm-$(TARGET)
 endif
 
 # Windows
@@ -134,28 +138,28 @@ ifeq ($(TARGET_OS),windows)
     endif
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
-ifeq ($(wildcard $(CHECKAVX)),)
-    $(error Unable to proceed. Run "make avxcheck", then try again)
-else
-    MACHINE_SUPPORTS_AVX_INSTRUCTIONS := $(shell $(CHECKAVX) | $(GREP) Yes)
+
+ifeq ($(TARGET_OS),windows)
+    #pindb-win-step-exception fails on pinw32-12. Mantis: 3072. 
+    TEST_ROOTS := $(filter-out pindb-win-step-exception, $(TEST_ROOTS))
+    # This test is disabled until Mantis 1839 is fixed.
+    TEST_ROOTS := $(filter-out simple-pindb-attach, $(TEST_ROOTS))
+    # This test is disabled until Mantis 4566 is fixed
+    TEST_TOOL_ROOTS := $(filter-out stop-resume-when-suspended, $(TEST_TOOL_ROOTS))
 endif
 
-# For machines that don't support AVX, exclude these tests as they contain hard coded AVX
-# instructions that result with illegal instruction.
-ifneq ($(MACHINE_SUPPORTS_AVX_INSTRUCTIONS),Yes)
-    TEST_ROOTS := $(filter-out ymm_with_set_xmm_scratch_regs_tool ymm, $(TEST_ROOTS))
+# There is a bug with PinADX when using early-injection (the default) on 32-bit applications when running
+# on a 64-bit host and when using versions of Windows earlier than Vista.  That bug causes this test to
+# fail, so we disable it in this case.  We can re-enable this test when Mantis #2385 is fixed.
+#
+osname := $(shell uname -s)
+ifeq ($(findstring CYGWIN_NT-5,$(osname))-$(HOST_ARCH)-$(TARGET),CYGWIN_NT-5-intel64-ia32)
+    TEST_ROOTS := $(filter-out pindb-start-fini, $(TEST_ROOTS))
 endif
 
 ifeq ($(TARGET_OS),linux)
-
-    ifeq ($(shell $(TOOLS_ROOT)/Utils/testStaticLibs), 1)
-        TEST_ROOTS := $(filter-out bp-icount, $(TEST_ROOTS))
-        TOOL_ROOTS := $(filter-out int3-count, $(TOOL_ROOTS))
-        APP_ROOTS := $(filter-out simple-static, $(APP_ROOTS))
-    endif
-
     GDB_VERSION_IF_BEFORE_66 := $(shell $(TOOLS_ROOT)/Utils/testToolVersion $(GDB) le 6.6)
     GDB_VERSION_IF_BEFORE_74 := $(shell $(TOOLS_ROOT)/Utils/testToolVersion $(GDB) le 7.4)
     GDB_VERSION_IF_BEFORE_80 := $(shell $(TOOLS_ROOT)/Utils/testToolVersion $(GDB) le 8.0)
@@ -184,107 +188,33 @@ ifeq ($(TARGET_OS),linux)
     endif
 endif
 
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
-
-ifeq ($(TARGET_OS),windows)
-    # This test is disabled until Mantis 1839 is fixed.
-    TEST_ROOTS := $(filter-out simple-pindb-attach, $(TEST_ROOTS))
-    # This test is disabled until Mantis 4566 is fixed
-    TEST_TOOL_ROOTS := $(filter-out stop-resume-when-suspended, $(TEST_TOOL_ROOTS))
-endif
-
-ifeq ($(TARGET_OS),linux)
-    # see mantis 4779 debugger update caused 32 bit to fail on ubuntu 18.04
-    # threrefore we filter them till debugger is fixed
-    FILTER_DEBUG_32BIT := 0
-    ifeq ($(TARGET),ia32)
-      ifeq ($(DIST_NAME_UBUNTU),1)
-        FILTER_DEBUG_32BIT := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion eq 18.04)
-      endif
-    endif
-    ifeq ($(FILTER_DEBUG_32BIT),1)
-        TEST_ROOTS := $(filter-out action-pending allow-remote bphandler bptest-ia32 breaktool_const_context breaktool-wait breaktool \
-                                   debugger-shell-breakpoints debugger-shell-tracepoints emu-simple execfail fork gdb-detach-reattach \
-                                   gdb-pthread-step-exit intercept-breakpoint pc-change-async pc-change-bp set-mode siginfo signal-step simple \
-                                   simultaneous-toolbreak_const_context simultaneous-toolbreak-change simultaneous-toolbreak-squash \
-                                   simultaneous-toolbreak stack-debugger thread watchpoint_const_context \
-                                   xmm-ia32_with_set_xmm_scratch_regs_before_breakpoint_tool_and_set_xmm_reg \
-                                   xmm-ia32_with_set_xmm_scratch_regs_before_breakpoint_tool_const_context \
-                                   xmm-ia32_with_set_xmm_scratch_regs_before_breakpoint_tool xmm-ia32 \
-                                   ymm_with_set_xmm_scratch_regs_tool ymm zmm , $(TEST_ROOTS))
-    endif 
-endif
-
-# There is a bug with PinADX when using early-injection (the default) on 32-bit applications when running
-# on a 64-bit host and when using versions of Windows earlier than Vista.  That bug causes this test to
-# fail, so we disable it in this case.  We can re-enable this test when Mantis #2385 is fixed.
-#
-osname := $(shell uname -s)
-ifeq ($(findstring CYGWIN_NT-5,$(osname))-$(HOST_ARCH)-$(TARGET),CYGWIN_NT-5-intel64-ia32)
-    TEST_ROOTS := $(filter-out pindb-start-fini, $(TEST_ROOTS))
-endif
-
 ifeq ($(TARGET_OS),linux)
     # See mantis 4613
     TEST_ROOTS := $(filter-out gdb-svr4-libraries-extension, $(TEST_ROOTS))
     
-    SKIP_DBG_TESTS = 0
-    ifeq ($(TARGET),ia32)
-        ifeq ($(DIST_NAME_RHEL),1)
-            DIST_VER_GE_75 := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion ge 7.5)
-            ifeq ($(DIST_VER_GE_75),1)
-                SKIP_DBG_TESTS = 1
+    ifeq ($(DIST_NAME_RHEL),1)
+        ifeq ($(TARGET),ia32)
+            DIST_VER_75_OR_76 := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion eq 7.5)
+            ifeq ($(DIST_VER_75_OR_76),0)
+                DIST_VER_75_OR_76 := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion eq 7.6)
             endif
-        endif
-        ifeq ($(DIST_NAME_CENTOS),1)
-            # In CentOS 7.8, VERSION has a value of 7 and not 7.8
-            DIST_VER_GE_7 := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion ge 7)
-            ifeq ($(DIST_VER_GE_7),1)
-                SKIP_DBG_TESTS = 1
-            endif
-        endif
-    endif
             
-    ifeq ($(SKIP_DBG_TESTS),1)
-        # Disable 32 bit tests on rhel7.5 & rhel7.6 & rhel7.8, Centos7.8 - see mantis 4677
-        TEST_ROOTS := $(filter-out action-pending allow-remote bphandler bptest-ia32 breaktool_const_context \
-                          breaktool-wait breaktool debugger-shell-breakpoints debugger-shell-tracepoints execfail fork \
-                          gdb-detach-reattach gdb-pthread-step-exit intercept-breakpoint invalid-write pc-change-async \
-                          pc-change-bp set-mode siginfo signal-step simple simultaneous-toolbreak_const_context \
-                          simultaneous-toolbreak-change simultaneous-toolbreak-squash simultaneous-toolbreak \
-                          stack-debugger thread watchpoint_const_context \
-                          xmm-ia32_with_set_xmm_scratch_regs_before_breakpoint_tool_and_set_xmm_reg \
-                          xmm-ia32_with_set_xmm_scratch_regs_before_breakpoint_tool_const_context \
-                          xmm-ia32_with_set_xmm_scratch_regs_before_breakpoint_tool xmm-ia32 \
-                          ymm_with_set_xmm_scratch_regs_tool ymm pindb-simultaneous-toolbreak check-ftag, $(TEST_ROOTS))
-    endif
-endif
-
-# See mantis 4570
-ifeq ($(TARGET_OS),windows)
-    TEST_ROOTS := $(filter-out pindb-zmm, $(TEST_ROOTS))
-endif
-
-# see mantis 4821
-ifeq ($(TARGET_OS),linux)
-    ifeq ($(DIST_NAME_UBUNTU),1)
-        DIST_VER_GE_1910 := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion ge 19.10)
-        ifeq ($(DIST_VER_GE_1910),1)
-            TEST_ROOTS := $(filter-out bphandler fork gdb-detach-reattach, $(TEST_ROOTS))
-            APP_ROOTS := $(filter-out bphandler_app, $(APP_ROOTS))
+            ifeq ($(DIST_VER_75_OR_76),1)
+                # Disable 32 bit tests on rhel7.5 & thel7.6 - see mantis 4677
+                TEST_ROOTS := $(filter-out action-pending allow-remote bphandler bptest-ia32 breaktool_const_context \
+                                  breaktool-wait breaktool debugger-shell-breakpoints debugger-shell-tracepoints execfail fork \
+                                  gdb-detach-reattach gdb-pthread-step-exit intercept-breakpoint invalid-write pc-change-async \
+                                  pc-change-bp set-mode siginfo signal-step simple simultaneous-toolbreak_const_context \
+                                  simultaneous-toolbreak-change simultaneous-toolbreak-squash simultaneous-toolbreak \
+                                  stack-debugger thread watchpoint_const_context \
+                                  xmm-ia32_with_set_xmm_scratch_regs_before_breakpoint_tool_and_set_xmm_reg \
+                                  xmm-ia32_with_set_xmm_scratch_regs_before_breakpoint_tool_const_context \
+                                  xmm-ia32_with_set_xmm_scratch_regs_before_breakpoint_tool xmm-ia32 \
+                                  ymm_with_set_xmm_scratch_regs_tool ymm pindb-simultaneous-toolbreak, $(TEST_ROOTS))
+            endif
         endif
     endif
-endif
-
-ifeq ($(TARGET_OS),mac)
-    # See mantis 4602
-    TEST_ROOTS := $(filter-out pindb-invalidate-regs, $(TEST_ROOTS))
     
-    # See mantis 4834
-    TEST_ROOTS := $(filter-out pindb-abrupt-disconnect pindb-kill-like-gdb pindb-noprompt-kill pindb-zmm, $(TEST_ROOTS))
 endif
 
 ###### Define the sanity subset ######
@@ -299,13 +229,22 @@ ifeq ($(TARGET_OS),mac)
                                   pindb-simultaneous-toolbreak-squash pindb-simultaneous-toolbreak-change \
                                   pindb-simultaneous-toolbreak-step, $(SANITY_SUBSET))
 
+    ifeq ($(TARGET),ia32)
+        # See mantis 4589
+        SANITY_SUBSET := $(filter-out fork breaktool simple, $(SANITY_SUBSET))
+        # See mantis 4601
+        SANITY_SUBSET := $(filter-out stack-debugger, $(SANITY_SUBSET))
+        # See mantis 4602
+        SANITY_SUBSET := $(filter-out pindb-invalidate-regs, $(SANITY_SUBSET))
+    endif
+
     # See mantis 4679
     SANITY_SUBSET := $(filter-out pindb-simultaneous-multi-serialize, $(SANITY_SUBSET))
 endif
 
-ifeq ($(TARGET_OS),linux)
-	# see mnatis 4903 - this test fails intermittently on Linux
-    SANITY_SUBSET := $(filter-out ymm_with_set_xmm_scratch_regs_tool, $(SANITY_SUBSET))
+ifeq ($(TARGET_OS),windows)
+    # See mantis 4570
+    SANITY_SUBSET := $(filter-out pindb-zmm, $(SANITY_SUBSET))
 endif
 
 
@@ -409,23 +348,6 @@ execfail.test: $(OBJDIR)exec$(EXE_SUFFIX) $(DEFAULT_TOOL)
 	$(DBG) $(DBG_CMD_SRC_FLAG) $(OBJDIR)$(@:.test=.$(DBG_STR)in) $(DBG_CMD_MORE_FLAGS) $(OBJDIR)exec$(EXE_SUFFIX) > $(OBJDIR)$(@:.test=.$(DBG_STR)out)
 	$(PYCOMPARE) -p $(@:.test=.compare$(COMPARE_RE_FILE_SUFFIX)) -c $(OBJDIR)$(@:.test=.$(DBG_STR)out)
 	$(RM) -f $(OBJDIR)$(@:.test=.out) $(OBJDIR)$(@:.test=.$(DBG_STR)in) $(OBJDIR)$(@:.test=.$(DBG_STR)out)
-
-
-#Test that Pin delivers the correct ftag value to the debugger (16 bits instead of 8 bits).
-check-ftag.test: $(OBJDIR)check-ftag$(EXE_SUFFIX) $(DEFAULT_TOOL)
-	$(RM) -f $(OBJDIR)$(@:.test=.out)
-	$(PIN) $(PINFLAGS_DEBUG) $(PIN_CMD_DEFAULT_TOOL) -- $(OBJDIR)check-ftag$(EXE_SUFFIX) > $(OBJDIR)$(@:.test=.out) &
-	count=0; \
-	until $(GREP) '$(BATCH_CMD_CONNECT_REMOTE)' $(OBJDIR)$(@:.test=.out) > /dev/null || $(BASHTEST) $$count -gt $(TLIMIT); \
-	    do sleep 1; count=`expr $$count + 1`; done
-	echo '$(BATCH_CMD_TIMEOUT_LIMIT)' > $(OBJDIR)$(@:.test=.$(DBG_STR)in)
-	$(GREP) '$(BATCH_CMD_CONNECT_REMOTE)' $(OBJDIR)$(@:.test=.out) >> $(OBJDIR)$(@:.test=.$(DBG_STR)in)
-	cat $(@:.test=.$(DBG_STR)) >> $(OBJDIR)$(@:.test=.$(DBG_STR)in)
-	$(DBG) $(DBG_CMD_SRC_FLAG) $(OBJDIR)$(@:.test=.$(DBG_STR)in) $(DBG_CMD_MORE_FLAGS) $(OBJDIR)check-ftag$(EXE_SUFFIX) > $(OBJDIR)$(@:.test=.$(DBG_STR)out)
-	$(PYCOMPARE) -p $(@:.test=-)$(TARGET_OS).compare -c $(OBJDIR)$(@:.test=.$(DBG_STR)out)
-	$(RM) -f  $(OBJDIR)$(@:.test=.$(DBG_STR)in) $(OBJDIR)$(@:.test=.$(DBG_STR)out)
-
-
 
 # Verify we can debug across a parent call to fork().
 #
@@ -1010,7 +932,6 @@ ymm_with_set_xmm_scratch_regs_tool.test: $(OBJDIR)set_xmm_scratches_for_ymmtest$
 	cat $(@:.test=.$(DBG_STR)) >> $(OBJDIR)$(@:.test=.$(DBG_STR)in)
 	$(DBG) $(DBG_CMD_SRC_FLAG) $(OBJDIR)$(@:.test=.$(DBG_STR)in) $(DBG_CMD_MORE_FLAGS) $(OBJDIR)ymm-$(TARGET)$(EXE_SUFFIX) > $(OBJDIR)$(@:.test=.$(DBG_STR)out) 2>&1
 	$(PYCOMPARE) -p $(@:.test=.compare$(COMPARE_RE_FILE_SUFFIX)) -c $(OBJDIR)$(@:.test=.$(DBG_STR)out)
-	sleep 5
 	cat set_xmm_scratches_for_ymmtest.out
 	$(QGREP) instrumented set_xmm_scratches_for_ymmtest.out
 	$(RM) -f $(OBJDIR)$(@:.test=.out) $(OBJDIR)$(@:.test=.$(DBG_STR)in) $(OBJDIR)$(@:.test=.$(DBG_STR)out)
@@ -1363,9 +1284,9 @@ set-mode.test: $(OBJDIR)simple$(EXE_SUFFIX) $(OBJDIR)set-mode-tool$(PINTOOL_SUFF
 
 # Test that PinDB can detach from Pin.
 #
-pindb-detach.test: $(OBJDIR)simple-pindb$(EXE_SUFFIX) $(DEFAULT_TOOL)
+pindb-detach.test: $(OBJDIR)simple-pindb$(EXE_SUFFIX)
 	$(OBJDIR)simple-pindb$(EXE_SUFFIX) detach $(OBJDIR)$(@:.test=.pindbin.0) $(OBJDIR)$(@:.test=.compare)
-	echo "set pinargs $(PIN_USERFLAGS) $(PIN_CMD_DEFAULT_TOOL)" > $(OBJDIR)$(@:.test=.pindbin)
+	echo "set pinargs $(PIN_USERFLAGS)" > $(OBJDIR)$(@:.test=.pindbin)
 	echo "run $(OBJDIR)simple-pindb$(EXE_SUFFIX)" >> $(OBJDIR)$(@:.test=.pindbin)
 	cat $(OBJDIR)$(@:.test=.pindbin.0) >> $(OBJDIR)$(@:.test=.pindbin)
 	$(PINDB_WITH_LIBPATH) --pin=$(BARE_PIN) --timeout=$(TLIMIT) --cpu=$(TARGET) --noprompt \
@@ -1490,8 +1411,8 @@ pindb-win-thread-stress.test: $(OBJDIR)win-thread-stress$(EXE_SUFFIX)
 # still exists.  We expect the debugger to stop after the thread exits, leaving the focus on
 # the one remaining thread.
 #
-pindb-pthread-step-exit.test: $(OBJDIR)pthread-bare-exit$(EXE_SUFFIX) $(DEFAULT_TOOL)
-	echo "set pinargs $(PIN_USERFLAGS) $(PIN_CMD_DEFAULT_TOOL)" > $(OBJDIR)$(@:.test=.pindbin)
+pindb-pthread-step-exit.test: $(OBJDIR)pthread-bare-exit$(EXE_SUFFIX)
+	echo "set pinargs $(PIN_USERFLAGS)" > $(OBJDIR)$(@:.test=.pindbin)
 	echo "run $(OBJDIR)pthread-bare-exit$(EXE_SUFFIX)" >> $(OBJDIR)$(@:.test=.pindbin)
 	cat $(@:.test=.pindb) >> $(OBJDIR)$(@:.test=.pindbin)
 	$(PINDB_WITH_LIBPATH) --pin=$(BARE_PIN) --timeout=$(TLIMIT) --cpu=$(TARGET) --noprompt \
@@ -1518,8 +1439,8 @@ gdb-pthread-step-exit.test: $(OBJDIR)pthread-bare-exit$(EXE_SUFFIX)
 # Test that we can debug an application where one thread exits the entire process
 # while another thread still exists.
 #
-pindb-pthread-cont-exitgroup.test: $(OBJDIR)pthread-bare-exitgroup$(EXE_SUFFIX) $(DEFAULT_TOOL)
-	echo "set pinargs $(PIN_USERFLAGS) $(PIN_CMD_DEFAULT_TOOL)" > $(OBJDIR)$(@:.test=.pindbin)
+pindb-pthread-cont-exitgroup.test: $(OBJDIR)pthread-bare-exitgroup$(EXE_SUFFIX)
+	echo "set pinargs $(PIN_USERFLAGS)" > $(OBJDIR)$(@:.test=.pindbin)
 	echo "run $(OBJDIR)pthread-bare-exitgroup$(EXE_SUFFIX)" >> $(OBJDIR)$(@:.test=.pindbin)
 	cat $(@:.test=.pindb) >> $(OBJDIR)$(@:.test=.pindbin)
 	$(PINDB_WITH_LIBPATH) --pin=$(BARE_PIN) --timeout=$(TLIMIT) --cpu=$(TARGET) --noprompt \
@@ -1531,8 +1452,8 @@ pindb-pthread-cont-exitgroup.test: $(OBJDIR)pthread-bare-exitgroup$(EXE_SUFFIX) 
 # another thread still exists.  We expect the debugger to stop after the exit call
 # and indicate that the process is terminated.
 #
-pindb-pthread-step-exitgroup.test: $(OBJDIR)pthread-bare-exitgroup$(EXE_SUFFIX) $(DEFAULT_TOOL)
-	echo "set pinargs $(PIN_USERFLAGS) $(PIN_CMD_DEFAULT_TOOL)" > $(OBJDIR)$(@:.test=.pindbin)
+pindb-pthread-step-exitgroup.test: $(OBJDIR)pthread-bare-exitgroup$(EXE_SUFFIX)
+	echo "set pinargs $(PIN_USERFLAGS)" > $(OBJDIR)$(@:.test=.pindbin)
 	echo "run $(OBJDIR)pthread-bare-exitgroup$(EXE_SUFFIX)" >> $(OBJDIR)$(@:.test=.pindbin)
 	cat $(@:.test=.pindb) >> $(OBJDIR)$(@:.test=.pindbin)
 	$(PINDB_WITH_LIBPATH) --pin=$(BARE_PIN) --timeout=$(TLIMIT) --cpu=$(TARGET) --noprompt \
@@ -1913,9 +1834,6 @@ $(OBJDIR)set_xmm_scratches_for_ymmtest$(PINTOOL_SUFFIX): $(OBJDIR)set_xmm_scratc
 	$(LINKER) $(TOOL_LDFLAGS) $(LINK_EXE)$@ $^ $(TOOL_LPATHS) $(TOOL_LIBS)
 
 ###### Special applications' build rules ######
-
-$(OBJDIR)check-ftag$(EXE_SUFFIX): check-ftag.c $(OBJDIR)check-ftag_asm$(OBJ_SUFFIX)
-	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS)
 
 $(OBJDIR)simple$(EXE_SUFFIX): simple.c
 	$(APP_CC) $(APP_CXXFLAGS_NOOPT) $(DBG_INFO_CXX_ALWAYS) $(COMP_EXE)$@ $< $(APP_LDFLAGS_NOOPT) $(APP_LIBS) $(DBG_INFO_LD_ALWAYS)

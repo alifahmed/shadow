@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,10 +16,11 @@
 
 #include "pin.H"
 
-static VOID InstrumentInstruction(INS, VOID*);
-static void OnInstruction(VOID*);
+static VOID InstrumentInstruction(INS, VOID *);
+static void OnInstruction(VOID *);
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
@@ -29,15 +30,17 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static VOID InstrumentInstruction(INS ins, VOID* v)
+
+static VOID InstrumentInstruction(INS ins, VOID *v)
 {
     INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(OnInstruction), IARG_PTR, (void*)16, IARG_END);
 }
 
+
 // The test assumes that OnInstruction is inline-able by pin.
-static void OnInstruction(VOID* ptr)
+static void OnInstruction(VOID *ptr)
 {
     // Generate a fault.
     //
-    *(int*)ptr = 0;
+    *(int *)ptr = 0;
 }

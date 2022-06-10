@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,21 +14,28 @@
 
 UINT64 icount = 0;
 
-ADDRINT SwizzleAddress(ADDRINT val) { return val; }
+ADDRINT SwizzleAddress(ADDRINT val)
+{
+    return val;
+}
 
-VOID Instruction(INS ins, VOID* v)
+
+VOID Instruction(INS ins, VOID *v)
 {
     REG basereg = INS_dec(ins)->basereg;
 
-    if (basereg == REG_INVALID()) return;
+    if (basereg == REG_INVALID())
+        return;
 
     // Not allowed to change esp
-    if (basereg == REG_ESP) return;
+    if (basereg == REG_ESP)
+        return;
 
-    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)SwizzleAddress, IARG_REG_VALUE, basereg, IARG_RETURN_REGS, basereg, IARG_END);
+    INS_InsertCall(ins, IPOINT_BEFORE,
+                   (AFUNPTR)SwizzleAddress, IARG_REG_VALUE, basereg, IARG_RETURN_REGS, basereg, IARG_END);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

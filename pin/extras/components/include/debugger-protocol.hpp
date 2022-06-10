@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -22,12 +22,13 @@
 #include "debugger-protocol/forward.hpp"
 
 #if defined(DEBUGGER_PROTOCOL_BUILD_SHARED)
-#define DEBUGGER_PROTOCOL_API _STLP_EXPORT_DECLSPEC
+#   define DEBUGGER_PROTOCOL_API    _STLP_EXPORT_DECLSPEC
 #elif defined(DEBUGGER_PROTOCOL_USE_SHARED)
-#define DEBUGGER_PROTOCOL_API _STLP_IMPORT_DECLSPEC
+#   define DEBUGGER_PROTOCOL_API    _STLP_IMPORT_DECLSPEC
 #else
-#define DEBUGGER_PROTOCOL_API
+#   define DEBUGGER_PROTOCOL_API
 #endif
+
 
 /*! @mainpage DEBUGGER_PROTOCOL library
  *
@@ -46,8 +47,8 @@
  */
 
 /*! @brief The DEBUGGER_PROTOCOL library. */
-namespace DEBUGGER_PROTOCOL
-{
+namespace DEBUGGER_PROTOCOL {
+
 /*!
  * Identifier representing a target thread, typically an O/S identifier.  The value zero is reserved.
  * Thread ID's may be reused once a thread exits.
@@ -141,15 +142,16 @@ typedef void EVENT_INFO;
  */
 typedef void THREAD_INFO;
 
+
 /*!
  * Flags that can be used with the Initialize() function.
  */
 enum INITIALIZE_FLAG
 {
     INITIALIZE_FLAG_NONE = 0,
-    INITIALIZE_FLAG_TCP  = (1 << 0) ///< Initialize for a TCP front- or back-end connection.
+    INITIALIZE_FLAG_TCP = (1<<0)        ///< Initialize for a TCP front- or back-end connection.
 };
-typedef UINT32 INITIALIZE_FLAGS; ///< Bit mask of INITIALIZE_FLAG's.
+typedef UINT32 INITIALIZE_FLAGS;  ///< Bit mask of INITIALIZE_FLAG's.
 
 /*!
  * Possible O/S types.
@@ -171,10 +173,10 @@ enum OS
 enum
 {
     REG_INVALID,
-    REG_PC,    ///< The program counter.
-    REG_FP,    ///< The frame pointer.
-    REG_SP,    ///< The stack pointer.
-    REG_FLAGS, ///< The flags.
+    REG_PC,         ///< The program counter.
+    REG_FP,         ///< The frame pointer.
+    REG_SP,         ///< The stack pointer.
+    REG_FLAGS,      ///< The flags.
     REG_END
 };
 
@@ -183,12 +185,12 @@ enum
  */
 enum FRONTEND_TYPE
 {
-    FRONTEND_TYPE_UNKNOWN,             ///< Type not known.
-    FRONTEND_TYPE_GDB,                 ///< The GNU debugger.
-    FRONTEND_TYPE_IDB,                 ///< The Intel debugger.
-    FRONTEND_TYPE_VISUAL_STUDIO_VSDBG, ///< Visual Studio via VSDBG.
-    FRONTEND_TYPE_VISUAL_STUDIO,       ///< Visual Studio via native connection.
-    FRONTEND_TYPE_LLDB                 ///< The LLVM debugger.
+    FRONTEND_TYPE_UNKNOWN,              ///< Type not known.
+    FRONTEND_TYPE_GDB,                  ///< The GNU debugger.
+    FRONTEND_TYPE_IDB,                  ///< The Intel debugger.
+    FRONTEND_TYPE_VISUAL_STUDIO_VSDBG,  ///< Visual Studio via VSDBG.
+    FRONTEND_TYPE_VISUAL_STUDIO,        ///< Visual Studio via native connection.
+    FRONTEND_TYPE_LLDB                  ///< The LLVM debugger.
 };
 
 /*!
@@ -196,8 +198,8 @@ enum FRONTEND_TYPE
  */
 enum BACKEND_TYPE
 {
-    BACKEND_TYPE_UNKNOWN, ///< Type not known.
-    BACKEND_TYPE_PIN      ///< The Pin dynamic instrumentation system.
+    BACKEND_TYPE_UNKNOWN,       ///< Type not known.
+    BACKEND_TYPE_PIN            ///< The Pin dynamic instrumentation system.
 };
 
 /*!
@@ -205,7 +207,7 @@ enum BACKEND_TYPE
  */
 enum FRONTEND_FEATURE
 {
-    FRONTEND_FEATURE_NONE = 0, ///< No extended features supported.
+    FRONTEND_FEATURE_NONE = 0,     ///< No extended features supported.
 
     /*!
      * The front-end will dynamically change the expected register set based on the
@@ -213,7 +215,7 @@ enum FRONTEND_FEATURE
      * ITARGET_DESCRIPTION::GetTargetDescription(), IFRONTEND::SetRegisters(), and
      * IBACKEND::SetRegisters().)
      */
-    FRONTEND_FEATURE_DYNAMIC_REGISTERS = (1 << 0),
+    FRONTEND_FEATURE_DYNAMIC_REGISTERS = (1<<0),
 
     /*!
      * This option controls the behavior when two or more threads stop simultaneously.
@@ -236,7 +238,7 @@ enum FRONTEND_FEATURE
      * front-end is notified with a single call to INOTIFICATIONS::NotifyStopped() and
      * each thread reports its own stop-reason via ICOMMANDS::GetThreadStopReason().
      */
-    FRONTEND_FEATURE_MULTIPLE_STOP_REASONS = (1 << 1),
+    FRONTEND_FEATURE_MULTIPLE_STOP_REASONS = (1<<1),
 
     /*!
      * The front-end supports the 'N' stop reply packet.
@@ -244,16 +246,16 @@ enum FRONTEND_FEATURE
      * threads had been terminated, but the process is still running (i.e. has additional
      * active threads which are stopped by the debugger).
      */
-    FRONTEND_FEATURE_NO_RESUMED = (1 << 2)
+    FRONTEND_FEATURE_NO_RESUMED = (1<<2)
 };
-typedef UINT32 FRONTEND_FEATURES; ///< Bit mask of FRONTEND_FEATURE's.
+typedef UINT32 FRONTEND_FEATURES;     ///< Bit mask of FRONTEND_FEATURE's.
 
 /*!
  * Possible features supported by a debugger back-end.
  */
 enum BACKEND_FEATURE
 {
-    BACKEND_FEATURE_NONE = 0, ///< No extended features supported.
+    BACKEND_FEATURE_NONE = 0,  ///< No extended features supported.
 
     /*!
      * The back-end supports the IBREAKPOINTS interface via
@@ -262,75 +264,75 @@ enum BACKEND_FEATURE
      * a target instruction with a software trap.  When such a breakpoint
      * triggers, the back-end stops the target with STOP_REASON_EVENT.
      */
-    BACKEND_FEATURE_BREAKPOINTS = (1 << 0),
+    BACKEND_FEATURE_BREAKPOINTS = (1<<0),
 
     /*!
      * The back-end supports the ICUSTOM_BREAKPOINTS interface via
      * ICOMMANDS::GetInterface(INTERFACE_ID_CUSTOM_BREAKPOINTS).
      */
-    BACKEND_FEATURE_CUSTOM_BREAKPOINTS = (1 << 1),
+    BACKEND_FEATURE_CUSTOM_BREAKPOINTS = (1<<1),
 
     /*!
      * The back-end supports the ICUSTOM_COMMANDS interface via
      * ICOMMANDS::GetInterface(INTERFACE_ID_CUSTOM_COMMANDS).
      */
-    BACKEND_FEATURE_CUSTOM_COMMANDS = (1 << 2),
+    BACKEND_FEATURE_CUSTOM_COMMANDS = (1<<2),
 
     /*!
      * The back-end supports the IKILL_WITH_NOTIFICATION interface via
      * ICOMMANDS::GetInterface(INTERFACE_ID_KILL_WITH_NOTIFICATION).
      */
-    BACKEND_FEATURE_KILL_WITH_NOTIFICATION = (1 << 3),
+    BACKEND_FEATURE_KILL_WITH_NOTIFICATION = (1<<3),
 
     /*!
      * The back-end supports the ITARGET_DESCRIPTION interface via
      * ICOMMANDS::GetInterface(INTERFACE_ID_TARGET_DESCRIPTION).
      */
-    BACKEND_FEATURE_TARGET_DESCRIPTION = (1 << 4),
+    BACKEND_FEATURE_TARGET_DESCRIPTION = (1<<4),
 
     /*!
      * The back-end supports the IEVENT_INTERCEPTION interface via
      * ICOMMANDS::GetInterface(INTERFACE_ID_EVENT_INTERCEPTION).
      */
-    BACKEND_FEATURE_EVENT_INTERCEPTION = (1 << 5),
+    BACKEND_FEATURE_EVENT_INTERCEPTION = (1<<5),
 
     /*!
      * The back-end supports the IIMAGE_EXTENSIONS interface via
      * ICOMMANDS::GetInterface(INTERFACE_ID_IMAGE_EXTENSIONS).
      */
-    BACKEND_FEATURE_IMAGE_EXTENSIONS = (1 << 6),
+    BACKEND_FEATURE_IMAGE_EXTENSIONS = (1<<6),
 
     /*!
      * The back-end supports the ITHREAD_EXTENSIONS interface via
      * ICOMMANDS::GetInterface(INTERFACE_ID_THREAD_EXTENSIONS).
      */
-    BACKEND_FEATURE_THREAD_EXTENSIONS = (1 << 7),
+    BACKEND_FEATURE_THREAD_EXTENSIONS = (1<<7),
 
     /*!
      * The back-end supports additional event information via EVENT_INFO.  Back-ends that do
      * not support this feature can ignore the EVENT_INFO parameters in all methods.
      */
-    BACKEND_FEATURE_EVENT_INFO = (1 << 8),
+    BACKEND_FEATURE_EVENT_INFO = (1<<8),
 
     /*!
      * The back-end supports the ability to resume a thread with CONTINUE_MODE_GO_NEW_EVENT
      * or CONTINUE_MODE_STEP_NEW_EVENT.  Back-ends that do not support this feature will
      * never receives these modes in calls to ICOMMANDS::SetContinueMode().
      */
-    BACKEND_FEATURE_CONTINUE_WITH_NEW_EVENT = (1 << 9),
+    BACKEND_FEATURE_CONTINUE_WITH_NEW_EVENT = (1<<9),
 
     /*!
      * The back-end supports the IPROCESS_INFO interface via
      * ICOMMANDS::GetInterface(INTERFACE_ID_PROCESS_INFO).
      */
-    BACKEND_FEATURE_PROCESS_INFO = (1 << 10),
+    BACKEND_FEATURE_PROCESS_INFO = (1<<10),
 
     /*!
      * The back-end supports System V R4 libraries extension
      */
-    BACKEND_FEATURE_SVR4_LIBRARIES = (1 << 11)
+    BACKEND_FEATURE_SVR4_LIBRARIES = (1<<11)
 };
-typedef UINT32 BACKEND_FEATURES; ///< Bit mask of BACKEND_FEATURE's.
+typedef UINT32 BACKEND_FEATURES;  ///< Bit mask of BACKEND_FEATURE's.
 
 /*!
  * Various properties for debugger transport connection
@@ -366,7 +368,7 @@ struct /*<POD>*/ DEBUGGER_CONNECTION_PROPERTIES
  */
 enum ENDPOINT_OPTION
 {
-    ENDPOINT_OPTION_NONE = 0, ///< No options specified.
+    ENDPOINT_OPTION_NONE = 0,  ///< No options specified.
 
     /*!
      * Do not use run-length compression for response data sent by the back-end.
@@ -374,7 +376,7 @@ enum ENDPOINT_OPTION
      * attempt to compress the data it sends.  This option is useful because it
      * makes the ILOG_NOTIFICATIONS messages easier for a human to read.
      */
-    ENDPOINT_OPTION_NO_COMPRESSION = (1 << 0),
+    ENDPOINT_OPTION_NO_COMPRESSION = (1<<0),
 
     /*!
      * This option only applies to endpoints that act as a server.  By default,
@@ -383,27 +385,27 @@ enum ENDPOINT_OPTION
      * to accept a connection even from a different machine (i.e. using the
      * INADDR_ANY local address).
      */
-    ENDPOINT_OPTION_ALLOW_REMOTE_CLIENTS = (1 << 1),
+    ENDPOINT_OPTION_ALLOW_REMOTE_CLIENTS = (1<<1),
 
     /*!
      * This options requires from the backend to always send the thread id in the
      * reply packets.
      */
-    ENDPOINT_OPTION_ALWAYS_SEND_THREAD = (1 << 2),
+    ENDPOINT_OPTION_ALWAYS_SEND_THREAD = (1<<2),
 
     /*!
      * This option enables the backend to send textual representation of the stop
      * reason in the packet.
      */
-    ENDPOINT_OPTION_SEND_STOP_REASON = (1 << 3),
+    ENDPOINT_OPTION_SEND_STOP_REASON = (1<<3),
 
     /*!
      * This option enables the backend to send unlimited size packets to the
      * frontend.
      */
-    ENDPOINT_OPTION_UNLIMITED_LENGTH_PACKETS = (1 << 4)
+    ENDPOINT_OPTION_UNLIMITED_LENGTH_PACKETS = (1<<4)
 };
-typedef UINT32 ENDPOINT_OPTIONS; ///< Bit mask of ENDPOINT_OPTION's.
+typedef UINT32 ENDPOINT_OPTIONS;      ///< Bit mask of ENDPOINT_OPTION's.
 
 /*!
  * Back-ends can provide some optional features via interfaces that are obtained
@@ -412,16 +414,16 @@ typedef UINT32 ENDPOINT_OPTIONS; ///< Bit mask of ENDPOINT_OPTION's.
  */
 enum INTERFACE_ID
 {
-    INTERFACE_ID_BREAKPOINTS,            ///< Back-end defines IBREAKPOINTS.
-    INTERFACE_ID_CUSTOM_BREAKPOINTS,     ///< Back-end defines ICUSTOM_BREAKPOINTS.
-    INTERFACE_ID_CUSTOM_COMMANDS,        ///< Back-end defines ICUSTOM_COMMANDS.
-    INTERFACE_ID_KILL_WITH_NOTIFICATION, ///< Back-end defines IKILL_WITH_NOTIFICATION.
-    INTERFACE_ID_TARGET_DESCRIPTION,     ///< Back-end defines ITARGET_DESCRIPTION.
-    INTERFACE_ID_EVENT_INTERCEPTION,     ///< Back-end defines IEVENT_INTERCEPTION.
-    INTERFACE_ID_IMAGE_EXTENSIONS,       ///< Back-end defines IIMAGE_EXTENSIONS.
-    INTERFACE_ID_THREAD_EXTENSIONS,      ///< Back-end defines ITHREAD_EXTENSIONS.
-    INTERFACE_ID_PROCESS_INFO,           ///< Back-end defines IPROCESS_INFO.
-    INTERFACE_ID_SVR4_LIBRARIES          ///< Back-end defines ISVR4_LIBRARIES.
+    INTERFACE_ID_BREAKPOINTS,               ///< Back-end defines IBREAKPOINTS.
+    INTERFACE_ID_CUSTOM_BREAKPOINTS,        ///< Back-end defines ICUSTOM_BREAKPOINTS.
+    INTERFACE_ID_CUSTOM_COMMANDS,           ///< Back-end defines ICUSTOM_COMMANDS.
+    INTERFACE_ID_KILL_WITH_NOTIFICATION,    ///< Back-end defines IKILL_WITH_NOTIFICATION.
+    INTERFACE_ID_TARGET_DESCRIPTION,        ///< Back-end defines ITARGET_DESCRIPTION.
+    INTERFACE_ID_EVENT_INTERCEPTION,        ///< Back-end defines IEVENT_INTERCEPTION.
+    INTERFACE_ID_IMAGE_EXTENSIONS,          ///< Back-end defines IIMAGE_EXTENSIONS.
+    INTERFACE_ID_THREAD_EXTENSIONS,         ///< Back-end defines ITHREAD_EXTENSIONS.
+    INTERFACE_ID_PROCESS_INFO,              ///< Back-end defines IPROCESS_INFO.
+    INTERFACE_ID_SVR4_LIBRARIES             ///< Back-end defines ISVR4_LIBRARIES.
 };
 
 /*!
@@ -429,37 +431,38 @@ enum INTERFACE_ID
  */
 enum IMAGE_NOTIFICATION
 {
-    IMAGE_NOTIFICATION_NONE = 0, ///< Do not enable any image notifications.
+    IMAGE_NOTIFICATION_NONE = 0,        ///< Do not enable any image notifications.
 
     /*!
      * Enable STOP_REASON_IMAGE_LOAD and STOP_REASON_IMAGE_MULTIPLE notifications when an image is loaded.
      */
-    IMAGE_NOTIFICATION_LOAD = (1 << 0),
+    IMAGE_NOTIFICATION_LOAD = (1<<0),
 
     /*!
      * Enable STOP_REASON_IMAGE_UNLOAD and STOP_REASON_IMAGE_MULTIPLE notifications when an image is unloaded.
      */
-    IMAGE_NOTIFICATION_UNLOAD = (1 << 1)
+    IMAGE_NOTIFICATION_UNLOAD = (1<<1)
 };
-typedef UINT32 IMAGE_NOTIFICATIONS; ///< Bit mask of IMAGE_NOTIFICATION's.
+typedef UINT32 IMAGE_NOTIFICATIONS;   ///< Bit mask of IMAGE_NOTIFICATION's.
 
 /*!
  * Possible notifications that can be enabled with ITHREAD_EXTENSIONS::SetThreadNotifications().
  */
 enum THREAD_NOTIFICATION
 {
-    THREAD_NOTIFICATION_NONE  = 0,        ///< Do not enable any thread notifications.
-    THREAD_NOTIFICATION_START = (1 << 0), ///< Enable STOP_REASON_THREAD_START notifications.
-    THREAD_NOTIFICATION_EXIT  = (1 << 1)  ///< Enable STOP_REASON_THREAD_EXIT notifications.
+    THREAD_NOTIFICATION_NONE = 0,           ///< Do not enable any thread notifications.
+    THREAD_NOTIFICATION_START = (1<<0),     ///< Enable STOP_REASON_THREAD_START notifications.
+    THREAD_NOTIFICATION_EXIT = (1<<1)       ///< Enable STOP_REASON_THREAD_EXIT notifications.
 };
-typedef UINT32 THREAD_NOTIFICATIONS; ///< Bit mask of THREAD_NOTIFICATION's.
+typedef UINT32 THREAD_NOTIFICATIONS;  ///< Bit mask of THREAD_NOTIFICATION's.
+
 
 /*!
  * Possible continuation modes when debugger front-end continues a target thread.
  */
 enum CONTINUE_MODE
 {
-    CONTINUE_MODE_FROZEN, ///< Thread should remain frozen.
+    CONTINUE_MODE_FROZEN,               ///< Thread should remain frozen.
 
     /*!
      * Thread should resume execution.  If it had previously stopped with STOP_REASON_EVENT,
@@ -512,8 +515,6 @@ enum CONTINUE_MODE
  */
 enum STOP_REASON
 {
-    STOP_REASON_INVALID,
-
     /*!
      * Thread triggered a breakpoint.  This can only happen for breakpoints set
      * via IBREAKPOINTS::SetBreakpoint(), not for breakpoints set by overwriting an
@@ -536,8 +537,9 @@ enum STOP_REASON
      */
     STOP_REASON_STOPPED,
 
-    STOP_REASON_STEP,  ///< Thread completed a single-step.
-    STOP_REASON_EVENT, ///< Thread received an O/S event, see EVENT.
+    STOP_REASON_STEP,           ///< Thread completed a single-step.
+    STOP_REASON_EVENT,          ///< Thread received an O/S event, see EVENT.
+
 
     /* Notifications enabled by ITHREAD_EXTENSIONS::SetThreadNotifications() */
 
@@ -554,10 +556,11 @@ enum STOP_REASON
      */
     STOP_REASON_THREAD_EXIT,
 
+
     /* Notifications enabled by IIMAGE_EXTENSIONS::SetImageNotifications() */
 
-    STOP_REASON_IMAGE_LOAD,   ///< Image loaded, see IIMAGE_EXTENSIONS::GetThreadStopImage().
-    STOP_REASON_IMAGE_UNLOAD, ///< Image unloaded, see IIMAGE_EXTENSIONS::GetThreadStopImage().
+    STOP_REASON_IMAGE_LOAD,     ///< Image loaded, see IIMAGE_EXTENSIONS::GetThreadStopImage().
+    STOP_REASON_IMAGE_UNLOAD,   ///< Image unloaded, see IIMAGE_EXTENSIONS::GetThreadStopImage().
 
     /*!
      * More than one image was loaded or unloaded at the same time.  Use
@@ -572,9 +575,9 @@ enum STOP_REASON
  */
 enum RESULT
 {
-    RESULT_OK,         ///< Method completed successfully.
-    RESULT_ERROR,      ///< Method failed.
-    RESULT_INTERRUPTED ///< Method was interrupted.
+    RESULT_OK,              ///< Method completed successfully.
+    RESULT_ERROR,           ///< Method failed.
+    RESULT_INTERRUPTED      ///< Method was interrupted.
 };
 
 /*!
@@ -583,10 +586,10 @@ enum RESULT
  */
 enum SESSION_RESULT
 {
-    SESSION_RESULT_TERMINATED,  ///< Target process terminated or was killed by the front-end.
-    SESSION_RESULT_DETACHED,    ///< Front-end detached via ICOMMANDS::Detach().
-    SESSION_RESULT_INTERRUPTED, ///< Session interrupted via IBACKEND::InterruptCommandThread().
-    SESSION_RESULT_ERROR        ///< Communication failure with the front-end.
+    SESSION_RESULT_TERMINATED,      ///< Target process terminated or was killed by the front-end.
+    SESSION_RESULT_DETACHED,        ///< Front-end detached via ICOMMANDS::Detach().
+    SESSION_RESULT_INTERRUPTED,     ///< Session interrupted via IBACKEND::InterruptCommandThread().
+    SESSION_RESULT_ERROR            ///< Communication failure with the front-end.
 };
 
 /*!
@@ -595,16 +598,17 @@ enum SESSION_RESULT
  */
 enum INVALIDATE_FLAG
 {
-    INVALIDATE_FLAG_REGISTERS = (1 << 0) ///< Invalidate the register values for a single thread.
+    INVALIDATE_FLAG_REGISTERS = (1<<0)  ///< Invalidate the register values for a single thread.
 };
-typedef UINT64 INVALIDATE_FLAGS; ///< Bit mask of INVALIDATE_FLAG's.
+typedef UINT64 INVALIDATE_FLAGS;  ///< Bit mask of INVALIDATE_FLAG's.
+
 
 /*!
  * Information describing how to connect to an endpoint using a TCP transport.
  */
 struct /*<POD>*/ TCP_INFO
 {
-    int _localPort; ///< The local port of a socket listening for a connection.
+    int _localPort;     ///< The local port of a socket listening for a connection.
 };
 
 /*!
@@ -612,22 +616,23 @@ struct /*<POD>*/ TCP_INFO
  */
 struct /*<POD>*/ REG_DESCRIPTION
 {
-    unsigned _widthInBits;     ///< Width (bits) of the register.  Currently, the width
-                               ///<  must be a multiple of 8.
-    REG _correspondingGeneric; ///< The corresponding "generic" register ID, if any.  Or,
-                               ///<  REG_INVALID, if there is no corresponding generic.
-                               ///<  There should be exactly one register that corresponds
-                               ///<  to each generic.  (E.g. there should be exactly one
-                               ///<  REG_PC register.)
-    bool _accelerated;         ///< If TRUE, the back-end automatically sends the value
-                               ///<  of this register whenever the target program stops.
-                               ///<  This saves a protocol request if the front-end
-                               ///<  usually needs this register when the target stops.
-    const char* _name;         ///< The textual name of the register
-    int _gccId;                ///< The GCC/DWARF compiler registers number for this
-                               ///< register (used for EH frame and other compiler
-                               ///< information that is encoded in the executable files).
+    unsigned _widthInBits;      ///< Width (bits) of the register.  Currently, the width
+                                ///<  must be a multiple of 8.
+    REG _correspondingGeneric;  ///< The corresponding "generic" register ID, if any.  Or,
+                                ///<  REG_INVALID, if there is no corresponding generic.
+                                ///<  There should be exactly one register that corresponds
+                                ///<  to each generic.  (E.g. there should be exactly one
+                                ///<  REG_PC register.)
+    bool _accelerated;          ///< If TRUE, the back-end automatically sends the value
+                                ///<  of this register whenever the target program stops.
+                                ///<  This saves a protocol request if the front-end
+                                ///<  usually needs this register when the target stops.
+    const char* _name;          ///< The textual name of the register
+    int _gccId;            ///< The GCC/DWARF compiler registers number for this
+                                ///< register (used for EH frame and other compiler
+                                ///< information that is encoded in the executable files).
 };
+
 
 /*!
  * This function must be called before using any other function in the debugger-protocol
@@ -656,6 +661,7 @@ DEBUGGER_PROTOCOL_API bool Initialize(INITIALIZE_FLAGS flags);
  */
 DEBUGGER_PROTOCOL_API bool Cleanup(INITIALIZE_FLAGS flags);
 
+
 /*!
  * Represents a communication endpoint for a debugger front-end.
  *
@@ -667,7 +673,7 @@ DEBUGGER_PROTOCOL_API bool Cleanup(INITIALIZE_FLAGS flags);
  */
 class /*<INTERFACE>*/ IFRONTEND
 {
-  public:
+public:
     /*!
      * If this front-end is a server, retrieve the communication information that
      * the back-end needs in order to connect.
@@ -676,7 +682,7 @@ class /*<INTERFACE>*/ IFRONTEND
      *
      * @return  TRUE on success (only if the front-end is a server).
      */
-    virtual bool GetServerInfo(TCP_INFO* info) = 0;
+    virtual bool GetServerInfo(TCP_INFO *info) = 0;
 
     /*!
      * The front-end and back-end must communicate with each other using
@@ -711,7 +717,7 @@ class /*<INTERFACE>*/ IFRONTEND
      *           if registers have already been accessed via one of the ICOMMANDS
      *           methods listed above.
      */
-    virtual bool SetRegisters(const REG_DESCRIPTION* regs, unsigned nregs) = 0;
+    virtual bool SetRegisters(const REG_DESCRIPTION *regs, unsigned nregs) = 0;
 
     /*!
      * If this front-end is a client, connect to a back-end which must be a server.
@@ -726,7 +732,7 @@ class /*<INTERFACE>*/ IFRONTEND
      * @return  On success, an object that can be used to send commands to the back-end.
      *           NULL on failure.
      */
-    virtual ICOMMANDS* ConnectToServer(const std::string& ip, int port) = 0;
+    virtual ICOMMANDS *ConnectToServer(const std::string &ip, int port) = 0;
 
     /*!
      * If this front-end is a server, wait for a connection from a back-end which
@@ -742,7 +748,7 @@ class /*<INTERFACE>*/ IFRONTEND
      * @return  On success, an object that can be used to send commands to the back-end.
      *           NULL on failure.
      */
-    virtual ICOMMANDS* ConnectFromClient(unsigned timeout) = 0;
+    virtual ICOMMANDS *ConnectFromClient(unsigned timeout) = 0;
 
     /*!
      * Tells the type of the back-end client.  This is only useful after
@@ -786,7 +792,7 @@ class /*<INTERFACE>*/ IFRONTEND
      *           returns TRUE even when there is no notification (e.g. when \a block
      *           is FALSE or when InterruptNotificationThread() interrupts this method).
      */
-    virtual bool HandleNotifications(INOTIFICATIONS* receiver, bool block) = 0;
+    virtual bool HandleNotifications(INOTIFICATIONS *receiver, bool block) = 0;
 
     /*!
      * Interrupt the thread executing the HandleNotifications() method, causing it to
@@ -837,14 +843,14 @@ class /*<INTERFACE>*/ IFRONTEND
      *
      *  @param[in] receiver     Object that receives notifications.
      */
-    virtual void AddDebugLogReceiver(ILOG_NOTIFICATIONS* receiver) = 0;
+    virtual void AddDebugLogReceiver(ILOG_NOTIFICATIONS *receiver) = 0;
 
     /*!
      * Unregister a listener, so it no longer receives log messages.
      *
      *  @param[in] receiver     Object previously registered via AddDebugLogReceiver().
      */
-    virtual void RemoveDebugLogReceiver(ILOG_NOTIFICATIONS* receiver) = 0;
+    virtual void RemoveDebugLogReceiver(ILOG_NOTIFICATIONS *receiver) = 0;
 
     /*!
      * The destructor automatically disconnects from the back-end and unregisters any
@@ -871,8 +877,9 @@ class /*<INTERFACE>*/ IFRONTEND
  *
  * @return  A new debugger front-end object.
  */
-DEBUGGER_PROTOCOL_API IFRONTEND* CreateFrontEnd(bool isServer, FRONTEND_TYPE type, FRONTEND_FEATURES features,
-                                                ENDPOINT_OPTIONS options);
+DEBUGGER_PROTOCOL_API IFRONTEND *CreateFrontEnd(bool isServer, FRONTEND_TYPE type,
+    FRONTEND_FEATURES features, ENDPOINT_OPTIONS options);
+
 
 /*!
  * Represents a communication endpoint for a debugger back-end.
@@ -887,7 +894,7 @@ DEBUGGER_PROTOCOL_API IFRONTEND* CreateFrontEnd(bool isServer, FRONTEND_TYPE typ
  */
 class /*<INTERFACE>*/ IBACKEND
 {
-  public:
+public:
     /*!
      * If this back-end is a server, retrieve the communication information that
      * the front-end needs in order to connect.
@@ -896,7 +903,7 @@ class /*<INTERFACE>*/ IBACKEND
      *
      * @return  TRUE on success (only if the back-end is a server).
      */
-    virtual bool GetServerInfo(TCP_INFO* info) = 0;
+    virtual bool GetServerInfo(TCP_INFO *info) = 0;
 
     /*!
      * Tell the backend to disable some features.
@@ -933,7 +940,7 @@ class /*<INTERFACE>*/ IBACKEND
      * @return  TRUE on success.  FALSE if there is an error with \a regset
      *           or if SetRegisters() is called too late.
      */
-    virtual bool SetRegisters(const REG_DESCRIPTION* regs, unsigned nregs) = 0;
+    virtual bool SetRegisters(const REG_DESCRIPTION *regs, unsigned nregs) = 0;
 
     /*!
      * Retrieve an interface that can be used to send notifications to the debugger
@@ -943,7 +950,7 @@ class /*<INTERFACE>*/ IBACKEND
      * @return  An interface that can be used to send notifications to the debugger
      *           front-end.
      */
-    virtual INOTIFICATIONS* GetNotificationListener() = 0;
+    virtual INOTIFICATIONS *GetNotificationListener() = 0;
 
     /*!
      * This method is the first step when connecting to a front-end from a client-like
@@ -968,7 +975,7 @@ class /*<INTERFACE>*/ IBACKEND
      *
      * @return  TRUE on success, FALSE on communication error.
      */
-    virtual bool ConnectToServer(const std::string& ip, int port) = 0;
+    virtual bool ConnectToServer(const std::string &ip, int port) = 0;
 
     /*!
      * This method is the first step when connecting to a front-end from a server-like
@@ -1073,7 +1080,7 @@ class /*<INTERFACE>*/ IBACKEND
      *
      * @return  A return code which tells why the debugger session completed.
      */
-    virtual SESSION_RESULT HandleCommands(ICOMMANDS* receiver) = 0;
+    virtual SESSION_RESULT HandleCommands(ICOMMANDS *receiver) = 0;
 
     /*!
      * Reset the debugger communication channel after a fork.  If the debugger
@@ -1133,14 +1140,14 @@ class /*<INTERFACE>*/ IBACKEND
      *
      *  @param[in] receiver     Object that receives notifications.
      */
-    virtual void AddDebugLogReceiver(ILOG_NOTIFICATIONS* receiver) = 0;
+    virtual void AddDebugLogReceiver(ILOG_NOTIFICATIONS *receiver) = 0;
 
     /*!
      * Unregister a listener, so it no longer receives log messages.
      *
      *  @param[in] receiver     Object previously registered via AddDebugLogReceiver().
      */
-    virtual void RemoveDebugLogReceiver(ILOG_NOTIFICATIONS* receiver) = 0;
+    virtual void RemoveDebugLogReceiver(ILOG_NOTIFICATIONS *receiver) = 0;
 
     /*!
      * If there is an active connection to the front-end when the destructor is called,
@@ -1169,8 +1176,9 @@ class /*<INTERFACE>*/ IBACKEND
  *
  * @return  A new debugger back-end object.
  */
-DEBUGGER_PROTOCOL_API IBACKEND* CreateBackEnd(bool isServer, OS os, BACKEND_TYPE type, BACKEND_FEATURES features,
-                                              ENDPOINT_OPTIONS options, const DEBUGGER_CONNECTION_PROPERTIES& props);
+DEBUGGER_PROTOCOL_API IBACKEND *CreateBackEnd(bool isServer, OS os, BACKEND_TYPE type,
+    BACKEND_FEATURES features, ENDPOINT_OPTIONS options, const DEBUGGER_CONNECTION_PROPERTIES& props);
+
 
 /*!
  * This interface represents the basic commands that a debugger front-end can send to
@@ -1191,7 +1199,7 @@ DEBUGGER_PROTOCOL_API IBACKEND* CreateBackEnd(bool isServer, OS os, BACKEND_TYPE
  */
 class /*<INTERFACE>*/ ICOMMANDS
 {
-  public:
+public:
     /*!
      * @return  The current number of threads in the application.
      *
@@ -1263,8 +1271,8 @@ class /*<INTERFACE>*/ ICOMMANDS
      *      - The \a mode is CONTINUE_MODE_GO_NEW_EVENT or CONTINUE_MODE_STEP_NEW_EVENT,
      *        and the back-end does not support BACKEND_FEATURE_CONTINUE_WITH_NEW_EVENT.
      */
-    virtual bool SetContinueMode(THREAD thread, CONTINUE_MODE mode, EVENT evnt, size_t szEvntInfo,
-                                 const EVENT_INFO* evntInfo) = 0;
+    virtual bool SetContinueMode(THREAD thread, CONTINUE_MODE mode, EVENT evnt,
+        size_t szEvntInfo, const EVENT_INFO *evntInfo) = 0;
 
     /*!
      * Let all threads continue execution according to the settings made via
@@ -1293,7 +1301,7 @@ class /*<INTERFACE>*/ ICOMMANDS
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool GetThreadStopReason(THREAD thread, STOP_REASON* reason) = 0;
+    virtual bool GetThreadStopReason(THREAD thread, STOP_REASON *reason) = 0;
 
     /*!
      * Tells the O/S event that caused a thread to stop.
@@ -1317,7 +1325,8 @@ class /*<INTERFACE>*/ ICOMMANDS
      *      - The \a evntInfo parameter is non-NULL and the back-end does not
      *        support BACKEND_FEATURE_EVENT_INFO.
      */
-    virtual bool GetThreadStopEvent(THREAD thread, EVENT* evnt, size_t szEvntInfo, EVENT_INFO* evntInfo) = 0;
+    virtual bool GetThreadStopEvent(THREAD thread, EVENT *evnt, size_t szEvntInfo,
+        EVENT_INFO *evntInfo) = 0;
 
     /*!
      * This is the only method that may be called during "run mode".  It tells
@@ -1378,7 +1387,7 @@ class /*<INTERFACE>*/ ICOMMANDS
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool GetRegisterValue(THREAD thread, REG reg, UTIL::REGVALUE* value) = 0;
+    virtual bool GetRegisterValue(THREAD thread, REG reg, UTIL::REGVALUE *value) = 0;
 
     /*!
      * Set the value of a register.
@@ -1395,7 +1404,7 @@ class /*<INTERFACE>*/ ICOMMANDS
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool SetRegisterValue(THREAD thread, REG reg, const UTIL::REGVALUE& value) = 0;
+    virtual bool SetRegisterValue(THREAD thread, REG reg, const UTIL::REGVALUE &value) = 0;
 
     /*!
      * Get the value of a memory region.
@@ -1409,7 +1418,7 @@ class /*<INTERFACE>*/ ICOMMANDS
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool GetMemoryValue(const UTIL::ANYRANGE& range, UTIL::DATA* value) = 0;
+    virtual bool GetMemoryValue(const UTIL::ANYRANGE &range, UTIL::DATA *value) = 0;
 
     /*!
      * Set the value of a memory range.
@@ -1425,7 +1434,7 @@ class /*<INTERFACE>*/ ICOMMANDS
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool SetMemoryValue(ANYADDR addr, const UTIL::DATA& value, size_t* sizeWritten) = 0;
+    virtual bool SetMemoryValue(ANYADDR addr, const UTIL::DATA &value, size_t *sizeWritten) = 0;
 
     /*!
      * A back-end can provide some optional functionality through interfaces returned
@@ -1438,11 +1447,12 @@ class /*<INTERFACE>*/ ICOMMANDS
      *           should cast this pointer to the appropriate interface.  If the back-end
      *           does not implement the interface, this method returns NULL.
      */
-    virtual void* GetInterface(INTERFACE_ID id) = 0;
+    virtual void *GetInterface(INTERFACE_ID id) = 0;
 
-  protected:
+protected:
     virtual ~ICOMMANDS() {} ///< Do not call delete on ICOMMANDS.
 };
+
 
 /*!
  * An optional interface that can be returned from ICOMMANDS::GetInterface() if the
@@ -1452,7 +1462,7 @@ class /*<INTERFACE>*/ ICOMMANDS
  */
 class /*<INTERFACE>*/ IBREAKPOINTS
 {
-  public:
+public:
     /*!
      * Ask the back-end to set a breakpoint.
      *
@@ -1483,7 +1493,7 @@ class /*<INTERFACE>*/ IBREAKPOINTS
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool SetBreakpoint(ANYADDR addr, size_t bpSize, bool* wasSet) = 0;
+    virtual bool SetBreakpoint(ANYADDR addr, size_t bpSize, bool *wasSet) = 0;
 
     /*!
      * Ask the back-end to clear a breakpoint that was previously set via SetBreakpoint().
@@ -1497,9 +1507,9 @@ class /*<INTERFACE>*/ IBREAKPOINTS
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool ClearBreakpoint(ANYADDR addr, bool* wasCleared) = 0;
+    virtual bool ClearBreakpoint(ANYADDR addr, bool *wasCleared) = 0;
 
-  protected:
+protected:
     virtual ~IBREAKPOINTS() {} ///< Do not call delete on IBREAKPOINTS.
 };
 
@@ -1515,7 +1525,7 @@ class /*<INTERFACE>*/ IBREAKPOINTS
  */
 class /*<INTERFACE>*/ ICUSTOM_BREAKPOINTS
 {
-  public:
+public:
     /*!
      * Tells why a thread triggered a "custom breakpoint".  This is useful for threads
      * that stop with STOP_REASON_CUSTOM_BREAK.  The format of \a msg is not defined by
@@ -1535,9 +1545,9 @@ class /*<INTERFACE>*/ ICUSTOM_BREAKPOINTS
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool GetThreadStopMessage(THREAD thread, std::string* msg) = 0;
+    virtual bool GetThreadStopMessage(THREAD thread, std::string *msg) = 0;
 
-  protected:
+protected:
     virtual ~ICUSTOM_BREAKPOINTS() {} ///< Do not call delete on ICUSTOM_BREAKPOINTS.
 };
 
@@ -1547,7 +1557,7 @@ class /*<INTERFACE>*/ ICUSTOM_BREAKPOINTS
  */
 class /*<INTERFACE>*/ ICUSTOM_COMMANDS
 {
-  public:
+public:
     /*!
      * Ask the back-end to execute a custom command.  The formats of \a cmd and
      * \a response are not defined by this API (they can be any format that the
@@ -1571,9 +1581,10 @@ class /*<INTERFACE>*/ ICUSTOM_COMMANDS
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool DoCustomCommand(THREAD thread, const std::string& cmd, bool* cmdRecognized, std::string* response) = 0;
+    virtual bool DoCustomCommand(THREAD thread, const std::string &cmd, bool *cmdRecognized,
+        std::string *response) = 0;
 
-  protected:
+protected:
     virtual ~ICUSTOM_COMMANDS() {} ///< Do not call delete on ICUSTOM_COMMANDS.
 };
 
@@ -1583,7 +1594,7 @@ class /*<INTERFACE>*/ ICUSTOM_COMMANDS
  */
 class /*<INTERFACE>*/ IKILL_WITH_NOTIFICATION
 {
-  public:
+public:
     /*!
      * Tell the target application to terminate.
      *
@@ -1600,7 +1611,7 @@ class /*<INTERFACE>*/ IKILL_WITH_NOTIFICATION
      */
     virtual bool KillWithNotification(INT64 code) = 0;
 
-  protected:
+protected:
     virtual ~IKILL_WITH_NOTIFICATION() {} ///< Do not call delete on IKILL_WITH_NOTIFICATION.
 };
 
@@ -1610,7 +1621,7 @@ class /*<INTERFACE>*/ IKILL_WITH_NOTIFICATION
  */
 class /*<INTERFACE>*/ ITARGET_DESCRIPTION
 {
-  public:
+public:
     /*!
      * Ask the back-end for a description of the target machine's features.  The format of the
      * returned information is not defined by this API (it can be any format that the front-end
@@ -1632,9 +1643,9 @@ class /*<INTERFACE>*/ ITARGET_DESCRIPTION
      * @par Error Returns (when used by debugger front-end)
      *  Returns FALSE on communication error, or if called during "run mode".
      */
-    virtual bool GetTargetDescription(const std::string& name, UTIL::DATA* content) = 0;
+    virtual bool GetTargetDescription(const std::string &name, UTIL::DATA *content) = 0;
 
-  protected:
+protected:
     virtual ~ITARGET_DESCRIPTION() {} ///< Do not call delete on ITARGET_DESCRIPTION.
 };
 
@@ -1644,7 +1655,7 @@ class /*<INTERFACE>*/ ITARGET_DESCRIPTION
  */
 class /*<INTERFACE>*/ IEVENT_INTERCEPTION
 {
-  public:
+public:
     /*!
      * Notifies the back-end that the application need not notify the front-end if the
      * application receives an O/S specific event.  Instead, the application can handle
@@ -1682,7 +1693,7 @@ class /*<INTERFACE>*/ IEVENT_INTERCEPTION
      */
     virtual bool MarkAllEventsIntercepted() = 0;
 
-  protected:
+protected:
     virtual ~IEVENT_INTERCEPTION() {} ///< Do not call delete on IEVENT_INTERCEPTION.
 };
 
@@ -1692,7 +1703,7 @@ class /*<INTERFACE>*/ IEVENT_INTERCEPTION
  */
 class /*<INTERFACE>*/ IIMAGE_EXTENSIONS
 {
-  public:
+public:
     /*!
      * Set the notifications that will be triggered when the target application loads or
      * unloads images.  By default, the back-end does not trigger any notifications when
@@ -1720,7 +1731,7 @@ class /*<INTERFACE>*/ IIMAGE_EXTENSIONS
      *      - Communication error with back-end.
      *      - Called during "run mode".
      */
-    virtual bool GetImageCount(unsigned* count) = 0;
+    virtual bool GetImageCount(unsigned *count) = 0;
 
     /*!
      * Retrieves the ID of an image in the application.
@@ -1740,7 +1751,7 @@ class /*<INTERFACE>*/ IIMAGE_EXTENSIONS
      * @par Error Returns (when implemented by debugger back-end)
      *  Returns FALSE if \a iImage is out of range.
      */
-    virtual bool GetImageId(unsigned iImage, IMAGE* image) = 0;
+    virtual bool GetImageId(unsigned iImage, IMAGE *image) = 0;
 
     /*!
      * Retrieves information about an image that is currently loaded in the application.
@@ -1759,7 +1770,7 @@ class /*<INTERFACE>*/ IIMAGE_EXTENSIONS
      *      - Called during "run mode".
      *      - The \a image is not valid.
      */
-    virtual bool GetImageInfo(IMAGE image, size_t szInfo, IMAGE_INFO* info) = 0;
+    virtual bool GetImageInfo(IMAGE image, size_t szInfo, IMAGE_INFO *info) = 0;
 
     /*!
      * Tells the image that was loaded or unloaded for a thread that stopped with
@@ -1780,7 +1791,7 @@ class /*<INTERFACE>*/ IIMAGE_EXTENSIONS
      *  Returns FALSE if \a thread did not stop with STOP_REASON_IMAGE_LOAD or
      *  STOP_REASON_IMAGE_UNLOAD.
      */
-    virtual bool GetThreadStopImage(THREAD thread, IMAGE* image) = 0;
+    virtual bool GetThreadStopImage(THREAD thread, IMAGE *image) = 0;
 
     /*!
      * Gets the loaded images list of the application according to the SVR4 format.
@@ -1790,9 +1801,9 @@ class /*<INTERFACE>*/ IIMAGE_EXTENSIONS
      * @return  TRUE on success.
      *
      */
-    virtual bool GetSvr4ImageList(SVR4_IMAGES_LIST* info) = 0;
+    virtual bool GetSvr4ImageList(SVR4_IMAGES_LIST *info) = 0;
 
-  protected:
+protected:
     virtual ~IIMAGE_EXTENSIONS() {} ///< Do not call delete on IIMAGE_EXTENSIONS.
 };
 
@@ -1802,7 +1813,7 @@ class /*<INTERFACE>*/ IIMAGE_EXTENSIONS
  */
 class /*<INTERFACE>*/ ITHREAD_EXTENSIONS
 {
-  public:
+public:
     /*!
      * Set the notifications that will be triggered when threads start or exit in the
      * target application.  By default, the back-end does not trigger any notifications
@@ -1832,8 +1843,8 @@ class /*<INTERFACE>*/ ITHREAD_EXTENSIONS
      *      - Communication error with back-end.
      *      - Called during "run mode".
      */
-    virtual bool GetThreadInfo(THREAD thread, size_t szInfo, THREAD_INFO* info) = 0;
-
+    virtual bool GetThreadInfo(THREAD thread, size_t szInfo, THREAD_INFO *info) = 0;
+ 
     /*!
      * Tells the thread exit status for a thread that stopped with STOP_REASON_THREAD_EXIT.
      *
@@ -1851,9 +1862,9 @@ class /*<INTERFACE>*/ ITHREAD_EXTENSIONS
      * @par Error Returns (when implemented  by debugger back-end)
      *  Returns FALSE if \a thread did not stop with STOP_REASON_THREAD_EXIT.
      */
-    virtual bool GetThreadExitStatus(THREAD thread, INT64* status) = 0;
+    virtual bool GetThreadExitStatus(THREAD thread, INT64 *status) = 0;
 
-  protected:
+protected:
     virtual ~ITHREAD_EXTENSIONS() {} ///< Do not call delete on ITHREAD_EXTENSIONS.
 };
 
@@ -1863,7 +1874,7 @@ class /*<INTERFACE>*/ ITHREAD_EXTENSIONS
  */
 class /*<INTERFACE>*/ IPROCESS_INFO
 {
-  public:
+public:
     /*!
      * Get the O/S process ID of the target application.
      *
@@ -1874,7 +1885,7 @@ class /*<INTERFACE>*/ IPROCESS_INFO
      *      - Communication error with back-end.
      *      - Called during "run mode".
      */
-    virtual bool GetProcessId(PROCESS* pid) = 0;
+    virtual bool GetProcessId(PROCESS *pid) = 0;
 
     /*!
      * Retrieves the address of the loader inside the target process memory layout.
@@ -1886,7 +1897,7 @@ class /*<INTERFACE>*/ IPROCESS_INFO
      *  Returns FALSE if:
      *      - Not supported (client interface doesn't exist).
      */
-    virtual bool GetLoaderInfoAddr(ANYADDR* addr) = 0;
+    virtual bool GetLoaderInfoAddr(ANYADDR *addr) = 0;
 
     /*!
      * Retrieves the target application architecture description.
@@ -1898,11 +1909,12 @@ class /*<INTERFACE>*/ IPROCESS_INFO
      *  Returns FALSE if:
      *      - Not supported (client interface doesn't exist).
      */
-    virtual bool GetTargetApplicationArch(std::string& desc) = 0;
+    virtual bool GetTargetApplicationArch(void **desc) = 0;
 
-  protected:
+protected:
     virtual ~IPROCESS_INFO() {} ///< Do not call delete on IPROCESS_INFO.
 };
+
 
 /*!
  * This interface represents notifications sent from the debugger back-end to the front-end.
@@ -1919,7 +1931,7 @@ class /*<INTERFACE>*/ IPROCESS_INFO
  */
 class /*<INTERFACE>*/ INOTIFICATIONS
 {
-  public:
+public:
     /*!
      * Indicates that all threads in the application stopped and the debugger back-end is
      * ready to accept commands from the front-end.  Use ICOMMANDS::GetThreadStopReason()
@@ -1971,11 +1983,13 @@ class /*<INTERFACE>*/ INOTIFICATIONS
      * @par Error Returns (when used by debugger back-end)
      *  Returns FALSE on communication error, or if called during "command mode".
      */
-    virtual bool NotifyTerminatedEvent(EVENT evnt, size_t szEvntInfo, const EVENT_INFO* evntInfo) = 0;
+    virtual bool NotifyTerminatedEvent(EVENT evnt, size_t szEvntInfo,
+        const EVENT_INFO *evntInfo) = 0;
 
-  protected:
+protected:
     virtual ~INOTIFICATIONS() {} ///< Do not call delete on INOTIFICATIONS.
 };
+
 
 /*!
  * Clients of the DEBUGGER_PROTOCOL library can implement this interface to receive
@@ -1984,17 +1998,17 @@ class /*<INTERFACE>*/ INOTIFICATIONS
  */
 class /*<INTERFACE>*/ ILOG_NOTIFICATIONS
 {
-  public:
+public:
     /*!
      * Indicates that a protocol message was sent or received.
      *
      *  @param[in] message  A textual description of the protocol message.
      */
-    virtual void NotifyLogMessage(const std::string& message) = 0;
+    virtual void NotifyLogMessage(const std::string &message) = 0;
 
-  protected:
+protected:
     virtual ~ILOG_NOTIFICATIONS() {} ///< Do not call delete on ILOG_NOTIFICATIONS.
 };
 
-} // namespace DEBUGGER_PROTOCOL
+} // namespace
 #endif // file guard

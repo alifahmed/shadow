@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -215,13 +215,6 @@ xed_decoded_inst_merging(const xed_decoded_inst_t* p);
 /// @ingroup DEC
 XED_DLL_EXPORT xed_bool_t
 xed_decoded_inst_zeroing(const xed_decoded_inst_t* p);
-
-/// Returns the maximum number elements processed for an AVX512 vector
-/// instruction. Scalars report 1 element.
-/// @ingroup DEC
-XED_DLL_EXPORT xed_uint_t
-xed_decoded_inst_avx512_dest_elements(const xed_decoded_inst_t* p);
-
 //@}
 
 /// @name xed_decoded_inst_t Initialization

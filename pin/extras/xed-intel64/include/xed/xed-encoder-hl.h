@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -206,7 +206,6 @@ static XED_INLINE  xed_encoder_operand_t xed_other(
 /// seg reg override for implicit suppressed memory ops
 static XED_INLINE  xed_encoder_operand_t xed_seg0(xed_reg_enum_t seg0) {
     xed_encoder_operand_t o;
-    o.width_bits = 0;
     o.type = XED_ENCODER_OPERAND_TYPE_SEG0;
     o.u.reg = seg0;
     return o;
@@ -216,7 +215,6 @@ static XED_INLINE  xed_encoder_operand_t xed_seg0(xed_reg_enum_t seg0) {
 /// seg reg override for implicit suppressed memory ops
 static XED_INLINE  xed_encoder_operand_t xed_seg1(xed_reg_enum_t seg1) {
     xed_encoder_operand_t o;
-    o.width_bits = 0;
     o.type = XED_ENCODER_OPERAND_TYPE_SEG1;
     o.u.reg = seg1;
     return o;

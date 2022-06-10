@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -22,8 +22,10 @@
 #include "atomic/exponential-backoff.hpp"
 #include "atomic/nullstats.hpp"
 
-namespace ATOMIC
-{
+
+namespace ATOMIC {
+
+
 /*! @brief  Associative map with pre-allocated elements.
  *
  * A map container that is thread safe and safe to use from signal handlers.
@@ -63,8 +65,9 @@ namespace ATOMIC
  *  }
  *                                                                                          \endcode
  */
-template< typename KEY, typename OBJECT, KEY InvalidKey1, KEY InvalidKey2, unsigned int Capacity, typename STATS = NULLSTATS >
-class /*<UTILITY>*/ FIXED_MULTIMAP
+template<typename KEY, typename OBJECT, KEY InvalidKey1, KEY InvalidKey2,
+    unsigned int Capacity, typename STATS=NULLSTATS>
+    class /*<UTILITY>*/ FIXED_MULTIMAP
 {
   public:
     /*!
@@ -72,9 +75,9 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
      *
      *  @param[in] stats    The new statistics collection object.
      */
-    FIXED_MULTIMAP(STATS* stats = 0) : _highWaterMark(0), _freeLocationHint(0), _stats(stats)
+    FIXED_MULTIMAP(STATS *stats=0) : _highWaterMark(0), _freeLocationHint(0), _stats(stats)
     {
-        for (UINT32 i = 0; i < Capacity; i++)
+        for (UINT32 i = 0;  i < Capacity;  i++)
             _map[i] = KeyAvailable;
     }
 
@@ -83,17 +86,20 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
      *
      *  @param[in] stats    The new statistics collection object.
      */
-    void SetStatsNonAtomic(STATS* stats) { _stats = stats; }
+    void SetStatsNonAtomic(STATS *stats)
+    {
+        _stats = stats;
+    }
 
     /*!
      * Remove all elements from the map.  This method is NOT atomic.
      */
     void ClearNonAtomic()
     {
-        _highWaterMark    = 0;
+        _highWaterMark = 0;
         _freeLocationHint = 0;
 
-        for (UINT32 i = 0; i < Capacity; i++)
+        for (UINT32 i = 0;  i < Capacity;  i++)
             _map[i] = KeyAvailable;
     }
 
@@ -109,20 +115,22 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
      *           can only safely dereference this pointer if it can guarantee that
      *           no other client has removed this element.
      */
-    OBJECT* Add(KEY key, const OBJECT& userObj)
+    OBJECT *Add(KEY key, const OBJECT &userObj)
     {
         ATOMIC_CHECK_ASSERT(key != KeyAvailable && key != KeyReserved);
 
         UINT32 highWater = OPS::Load(&_highWaterMark);
-        UINT32 freeHint  = OPS::Load(&_freeLocationHint);
+        UINT32 freeHint = OPS::Load(&_freeLocationHint);
 
-        for (UINT32 i = freeHint; i < highWater; i++)
+        for (UINT32 i = freeHint;  i < highWater;  i++)
         {
-            if (OPS::Load(&_map[i]) == KeyAvailable && AddAt(i, key, userObj)) return &_objects[i];
+            if (OPS::Load(&_map[i]) == KeyAvailable && AddAt(i, key, userObj))
+                return &_objects[i];
         }
-        for (UINT32 i = 0; i < Capacity; i++)
+        for (UINT32 i = 0;  i < Capacity;  i++)
         {
-            if (OPS::Load(&_map[i]) == KeyAvailable && AddAt(i, key, userObj)) return &_objects[i];
+            if (OPS::Load(&_map[i]) == KeyAvailable && AddAt(i, key, userObj))
+                return &_objects[i];
         }
         return 0;
     }
@@ -142,18 +150,19 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
      *           no such element is found.  The client can only safely dereference
      *           this pointer if it can guarantee that no other client has removed it.
      */
-    OBJECT* Find(KEY key)
+    OBJECT *Find(KEY key)
     {
         ATOMIC_CHECK_ASSERT(key != KeyAvailable && key != KeyReserved);
 
         UINT32 highWater = OPS::Load(&_highWaterMark);
-        for (UINT32 i = 0; i < highWater; i++)
+        for (UINT32 i = 0;  i < highWater;  i++)
         {
             // This BARRIER_LD_NEXT works in conjunction with the other barrier marked (A).
             // They ensure that the contents of _object[i] are visible on this processor,
             // even if they were written by another.
             //
-            if (OPS::Load(&_map[i], BARRIER_LD_NEXT) == key) return &_objects[i];
+            if (OPS::Load(&_map[i], BARRIER_LD_NEXT) == key)
+                return &_objects[i];
         }
         return 0;
     }
@@ -174,10 +183,10 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
      *           no such element is found.  The client can only safely dereference
      *           this pointer if it can guarantee that no other client has removed it.
      */
-    template< typename PRED > OBJECT* FindIf(PRED pred)
+    template<typename PRED> OBJECT *FindIf(PRED pred)
     {
         UINT32 highWater = OPS::Load(&_highWaterMark);
-        for (UINT32 i = 0; i < highWater; i++)
+        for (UINT32 i = 0;  i < highWater;  i++)
         {
             // This BARRIER_LD_NEXT works in conjunction with the other barrier marked (A).
             // They ensure that the contents of _object[i] are visible on this processor,
@@ -186,7 +195,8 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
             KEY key = OPS::Load(&_map[i], BARRIER_LD_NEXT);
             if (key != KeyAvailable && key != KeyReserved)
             {
-                if (pred(key)) return &_objects[i];
+                if (pred(key))
+                    return &_objects[i];
             }
         }
         return 0;
@@ -208,7 +218,7 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
         ATOMIC_CHECK_ASSERT(key != KeyAvailable && key != KeyReserved);
 
         UINT32 highWater = OPS::Load(&_highWaterMark);
-        for (UINT32 i = 0; i < highWater; i++)
+        for (UINT32 i = 0;  i < highWater;  i++)
         {
             if (OPS::Load(&_map[i]) == key)
             {
@@ -230,15 +240,16 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
      *  @param[in] pred     An STL-like predicate functor.  A key is passed as the predicate's
      *                       only argument.  If it returns TRUE, that element is removed.
      */
-    template< typename PRED > void RemoveIf(PRED pred)
+    template<typename PRED> void RemoveIf(PRED pred)
     {
         UINT32 highWater = OPS::Load(&_highWaterMark);
-        for (UINT32 i = 0; i < highWater; i++)
+        for (UINT32 i = 0;  i < highWater;  i++)
         {
             KEY key = OPS::Load(&_map[i]);
             if (key != KeyAvailable && key != KeyReserved)
             {
-                if (pred(key)) RemoveAt(i, key);
+                if (pred(key))
+                    RemoveAt(i, key);
             }
         }
     }
@@ -256,17 +267,18 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
      *                       The client can only safely dereference \e obj if it can
      *                       guarantee that no other client has deleted it.
      */
-    template< typename BINARY > void ForEach(BINARY func)
+    template<typename BINARY> void ForEach(BINARY func)
     {
         UINT32 highWater = OPS::Load(&_highWaterMark);
-        for (UINT32 i = 0; i < highWater; i++)
+        for (UINT32 i = 0;  i < highWater;  i++)
         {
             // This BARRIER_LD_NEXT works in conjunction with the other barrier marked (A).
             // They ensure that the contents of _object[i] are visible on this processor,
             // even if they were written by another.
             //
             KEY key = OPS::Load(&_map[i], BARRIER_LD_NEXT);
-            if (key != KeyAvailable && key != KeyReserved) func(key, &_objects[i]);
+            if (key != KeyAvailable && key != KeyReserved)
+                func(key, &_objects[i]);
         }
     }
 
@@ -275,7 +287,7 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
      * Attempt to add a new element at the given location.  Return TRUE if it could
      * be added there, FALSE if not.
      */
-    bool AddAt(UINT32 index, KEY key, const OBJECT& userObj)
+    bool AddAt(UINT32 index, KEY key, const OBJECT &userObj)
     {
         // If this location is available, mark it as reserved.
         //
@@ -285,7 +297,8 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
         // and not realize that _highWaterMark needs to be updated for this new element.
         // (See reference mark (C) below.)
         //
-        if (!OPS::CompareAndDidSwap(&_map[index], KeyAvailable, KeyReserved, BARRIER_CS_NEXT)) return false;
+        if (!OPS::CompareAndDidSwap(&_map[index], KeyAvailable, KeyReserved, BARRIER_CS_NEXT))
+            return false;
 
         // Now that the position is reserved, we can safely write to it without
         // anyone else using it.
@@ -303,7 +316,7 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
         // one.
         //
         UINT32 highWater;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
         do
         {
             backoff.Delay();
@@ -314,11 +327,12 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
             // prevented by barrier (B).
             //
             highWater = OPS::Load(&_highWaterMark);
-            if (index < highWater) break;
+            if (index < highWater)
+                break;
         }
-        while (!OPS::CompareAndDidSwap(&_highWaterMark, highWater, index + 1));
+        while (!OPS::CompareAndDidSwap(&_highWaterMark, highWater, index+1));
 
-        OPS::CompareAndSwap(&_freeLocationHint, index, index + 1);
+        OPS::CompareAndSwap(&_freeLocationHint, index, index+1);
         return true;
     }
 
@@ -329,7 +343,8 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
     {
         // Unless someone else removes this element first, mark the location as reserved.
         //
-        if (!OPS::CompareAndDidSwap(&_map[index], key, KeyReserved)) return;
+        if (!OPS::CompareAndDidSwap(&_map[index], key, KeyReserved))
+            return;
 
         do
         {
@@ -346,7 +361,7 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
             // before _map[index] is marked available.
             //
             UINT32 highWater = OPS::Load(&_highWaterMark);
-            if (index != highWater - 1 || !OPS::CompareAndDidSwap(&_highWaterMark, highWater, index, BARRIER_CS_NEXT))
+            if (index != highWater-1 || !OPS::CompareAndDidSwap(&_highWaterMark, highWater, index, BARRIER_CS_NEXT))
             {
                 OPS::Store(&_map[index], KeyAvailable);
                 break;
@@ -359,15 +374,16 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
             // If the next position below is also available, keep iterating in order to
             // reduce the high water mark even further.
             //
-            if (index == 0) break;
+            if (index == 0)
+                break;
             index--;
         }
         while (OPS::CompareAndDidSwap(&_map[index], KeyAvailable, KeyReserved));
     }
 
   private:
-    static const KEY KeyAvailable = InvalidKey1; // Entry is available to hold a map
-    static const KEY KeyReserved  = InvalidKey2; // Entry is being updated, not available but not valid either
+    static const KEY KeyAvailable = InvalidKey1;  // Entry is available to hold a map
+    static const KEY KeyReserved = InvalidKey2;   // Entry is being updated, not available but not valid either
 
     // These arrays are the map.  Keys in _map correspond to objects in _objects.
     //
@@ -382,8 +398,8 @@ class /*<UTILITY>*/ FIXED_MULTIMAP
     //
     volatile UINT32 _freeLocationHint;
 
-    STATS* _stats; // Object which collects statistics, or NULL
+    STATS *_stats;  // Object which collects statistics, or NULL
 };
 
-} // namespace ATOMIC
+} // namespace
 #endif // file guard

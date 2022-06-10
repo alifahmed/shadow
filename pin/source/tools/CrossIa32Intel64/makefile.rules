@@ -84,10 +84,25 @@ ifeq ($(TARGET_OS),linux)
 endif
 
 # macOS*
-# Starting from macOS 10.14 clang doesn't support building 32 bits. 
-# Starting from macOS 10.15 32 bit binaries won't be able to run.
-# Starting from clang 11 we build Pin only in 64 bit (since clang 11 don't support 32 bit), therefore it can't run 32 bit 
-# applications. (Therefore we don't run any tests here)
+ifeq ($(TARGET_OS),mac)
+    MACOS_VERSION_LT_1014 := $(shell $(TOOLS_ROOT)/Utils/testMacOsVersion lt 10.14.0)
+    # Starting from macOS 10.14 clang (part of XCode) doesn't support building 32 bits. Starting from macOS 10.15 32 bit binaries
+    # won't be able to run.
+    ifeq ($(MACOS_VERSION_LT_1014), 1) #and
+    ifeq ($(TARGET),intel64)
+        TEST_TOOL_ROOTS +=
+        TEST_ROOTS += cross_32_64_32 cross_64_32_64 space_$(TARGET_OS) sigchld_cross child_process_injection child_process_injection1_mac
+        TOOL_ROOTS += follow_child_tool_dummy child_process_injection_dummy
+        SA_TOOL_ROOTS +=
+        APP_ROOTS += parent_process_$(TARGET_OS)_dummy child_process_$(TARGET_OS)_dummy \
+                     grand_child_process_$(TARGET_OS)_dummy child_process_injection_app_dummy sigchld_app_dummy setuid_utility_dummy \
+                     child_process_injection_app1_dummy
+        OBJECT_ROOTS +=
+        DLL_ROOTS +=
+        LIB_ROOTS +=
+    endif
+    endif
+endif
 
 # Windows
 ifeq ($(TARGET_OS),windows)
@@ -111,7 +126,7 @@ ifeq ($(TARGET_OS),windows)
     endif
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 DONT_RUN :=
 
@@ -144,9 +159,13 @@ ifeq ($(TARGET_OS),linux)
     endif
 endif
 
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
+#check whether child_process_injection1_mac can be tested on macOS* (we need to build a binary and use sudo to change its owner and privilege)
+ifeq ($(TARGET_OS),mac)
+        SUDO_USABLE := $(shell if [ `$(SUDO) -ln > /dev/null 2>&1; echo $$?` -ne "0" ]; then echo no; else echo yes; fi)
+   ifeq (no,$(SUDO_USABLE))
+        TEST_ROOTS := $(filter-out child_process_injection1_mac, $(TEST_ROOTS))
+   endif
+endif
 
 # See Mantis 3197
 ifeq ($(TARGET_OS),windows)
@@ -173,14 +192,6 @@ endif
 # This defines the list of tests that should run in sanity. It should include all the tests listed in
 # TEST_TOOL_ROOTS and TEST_ROOTS excluding only unstable tests.
 SANITY_SUBSET := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-# Disable child_process_injection1 on rhel6 (or lower) - see mantis 4781
-ifeq ($(DIST_NAME_RHEL),1)
-    DIST_VER_LE_6 := $(shell $(TOOLS_ROOT)/Utils/testLinuxDistVersion lt 7.0)
-    ifeq ($(DIST_VER_LE_6),1)
-        SANITY_SUBSET := $(filter-out child_process_injection1, $(SANITY_SUBSET))
-    endif
-endif
 
 
 ##############################################################

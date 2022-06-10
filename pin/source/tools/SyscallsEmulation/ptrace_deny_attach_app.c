@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -52,14 +52,14 @@ int main()
     child = fork();
     if (child == 0)
     { // Child process
-        int ret = -1;
+        int ret =-1;
         close(parentToChildPipe[1]);
         close(ChildToParentPipe[0]);
 
         // Deny attach in child
         printf("Deny PTRACE requests from Child\n");
         errno = 0;
-        ret   = ptrace(PT_DENY_ATTACH, 0, 0, 0);
+        ret = ptrace(PT_DENY_ATTACH, 0, 0 ,0);
         // Pin ignore PT_DENY_ATTACH but still need to emulate a correct return value
         assert(errno == 0);
         assert(ret == 0);
@@ -86,6 +86,7 @@ int main()
         close(parentToChildPipe[0]);
         close(ChildToParentPipe[1]);
 
+
         // Wait for child to notify it is ready to be traced
         do
         {
@@ -96,27 +97,28 @@ int main()
         assert(res == 0);
 
         // Attach to child
-        ret = ptrace(PT_ATTACH, child, 0, 0);
-        if (ret < 0)
+        ret = ptrace (PT_ATTACH, child, 0, 0);
+        if (ret < 0 )
         {
             exit(1);
         }
         // Wait for child (tracee) to stop
         wpid = waitpid(child, NULL, WUNTRACED);
-        if (wpid != child)
+        if (wpid != child )
         {
             exit(1);
         }
 
         // Let child (tracee) continue
-        ret = ptrace(PT_CONTINUE, child, (caddr_t)1, 0);
-        if (ret < 0)
+        ret = ptrace (PT_CONTINUE , child, (caddr_t)1, 0);
+        if (ret < 0 )
         {
             exit(1);
         }
 
         // Notify child, parent has attached to it and it can continue
         close(parentToChildPipe[1]);
+
     }
 
     printf("Application Finished, bye...\n");

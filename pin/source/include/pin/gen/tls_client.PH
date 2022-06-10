@@ -1,15 +1,9 @@
+//Groups: @ingroup\s+(API_REF|KNOBS|IMG_BASIC_API|INS_BASIC_API|INS_INST_API|INS_BASIC_API_GEN_IA32|INS_BASIC_API_IA32|INS_MOD_API_GEN_IA32|SEC_BASIC_API|RTN_BASIC_API|REG_BASIC_API|REG_CPU_GENERIC|REG_CPU_IA32|TRACE_BASIC_API|BBL_BASIC_API|SYM_BASIC_API|MISC_PRINT|MISC_PARSE|KNOB_API|KNOB_BASIC|KNOB_PRINT|LOCK|PIN_CONTROL|TRACE_VERSION_API|BUFFER_API|PROTO_API|PIN_PROCESS_API|PIN_THREAD_API|PIN_SYSCALL_API|WINDOWS_SYSCALL_API_UNDOC|DEBUG_API|ERROR_FILE_BASIC|TYPE_BASE|INSTLIB|ALARM|CHILD_PROCESS_API|UTILS|MISC|CONTEXT_API|PHYSICAL_CONTEXT_API|PIN_CALLBACKS|EXCEPTION_API|APPDEBUG_API|STOPPED_THREAD_API|BUFFER_API|PROTO|INST_ARGS|DEPRECATED_PIN_API|INTERNAL_EXCEPTION_PRIVATE_UNDOCUMENTED|PIN_THREAD_PRIVATE|CHILD_PROCESS_INTERNAL|BBL_BASIC|ROGUE_BASIC_API|MESSAGE_TYPE|MESSAGE_BASIC|ERRFILE|MISC_BASIC|ITC_INST_API|CONTEXT_API_UNDOC|EXCEPTION_API_UNDOC|UNDOCUMENTED_PIN_API|OPIN|TRACE_VERSIONS
+/* PIN API */
 
-#ifdef PIN_G_TLS_CLIENT_PH
-#error duplicate inclusion of tls_client
-#else
-#define PIN_G_TLS_CLIENT_PH
-/*! @file
+/* THIS FILE IS AUTOMAGICALLY GENERATED - DO NOT CHANGE DIRECTLY*/
 
- */
 
-/*! @ingroup THREADS
-  Keys to access client data in the thread local storage
-*/
 enum
 {
     // Reserved for internal exception handling
@@ -21,140 +15,181 @@ enum
     TLS_KEY_CLIENT_LAST = TLS_KEY_CLIENT_FIRST + 63
 };
 
-/*! @ingroup THREADS
-  Maximum number of TLS keys that can be allocated by tool
-*/
+                                                                  /* DO NOT EDIT */
 const UINT32 MAX_CLIENT_TLS_KEYS = (TLS_KEY_CLIENT_LAST - TLS_KEY_CLIENT_FIRST + 1);
 
-/*! @ingroup THREADS
- * Allocate a new TLS key and associate it with a given data destruction function.
- * Upon successful return, any thread of the process can use PIN_SetThreadData() and
- * PIN_GetThreadData() functions to store and retrieve values in its own slot,
- * referenced by the allocated key. The initial value associated with the key in
- * all threads is NULL. At the thread exit, if a key has a non-NULL pointer to the
- * cleanup (destruction) function, and the thread has a non-NULL value in the
- * corresponding slot, the function is called with the slot's value as its sole
- * argument. The order in which destructors are invoked is undefined.
- * @param[in]    destructFun     optional parameter that specifies data destruction
- *                               function to be associated with the new key.
- *                               This function is called just after notifying the
- *                               client about VM thread exit. By default (NULL destructor),
- *                               the data is not cleaned up.
- * @return   allocated TLS key, upon success;
- *           -1, if number of already allocated keys reached the MAX_CLIENT_TLS_KEYS limit.
+                                                                  /* DO NOT EDIT */
+class CLIENT_TLS
+{
+  public:
 
-  @par Availability:
-  \b Mode:  JIT\n
-  \b O/S:   Linux, Windows & macOS*\n
-  \b CPU:   All\n
- */
-extern TLS_KEY PIN_CreateThreadDataKey(DESTRUCTFUN destruct_func);
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Allocate a new TLS key and associate it with a given data destruction function.
+     *  See PIN_CreateThreadDataKey() description.
+     */
+    TLS_KEY AllocateKey(DESTRUCTFUN destructFun = NULL);
 
-/*! @ingroup THREADS
- * Release TLS key, allocated by a previous call to the PIN_CreateThreadDataKey() function.
- * The function has no effect if specified key is not allocated/already released.
- * After the key is released, a client should not attempt to use it for any further
- * TLS access. Doing otherwise results in undefined behavior.
- * @param[in]    key         TLS key to be released
- * @return   TRUE, upon success;
- *           FALSE, if if specified key is invalid
- *
- * @par Availability:
- * \b Mode:  JIT\n
- * \b O/S:   Linux, Windows & macOS*\n
- * \b CPU:   All\n
- */
-extern BOOL PIN_DeleteThreadDataKey(TLS_KEY key);
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Release TLS key, allocated by a previous call to the CreateThreadDataKey() function.
+     *  See PIN_DeleteThreadDataKey() description.
+     */
+    BOOL FreeKey(TLS_KEY tlsKey);
 
+    /*! @ingroup PIN_THREAD_PRIVATE
+     * Return TRUE if TLS key is allocated by a previous call to the CreateThreadDataKey() function,
+     * FALSE otherwise
+     */
+    BOOL IsKeyAllocated(TLS_KEY tlsKey);
+
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Get/Set the value of the specified TLS slot of the given thread.
+     *  See PIN_GetThreadData() and PIN_SetThreadData() description.
+     *  @param[in]  threadId    Thread ID assigned by pin of the thread for which
+     *                          TLS access is desired, not necessarily the current
+     *                          thread.
+     *                          This ID can be obtained by the PIN_ThreadId()
+     *                          function call or received as the value of the
+     *                          IARG_THREAD_ID argument.
+     * @note The Get/SetData functions are defined as static to eliminate overhead of the
+     *       Instance() function. These functions assume that the Instance() function is
+     *       invoked at least once before the first call to these functions. This assumption
+     *       is valid because we enforce Instance() invocation from the static initializer
+     *       of the <m_pInstance> member.
+     */
+    static VOID * GetData(TLS_KEY tlsKey, THREADID threadId)
+    {
+        return (*(m_pSlots[threadId]))[tlsKey];
+    }
+
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Get/Set the value of the specified TLS slot of the current/given thread.
+     *  See above.
+     */
+    static BOOL SetData(TLS_KEY tlsKey, const VOID *  value, THREADID threadId)
+    {
+        (*(m_pSlots[threadId]))[tlsKey] = const_cast<VOID *>(value);
+        return TRUE;
+    }
+
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Zero-initialize all TLS slots in the current thread.
+     *  This function should be called on the thread start but before the client
+     *  is notified about the new thread.
+     *  @param[in] currentThreadId   ID of the new (current) thread assigned by pin.
+     */
+    VOID InitCurrentTls(THREADID currentThreadId);
+
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Destruct all per-thread data stored in TLS slots of the given thread.
+     *  This function is called when the given thread is about to exit,
+     *  just after notifying the client about thread exit.
+     *  @param[in] threadId   ID of the exiting thread assigned by pin.
+     */
+    VOID DestructThreadTls(THREADID threadId);
+
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Return TRUE if TLS slots are allocated for current thread, FALSE otherwise.
+     *  @param[in] currentThreadId   ID of the current thread assigned by pin.
+     */
+    BOOL IsCurrentTlsAllocated(THREADID currentThreadId);
+
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Check whether the input TLS_KEY is valid.
+     * @param[in] tlsKey                The TLS key
+     * @param[in] currentThreadId   ID of the current thread assigned by pin.
+     * @return TRUE if TLS key is valid, FALSE otherwise
+     */
+    static BOOL IsValidTlsKey(TLS_KEY tlsKey, THREADID threadId)
+    {
+        return m_pSlots[threadId]->IsValidKey(tlsKey) && CLIENT_TLS::Instance()->IsKeyAllocated(tlsKey);
+    }
+
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Return single instance of this class.
+     */
+    static CLIENT_TLS * Instance();
+
+  private:
+    /*! @ingroup PIN_THREAD_PRIVATE
+     *  Per-thread array of client's TLS slots indexed by TLS_KEY.
+     */
+    typedef TLS_ARRAY<0, TLS_KEY_CLIENT_LAST> SLOTS;
+
+  private:
+    // Private constructor
+    CLIENT_TLS() {}
+    friend class DUMMY_GCC32; //dummy friend to appease gcc 3.2.X compiler. It does not understand
+                              //singleton idiom and reports warning for private constructor.
+    //Disable copy constructor and assignment operator
+    CLIENT_TLS(const CLIENT_TLS &);
+    CLIENT_TLS & operator = (const CLIENT_TLS &);
+
+    static SLOTS * m_pSlots[PIN_MAX_THREADS];
+
+    /*
+     * Pointer to a single instance of this class
+     * This static member enforces initialization of CLIENT_TLS in the first (main) thread.
+     */
+    static CLIENT_TLS * m_pInstance;
+
+};
+
+                                                                  /* DO NOT EDIT */
+inline TLS_KEY PIN_CreateThreadDataKey(DESTRUCTFUN destruct_func)
+{
+    return CLIENT_TLS::Instance()->AllocateKey(destruct_func);
+}
+
+                                                                  /* DO NOT EDIT */
+inline BOOL PIN_DeleteThreadDataKey(TLS_KEY key)
+{
+    if (CLIENT_TLS::Instance()->IsKeyAllocated(key))
+        return CLIENT_TLS::Instance()->FreeKey(key);
+    else
+        return FALSE;
+}
+
+                                                                  /* DO NOT EDIT */
+/* DO NOT EDIT */
 /* This version of PIN_SetThreadData is now deprecated. Please use the version of this function which takes
  * a THREADID argument.
  */
-/*! @ingroup DEPRECATED
- * Store specified value in the specified TLS slot of the thread.
- *
- * @note DEPRECATED and NO LONGER SUPPORTED. Please use the version of this function which takes a THREADID argument.
- *
- * @par Availability:
- * \b Mode:  JIT\n
- * \b O/S:   Linux, Windows & macOS*\n
- * \b CPU:   All\n
- */
-inline BOOL PIN_SetThreadData(TLS_KEY key, const VOID* data)
+inline BOOL PIN_SetThreadData( TLS_KEY key, const VOID * data )
 {
     ASSERT(FALSE, "This version of PIN_SetThreadData is now deprecated. Please use the version of this function which "
                   "takes a THREADID argument.");
     return FALSE;
 }
 
-/*! @ingroup THREADS
- * Store specified value in the specified TLS slot of the thread.
- * @param[in]    key                 TLS key, referencing the slot, where the value
- *                                   will be stored upon successful return. The key
- *                                   should be allocated by a previous call to the
- *                                   PIN_CreateThreadDataKey() function.
- * @param[in]    data                value to be stored in the TLS slot
- *                                   of the current thread.
- * @param[in]    threadId            Thread ID assigned by pin of the thread for which
- *                                   TLS access is desired, not necessarily the current
- *                                   thread.
- *                                   This ID can be obtained by the PIN_ThreadId()
- *                                   function call or received as the value of the
- *                                   IARG_THREAD_ID argument.
- * @return   TRUE, if specified key is currently allocated;
- *           FALSE, if specified key is invalid or the given thread is not yet
- *                  registered in the pin thread database;
- *           undefined, if specified key is valid, but it is not currently allocated
- *
- * @par Availability:
- * \b Mode:  JIT\n
- * \b O/S:   Linux, Windows & macOS*\n
- * \b CPU:   All\n
- */
-extern BOOL PIN_SetThreadData(TLS_KEY key, const VOID* data, THREADID threadId);
+                                                                  /* DO NOT EDIT */
+inline BOOL PIN_SetThreadData( TLS_KEY key, const VOID * data , THREADID threadId)
+{
+    if (CLIENT_TLS::IsValidTlsKey(key, threadId))
+        return CLIENT_TLS::SetData( key, data, threadId );
+    else
+        return FALSE;
+}
 
+                                                                  /* DO NOT EDIT */
+/* DO NOT EDIT */
 /* This version of PIN_GetThreadData is now deprecated. Please use the version of this function which takes
  * a THREADID argument.
  */
-/*! @ingroup DEPRECATED
- * Get the value stored in the specified TLS slot of the thread.
- *
- * @note DEPRECATED and NO LONGER SUPPORTED. Please use the version of this function which takes a THREADID argument.
- *
- * @par Availability:
- * \b Mode:  JIT\n
- * \b O/S:   Linux, Windows & macOS*\n
- * \b CPU:   All\n
- */
-inline VOID* PIN_GetThreadData(TLS_KEY key)
+inline VOID * PIN_GetThreadData( TLS_KEY key )
 {
     ASSERT(FALSE, "This version of PIN_GetThreadData is now deprecated. Please use the version of this function which "
                   "takes a THREADID argument.");
     return FALSE;
 }
 
-/*! @ingroup THREADS
- * Get the value stored in the specified TLS slot of the thread.
- * @param[in]    key                 TLS key, referencing the slot, whose value is
- *                                   requested. The key should be allocated by a
- *                                   previous call to the PIN_CreateThreadDataKey()
- *                                   function.
- * @param[in]    threadId            Thread ID assigned by pin of the thread for which
- *                                   TLS access is desired, not necessarily the current
- *                                   thread.
- *                                   This ID can be obtained by the PIN_ThreadId()
- *                                   function call or received as the value of the
- *                                   IARG_THREAD_ID argument.
- * @return   value stored in the specified slot of the thread, if specified key is
- *           currently allocated;
- *           NULL,  if specified key is invalid or the given thread is not yet
- *                  registered in the pin thread database;
- *           undefined, if specified key is valid, but it is not currently allocated
- *
- * @par Availability:
- * \b Mode:  JIT\n
- * \b O/S:   Linux, Windows & macOS*\n
- * \b CPU:   All\n
- */
-extern VOID* PIN_GetThreadData(TLS_KEY key, THREADID threadId);
+                                                                  /* DO NOT EDIT */
+inline VOID * PIN_GetThreadData( TLS_KEY key, THREADID threadId )
+{
+    if (CLIENT_TLS::IsValidTlsKey(key, threadId))
+        return CLIENT_TLS::GetData( key, threadId );
+    else
+        return NULL;
+}
 
-#endif // PIN_G_TLS_CLIENT_PH
+                                                                  /* DO NOT EDIT */
+

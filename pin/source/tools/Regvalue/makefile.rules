@@ -18,7 +18,7 @@
 # defining the test name twice (once in TOOL_ROOTS and again in TEST_ROOTS).
 # Tests defined here should not be defined in TOOL_ROOTS and TEST_ROOTS.
 TEST_TOOL_ROOTS := context_regvalue change_context_regvalue change_context_rflags emu_context_regvalue context_perf \
-                   iarg_reg_reference iarg_reg_reference_flags fptag_conversion
+                   iarg_reg_reference iarg_reg_reference_flags
 
 # This defines the tests to be run that were not already defined in TEST_TOOL_ROOTS.
 TEST_ROOTS := const_context_regvalue partial_context_regvalue change_partial_context_regvalue \
@@ -42,10 +42,10 @@ TOOL_ROOTS := checkXStateBV_tool xsave_iarg_mem
 SA_TOOL_ROOTS :=
 
 # This defines all the applications that will be run during the tests.
-APP_ROOTS := regvalue_app checkXStateBV_app xsave_iarg_mem_app print_flags fptag_conversion_app
+APP_ROOTS := regvalue_app checkXStateBV_app xsave_iarg_mem_app print_flags
 
 # This defines any additional object files that need to be compiled.
-OBJECT_ROOTS := regvalues changeRegs regvalue_test_utils context_utils register_modification_utils doXsave print_flags_asm fptag_conversion_app fptag_conversion
+OBJECT_ROOTS := regvalues changeRegs regvalue_test_utils context_utils register_modification_utils doXsave print_flags_asm
 
 # This defines any additional dlls (shared objects), other than the pintools, that need to be compiled.
 DLL_ROOTS :=
@@ -53,7 +53,7 @@ DLL_ROOTS :=
 # This defines any static libraries (archives), that need to be built.
 LIB_ROOTS :=
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 # First, see if the specified targets require avx support. "clean" for example does not,
 # so there is no need for making that check.
@@ -105,18 +105,6 @@ ifeq ($(MACHINE_SUPPORTS_AVX_INSTRUCTIONS),Yes)
         APP_ROOTS := $(filter-out regvalue_app, $(APP_ROOTS))
         OBJECT_ROOTS := $(filter-out changeRegs, $(OBJECT_ROOTS))
     endif
-endif
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
-
-# See Mantis 4788 for change_context_rflags
-ifeq ($(TARGET_OS),windows)
-    TEST_TOOL_ROOTS := $(filter-out change_context_rflags, $(TEST_TOOL_ROOTS))
-endif
-ifeq ($(TARGET_OS),mac)
-    TEST_TOOL_ROOTS := $(filter-out change_context_rflags, $(TEST_TOOL_ROOTS))
 endif
 
 ###### Define the sanity subset ######
@@ -297,8 +285,6 @@ iarg_reg_reference_flags.test: $(OBJDIR)iarg_reg_reference_flags$(PINTOOL_SUFFIX
 	$(QGREP) "Flags: 207" $(OBJDIR)$(@:%.test=%.out)
 	$(QGREP) "Flags: ed2" $(OBJDIR)print_flags.out
 
-fptag_conversion.test: $(OBJDIR)fptag_conversion$(PINTOOL_SUFFIX) $(OBJDIR)fptag_conversion_app$(EXE_SUFFIX)
-	$(PIN) -t $(OBJDIR)fptag_conversion$(PINTOOL_SUFFIX) -- $(OBJDIR)fptag_conversion_app$(EXE_SUFFIX)
 
 ##############################################################
 #
@@ -351,15 +337,12 @@ $(OBJDIR)checkXStateBV_tool$(PINTOOL_SUFFIX): $(OBJDIR)checkXStateBV_tool$(OBJ_S
 
 ###### Special applications' build rules ######
 
-$(OBJDIR)fptag_conversion_app$(EXE_SUFFIX): fptag_conversion_app.c $(OBJDIR)fptag_conversion_app_asm$(OBJ_SUFFIX)
-	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS)
-
-$(OBJDIR)regvalue_app$(EXE_SUFFIX): regvalue_app.cpp $(OBJDIR)changeRegs$(OBJ_SUFFIX) $(OBJDIR)regvalues_app_noopt$(OBJ_SUFFIX) regvalues.h
+$(OBJDIR)regvalue_app$(EXE_SUFFIX): regvalue_app.cpp $(OBJDIR)changeRegs$(OBJ_SUFFIX) $(OBJDIR)regvalues$(OBJ_SUFFIX) regvalues.h
 	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $(^:%.h=) $(APP_LDFLAGS_NOOPT) $(REGVALUE_APP_EXPORTS) $(APP_LIBS) \
 	  $(CXX_LPATHS) $(CXX_LIBS)
 
-# The xstateBVUtils is used by both the tool and the application. Options to compile source files for tool and application
-# may differ thus this mismatch might cause a link error. So instead of linking the xstateBVUtils object, the source is
+# The xstateBVUtils is used by both the tool and the application. On Windows, it is compiled with /MT, but the application
+# is compiled with /MD and this mismatch causes a link error. So instead of linking the xstateBVUtils object, the source is
 # used directly when building the application.
 $(OBJDIR)checkXStateBV_app$(EXE_SUFFIX): checkXStateBV_app.cpp xstateBVUtils.cpp xstateBVUtils.h $(OBJDIR)doXsave$(OBJ_SUFFIX)
 	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $(^:%.h=) $(APP_LDFLAGS_NOOPT) $(CHECKXSTATEBV_APP_EXPORTS) $(APP_LIBS) \
@@ -377,9 +360,6 @@ $(OBJDIR)print_flags$(EXE_SUFFIX): print_flags.c $(OBJDIR)print_flags_asm$(OBJ_S
 ###### Special objects' build rules ######
 
 $(OBJDIR)regvalues$(OBJ_SUFFIX): regvalues.h
-
-$(OBJDIR)regvalues_app_noopt$(OBJ_SUFFIX): regvalues.cpp regvalues.h
-	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_OBJ)$@ $<
 
 $(OBJDIR)regvalue_test_utils$(OBJ_SUFFIX): regvalue_test_utils.h regvalues.h
 

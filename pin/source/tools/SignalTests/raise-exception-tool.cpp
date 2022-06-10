@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -29,7 +29,8 @@
 #include "pin.H"
 #include "raise-exception-addrs.h"
 
-KNOB< BOOL > KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool", "const_context", "0", "use IARG_CONST_CONTEXT");
+KNOB<BOOL> KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool",
+                                   "const_context", "0", "use IARG_CONST_CONTEXT");
 
 /*
  * Bit positions in the MXCSR and x87 status registers that correspond to
@@ -37,76 +38,80 @@ KNOB< BOOL > KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool", "const_cont
  */
 enum
 {
-    EXCBIT_IE = (1 << 0),
-    EXCBIT_DE = (1 << 1),
-    EXCBIT_ZE = (1 << 2),
-    EXCBIT_OE = (1 << 3),
-    EXCBIT_UE = (1 << 4),
-    EXCBIT_PE = (1 << 5)
+    EXCBIT_IE = (1<<0),
+    EXCBIT_DE = (1<<1),
+    EXCBIT_ZE = (1<<2),
+    EXCBIT_OE = (1<<3),
+    EXCBIT_UE = (1<<4),
+    EXCBIT_PE = (1<<5)
 };
 
-static VOID OnImage(IMG, VOID*);
-static VOID OnInstruction(INS, VOID*);
-static void OnFini(INT32, VOID*);
-static void AtSetLabels(RAISE_EXCEPTION_ADDRS*);
-static void DoUnmappedRead(CONTEXT*, THREADID, ADDRINT);
-static void DoUnmappedWrite(CONTEXT*, THREADID, ADDRINT);
-static void DoInaccessibleRead(CONTEXT*, THREADID, ADDRINT);
-static void DoInaccessibleWrite(CONTEXT*, THREADID, ADDRINT);
-static void DoMisalignedRead(CONTEXT*, THREADID);
-static void DoMisalignedWrite(CONTEXT*, THREADID);
-static void DoIllegalInstruction(CONTEXT*, THREADID);
-static void DoPrivilegedInstruction(CONTEXT*, THREADID);
-static void DoIntegerDivideByZero(CONTEXT*, THREADID);
-static void DoIntegerOverflowTrap(CONTEXT*, THREADID, UINT32);
-static void DoBoundTrap(CONTEXT*, THREADID, UINT32);
-static void DoX87DivideByZero(CONTEXT*, THREADID);
-static void DoX87Overflow(CONTEXT*, THREADID);
-static void DoX87Underflow(CONTEXT*, THREADID);
-static void DoX87Precision(CONTEXT*, THREADID);
-static void DoX87InvalidOperation(CONTEXT*, THREADID);
-static void DoX87DenormalizedOperand(CONTEXT*, THREADID);
-static void DoX87StackUnderflow(CONTEXT*, THREADID);
-static void DoX87StackOverflow(CONTEXT*, THREADID);
-static void DoSIMDDivideByZero(CONTEXT*, THREADID);
-static void DoSIMDOverflow(CONTEXT*, THREADID);
-static void DoSIMDUnderflow(CONTEXT*, THREADID);
-static void DoSIMDPrecision(CONTEXT*, THREADID);
-static void DoSIMDInvalidOperation(CONTEXT*, THREADID);
-static void DoSIMDDenormalizedOperand(CONTEXT*, THREADID);
-static void DoBreakpointTrap(CONTEXT*, THREADID, UINT32);
 
-BOOL HaveExceptionAddrs            = FALSE;
-BOOL ExpectUnmappedRead            = FALSE;
-BOOL ExpectUnmappedWrite           = FALSE;
-BOOL ExpectInaccessibleRead        = FALSE;
-BOOL ExpectInaccessibleWrite       = FALSE;
-BOOL ExpectMisalignedRead          = FALSE;
-BOOL ExpectMisalignedWrite         = FALSE;
-BOOL ExpectIllegalInstruction      = FALSE;
-BOOL ExpectPrivilegedInstruction   = FALSE;
-BOOL ExpectIntegerDivideByZero     = FALSE;
-BOOL ExpectIntegerOverflowTrap     = FALSE;
-BOOL ExpectBoundTrap               = FALSE;
-BOOL ExpectX87DivideByZero         = FALSE;
-BOOL ExpectX87Overflow             = FALSE;
-BOOL ExpectX87Underflow            = FALSE;
-BOOL ExpectX87Precision            = FALSE;
-BOOL ExpectX87InvalidOperation     = FALSE;
-BOOL ExpectX87DenormalizedOperand  = FALSE;
-BOOL ExpectX87StackUnderflow       = FALSE;
-BOOL ExpectX87StackOverflow        = FALSE;
-BOOL ExpectSimdDivideByZero        = FALSE;
-BOOL ExpectSimdOverflow            = FALSE;
-BOOL ExpectSimdUnderflow           = FALSE;
-BOOL ExpectSimdPrecision           = FALSE;
-BOOL ExpectSimdInvalidOperation    = FALSE;
+static VOID OnImage(IMG, VOID *);
+static VOID OnInstruction(INS, VOID *);
+static void OnFini(INT32, VOID *);
+static void AtSetLabels(RAISE_EXCEPTION_ADDRS *);
+static void DoUnmappedRead(CONTEXT *, THREADID, ADDRINT);
+static void DoUnmappedWrite(CONTEXT *, THREADID, ADDRINT);
+static void DoInaccessibleRead(CONTEXT *, THREADID, ADDRINT);
+static void DoInaccessibleWrite(CONTEXT *, THREADID, ADDRINT);
+static void DoMisalignedRead(CONTEXT *, THREADID);
+static void DoMisalignedWrite(CONTEXT *, THREADID);
+static void DoIllegalInstruction(CONTEXT *, THREADID);
+static void DoPrivilegedInstruction(CONTEXT *, THREADID);
+static void DoIntegerDivideByZero(CONTEXT *, THREADID);
+static void DoIntegerOverflowTrap(CONTEXT *, THREADID, UINT32);
+static void DoBoundTrap(CONTEXT *, THREADID, UINT32);
+static void DoX87DivideByZero(CONTEXT *, THREADID);
+static void DoX87Overflow(CONTEXT *, THREADID);
+static void DoX87Underflow(CONTEXT *, THREADID);
+static void DoX87Precision(CONTEXT *, THREADID);
+static void DoX87InvalidOperation(CONTEXT *, THREADID);
+static void DoX87DenormalizedOperand(CONTEXT *, THREADID);
+static void DoX87StackUnderflow(CONTEXT *, THREADID);
+static void DoX87StackOverflow(CONTEXT *, THREADID);
+static void DoSIMDDivideByZero(CONTEXT *, THREADID);
+static void DoSIMDOverflow(CONTEXT *, THREADID);
+static void DoSIMDUnderflow(CONTEXT *, THREADID);
+static void DoSIMDPrecision(CONTEXT *, THREADID);
+static void DoSIMDInvalidOperation(CONTEXT *, THREADID);
+static void DoSIMDDenormalizedOperand(CONTEXT *, THREADID);
+static void DoBreakpointTrap(CONTEXT *, THREADID, UINT32);
+
+
+
+BOOL HaveExceptionAddrs = FALSE;
+BOOL ExpectUnmappedRead = FALSE;
+BOOL ExpectUnmappedWrite = FALSE;
+BOOL ExpectInaccessibleRead = FALSE;
+BOOL ExpectInaccessibleWrite = FALSE;
+BOOL ExpectMisalignedRead = FALSE;
+BOOL ExpectMisalignedWrite = FALSE;
+BOOL ExpectIllegalInstruction = FALSE;
+BOOL ExpectPrivilegedInstruction = FALSE;
+BOOL ExpectIntegerDivideByZero = FALSE;
+BOOL ExpectIntegerOverflowTrap = FALSE;
+BOOL ExpectBoundTrap = FALSE;
+BOOL ExpectX87DivideByZero = FALSE;
+BOOL ExpectX87Overflow = FALSE;
+BOOL ExpectX87Underflow = FALSE;
+BOOL ExpectX87Precision = FALSE;
+BOOL ExpectX87InvalidOperation = FALSE;
+BOOL ExpectX87DenormalizedOperand = FALSE;
+BOOL ExpectX87StackUnderflow = FALSE;
+BOOL ExpectX87StackOverflow = FALSE;
+BOOL ExpectSimdDivideByZero = FALSE;
+BOOL ExpectSimdOverflow = FALSE;
+BOOL ExpectSimdUnderflow = FALSE;
+BOOL ExpectSimdPrecision = FALSE;
+BOOL ExpectSimdInvalidOperation = FALSE;
 BOOL ExpectSimdDenormalizedOperand = FALSE;
-BOOL ExpectBreakpointTrap          = FALSE;
+BOOL ExpectBreakpointTrap = FALSE;
 
 RAISE_EXCEPTION_ADDRS ExceptionAddrs;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -119,7 +124,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static VOID OnImage(IMG img, VOID*)
+
+static VOID OnImage(IMG img, VOID *)
 {
     RTN rtn = RTN_FindByName(img, "SetLabelsForPinTool");
     if (RTN_Valid(rtn))
@@ -130,175 +136,224 @@ static VOID OnImage(IMG img, VOID*)
     }
 }
 
-static VOID OnInstruction(INS ins, VOID*)
+static VOID OnInstruction(INS ins, VOID *)
 {
-    if (!HaveExceptionAddrs) return;
+    if (!HaveExceptionAddrs)
+        return;
 
-    char* insAddr = reinterpret_cast< char* >(INS_Address(ins));
+    char *insAddr = reinterpret_cast<char *>(INS_Address(ins));
     if (insAddr == ExceptionAddrs._unmappedRead)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoUnmappedRead), (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT,
-                       IARG_THREAD_ID, IARG_ADDRINT, ExceptionAddrs._unmappedReadAddr, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoUnmappedRead), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_ADDRINT, ExceptionAddrs._unmappedReadAddr, IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._unmappedWrite)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoUnmappedWrite),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_ADDRINT,
-                       ExceptionAddrs._unmappedWriteAddr, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoUnmappedWrite), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_ADDRINT, ExceptionAddrs._unmappedWriteAddr, IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._inaccessibleRead)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoInaccessibleRead),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_ADDRINT,
-                       ExceptionAddrs._inaccessibleReadAddr, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoInaccessibleRead), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_ADDRINT, ExceptionAddrs._inaccessibleReadAddr, IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._inaccessibleWrite)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoInaccessibleWrite),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_ADDRINT,
-                       ExceptionAddrs._inaccessibleWriteAddr, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoInaccessibleWrite), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_ADDRINT, ExceptionAddrs._inaccessibleWriteAddr, IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._misalignedRead)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoMisalignedRead),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoMisalignedRead), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._misalignedWrite)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoMisalignedWrite),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoMisalignedWrite), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._illegalInstruction)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoIllegalInstruction),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoIllegalInstruction), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._privilegedInstruction)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoPrivilegedInstruction),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoPrivilegedInstruction), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._integerDivideByZero)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoIntegerDivideByZero),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoIntegerDivideByZero), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._integerOverflowTrap)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoIntegerOverflowTrap),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_UINT32,
-                       static_cast< UINT32 >(INS_Size(ins)), IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoIntegerOverflowTrap), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_UINT32, static_cast<UINT32>(INS_Size(ins)), IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._boundTrap)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoBoundTrap), (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT,
-                       IARG_THREAD_ID, IARG_UINT32, static_cast< UINT32 >(INS_Size(ins)), IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoBoundTrap), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_UINT32, static_cast<UINT32>(INS_Size(ins)), IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._x87DivideByZero)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87DivideByZero),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87DivideByZero), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._x87Overflow)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87Overflow), (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT,
-                       IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87Overflow), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._x87Underflow)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87Underflow), (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT,
-                       IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87Underflow), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._x87Precision)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87Precision), (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT,
-                       IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87Precision), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._x87InvalidOperation)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87InvalidOperation),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87InvalidOperation), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._x87DenormalizedOperand)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87DenormalizedOperand),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87DenormalizedOperand), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._x87StackUnderflow)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87StackUnderflow),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87StackUnderflow), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._x87StackOverflow)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87StackOverflow),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoX87StackOverflow), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._simdDivideByZero)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDDivideByZero),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDDivideByZero), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._simdOverflow)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDOverflow), (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT,
-                       IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDOverflow), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._simdUnderflow)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDUnderflow),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDUnderflow), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._simdPrecision)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDPrecision),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDPrecision), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._simdInvalidOperation)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDInvalidOperation),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDInvalidOperation), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._simdDenormalizedOperand)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDDenormalizedOperand),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoSIMDDenormalizedOperand), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_END);
         INS_Delete(ins);
     }
     if (insAddr == ExceptionAddrs._breakpointTrap)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoBreakpointTrap),
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_UINT32,
-                       static_cast< UINT32 >(INS_Size(ins)), IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoBreakpointTrap), 
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, 
+            IARG_THREAD_ID,
+            IARG_UINT32, static_cast<UINT32>(INS_Size(ins)), IARG_END);
         INS_Delete(ins);
     }
 }
 
-static void OnFini(INT32, VOID*)
+
+static void OnFini(INT32, VOID *)
 {
     if (!HaveExceptionAddrs)
     {
@@ -437,7 +492,8 @@ static void OnFini(INT32, VOID*)
     }
 }
 
-static void AtSetLabels(RAISE_EXCEPTION_ADDRS* exceptionAddrs)
+
+static void AtSetLabels(RAISE_EXCEPTION_ADDRS *exceptionAddrs)
 {
     size_t sz = PIN_SafeCopy(&ExceptionAddrs, exceptionAddrs, sizeof(ExceptionAddrs));
     if (sz != sizeof(ExceptionAddrs))
@@ -446,123 +502,124 @@ static void AtSetLabels(RAISE_EXCEPTION_ADDRS* exceptionAddrs)
         std::exit(1);
     }
 
-    HaveExceptionAddrs            = TRUE;
-    ExpectUnmappedRead            = (ExceptionAddrs._unmappedRead != 0);
-    ExpectUnmappedWrite           = (ExceptionAddrs._unmappedWrite != 0);
-    ExpectInaccessibleRead        = (ExceptionAddrs._inaccessibleRead != 0);
-    ExpectInaccessibleWrite       = (ExceptionAddrs._inaccessibleWrite != 0);
-    ExpectMisalignedRead          = (ExceptionAddrs._misalignedRead != 0);
-    ExpectMisalignedWrite         = (ExceptionAddrs._misalignedWrite != 0);
-    ExpectIllegalInstruction      = (ExceptionAddrs._illegalInstruction != 0);
-    ExpectPrivilegedInstruction   = (ExceptionAddrs._privilegedInstruction != 0);
-    ExpectIntegerDivideByZero     = (ExceptionAddrs._integerDivideByZero != 0);
-    ExpectIntegerOverflowTrap     = (ExceptionAddrs._integerOverflowTrap != 0);
-    ExpectBoundTrap               = (ExceptionAddrs._boundTrap != 0);
-    ExpectX87DivideByZero         = (ExceptionAddrs._x87DivideByZero != 0);
-    ExpectX87Overflow             = (ExceptionAddrs._x87Overflow != 0);
-    ExpectX87Underflow            = (ExceptionAddrs._x87Underflow != 0);
-    ExpectX87Precision            = (ExceptionAddrs._x87Precision != 0);
-    ExpectX87InvalidOperation     = (ExceptionAddrs._x87InvalidOperation != 0);
-    ExpectX87DenormalizedOperand  = (ExceptionAddrs._x87DenormalizedOperand != 0);
-    ExpectX87StackUnderflow       = (ExceptionAddrs._x87StackUnderflow != 0);
-    ExpectX87StackOverflow        = (ExceptionAddrs._x87StackOverflow != 0);
-    ExpectSimdDivideByZero        = (ExceptionAddrs._simdDivideByZero != 0);
-    ExpectSimdOverflow            = (ExceptionAddrs._simdOverflow != 0);
-    ExpectSimdUnderflow           = (ExceptionAddrs._simdUnderflow != 0);
-    ExpectSimdPrecision           = (ExceptionAddrs._simdPrecision != 0);
-    ExpectSimdInvalidOperation    = (ExceptionAddrs._simdInvalidOperation != 0);
+    HaveExceptionAddrs = TRUE;
+    ExpectUnmappedRead = (ExceptionAddrs._unmappedRead != 0);
+    ExpectUnmappedWrite = (ExceptionAddrs._unmappedWrite != 0);
+    ExpectInaccessibleRead = (ExceptionAddrs._inaccessibleRead != 0);
+    ExpectInaccessibleWrite = (ExceptionAddrs._inaccessibleWrite != 0);
+    ExpectMisalignedRead = (ExceptionAddrs._misalignedRead != 0);
+    ExpectMisalignedWrite = (ExceptionAddrs._misalignedWrite != 0);
+    ExpectIllegalInstruction = (ExceptionAddrs._illegalInstruction != 0);
+    ExpectPrivilegedInstruction = (ExceptionAddrs._privilegedInstruction != 0);
+    ExpectIntegerDivideByZero = (ExceptionAddrs._integerDivideByZero != 0);
+    ExpectIntegerOverflowTrap = (ExceptionAddrs._integerOverflowTrap != 0);
+    ExpectBoundTrap = (ExceptionAddrs._boundTrap != 0);
+    ExpectX87DivideByZero = (ExceptionAddrs._x87DivideByZero != 0);
+    ExpectX87Overflow = (ExceptionAddrs._x87Overflow != 0);
+    ExpectX87Underflow = (ExceptionAddrs._x87Underflow != 0);
+    ExpectX87Precision = (ExceptionAddrs._x87Precision != 0);
+    ExpectX87InvalidOperation = (ExceptionAddrs._x87InvalidOperation != 0);
+    ExpectX87DenormalizedOperand = (ExceptionAddrs._x87DenormalizedOperand != 0);
+    ExpectX87StackUnderflow = (ExceptionAddrs._x87StackUnderflow != 0);
+    ExpectX87StackOverflow = (ExceptionAddrs._x87StackOverflow != 0);
+    ExpectSimdDivideByZero = (ExceptionAddrs._simdDivideByZero != 0);
+    ExpectSimdOverflow = (ExceptionAddrs._simdOverflow != 0);
+    ExpectSimdUnderflow = (ExceptionAddrs._simdUnderflow != 0);
+    ExpectSimdPrecision = (ExceptionAddrs._simdPrecision != 0);
+    ExpectSimdInvalidOperation = (ExceptionAddrs._simdInvalidOperation != 0);
     ExpectSimdDenormalizedOperand = (ExceptionAddrs._simdDenormalizedOperand != 0);
-    ExpectBreakpointTrap          = (ExceptionAddrs._breakpointTrap != 0);
+    ExpectBreakpointTrap = (ExceptionAddrs._breakpointTrap != 0);
 
     PIN_RemoveInstrumentation();
 }
 
-static void DoUnmappedRead(CONTEXT* ctxt, THREADID tid, ADDRINT accessAddr)
+
+static void DoUnmappedRead(CONTEXT *ctxt, THREADID tid, ADDRINT accessAddr)
 {
     ExpectUnmappedRead = FALSE;
-    ADDRINT pc         = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitAccessFaultInfo(&exc, EXCEPTCODE_ACCESS_INVALID_ADDRESS, pc, accessAddr, FAULTY_ACCESS_READ);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoUnmappedWrite(CONTEXT* ctxt, THREADID tid, ADDRINT accessAddr)
+static void DoUnmappedWrite(CONTEXT *ctxt, THREADID tid, ADDRINT accessAddr)
 {
-    ExpectUnmappedWrite = FALSE;
-    ADDRINT pc          = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ExpectUnmappedWrite= FALSE;
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitAccessFaultInfo(&exc, EXCEPTCODE_ACCESS_INVALID_ADDRESS, pc, accessAddr, FAULTY_ACCESS_WRITE);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoInaccessibleRead(CONTEXT* ctxt, THREADID tid, ADDRINT accessAddr)
+static void DoInaccessibleRead(CONTEXT *ctxt, THREADID tid, ADDRINT accessAddr)
 {
     ExpectInaccessibleRead = FALSE;
-    ADDRINT pc             = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitAccessFaultInfo(&exc, EXCEPTCODE_ACCESS_DENIED, pc, accessAddr, FAULTY_ACCESS_READ);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoInaccessibleWrite(CONTEXT* ctxt, THREADID tid, ADDRINT accessAddr)
+static void DoInaccessibleWrite(CONTEXT *ctxt, THREADID tid, ADDRINT accessAddr)
 {
     ExpectInaccessibleWrite = FALSE;
-    ADDRINT pc              = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitAccessFaultInfo(&exc, EXCEPTCODE_ACCESS_DENIED, pc, accessAddr, FAULTY_ACCESS_WRITE);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoMisalignedRead(CONTEXT* ctxt, THREADID tid)
+static void DoMisalignedRead(CONTEXT *ctxt, THREADID tid)
 {
     ExpectMisalignedRead = FALSE;
-    ADDRINT pc           = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_ACCESS_MISALIGNED, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoMisalignedWrite(CONTEXT* ctxt, THREADID tid)
+static void DoMisalignedWrite(CONTEXT *ctxt, THREADID tid)
 {
     ExpectMisalignedWrite = FALSE;
-    ADDRINT pc            = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_ACCESS_MISALIGNED, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoIllegalInstruction(CONTEXT* ctxt, THREADID tid)
+static void DoIllegalInstruction(CONTEXT *ctxt, THREADID tid)
 {
     ExpectIllegalInstruction = FALSE;
-    ADDRINT pc               = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_ILLEGAL_INS, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoPrivilegedInstruction(CONTEXT* ctxt, THREADID tid)
+static void DoPrivilegedInstruction(CONTEXT *ctxt, THREADID tid)
 {
     ExpectPrivilegedInstruction = FALSE;
-    ADDRINT pc                  = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_PRIVILEGED_INS, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoIntegerDivideByZero(CONTEXT* ctxt, THREADID tid)
+static void DoIntegerDivideByZero(CONTEXT *ctxt, THREADID tid)
 {
     ExpectIntegerDivideByZero = FALSE;
-    ADDRINT pc                = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_INT_DIVIDE_BY_ZERO, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoIntegerOverflowTrap(CONTEXT* context, THREADID tid, UINT32 instSize)
+static void DoIntegerOverflowTrap(CONTEXT *context, THREADID tid, UINT32 instSize)
 {
     ExpectIntegerOverflowTrap = FALSE;
-    ADDRINT pc                = PIN_GetContextReg(context, REG_INST_PTR);
-
+    ADDRINT pc = PIN_GetContextReg(context, REG_INST_PTR);
+    
     CONTEXT writableContext, *ctxt;
     if (KnobUseIargConstContext)
     { // need to copy the ctxt into a writable context
@@ -574,98 +631,98 @@ static void DoIntegerOverflowTrap(CONTEXT* context, THREADID tid, UINT32 instSiz
         ctxt = context;
     }
 
-    PIN_SetContextReg(ctxt, REG_INST_PTR, pc + instSize); // The fault is reported on the PC after the trap instruction.
+    PIN_SetContextReg(ctxt, REG_INST_PTR, pc+instSize); // The fault is reported on the PC after the trap instruction.
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_INT_OVERFLOW_TRAP, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoBoundTrap(CONTEXT* ctxt, THREADID tid, UINT32 instSize)
+static void DoBoundTrap(CONTEXT *ctxt, THREADID tid, UINT32 instSize)
 {
     ExpectBoundTrap = FALSE;
-    ADDRINT pc      = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_INT_BOUNDS_EXCEEDED, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoX87DivideByZero(CONTEXT* ctxt, THREADID tid)
+static void DoX87DivideByZero(CONTEXT *ctxt, THREADID tid)
 {
     ExpectX87DivideByZero = FALSE;
-    ADDRINT pc            = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_X87_DIVIDE_BY_ZERO, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoX87Overflow(CONTEXT* ctxt, THREADID tid)
+static void DoX87Overflow(CONTEXT *ctxt, THREADID tid)
 {
     ExpectX87Overflow = FALSE;
-    ADDRINT pc        = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_X87_OVERFLOW, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoX87Underflow(CONTEXT* ctxt, THREADID tid)
+static void DoX87Underflow(CONTEXT *ctxt, THREADID tid)
 {
     ExpectX87Underflow = FALSE;
-    ADDRINT pc         = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_X87_UNDERFLOW, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoX87Precision(CONTEXT* ctxt, THREADID tid)
+static void DoX87Precision(CONTEXT *ctxt, THREADID tid)
 {
     ExpectX87Precision = FALSE;
-    ADDRINT pc         = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_X87_INEXACT_RESULT, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoX87InvalidOperation(CONTEXT* ctxt, THREADID tid)
+static void DoX87InvalidOperation(CONTEXT *ctxt, THREADID tid)
 {
     ExpectX87InvalidOperation = FALSE;
-    ADDRINT pc                = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_X87_INVALID_OPERATION, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoX87DenormalizedOperand(CONTEXT* ctxt, THREADID tid)
+static void DoX87DenormalizedOperand(CONTEXT *ctxt, THREADID tid)
 {
     ExpectX87DenormalizedOperand = FALSE;
-    ADDRINT pc                   = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_X87_DENORMAL_OPERAND, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoX87StackUnderflow(CONTEXT* ctxt, THREADID tid)
+static void DoX87StackUnderflow(CONTEXT *ctxt, THREADID tid)
 {
     ExpectX87StackUnderflow = FALSE;
-    ADDRINT pc              = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_X87_STACK_ERROR, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoX87StackOverflow(CONTEXT* ctxt, THREADID tid)
+static void DoX87StackOverflow(CONTEXT *ctxt, THREADID tid)
 {
     ExpectX87StackOverflow = FALSE;
-    ADDRINT pc             = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_X87_STACK_ERROR, pc);
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoSIMDDivideByZero(CONTEXT* context, THREADID tid)
+static void DoSIMDDivideByZero(CONTEXT *context, THREADID tid)
 {
     ExpectSimdDivideByZero = FALSE;
-    ADDRINT pc             = PIN_GetContextReg(context, REG_INST_PTR);
-    ADDRINT mxcsr          = PIN_GetContextReg(context, REG_MXCSR);
+    ADDRINT pc = PIN_GetContextReg(context, REG_INST_PTR);
+    ADDRINT mxcsr = PIN_GetContextReg(context, REG_MXCSR);
 
     CONTEXT writableContext, *ctxt;
     if (KnobUseIargConstContext)
@@ -684,12 +741,12 @@ static void DoSIMDDivideByZero(CONTEXT* context, THREADID tid)
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoSIMDOverflow(CONTEXT* context, THREADID tid)
+static void DoSIMDOverflow(CONTEXT *context, THREADID tid)
 {
     ExpectSimdOverflow = FALSE;
-    ADDRINT pc         = PIN_GetContextReg(context, REG_INST_PTR);
-    ADDRINT mxcsr      = PIN_GetContextReg(context, REG_MXCSR);
-
+    ADDRINT pc = PIN_GetContextReg(context, REG_INST_PTR);
+    ADDRINT mxcsr = PIN_GetContextReg(context, REG_MXCSR);
+    
     CONTEXT writableContext, *ctxt;
     if (KnobUseIargConstContext)
     { // need to copy the ctxt into a writable context
@@ -707,11 +764,11 @@ static void DoSIMDOverflow(CONTEXT* context, THREADID tid)
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoSIMDUnderflow(CONTEXT* context, THREADID tid)
+static void DoSIMDUnderflow(CONTEXT *context, THREADID tid)
 {
     ExpectSimdUnderflow = FALSE;
-    ADDRINT pc          = PIN_GetContextReg(context, REG_INST_PTR);
-    ADDRINT mxcsr       = PIN_GetContextReg(context, REG_MXCSR);
+    ADDRINT pc = PIN_GetContextReg(context, REG_INST_PTR);
+    ADDRINT mxcsr = PIN_GetContextReg(context, REG_MXCSR);
 
     CONTEXT writableContext, *ctxt;
     if (KnobUseIargConstContext)
@@ -730,12 +787,12 @@ static void DoSIMDUnderflow(CONTEXT* context, THREADID tid)
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoSIMDPrecision(CONTEXT* context, THREADID tid)
+static void DoSIMDPrecision(CONTEXT *context, THREADID tid)
 {
     ExpectSimdPrecision = FALSE;
-    ADDRINT pc          = PIN_GetContextReg(context, REG_INST_PTR);
-    ADDRINT mxcsr       = PIN_GetContextReg(context, REG_MXCSR);
-
+    ADDRINT pc = PIN_GetContextReg(context, REG_INST_PTR);
+    ADDRINT mxcsr = PIN_GetContextReg(context, REG_MXCSR);
+    
     CONTEXT writableContext, *ctxt;
     if (KnobUseIargConstContext)
     { // need to copy the ctxt into a writable context
@@ -753,12 +810,12 @@ static void DoSIMDPrecision(CONTEXT* context, THREADID tid)
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoSIMDInvalidOperation(CONTEXT* context, THREADID tid)
+static void DoSIMDInvalidOperation(CONTEXT *context, THREADID tid)
 {
     ExpectSimdInvalidOperation = FALSE;
-    ADDRINT pc                 = PIN_GetContextReg(context, REG_INST_PTR);
-    ADDRINT mxcsr              = PIN_GetContextReg(context, REG_MXCSR);
-
+    ADDRINT pc = PIN_GetContextReg(context, REG_INST_PTR);
+    ADDRINT mxcsr = PIN_GetContextReg(context, REG_MXCSR);
+    
     CONTEXT writableContext, *ctxt;
     if (KnobUseIargConstContext)
     { // need to copy the ctxt into a writable context
@@ -776,11 +833,11 @@ static void DoSIMDInvalidOperation(CONTEXT* context, THREADID tid)
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoSIMDDenormalizedOperand(CONTEXT* context, THREADID tid)
+static void DoSIMDDenormalizedOperand(CONTEXT *context, THREADID tid)
 {
     ExpectSimdDenormalizedOperand = FALSE;
-    ADDRINT pc                    = PIN_GetContextReg(context, REG_INST_PTR);
-    ADDRINT mxcsr                 = PIN_GetContextReg(context, REG_MXCSR);
+    ADDRINT pc = PIN_GetContextReg(context, REG_INST_PTR);
+    ADDRINT mxcsr = PIN_GetContextReg(context, REG_MXCSR);
 
     CONTEXT writableContext, *ctxt;
     if (KnobUseIargConstContext)
@@ -799,11 +856,12 @@ static void DoSIMDDenormalizedOperand(CONTEXT* context, THREADID tid)
     PIN_RaiseException(ctxt, tid, &exc);
 }
 
-static void DoBreakpointTrap(CONTEXT* context, THREADID tid, UINT32 instSize)
+static void DoBreakpointTrap(CONTEXT *context, THREADID tid, UINT32 instSize)
 {
     ExpectBreakpointTrap = FALSE;
-    ADDRINT pc           = PIN_GetContextReg(context, REG_INST_PTR);
+    ADDRINT pc = PIN_GetContextReg(context, REG_INST_PTR);
 
+    
     CONTEXT writableContext, *ctxt;
     if (KnobUseIargConstContext)
     { // need to copy the ctxt into a writable context
@@ -815,7 +873,7 @@ static void DoBreakpointTrap(CONTEXT* context, THREADID tid, UINT32 instSize)
         ctxt = context;
     }
 
-    PIN_SetContextReg(ctxt, REG_INST_PTR, pc + instSize); // The fault is reported on the PC after the trap instruction.
+    PIN_SetContextReg(ctxt, REG_INST_PTR, pc+instSize); // The fault is reported on the PC after the trap instruction.
     EXCEPTION_INFO exc;
     PIN_InitExceptionInfo(&exc, EXCEPTCODE_DBG_BREAKPOINT_TRAP, pc);
     PIN_RaiseException(ctxt, tid, &exc);

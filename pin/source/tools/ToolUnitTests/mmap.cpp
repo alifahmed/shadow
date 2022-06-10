@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,21 +21,24 @@
 #include <sys/mman.h>
 #include "pin.H"
 
-static void* gptr = 0;
+static void *gptr = 0;
 
-class TestMMap
-{
-  public:
-    TestMMap() { gptr = mmap(0, 4 * 1024, PROT_READ, MAP_PRIVATE | MAP_ANON, -1, 0); }
+class TestMMap {
+public:
+    TestMMap() 
+    {
+        gptr = mmap(0, 4*1024, PROT_READ, MAP_PRIVATE|MAP_ANON, -1, 0);
+    }
 };
 
 static TestMMap testMmap;
 
-int main(INT32 argc, CHAR** argv)
+
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
 
-    void* p = mmap(0, 4 * 1024, PROT_READ, MAP_PRIVATE | MAP_ANON, -1, 0);
+    void *p = mmap(0, 4*1024, PROT_READ, MAP_PRIVATE|MAP_ANON, -1, 0);
     if (p == MAP_FAILED || gptr == MAP_FAILED)
     {
         std::cerr << "mmap has failed" << std::endl;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,19 +18,22 @@
 #include <iostream>
 #include <fstream>
 #include "pin.H"
-using std::cerr;
-using std::endl;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
+
 
 // Global variables
 
 // A knob for defining the file with list of loaded images
-KNOB< string > KnobImagesLog(KNOB_MODE_WRITEONCE, "pintool", "o", "images_on_attach.log", "log file for the tool");
+KNOB<string> KnobImagesLog(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "images_on_attach.log", "log file for the tool");
 
 ofstream outFile; // The tool's output file for printing the loaded images.
 
 bool attached = false;
+
 
 static void OnDoRelease(ADDRINT doRelease)
 {
@@ -38,7 +41,8 @@ static void OnDoRelease(ADDRINT doRelease)
     *((bool*)doRelease) = true;
 }
 
-static VOID ImageLoad(IMG img, VOID* v)
+
+static VOID ImageLoad(IMG img, VOID *v)
 {
     outFile << IMG_Name(img) << endl;
     if (IMG_IsMainExecutable(img))
@@ -55,11 +59,20 @@ static VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-static VOID OnAppStart(VOID* v) { attached = true; }
 
-static VOID Fini(INT32 code, VOID* v) { outFile.close(); }
+static VOID OnAppStart(VOID *v)
+{
+    attached = true;
+}
 
-int main(INT32 argc, CHAR* argv[])
+
+static VOID Fini(INT32 code, VOID *v)
+{
+    outFile.close();
+}
+
+
+int main( INT32 argc, CHAR *argv[] )
 {
     // Initialization.
     PIN_InitSymbols();
@@ -67,7 +80,7 @@ int main(INT32 argc, CHAR* argv[])
 
     // Open the tool's output file for printing the loaded images.
     outFile.open(KnobImagesLog.Value().c_str());
-    if (!outFile.is_open() || outFile.fail())
+    if(!outFile.is_open() || outFile.fail())
     {
         cerr << "TOOL ERROR: Unable to open the images file." << endl;
         PIN_ExitProcess(1);

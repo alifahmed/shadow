@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,30 +26,34 @@
 #include <elf.h>
 #endif
 #include "tool_macros.h"
+using std::ofstream;
+using std::string;
+using std::ios;
+using std::hex;
+using std::set;
 using std::cerr;
+using std::pair;
 using std::dec;
 using std::endl;
-using std::hex;
-using std::ios;
-using std::ofstream;
-using std::pair;
-using std::set;
-using std::string;
+
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "jit_tool.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "jit_tool.out", "specify file name");
 
-KNOB< BOOL > KnobJustInitialNum(KNOB_MODE_WRITEONCE, "pintool", "just_init", "0", "just test the initial thread number");
+KNOB<BOOL> KnobJustInitialNum(KNOB_MODE_WRITEONCE, "pintool",
+    "just_init", "0", "just test the initial thread number");
 
-KNOB< BOOL > KnobCheckOrder(KNOB_MODE_WRITEONCE, "pintool", "check_order", "0",
-                            "Verify that all image load callbacks and all thread start "
-                            "callbacks are being called before starting to Jit.");
+KNOB<BOOL> KnobCheckOrder(KNOB_MODE_WRITEONCE, "pintool",
+    "check_order", "0", "Verify that all image load callbacks and all thread start "
+            "callbacks are being called before starting to Jit.");
 
 #ifdef TARGET_LINUX
-KNOB< BOOL > KnobJustQueryAuxv(KNOB_MODE_WRITEONCE, "pintool", "just_auxv", "0", "just test availability of auxv values");
+KNOB<BOOL> KnobJustQueryAuxv(KNOB_MODE_WRITEONCE, "pintool",
+    "just_auxv", "0", "just test availability of auxv values");
 #endif
 
 ofstream TraceFile;
@@ -59,8 +63,9 @@ volatile BOOL jitBegan = FALSE; // True if Jitting has started
 
 INT32 Usage()
 {
-    cerr << "This pin tool tests MT attach in JIT mode.\n"
-            "\n";
+    cerr <<
+        "This pin tool tests MT attach in JIT mode.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
@@ -69,7 +74,7 @@ INT32 Usage()
 #ifdef TARGET_LINUX
 void QueryAuxv(const char* name, ADDRINT value)
 {
-    bool found   = false;
+    bool found = false;
     ADDRINT vdso = PIN_GetAuxVectorValue(value, &found);
     if (found)
     {
@@ -82,16 +87,16 @@ void QueryAuxv(const char* name, ADDRINT value)
 }
 #endif
 
-UINT32 threadCounter = 0;
+UINT32  threadCounter=0;
 /*
  * Thread Start callback
  */
 PIN_LOCK pinLock;
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     ASSERT(!KnobCheckOrder || !jitBegan, "JIT began before all Thread start callbacks were called");
     PIN_GetLock(&pinLock, PIN_GetTid());
-    TraceFile << "Thread counter is updated to " << dec << (threadCounter + 1) << endl;
+    TraceFile << "Thread counter is updated to " << dec <<  (threadCounter+1) << endl;
     ++threadCounter;
     PIN_ReleaseLock(&pinLock);
 }
@@ -114,31 +119,41 @@ VOID AllThreadsNotifed(unsigned int numOfThreads, ADDRINT* gax)
     PIN_ReleaseLock(&pinLock);
 }
 
-int OneThreadNotified() { return threadCounter > 0; }
+int OneThreadNotified()
+{
+    return threadCounter > 0;
+}
 
 void* MyThreadMain(void* arg)
 {
-    static set< OS_THREAD_ID > tids;
-    static set< ADDRINT > args;
+    static set<OS_THREAD_ID> tids;
+    static set<ADDRINT> args;
 
     PIN_GetLock(&pinLock, PIN_GetTid());
 
     TraceFile << "MyThreadMain called with " << dec << (ADDRINT)arg << endl;
-    pair< set< OS_THREAD_ID >::iterator, bool > res = tids.insert(PIN_GetTid());
+    pair<set<OS_THREAD_ID>::iterator,bool> res = tids.insert(PIN_GetTid());
     ASSERT(res.second, "Thread " + decstr(PIN_GetTid()) + " started twice");
-    pair< set< ADDRINT >::iterator, bool > res2 = args.insert((ADDRINT)arg);
+    pair<set<ADDRINT>::iterator,bool> res2 = args.insert((ADDRINT)arg);
     ASSERT(res2.second, "Argument " + decstr((ADDRINT)arg) + " provided twice");
 
     PIN_ReleaseLock(&pinLock);
     return arg;
 }
 
-int MyPinAttached() { return 1; }
+int MyPinAttached()
+{
+    return 1;
+}
 
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v) { jitBegan = TRUE; }
+VOID Instruction(INS ins, VOID *v)
+{
+    jitBegan = TRUE;
+}
 
-VOID ImageLoad(IMG img, void* v)
+
+VOID ImageLoad(IMG img, void *v)
 {
     ASSERT(!KnobCheckOrder || !jitBegan, "JIT began before all image load callbacks were called");
     RTN rtn = RTN_FindByName(img, C_MANGLE("ThreadsReady"));
@@ -154,8 +169,7 @@ VOID ImageLoad(IMG img, void* v)
         // application, while RTN_InsertCall() doesn't.
         // So, in this case we choose to use RTN_InsertCall().
         RTN_Open(rtn);
-        RTN_InsertCall(rtn, IPOINT_AFTER, AFUNPTR(AllThreadsNotifed), IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_REG_REFERENCE,
-                       REG_GAX, IARG_END);
+        RTN_InsertCall(rtn, IPOINT_AFTER, AFUNPTR(AllThreadsNotifed), IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_REG_REFERENCE, REG_GAX, IARG_END);
         RTN_Close(rtn);
     }
 
@@ -179,7 +193,7 @@ VOID ImageLoad(IMG img, void* v)
 }
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     // Write to a file since cout and cerr maybe closed by the application
     TraceFile << "Fini was called" << endl;
@@ -189,11 +203,11 @@ VOID Fini(INT32 code, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -204,16 +218,14 @@ int main(int argc, CHAR* argv[])
     TraceFile << hex;
     TraceFile.setf(ios::showbase);
 
-    if (KnobJustInitialNum)
-    {
+    if (KnobJustInitialNum) {
         TraceFile << "Initial thread counter: " << PIN_GetInitialThreadCount() << endl;
         TraceFile.close();
         PIN_ExitProcess(0);
     }
 
 #ifdef TARGET_LINUX
-    if (KnobJustQueryAuxv)
-    {
+    if (KnobJustQueryAuxv) {
         QueryAuxv("AT_ENTRY", AT_ENTRY);
         QueryAuxv("UNDEFINED_ENTRY", 0xFFFFFFF);
         TraceFile.close();

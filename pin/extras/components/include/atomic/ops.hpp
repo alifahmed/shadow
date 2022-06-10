@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -23,13 +23,15 @@
 #include "atomic/private/backoff-impl.hpp"
 
 #if defined(HOST_IA32)
-#include "atomic/private/ia32/ops-impl.hpp"
+#   include "atomic/private/ia32/ops-impl.hpp"
 #elif defined(HOST_IA32E)
-#include "atomic/private/intel64/ops-impl.hpp"
+#   include "atomic/private/intel64/ops-impl.hpp"
 #endif
 
-namespace ATOMIC
-{
+
+namespace ATOMIC {
+
+
 /*! @brief  Low-level atomic memory operations.
  *
  * A collection of low-level atomic memory operations that can be performed on fundemental data types
@@ -63,10 +65,11 @@ class /*<UTILITY>*/ OPS
      * @return  The value of \a location prior to the operation.  The \a newVal was stored
      *           only if the return value is equal to \a oldVal.
      */
-    template< typename T > static T CompareAndSwap(volatile T* location, T oldVal, T newVal, BARRIER_CS barrier = BARRIER_CS_NONE)
+    template<typename T> static T CompareAndSwap(volatile T *location, T oldVal, T newVal,
+        BARRIER_CS barrier = BARRIER_CS_NONE)
     {
-        OPS_IMPL::CompareAndSwap< sizeof(T) >(static_cast< volatile void* >(location), static_cast< const void* >(&oldVal),
-                                              static_cast< void* >(&newVal), barrier);
+        OPS_IMPL::CompareAndSwap<sizeof(T)>(static_cast<volatile void*>(location),
+            static_cast<const void*>(&oldVal), static_cast<void*>(&newVal), barrier);
         return newVal;
     }
 
@@ -82,11 +85,11 @@ class /*<UTILITY>*/ OPS
      *
      * @return  TRUE if \a newVal was stored to \a location.
      */
-    template< typename T >
-    static bool CompareAndDidSwap(volatile T* location, T oldVal, T newVal, BARRIER_CS barrier = BARRIER_CS_NONE)
+    template<typename T> static bool CompareAndDidSwap(volatile T *location, T oldVal, T newVal,
+        BARRIER_CS barrier = BARRIER_CS_NONE)
     {
-        OPS_IMPL::CompareAndSwap< sizeof(T) >(static_cast< volatile void* >(location), static_cast< const void* >(&oldVal),
-                                              static_cast< void* >(&newVal), barrier);
+        OPS_IMPL::CompareAndSwap<sizeof(T)>(static_cast<volatile void*>(location),
+            static_cast<const void*>(&oldVal), static_cast<void*>(&newVal), barrier);
         return (newVal == oldVal);
     }
 
@@ -99,12 +102,15 @@ class /*<UTILITY>*/ OPS
      *
      * @return  The value swapped out of \a location
      */
-    template< typename T > static T Swap(volatile T* location, T newVal, BARRIER_SWAP barrier = BARRIER_SWAP_NONE)
+    template<typename T> static T Swap(volatile T *location, T  newVal,
+        BARRIER_SWAP barrier = BARRIER_SWAP_NONE)
     {
         T oldVal;
 
-        OPS_IMPL::Swap< sizeof(T) >(static_cast< volatile void* >(location), static_cast< void* >(&oldVal),
-                                    static_cast< const void* >(&newVal), barrier);
+        OPS_IMPL::Swap<sizeof(T)>(static_cast<volatile void*>(location),
+            static_cast<void*>(&oldVal),
+            static_cast<const void*>(&newVal),
+            barrier);
 
         return oldVal;
     }
@@ -117,9 +123,9 @@ class /*<UTILITY>*/ OPS
      *  @param[in] val          The value to write to \a location.
      *  @param[in] barrier      Tells the memory ordering semantics of this operation.
      */
-    template< typename T > static void Store(volatile T* location, T val, BARRIER_ST barrier = BARRIER_ST_NONE)
+    template<typename T> static void Store(volatile T *location, T val, BARRIER_ST barrier = BARRIER_ST_NONE)
     {
-        OPS_IMPL::Store< sizeof(T) >(static_cast< volatile void* >(location), static_cast< const void* >(&val), barrier);
+        OPS_IMPL::Store<sizeof(T)>(static_cast<volatile void*>(location), static_cast<const void*>(&val), barrier);
     }
 
     /*!
@@ -132,10 +138,10 @@ class /*<UTILITY>*/ OPS
      *
      * @return  The value at \a location.
      */
-    template< typename T > static T Load(volatile const T* location, BARRIER_LD barrier = BARRIER_LD_NONE)
+    template<typename T> static T Load(volatile const T *location, BARRIER_LD barrier = BARRIER_LD_NONE)
     {
         T val;
-        OPS_IMPL::Load< sizeof(T) >(static_cast< volatile const void* >(location), static_cast< void* >(&val), barrier);
+        OPS_IMPL::Load<sizeof(T)>(static_cast<volatile const void*>(location), static_cast<void*>(&val), barrier);
         return val;
     }
 
@@ -148,11 +154,12 @@ class /*<UTILITY>*/ OPS
      *
      * @return  The value of \a location prior to being incremented.
      */
-    template< typename T > static T Increment(volatile T* location, T inc, BARRIER_CS barrier = BARRIER_CS_NONE)
+    template<typename T> static T Increment(volatile T *location, T inc,
+        BARRIER_CS barrier = BARRIER_CS_NONE)
     {
         T oldVal;
-        OPS_IMPL::Increment< sizeof(T) >(static_cast< volatile void* >(location), static_cast< const void* >(&inc),
-                                         static_cast< void* >(&oldVal), barrier);
+        OPS_IMPL::Increment<sizeof(T)>(static_cast<volatile void*>(location), static_cast<const void*>(&inc),
+            static_cast<void*>(&oldVal), barrier);
         return oldVal;
     }
 
@@ -163,7 +170,7 @@ class /*<UTILITY>*/ OPS
      *  @param[in] location   Pointer to the location to modify.
      *  @param[in] val        If \a location is less than \a val it is updated.
      */
-    template< typename T > static void MaxValue(volatile T* location, T val)
+    template<typename T> static void MaxValue(volatile T *location, T val)
     {
         EXPONENTIAL_BACKOFF<> backoff;
 
@@ -181,8 +188,11 @@ class /*<UTILITY>*/ OPS
      *
      *  @param[in] delay    The number of iterations for the spin loop.
      */
-    static void Delay(unsigned delay) { ATOMIC_SpinDelay(static_cast< UINT32 >(delay)); }
+    static void Delay(unsigned delay)
+    {
+        ATOMIC_SpinDelay(static_cast<UINT32>(delay));
+    }
 };
 
-} // namespace ATOMIC
+} // namespace
 #endif // file guard

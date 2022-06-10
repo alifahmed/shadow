@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,22 +12,23 @@
 #ifndef FOLLOW_CHILD_H
 #define FOLLOW_CHILD_H
 
-using std::cerr;
 using std::cout;
 using std::endl;
+using std::cerr;
 
 #ifndef TARGET_WINDOWS
 
 #if defined(TARGET_LINUX)
-#include <syscall.h>
+# include <syscall.h>
 #endif
 
 #if defined(TARGET_MAC)
-#include <sys/syscall.h>
+# include <sys/syscall.h>
 #endif
 
 namespace INSTLIB
 {
+
 /*! @defgroup FOLLOW_CHILD
  *
  * Instrumentation for injecting pin in child processes. Pin will always be
@@ -65,7 +66,7 @@ class FOLLOW_CHILD
      * users can simply use the argv array that is passed to the main of
      * the tool.
      */
-    VOID SetPrefix(CHAR* prefix[])
+    VOID SetPrefix(CHAR *prefix[])
     {
         ASSERTX(_active == TRUE);
         _prefix = prefix;
@@ -88,19 +89,24 @@ class FOLLOW_CHILD
      *
      * Instrument all the system calls to look for exec
      */
-    static VOID Instruction(INS ins, VOID* v)
+    static VOID Instruction(INS ins, VOID * v)
     {
-        if (!static_cast< FOLLOW_CHILD* >(v)->_active || !INS_IsSyscall(ins)) return;
+        if (!static_cast<FOLLOW_CHILD*>(v)->_active || !INS_IsSyscall(ins))
+            return;
 
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(StaticFollowExec), IARG_PTR, v, IARG_SYSCALL_NUMBER, IARG_SYSARG_REFERENCE, 0,
-                       IARG_SYSARG_REFERENCE, 1, IARG_SYSARG_REFERENCE, 2, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(StaticFollowExec),
+                       IARG_PTR,
+                       v,
+                       IARG_SYSCALL_NUMBER,
+                       IARG_SYSARG_REFERENCE, 0, IARG_SYSARG_REFERENCE, 1, IARG_SYSARG_REFERENCE, 2,
+                       IARG_END);
     }
 
     /*
      * Analysis function must be static member functions. We pass the
      * object and use this wrapper to get to the member function
      */
-    static VOID StaticFollowExec(FOLLOW_CHILD* me, int syscallNumber, CHAR const** filename, CHAR const** argv[], VOID* envp)
+    static VOID StaticFollowExec(FOLLOW_CHILD * me, int syscallNumber, CHAR const ** filename, CHAR const **argv[], VOID * envp)
     {
         me->FollowExec(syscallNumber, filename, argv, envp);
     }
@@ -110,17 +116,18 @@ class FOLLOW_CHILD
      *
      * If this is an exec system call, rewrite the arguments to insert the pin prefix
      */
-    VOID FollowExec(int syscallNumber, CHAR const** filename, CHAR const** argv[], VOID* envp)
+    VOID FollowExec(int syscallNumber, CHAR const ** filename, CHAR const **argv[], VOID * envp)
     {
-        if (syscallNumber != SYS_execve) return;
+        if (syscallNumber != SYS_execve)
+            return;
 
-        CHAR const* const appFilenameKnob = "-app_filename";
+        CHAR const * const appFilenameKnob = "-app_filename";
 
         // Construct a new argv array
 
         // Compute size of pin prefix, ends with '--'
         INT32 newArgvSize = 0;
-        for (INT32 i = 0; strcmp(_prefix[i], "--") != 0; i++)
+        for (INT32 i = 0; strcmp(_prefix[i],"--") != 0; i++)
         {
             if (strcmp(_prefix[i], appFilenameKnob) == 0)
             {
@@ -131,6 +138,7 @@ class FOLLOW_CHILD
             {
                 newArgvSize++;
             }
+
         }
 
         // Add space for "-app_filename <file> --"
@@ -146,8 +154,8 @@ class FOLLOW_CHILD
         newArgvSize++;
 
         // We are about to do an exec, so this is not a true memory leak
-        CHAR const** newArgv = new CHAR const*[newArgvSize];
-        INT32 newArgc        = 0;
+        CHAR const ** newArgv = new CHAR const *[newArgvSize];
+        INT32 newArgc = 0;
 
         // Add Pin binary name
         newArgv[newArgc++] = PIN_VmFullPath();
@@ -157,7 +165,7 @@ class FOLLOW_CHILD
         newArgv[newArgc++] = *filename;
 
         // Add rest of pin prefix, skipping binary name
-        for (INT32 i = 1; strcmp(_prefix[i], "--") != 0; i++)
+        for (INT32 i = 1; strcmp(_prefix[i],"--") != 0; i++)
         {
             if (strcmp(_prefix[i], appFilenameKnob) == 0)
             {
@@ -185,7 +193,7 @@ class FOLLOW_CHILD
 
         // Change the system call arguments
         *filename = newArgv[0];
-        *argv     = newArgv;
+        *argv = newArgv;
 
         const BOOL debug = FALSE;
 
@@ -201,10 +209,11 @@ class FOLLOW_CHILD
     }
 
     BOOL _active;
-    CHAR const* const* _prefix;
+    CHAR const * const *_prefix;
 };
 
-} // namespace INSTLIB
+
+}
 
 #endif
 #endif

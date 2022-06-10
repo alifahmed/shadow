@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,21 +14,26 @@
 #include <assert.h>
 #include "pin.H"
 
+
 #include "instrumentation_order_app.h"
-using std::endl;
 using std::ofstream;
 using std::string;
+using std::endl;
 
 // A knob for defining the output file name
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "instrumentation_order17.out",
-                              "specify file name for instrumentation order output");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "instrumentation_order17.out",
+                            "specify file name for instrumentation order output");
 
 // ofstream object for handling the output.
 ofstream outstream;
 
-void Emit(char const* message) { outstream << message << endl; }
 
-static VOID Image(IMG img, VOID* v)
+void Emit(char const* message)
+{
+    outstream << message << endl;
+}
+
+static VOID Image(IMG img, VOID *v)
 {
     RTN rtn = RTN_FindByName(img, watch_rtn);
 
@@ -39,18 +44,23 @@ static VOID Image(IMG img, VOID* v)
     printf("Image Instrumenting %s\n", watch_rtn);
     RTN_Open(rtn);
     INS ins = RTN_InsHeadOnly(rtn);
-    ASSERTX(INS_Valid(ins));
-
-    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR, "IMG instrumentation2", IARG_CALL_ORDER, CALL_ORDER_FIRST + 2,
-                   IARG_END);
-    RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR, "IMG instrumentation1", IARG_CALL_ORDER, CALL_ORDER_FIRST + 2,
-                   IARG_END);
+    ASSERTX (INS_Valid(ins));
+    
+    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(Emit),
+                             IARG_PTR, "IMG instrumentation2",  IARG_CALL_ORDER, CALL_ORDER_FIRST+2, IARG_END);
+    RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(Emit),
+                             IARG_PTR, "IMG instrumentation1",  IARG_CALL_ORDER, CALL_ORDER_FIRST+2, IARG_END);
     RTN_Close(rtn);
+    
 }
 
-static VOID Fini(INT32 code, VOID* v) { outstream.close(); }
 
-int main(int argc, char* argv[])
+static VOID Fini(INT32 code, VOID *v)
+{
+    outstream.close();
+}
+
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
@@ -63,6 +73,6 @@ int main(int argc, char* argv[])
 
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

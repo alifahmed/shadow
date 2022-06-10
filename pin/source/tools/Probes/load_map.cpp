@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,18 +25,20 @@
 #include "pin.H"
 #include <list>
 #include "tool_macros.h"
-using std::cerr;
-using std::cout;
-using std::dec;
-using std::endl;
+using std::string;
 using std::hex;
 using std::list;
-using std::string;
+using std::cerr;
+using std::dec;
+using std::endl;
+using std::cout;
+
 
 /* Memory range */
 struct RANGE_ATTR
 {
-    RANGE_ATTR(ADDRINT start, ADDRINT end, string attr) : _start(start), _end(end), _attr(attr) {}
+    RANGE_ATTR(ADDRINT start, ADDRINT end, string attr)
+            :_start(start), _end(end), _attr(attr) {} 
     ADDRINT _start;
     ADDRINT _end;
     string _attr;
@@ -47,19 +49,21 @@ class RANGES
 {
   public:
     /* Get memory attributes under the specified address */
-    BOOL GetAttributes(ADDRINT addr, string* attr);
+    BOOL GetAttributes(ADDRINT addr, string *attr);
     VOID AddRange(ADDRINT start, ADDRINT end, string attr);
-
   private:
-    list< RANGE_ATTR > _ranges;
+	list <RANGE_ATTR> _ranges;
 };
 
-VOID RANGES::AddRange(ADDRINT start, ADDRINT end, string attr) { _ranges.push_back(RANGE_ATTR(start, end, attr)); }
+VOID RANGES::AddRange(ADDRINT start, ADDRINT end, string attr)
+{
+    _ranges.push_back(RANGE_ATTR(start, end, attr));
+}
 
 /* Find range and get its attriutes */
-BOOL RANGES::GetAttributes(ADDRINT addr, string* attrStr)
+BOOL RANGES::GetAttributes(ADDRINT addr, string *attrStr)
 {
-    list< RANGE_ATTR >::iterator it = _ranges.begin();
+    list < RANGE_ATTR>::iterator it = _ranges.begin();
     for (; it != _ranges.end(); it++)
     {
         if ((it->_start <= addr) && (it->_end > addr))
@@ -75,23 +79,25 @@ BOOL RANGES::GetAttributes(ADDRINT addr, string* attrStr)
 #define MAX_NUM_OF_RANGES_PER_FILENAME 10
 
 /* Read /proc/self/maps and fill fileMap with ranges */
-VOID FillFileMap(const char* name, RANGES* fileMap)
+VOID FillFileMap(const char *name, RANGES *fileMap)
 {
-    FILE* fp = fopen("/proc/self/maps", "r");
+    FILE *fp = fopen("/proc/self/maps", "r");
     char buff[1024];
-    char attributes[MAX_NUM_OF_RANGES_PER_FILENAME][10];
+	char attributes[MAX_NUM_OF_RANGES_PER_FILENAME][10];
     unsigned long mapl[MAX_NUM_OF_RANGES_PER_FILENAME], maph[MAX_NUM_OF_RANGES_PER_FILENAME];
     int nRange = 0;
-    while (fgets(buff, 1024, fp) != NULL)
+    while(fgets(buff, 1024, fp) != NULL)
     {
         if (strstr(buff, name) != 0)
         {
-            if (sscanf(buff, "%lx-%lx %s", &mapl[nRange], &maph[nRange], attributes[nRange]) != 3) continue;
-            nRange++;
+            if(sscanf(buff, "%lx-%lx %s", &mapl[nRange], &maph[nRange],
+             attributes[nRange]) != 3)
+                continue;
+			nRange++;
         }
     }
     fclose(fp);
-    for (int i = 0; i < nRange; i++)
+    for (int i=0; i< nRange; i++)
     {
         fileMap->AddRange(mapl[i], maph[i], attributes[i]);
     }
@@ -103,15 +109,15 @@ VOID FillFileMap(const char* name, RANGES* fileMap)
 #include <mach/mach_init.h>
 #include <mach/vm_prot.h>
 
-VOID FillFileMap(const char* name, RANGES* fileMap)
+VOID FillFileMap(const char *name, RANGES *fileMap)
 {
-    mach_vm_address_t address      = 0;
+    mach_vm_address_t address = 0;
     mach_vm_address_t last_address = 0;
-    mach_vm_size_t size            = 0;
+    mach_vm_size_t size = 0;
     while (1)
     {
         kern_return_t ret = KERN_SUCCESS;
-        natural_t depth   = 1;
+        natural_t depth = 1;
         vm_region_submap_info_data_64_t info;
         mach_msg_type_number_t count = VM_REGION_SUBMAP_INFO_COUNT_64;
         ret = mach_vm_region_recurse(mach_task_self(), &address, &size, &depth, (vm_region_recurse_info_t)&info, &count);
@@ -120,9 +126,10 @@ VOID FillFileMap(const char* name, RANGES* fileMap)
             break;
         }
         char buf[4];
-        sprintf(buf, "%c%c%c", (info.protection & VM_PROT_READ) ? 'r' : '-', (info.protection & VM_PROT_WRITE) ? 'w' : '-',
-                (info.protection & VM_PROT_EXECUTE) ? 'x' : '-');
-        fileMap->AddRange((unsigned long)address, (unsigned long)(address + size), buf);
+        sprintf(buf, "%c%c%c", (info.protection & VM_PROT_READ) ? 'r' : '-',
+                               (info.protection & VM_PROT_WRITE) ? 'w' : '-',
+                               (info.protection & VM_PROT_EXECUTE) ? 'x' : '-');
+        fileMap->AddRange((unsigned long)address, (unsigned long)(address+size), buf);
         last_address = address;
         address += size;
     }
@@ -130,41 +137,48 @@ VOID FillFileMap(const char* name, RANGES* fileMap)
 
 #endif
 
-VOID ToolDoNothing() { cout << "Tool replacement - nothing to do" << endl; }
-
-VOID ToolOne(size_t nBytes) { cout << "Tool replacement - print 1" << endl; }
-
-BOOL PutProbeAndCheckAttributes(IMG img, const char* rtnName, AFUNPTR rtnReplacement)
+VOID ToolDoNothing()
 {
-    string shortName      = IMG_Name(img);
+	cout << "Tool replacement - nothing to do" << endl;
+}
+
+VOID ToolOne(size_t nBytes)
+{
+	cout << "Tool replacement - print 1" << endl;
+}
+
+BOOL PutProbeAndCheckAttributes(IMG img, const char *rtnName, AFUNPTR rtnReplacement)
+{
+    string shortName = IMG_Name(img);
     string::size_type pos = shortName.rfind('/');
-    if (pos != string::npos) shortName = shortName.substr(pos + 1);
+    if (pos != string::npos)
+        shortName = shortName.substr(pos + 1);
 
     RANGES fileMapBeforeProbe;
     FillFileMap(shortName.c_str(), &fileMapBeforeProbe);
-
+    
     RTN rtn = RTN_FindByName(img, rtnName);
     if (RTN_Valid(rtn) && RTN_IsSafeForProbedReplacement(rtn))
     {
-        cout << "Looking at file " << shortName << endl;
-
-        ADDRINT addr = RTN_Address(rtn);
-        string origAttr;
-        BOOL res = fileMapBeforeProbe.GetAttributes(addr, &origAttr);
-        if (!res)
+	    cout << "Looking at file " << shortName << endl;
+ 
+	    ADDRINT addr = RTN_Address(rtn);
+     	string origAttr;
+     	BOOL res = fileMapBeforeProbe.GetAttributes(addr, &origAttr); 
+      	if (!res)
         {
             cerr << "Failed to read original page attributes from /proc/self/maps" << endl;
             cerr << "The bug is in the test" << endl;
             exit(-1);
         }
-
+     
         RTN_ReplaceProbed(rtn, rtnReplacement);
-
+        
         RANGES fileMapAfterProbe;
         FillFileMap(shortName.c_str(), &fileMapAfterProbe);
         string newAttr = "-cant-read-maps-file-";
-        res            = fileMapAfterProbe.GetAttributes(addr, &newAttr);
-        if (!res)
+     	res = fileMapAfterProbe.GetAttributes(addr, &newAttr); 
+      	if (!res)
         {
             cerr << "Failed to read new page attributes from /proc/self/maps" << endl;
             cerr << "The bug is in the test" << endl;
@@ -179,39 +193,40 @@ BOOL PutProbeAndCheckAttributes(IMG img, const char* rtnName, AFUNPTR rtnReplace
         else
         {
             cout << "Original map was preserved around address " << hex << addr << endl;
-            cout << "Attributes: " << newAttr << endl;
-        }
+        	cout << "Attributes: " << newAttr << endl;
+     	}
         return TRUE;
     }
-    return FALSE;
+ 	return FALSE;
 }
+    
 
-VOID ImageLoad(IMG img, VOID* arg)
+VOID ImageLoad(IMG img, VOID * arg)
 {
-    UINT32* numOfInstrumentedRtnsPtr = (UINT32*)arg;
+    UINT32 *numOfInstrumentedRtnsPtr = (UINT32 *)arg;
     if (PutProbeAndCheckAttributes(img, C_MANGLE("do_nothing"), (AFUNPTR)ToolDoNothing))
     {
-        (*numOfInstrumentedRtnsPtr)++;
-        cout << dec << *numOfInstrumentedRtnsPtr << " routines were instrumented" << endl;
+        (*numOfInstrumentedRtnsPtr) ++;
+	    cout << dec << *numOfInstrumentedRtnsPtr << " routines were instrumented" << endl;
     }
-
+        
     if (PutProbeAndCheckAttributes(img, C_MANGLE("one"), (AFUNPTR)ToolOne))
     {
-        (*numOfInstrumentedRtnsPtr)++;
-        cout << dec << *numOfInstrumentedRtnsPtr << " routines were instrumented" << endl;
+        (*numOfInstrumentedRtnsPtr) ++;
+	    cout << dec << *numOfInstrumentedRtnsPtr << " routines were instrumented" << endl;
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
 
     UINT32 numOfInstrumentedRtns = 0;
     IMG_AddInstrumentFunction(ImageLoad, (VOID*)&numOfInstrumentedRtns);
-
+    
     // Never returns
     PIN_StartProgramProbed();
-
+    
     return 0;
 }

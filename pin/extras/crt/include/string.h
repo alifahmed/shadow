@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -58,7 +58,6 @@ extern void*  memchr(const void *, int, size_t) __purefunc;
 extern void*  memrchr(const void *, int, size_t) __purefunc;
 extern int    memcmp(const void *, const void *, size_t) __purefunc;
 extern void*  memcpy(void* __restrict, const void* __restrict, size_t);
-extern int    memcpy_s(void*, size_t, const void*, size_t);
 extern void*  memmove(void *, const void *, size_t);
 extern void*  memset(void *, int, size_t);
 extern void*  memmem(const void *, size_t, const void *, size_t) __purefunc;
@@ -75,10 +74,7 @@ extern size_t strnlen_s(const char *, size_t);
 extern int    strcmp(const char *, const char *) __purefunc;
 extern char*  stpcpy(char* __restrict, const char* __restrict);
 extern char*  strcpy(char* __restrict, const char* __restrict);
-extern int    strcpy_s(char*, size_t, const char*);
 extern char*  strcat(char* __restrict, const char* __restrict);
-extern int    strcat_s(char*, size_t, const char*);
-extern int    strncat_s(char*, size_t, const char*, size_t);
 
 extern int    strcasecmp(const char *, const char *) __purefunc;
 extern int    strncasecmp(const char *, const char *, size_t) __purefunc;
@@ -92,7 +88,6 @@ extern char*  strstr(const char *, const char *) __purefunc;
 extern char*  strnstr(const char *, const char *, size_t) __purefunc;
 extern char*  strcasestr(const char *haystack, const char *needle) __purefunc;
 extern char*  strtok(char* __restrict, const char* __restrict);
-extern char*  strtok_s(char*, size_t*, const char*, char**);
 extern char*  strtok_r(char* __restrict, const char* __restrict, char** __restrict);
 
 extern char* strerror(int);
@@ -108,7 +103,7 @@ extern char*  strndup(const char *, size_t);
 extern int    strncmp(const char *, const char *, size_t) __purefunc;
 extern char*  stpncpy(char* __restrict, const char* __restrict, size_t);
 extern char*  strncpy(char* __restrict, const char* __restrict, size_t);
-extern int    strncpy_s(char*, size_t, const char*, size_t);
+
 extern size_t strlcat(char* __restrict, const char* __restrict, size_t);
 extern size_t strlcpy(char* __restrict, const char* __restrict, size_t);
 

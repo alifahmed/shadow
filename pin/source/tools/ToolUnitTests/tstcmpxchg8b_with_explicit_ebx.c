@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -32,8 +32,9 @@ unsigned int edxVal;
 unsigned char a[] = {0x1, 0xff, 0xff, 0xff, 0x2, 0xff, 0xff, 0xff};
 int main()
 {
+    
     cmpxchg8_with_explicit_ebx();
-    printf("eaxVal %x edxVal %x\n", eaxVal, edxVal);
+    printf ("eaxVal %x edxVal %x\n", eaxVal, edxVal);
     /*
     asm( "mov %ebp, %ebx");
     asm( "mov $8, %eax");

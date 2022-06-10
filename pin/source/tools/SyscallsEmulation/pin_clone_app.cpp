@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,22 +17,18 @@
 #include <cstring>
 #include <cerrno>
 
+
 /* Stack size for cloned child */
 #define STACK_SIZE (1024 * 1024)
 
-#define errExit(msg)        \
-    do                      \
-    {                       \
-        perror(msg);        \
-        exit(EXIT_FAILURE); \
-    }                       \
-    while (0)
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+                        } while (0)
 
 /* Pipe for connection between main process and child */
 int myPipe[2];
 
 /* Start function for cloned child */
-static int childFunc(void* arg)
+static int childFunc(void *arg)
 {
     /* Close unused read side */
     close(myPipe[0]);
@@ -45,13 +41,13 @@ static int childFunc(void* arg)
 }
 
 /* main function */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    char* stack    = NULL;
-    char* stackTop = NULL;
-    char buf       = '\0';
-    int oldStatus  = -1;
-    pid_t pid      = -1;
+    char * stack = NULL;
+    char * stackTop = NULL;
+    char buf = '\0';
+    int oldStatus = -1;
+    pid_t pid = -1;
 
     /* Allocate stack for child */
     stack = (char*)malloc(STACK_SIZE);
@@ -73,7 +69,7 @@ int main(int argc, char* argv[])
     {
         errExit("fcntl");
     }
-    fcntl(myPipe[0], F_SETFL, oldStatus | O_NONBLOCK);
+    fcntl(myPipe[0], F_SETFL, oldStatus|O_NONBLOCK);
 
     /* Create child */
     pid = clone(childFunc, stackTop, CLONE_VFORK, NULL);

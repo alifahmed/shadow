@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -51,10 +51,7 @@
 #ifndef __stl_config__system_h
 #define __stl_config__system_h
 
-#if defined (PIN_CRT)
-/* Build stlport for PIN */
-#  include <stl/config/_pin.h>
-#elif defined (__sun)
+#if defined (__sun)
 #  include <stl/config/_solaris.h>
 #  if defined (__GNUC__)
 #    include <stl/config/_gcc.h>
@@ -77,6 +74,9 @@
 #  elif defined (__HP_aCC)
 #    include <stl/config/_hpacc.h>
 #  endif
+#elif defined (__PIN__)
+/* Build stlport for PIN */
+#  include <stl/config/_pin.h>
 #elif defined (__ANDROID__)
 /* Android mobile phone platform. Somewhat but not entirely GNU/Linux-like */
 #  include <stl/config/_android.h>

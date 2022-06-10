@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -28,30 +28,33 @@
 #include "atomic.hpp"
 
 #if defined(FUND_HOST_MAC)
-#include <sys/types.h>
-#include <sys/sysctl.h>
+#   include <sys/types.h>
+#   include <sys/sysctl.h>
 #endif
 
-extern "C" void InstrumentedWithPin(volatile UINT32*);
+
+extern "C" void InstrumentedWithPin(volatile UINT32 *);
 extern "C" void TellPinThreadCount(ADDRINT);
 extern "C" void TellPinThreadStart();
 
 static unsigned const DEFAULT_CPU_COUNT = 2;
 
-typedef void (*FUNPTR1)(volatile UINT32*);
+typedef void (*FUNPTR1)(volatile UINT32 *);
 typedef void (*FUNPTR2)(ADDRINT);
 typedef void (*FUNPTR3)();
 
 static volatile bool Ready = false;
 
-static unsigned GetThreadCount(int, char**);
+static unsigned GetThreadCount(int, char **);
 static unsigned GetCpuCount();
-static void* Worker(void*);
+static void *Worker(void *);
 
-int main(int argc, char** argv)
+
+int main(int argc, char **argv)
 {
     unsigned numThreads = GetThreadCount(argc, argv);
-    if (!numThreads) return 1;
+    if (!numThreads)
+        return 1;
 
     std::cout << "Testing with threads: " << std::dec << numThreads << std::endl;
 
@@ -60,8 +63,8 @@ int main(int argc, char** argv)
     volatile FUNPTR2 tellPinCount = TellPinThreadCount;
     tellPinCount(numThreads);
 
-    pthread_t* thds = new pthread_t[numThreads];
-    for (unsigned i = 0; i < numThreads; i++)
+    pthread_t *thds = new pthread_t[numThreads];
+    for (unsigned i = 0;  i < numThreads;  i++)
     {
         if (pthread_create(&thds[i], 0, Worker, 0) != 0)
         {
@@ -74,13 +77,13 @@ int main(int argc, char** argv)
     //
     ATOMIC::OPS::Store(&Ready, true);
 
-    for (unsigned i = 0; i < numThreads; i++)
+    for (unsigned i = 0;  i < numThreads;  i++)
         pthread_join(thds[i], 0);
-    delete[] thds;
+    delete [] thds;
     return 0;
 }
 
-static unsigned GetThreadCount(int argc, char** argv)
+static unsigned GetThreadCount(int argc, char **argv)
 {
     // If there's no explicit thread parameter, use the number of CPU's
     // but not less than 2 and not more than 8.
@@ -88,8 +91,10 @@ static unsigned GetThreadCount(int argc, char** argv)
     if (argc <= 1)
     {
         unsigned ncpus = GetCpuCount();
-        if (ncpus < 2) ncpus = 2;
-        if (ncpus > 8) ncpus = 8;
+        if (ncpus < 2)
+            ncpus = 2;
+        if (ncpus > 8)
+            ncpus = 8;
         return ncpus;
     }
 
@@ -105,14 +110,14 @@ static unsigned GetThreadCount(int argc, char** argv)
         return 0;
     }
 
-    char* end;
+    char *end;
     unsigned long val = std::strtoul(argv[2], &end, 10);
     if (*(argv[2]) == '\0' || val > UINT_MAX || val == 0 || *end != '\0')
     {
         std::cerr << "Invalid parameter to -t: " << argv[2] << std::endl;
         return 0;
     }
-    return static_cast< unsigned >(val);
+    return static_cast<unsigned>(val);
 }
 
 static unsigned GetCpuCount()
@@ -120,7 +125,8 @@ static unsigned GetCpuCount()
 #if defined(FUND_HOST_LINUX) || defined(FUND_HOST_BSD)
 
     long count = sysconf(_SC_NPROCESSORS_ONLN);
-    if (count != -1) return count;
+    if (count != -1)
+        return count;
 
 #elif defined(FUND_HOST_MAC)
 
@@ -129,7 +135,8 @@ static unsigned GetCpuCount()
     mib[1] = HW_NCPU;
     unsigned ncpu;
     size_t len = sizeof(ncpu);
-    if (sysctl(mib, 2, &ncpu, &len, 0, 0) == 0) return ncpu;
+    if (sysctl(mib, 2, &ncpu, &len, 0, 0) == 0)
+        return ncpu;
 
 #endif
 
@@ -137,7 +144,7 @@ static unsigned GetCpuCount()
     return DEFAULT_CPU_COUNT;
 }
 
-static void* Worker(void*)
+static void *Worker(void *)
 {
     volatile FUNPTR3 threadstarted = TellPinThreadStart;
     threadstarted();
@@ -145,21 +152,20 @@ static void* Worker(void*)
     // spin loop here to help ensure that all thread execute the loop below
     // in parallel.
     //
-    while (!ATOMIC::OPS::Load(&Ready))
-        ;
+    while (!ATOMIC::OPS::Load(&Ready));
 
     // Call InstrumentedWithPin() through a volatile pointer to prevent the compiler
     // from inlining the body.
     //
     volatile FUNPTR1 doFun = InstrumentedWithPin;
-    volatile UINT32 done   = 0;
+    volatile UINT32 done = 0;
     while (!done)
         doFun(&done);
 
     return 0;
 }
 
-extern "C" void InstrumentedWithPin(volatile UINT32* done)
+extern "C" void InstrumentedWithPin(volatile UINT32 *done)
 {
     // Pin tool places instrumentation here.
     // It stores non-zero to 'done' when the thread should exit.

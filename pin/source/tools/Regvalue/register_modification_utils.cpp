@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,6 +18,7 @@ using std::flush;
 
 using std::map;
 
+
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
@@ -25,7 +26,8 @@ using std::map;
 // The regvalue_app application stores the register values after the ChangeRegs routine completes.
 // The tool can then inspect these values to check whether value replacement was successful.
 // This map holds pointers to these stored values.
-static map< REG, void* > applicationStoredValues;
+static map<REG, void*> applicationStoredValues;
+
 
 /////////////////////
 // UTILITY FUNCTIONS
@@ -33,9 +35,9 @@ static map< REG, void* > applicationStoredValues;
 
 bool CheckModifiedValues(ostream& ost)
 {
-    bool success              = true;
-    const vector< REG >& regs = GetTestRegs();
-    int numOfRegs             = regs.size();
+    bool success = true;
+    const vector<REG>& regs = GetTestRegs();
+    int numOfRegs = regs.size();
     for (int r = 0; r < numOfRegs; ++r)
     {
         REG reg = regs[r];
@@ -44,11 +46,12 @@ bool CheckModifiedValues(ostream& ost)
     return success;
 }
 
+
 /////////////////////
 // API FUNCTIONS IMPLEMENTATION
 /////////////////////
 
-void CheckToolModifiedValues(CONTEXT* ctxt, void* /* ostream* */ ostptr)
+void CheckToolModifiedValues(CONTEXT * ctxt, void* /* ostream* */ ostptr)
 {
     ostream& ost = *((ostream*)ostptr);
     ost << "Context values after being changed" << endl << flush;
@@ -64,8 +67,8 @@ void CheckToolModifiedValues(CONTEXT* ctxt, void* /* ostream* */ ostptr)
 void ToolSaveAppPointers(void* gprptr, void* stptr, void* xmmptr, void* ymmptr, void* zmmptr, void* opmaskptr,
                          void* /* ostream* */ ostptr)
 {
-    const vector< REG >& regs = GetTestRegs();
-    int numberOfTestRegs      = regs.size();
+    const vector<REG>& regs = GetTestRegs();
+    int numberOfTestRegs = regs.size();
     for (int r = 0; r < numberOfTestRegs; ++r)
     {
         if (REG_is_gr(regs[r]))
@@ -94,7 +97,8 @@ void ToolSaveAppPointers(void* gprptr, void* stptr, void* xmmptr, void* ymmptr, 
         }
         else
         {
-            *((ostream*)ostptr) << "Test configuration includes an invalid register: " << REG_StringShort(regs[r]) << endl;
+            *((ostream*)ostptr) << "Test configuration includes an invalid register: "
+                                << REG_StringShort(regs[r]) << endl;
             PIN_ExitApplication(100);
         }
     }

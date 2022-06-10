@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,17 +13,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 void Handle(int, siginfo_t*, void*);
 void MakeSegv();
 
 int First = 1;
+
 
 int main()
 {
     struct sigaction sigact;
 
     sigact.sa_sigaction = Handle;
-    sigact.sa_flags     = (SA_RESETHAND | SA_SIGINFO);
+    sigact.sa_flags = (SA_RESETHAND | SA_SIGINFO);
     sigemptyset(&sigact.sa_mask);
     sigaddset(&sigact.sa_mask, SIGUSR1);
     if (sigaction(SIGSEGV, &sigact, 0) == -1)
@@ -48,7 +50,7 @@ void Handle(int sig, siginfo_t* info, void* vctxt)
 
     if (sig == SIGSEGV)
         printf("Got signal SEGV\n");
-    else if (sig == SIGBUS)
+    else if(sig == SIGBUS)
         printf("Got signal SIGBUS\n");
     else
         printf("Got signal %d\n", sig);
@@ -94,9 +96,9 @@ void Handle(int sig, siginfo_t* info, void* vctxt)
 
 void MakeSegv()
 {
-    volatile int* p;
+    volatile int * p;
     int i;
 
-    p = (volatile int*)0x9;
+    p = (volatile int *)0x9;
     i = *p;
 }

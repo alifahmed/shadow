@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,13 +16,14 @@
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
-using std::cerr;
 using std::cout;
-using std::endl;
-using std::hex;
 using std::ios;
+using std::hex;
+using std::cerr;
 using std::ofstream;
+using std::endl;
 using std::string;
+
 
 /* ===================================================================== */
 /* Global Variables */
@@ -31,29 +32,33 @@ using std::string;
 ofstream TraceFile;
 static void (*pf_dn)();
 
+
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "probe7.outfile", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "probe7.outfile", "specify file name");
 
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This pin tool tests probe replacement.\n"
-            "\n";
+    cerr <<
+        "This pin tool tests probe replacement.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
 }
+
 
 void Foo_Function()
 {
     if (pf_dn)
     {
         (*pf_dn)();
-
+        
         TraceFile << "Doing nothing." << endl;
     }
 }
@@ -61,34 +66,34 @@ void Foo_Function()
 /* ===================================================================== */
 // Called every time a new image is loaded
 // Look for routines that we want to probe
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    cout << "Processing " << IMG_Name(img) << endl;
-
+    cout << "Processing " << IMG_Name( img ) << endl;
+    
     RTN rtn = RTN_FindByName(img, "Haha");
     if (RTN_Valid(rtn))
     {
-        if (!RTN_IsSafeForProbedReplacement(rtn))
+        if ( ! RTN_IsSafeForProbedReplacement( rtn ) )
         {
             TraceFile << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
             exit(1);
         }
 
-        pf_dn = (void (*)())RTN_ReplaceProbed(rtn, AFUNPTR(Foo_Function));
+        pf_dn = (void (*)())RTN_ReplaceProbed( rtn, AFUNPTR( Foo_Function ) );
 
         TraceFile << "Inserted probe for haha:" << IMG_Name(img) << endl;
     }
 
-    cout << "Completed " << IMG_Name(img) << endl;
+    cout << "Completed " << IMG_Name( img ) << endl;
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -98,9 +103,9 @@ int main(int argc, CHAR* argv[])
     TraceFile.setf(ios::showbase);
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

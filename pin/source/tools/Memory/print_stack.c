@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,7 +24,8 @@ void consumeHalfPages(int numPagesDoubled)
 {
     int i;
     char buf[2048];
-    if (--numPagesDoubled > 0) consumeHalfPages(numPagesDoubled);
+    if (--numPagesDoubled > 0)
+        consumeHalfPages(numPagesDoubled);
     for (i = 0; i < sizeof(buf); i++)
         buf[i] = (char)i;
 
@@ -32,22 +33,21 @@ void consumeHalfPages(int numPagesDoubled)
     printf("%s", buf);
 }
 
-int main(int argc, char** argv, char** envp)
+int main( int argc, char **argv, char **envp )
 {
-    intptr_t sp        = (intptr_t)&argc;
-    size_t pgsize      = getpagesize();
-    void* end_of_stack = NULL;
-    sp &= ~(pgsize - 1);
+   intptr_t sp = (intptr_t)&argc;
+   size_t pgsize = getpagesize();
+   void* end_of_stack = NULL;
+   sp &= ~(pgsize-1);
 
-    // Find the end of the stack (the page before the one that mprotect fails on)
-    for (end_of_stack = (void*)sp; 0 == mprotect(end_of_stack + pgsize, pgsize, PROT_READ | PROT_WRITE); end_of_stack += pgsize)
-        ;
+   // Find the end of the stack (the page before the one that mprotect fails on)
+   for (end_of_stack = (void*)sp; 0 == mprotect(end_of_stack + pgsize, pgsize,PROT_READ|PROT_WRITE); end_of_stack += pgsize);
 
-    // print part of the stack in PIN's -reserve_memory file format
-    printf("%p %p data 0\n", (void*)(sp - PAGE_TO_CONSUME * pgsize), end_of_stack);
+   // print part of the stack in PIN's -reserve_memory file format
+   printf("%p %p data 0\n", (void*)(sp - PAGE_TO_CONSUME * pgsize), end_of_stack);
 
-    // The call below will consume at least PAGE_TO_CONSUME*4KB memory from the stack
-    consumeHalfPages(PAGE_TO_CONSUME * 2);
+   // The call below will consume at least PAGE_TO_CONSUME*4KB memory from the stack
+   consumeHalfPages(PAGE_TO_CONSUME * 2);
 
-    return 0;
+   return 0;
 }

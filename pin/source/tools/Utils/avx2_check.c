@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,9 +15,9 @@ int SupportsAvx2();
 
 int main()
 {
-    if (SupportsAvx2())
-        printf("Yes\n");
-    else
-        printf("No\n");
-    return 0;
+ if (SupportsAvx2())
+   printf("Yes\n");
+ else
+   printf("No\n");
+  return 0;
 }

@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -31,9 +31,7 @@ END_LEGAL */
 #         pragma intrinsic(__rdtsc)
 #      endif
 #      if defined(__GNUC__)
-#         if defined(__i386__) || defined(i386) || defined(i686) || defined(__x86_64__)
-#             include <x86intrin.h>
-#         endif
+#         include <x86intrin.h>
 #      endif
 #   endif
 

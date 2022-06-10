@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,23 +13,28 @@
  *  Pin Tool for testing the correctness of the new log message format 2.0 
  */
 
+
 /* ===================================================================== */
 /* includes                                                              */
 /* ===================================================================== */
+
 
 #include "pin.H"
 #include <iostream>
 #include <fstream>
 using std::cerr;
-using std::endl;
 using std::string;
+using std::endl;
+
 
 /* ===================================================================== */
 /* Commandline Switches                                                  */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "error_log.out", "specify trace file name");
+KNOB<string> KnobOutputFile( KNOB_MODE_WRITEONCE, "pintool",
+    "o", "error_log.out", "specify trace file name" );
 
+	
 /* ===================================================================== */
 /* Finals                                                                */
 /* ===================================================================== */
@@ -40,18 +45,20 @@ KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "error_log.ou
 #define MAIN "main"
 #endif
 
+
 /* ===================================================================== */
 /* Instrumentation callbacks                                             */
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
-{
+VOID ImageLoad( IMG img, VOID *v ) 
+{    
     /*
      * Pin callback. Registered by IMG_AddInstrumentFunction
      */
-    if (IMG_IsMainExecutable(img))
+    if ( IMG_IsMainExecutable(img) )
     {
-        PIN_WriteErrorMessage("this is a fatal user specified error message", 1001, PIN_ERR_FATAL, 2, "firstArg", "secondArg");
+        PIN_WriteErrorMessage( "this is a fatal user specified error message",
+        1001, PIN_ERR_FATAL, 2, "firstArg","secondArg" );
     }
 }
 
@@ -65,7 +72,7 @@ VOID ImageLoad(IMG img, VOID* v)
 
 INT32 Usage()
 {
-    /* Knobs automate the parsing and management of command line switches. 
+	/* Knobs automate the parsing and management of command line switches. 
      * A command line contains switches for Pin, the tool, and the application. 
      * The knobs parsing code understands how to separate them. 
      */
@@ -82,24 +89,24 @@ INT32 Usage()
  *                              including pin -t <toolname> -- ...
  */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitSymbols();
-
+	
     /*
      * Initialize PIN library.
      */
-    if (PIN_Init(argc, argv))
+    if ( PIN_Init(argc, argv) )
     {
         return Usage();
     }
-
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    		
+    IMG_AddInstrumentFunction( ImageLoad, 0 );
+    
     /* 
      * Start the program, never returns
      */
     PIN_StartProgram();
-
+    
     return 0;
 }

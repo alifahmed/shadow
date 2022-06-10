@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -18,13 +18,12 @@
 #define OS_APIS_BARESYSCALL_H__
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include "syscalltypes.h"
 
-    typedef int OS_SYSCALL_TYPE;
+typedef int OS_SYSCALL_TYPE;
 
 #if defined(TARGET_WINDOWS)
 
@@ -44,7 +43,7 @@ extern "C"
 
 #endif
 
-    /*!
+/*!
  * Perform a system call.
  * @param[in] sysno        The system call number.
  * @param[in] type         The system call type (linux, int80 , int81 ....).
@@ -54,7 +53,8 @@ extern "C"
  * @return  Returns a OS_SYSCALLRETURN object, which can be used to
  *          examine success and result values.
  */
-    OS_SYSCALLRETURN OS_SyscallDo(ADDRINT sysno, OS_SYSCALL_TYPE type, unsigned argCount, ...);
+OS_SYSCALLRETURN OS_SyscallDo(ADDRINT sysno, OS_SYSCALL_TYPE type, unsigned argCount, ...);
+
 
 #ifdef __cplusplus
 }

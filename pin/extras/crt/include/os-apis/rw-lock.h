@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -50,28 +50,18 @@ typedef struct
 typedef PRE_ALIGNTO(CPU_MEMORY_CACHELINE_SIZE) union
 {
     OS_APIS_RW_LOCK_IMPL_T impl;
-    char reserved[2 * CPU_MEMORY_CACHELINE_SIZE];
+    char reserved[CPU_MEMORY_CACHELINE_SIZE*2];
 } POST_ALIGNTO(CPU_MEMORY_CACHELINE_SIZE) OS_APIS_RW_LOCK_T;
 
 /*!
  * Static initializer for OS_APIS_RW_LOCK_T type.
  */
 #ifdef TARGET_WINDOWS
-#define OS_APIS_RW_LOCK_INITIALIZER                                                                                        \
-    {                                                                                                                      \
-        {                                                                                                                  \
-            OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER, OS_APIS_RW_LOCK_OWNER_TYPE_NONE, (UINT32)0, OS_EVENT_INITIALIZER, \
-                (UINT32)0                                                                                                  \
-        }                                                                                                                  \
-    }
+# define OS_APIS_RW_LOCK_INITIALIZER {{OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER, OS_APIS_RW_LOCK_OWNER_TYPE_NONE, \
+                                      (UINT32)0, OS_EVENT_INITIALIZER, (UINT32)0}}
 #else
-#define OS_APIS_RW_LOCK_INITIALIZER                                                                                        \
-    {                                                                                                                      \
-        {                                                                                                                  \
-            OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER, OS_APIS_RW_LOCK_OWNER_TYPE_NONE, (UINT32)0, OS_EVENT_INITIALIZER, \
-                (UINT32)0, (UINT32)0                                                                                       \
-        }                                                                                                                  \
-    }
+# define OS_APIS_RW_LOCK_INITIALIZER {{OS_APIS_MUTEX_IMPL_DEPTH_SIMPLE_INITIALIZER, OS_APIS_RW_LOCK_OWNER_TYPE_NONE, \
+                                      (UINT32)0, OS_EVENT_INITIALIZER, (UINT32)0, (UINT32)0}}
 #endif
 
 /*! @ingroup OS_APIS_RW_LOCK

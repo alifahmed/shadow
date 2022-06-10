@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,10 +13,11 @@
 #include <cstring>
 #include <unistd.h>
 
+
 int main()
 {
     char printf_string[] = "printing using printf\n";
-    char write_string[]  = "printing using write\n";
+    char write_string[] = "printing using write\n";
 
     printf("%s", printf_string);
     fflush(stdout);

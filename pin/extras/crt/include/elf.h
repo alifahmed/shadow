@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -46,8 +46,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "freebsd/3rd-party/include/elf.h"
-#include "freebsd/3rd-party/sys/compat/linux/linux_misc.h"
+#include "freebsd/include/elf.h"
+#include "freebsd/sys/compat/linux/linux_misc.h"
 #include "linux/auxvec.h"
 #include "asm-x86/asm/auxvec.h"
 

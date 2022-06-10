@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,12 +18,14 @@
 #include <pthread.h>
 #include <unistd.h>
 
+
 extern "C" int One();
 extern "C" int GetValue(int (*)());
 extern "C" void Breakpoint();
 
-static void* Child(void*);
+static void *Child(void *);
 static void DoTest();
+
 
 int main()
 {
@@ -44,7 +46,8 @@ int main()
     return 0;
 }
 
-static void* Child(void*)
+
+static void *Child(void *)
 {
     Breakpoint();
     return 0;

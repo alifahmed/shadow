@@ -174,22 +174,9 @@ ifeq ($(TARGET_OS),windows)
     endif
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
-# If some tests need to be disabled because of unsupported features on OS/arch, do this here
-
-# This defines the full list of tests prior to applying any bug related filters.
-# It is being used to generate a report about filtered tests.
-RUNNABLE_TESTS := 
-
-###### Handle exceptions here (bugs related) ######
-
-# If some tests need to be disabled because of known failures, do this here
-
-###### Define the serial subset ######
-
-# Defines which tests need to be run serially as may cause issues when running in parallel 
-SERIAL_SUBSET := 
+# If some tests need to be disabled, do this here
 
 ###### Define the sanity subset ######
 

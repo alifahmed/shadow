@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,27 +14,30 @@
 using std::cerr;
 using std::endl;
 
-static void pinException() { cerr << "APP: in pinException" << endl; }
+static void pinException() {
+    cerr << "APP: in pinException" << endl;
+}
 
-static void toolException() { cerr << "APP: in toolException" << endl; }
+static void toolException() {
+    cerr << "APP: in toolException" << endl;
+}
 
-static int appException()
-{
+static int appException() {
     cerr << "APP: in appException" << endl;
     int zero = 0; // This is to avoid getting a compiler warning of division by zero.
     return 1 / zero;
 }
 
-int main()
-{
+int main() {
+    
     // Cause a Pin exception via PIN_SafeCopyEx.
     pinException();
-
+    
     // Cause a tool exception.
     toolException();
-
+    
     // Cause an application exception (SIGFPE) - divide by zero.
     appException();
-
+    
     return 0;
 }

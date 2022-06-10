@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <signal.h>
+
 
 int main()
 {
@@ -38,9 +39,9 @@ int main()
         return 1;
     }
 
-    errno          = 0;
-    stack.ss_sp    = 0;
-    stack.ss_size  = 0;
+    errno = 0;
+    stack.ss_sp = 0;
+    stack.ss_size = 0;
     stack.ss_flags = 0x12345678;
     if (sigaltstack(&stack, 0) != -1 || (errno != EINVAL && errno != ENOMEM))
     {

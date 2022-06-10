@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,26 +13,27 @@
  * This tool only runs with the application "intercept-app.cpp".  It's part
  * of a test for PIN_InterceptDebuggingEvent().
  */
-
+ 
 #include <iostream>
 #include <cstdlib>
 #include "pin.H"
 #include "memlog.hpp"
 using std::string;
 
-static void InstrumentRtn(RTN, VOID*);
-static VOID InstrumentIns(INS, VOID*);
-static void OnCheckpoint(CONTEXT*);
+static void InstrumentRtn(RTN, VOID *);
+static VOID InstrumentIns(INS, VOID *);
+static void OnCheckpoint(CONTEXT *);
 static void OnMemWrite(ADDRINT, ADDRINT);
-static BOOL InterceptBreakpoint(THREADID, DEBUGGING_EVENT, CONTEXT*, VOID*);
-static void OnExit(INT32, VOID*);
+static BOOL InterceptBreakpoint(THREADID, DEBUGGING_EVENT, CONTEXT *, VOID *);
+static void OnExit(INT32, VOID *);
 
 static BOOL FoundCheckpoint = FALSE;
 static BOOL IsCheckpointing = FALSE;
 static CONTEXT SavedContext;
 static MEMLOG MemLog;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -45,11 +46,12 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+
 // When the application executes the Checkpoint() function, we take a snapshot of the
 // registers and start recording changes to memory.  This allows us to roll the application
 // back to the Checkpoint() call later.
 //
-static void InstrumentRtn(RTN rtn, VOID*)
+static void InstrumentRtn(RTN rtn, VOID *)
 {
     if (RTN_Name(rtn) == "Checkpoint")
     {
@@ -60,15 +62,16 @@ static void InstrumentRtn(RTN rtn, VOID*)
     }
 }
 
-static void InstrumentIns(INS ins, VOID*)
+static void InstrumentIns(INS ins, VOID *)
 {
     if (INS_IsMemoryWrite(ins))
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)OnMemWrite, IARG_MEMORYWRITE_EA, IARG_MEMORYWRITE_SIZE, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)OnMemWrite,
+            IARG_MEMORYWRITE_EA, IARG_MEMORYWRITE_SIZE, IARG_END);
     }
 }
 
-static void OnCheckpoint(CONTEXT* ctxt)
+static void OnCheckpoint(CONTEXT *ctxt)
 {
     PIN_SaveContext(ctxt, &SavedContext);
     IsCheckpointing = TRUE;
@@ -76,13 +79,15 @@ static void OnCheckpoint(CONTEXT* ctxt)
 
 static VOID OnMemWrite(ADDRINT addr, ADDRINT size)
 {
-    if (IsCheckpointing) MemLog.Record(addr, size);
+    if (IsCheckpointing)
+        MemLog.Record(addr, size);
 }
+
 
 // This function is called whenever Pin wants to report a breakpoint event to the
 // debugger.
 //
-static BOOL InterceptBreakpoint(THREADID tid, DEBUGGING_EVENT eventType, CONTEXT* ctxt, VOID*)
+static BOOL InterceptBreakpoint(THREADID tid, DEBUGGING_EVENT eventType, CONTEXT *ctxt, VOID *)
 {
     if (eventType != DEBUGGING_EVENT_BREAKPOINT)
     {
@@ -90,8 +95,8 @@ static BOOL InterceptBreakpoint(THREADID tid, DEBUGGING_EVENT eventType, CONTEXT
         std::exit(1);
     }
 
-    ADDRINT pc     = PIN_GetContextReg(ctxt, REG_INST_PTR);
-    RTN rtn        = RTN_FindByAddress(pc);
+    ADDRINT pc = PIN_GetContextReg(ctxt, REG_INST_PTR);
+    RTN rtn = RTN_FindByAddress(pc);
     string rtnName = RTN_Valid(rtn) ? RTN_Name(rtn) : "<N/A>";
 
     // When the application triggers the breakpoint in Breakpoint1(), squash the breakpoint
@@ -124,7 +129,7 @@ static BOOL InterceptBreakpoint(THREADID tid, DEBUGGING_EVENT eventType, CONTEXT
     return TRUE;
 }
 
-static void OnExit(INT32, VOID*)
+static void OnExit(INT32, VOID *)
 {
     if (!FoundCheckpoint)
     {

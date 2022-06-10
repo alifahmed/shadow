@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,12 +19,13 @@ static void HandlerIsEstablished();
 typedef void (*PF)();
 volatile PF pfEstablished;
 
+
 int main()
 {
     struct sigaction act;
 
     act.sa_handler = Handle;
-    act.sa_flags   = 0;
+    act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
     if (sigaction(SIGUSR1, &act, 0) != 0)
     {
@@ -42,13 +43,16 @@ int main()
     return 1;
 }
 
+
 static void Handle(int sig)
 {
     static int Count = 0;
 
     printf("In handler\n");
-    if (++Count == 2) exit(0);
+    if (++Count == 2)
+        exit(0);
 }
+
 
 static void HandlerIsEstablished()
 {

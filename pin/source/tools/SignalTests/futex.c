@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,7 +22,7 @@
 volatile int flag = 0;
 
 static void Handler(int);
-static void* Start(void*);
+static void *Start(void *);
 
 int main()
 {
@@ -30,7 +30,7 @@ int main()
     pthread_t thrd2;
 
     pthread_create(&thrd1, 0, Start, 0);
-    pthread_create(&thrd2, 0, Start, (void*)1);
+    pthread_create(&thrd2, 0, Start, (void *)1);
     pthread_join(thrd1, 0);
     pthread_join(thrd2, 0);
 
@@ -41,9 +41,10 @@ static void Handler(int sig)
 {
     flag = 1;
     printf("received signal\n");
+
 }
 
-static void* Start(void* v)
+static void *Start(void *v)
 {
     if (v != 0)
     {
@@ -52,7 +53,6 @@ static void* Start(void* v)
         alarm(2);
     }
     printf("waiting for signal at %p\n", &flag);
-    while (!flag)
-        ;
+    while (!flag);
     return 0;
 }

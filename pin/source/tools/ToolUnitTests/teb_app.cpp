@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -9,8 +9,8 @@
  * warranties, other than those that are expressly stated in the License.
  */
 
-#include <windows.h>
-#include <stdio.h>
+#include <windows.h> 
+#include <stdio.h> 
 
 //=======================================================================
 // This is the application for testing the teb.dll tool.
@@ -24,15 +24,13 @@ int main(int argc, char** argv)
     SetLastError(777);
     DWORD lastError = GetLastError();
 
-    if (lastError == 777)
+   if (lastError == 777)
     {
-        printf("Success\n");
-        fflush(stdout);
+        printf( "Success\n" ); fflush( stdout );
     }
     else
     {
-        printf("Failure\n");
-        fflush(stdout);
+        printf( "Failure\n" ); fflush( stdout );
     }
     return 0;
 }

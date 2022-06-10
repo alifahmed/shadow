@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,60 +14,67 @@
 
 using std::string;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "exception_monitor.out", "Output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "exception_monitor.out", "Output file");
 
-FILE* out;
+FILE * out;
 
-void BeforePinVerifyInTry()
+void BeforePinVerifyInTry ()
 {
     fprintf(out, "BeforePinVerifyInTry\n");
-    fflush(out);
+    fflush (out);
 }
 
-void BeforePinVerifyInCatch()
+void BeforePinVerifyInCatch ()
 {
     fprintf(out, "BeforePinVerifyInCatch\n");
-    fflush(out);
+    fflush (out);
 }
 
-void BeforePinVerifyAfterCatch()
+
+void BeforePinVerifyAfterCatch ()
 {
     fprintf(out, "BeforePinVerifyAfterCatch\n");
-    fflush(out);
+    fflush (out);
 }
 
-void BeforePinVerifyInDestructor()
+
+void BeforePinVerifyInDestructor ()
 {
     fprintf(out, "BeforePinVerifyInDestructor\n");
-    fflush(out);
+    fflush (out);
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     fprintf(out, "PinFiniFunction\n");
     fclose(out);
 }
 
-static void OnException(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, const CONTEXT* ctxtFrom, CONTEXT* ctxtTo, INT32 info,
-                        VOID* v)
+static void OnException(THREADID threadIndex, 
+                  CONTEXT_CHANGE_REASON reason, 
+                  const CONTEXT *ctxtFrom,
+                  CONTEXT *ctxtTo,
+                  INT32 info, 
+                  VOID *v)
 {
     if (reason == CONTEXT_CHANGE_REASON_EXCEPTION)
     {
         UINT32 exceptionCode = info;
-        // Depending on the system and CRT version, C++ exceptions can be implemented
+        // Depending on the system and CRT version, C++ exceptions can be implemented 
         // as kernel- or user-mode- exceptions.
-        // This callback does not not intercept user mode exceptions, so we do not
+        // This callback does not not intercept user mode exceptions, so we do not 
         // log C++ exceptions to avoid difference in output files.
         if ((exceptionCode >= 0xc0000000) && (exceptionCode <= 0xcfffffff))
         {
             fprintf(out, "Start handling exception. Exception code = 0x%x\n", exceptionCode);
-            fflush(out);
+            fflush (out);
         }
     }
 }
 
-VOID Image(IMG img, VOID* v)
+VOID Image(IMG img, VOID *v)
 {
+
     // hook the functions in the image. If these functions are called then it means
     // that pin has not lost control.
     RTN rtn = RTN_FindByName(img, "PinVerifyInTry");
@@ -106,14 +113,14 @@ VOID UseToolStack()
     local++;
 }
 
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)UseToolStack, IARG_END);
 
-    // This is added for regression testing
-    // (when executed with win_divide_by_zero_exception application)
+    // This is added for regression testing  
+    // (when executed with win_divide_by_zero_exception application) 
     // multiple instrumentations of branch taken
-    for (int i = 0; i < 10; i++)
+    for(int i = 0; i < 10; i++)
     {
         if (INS_IsValidForIpointTakenBranch(ins))
         {
@@ -122,7 +129,7 @@ VOID Instruction(INS ins, VOID* v)
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);

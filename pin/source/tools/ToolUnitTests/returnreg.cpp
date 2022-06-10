@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,8 +15,12 @@
 using std::cerr;
 using std::endl;
 
-ADDRINT SetVal() { return 999; }
+ADDRINT SetVal()
+{
+    return 999;
 
+}
+    
 VOID CheckVal(INT32 val)
 {
     if (val != 999)
@@ -25,7 +29,7 @@ VOID CheckVal(INT32 val)
         exit(-1);
     }
 }
-
+    
 int a[10];
 int n = 10;
 
@@ -35,10 +39,10 @@ ADDRINT SetValNoInline()
     {
         a[i] = i;
     }
-
+    
     return 666;
 }
-
+    
 VOID CheckValNoInline(INT32 val)
 {
     if (val != 666)
@@ -47,44 +51,44 @@ VOID CheckValNoInline(INT32 val)
         exit(-1);
     }
 }
-
-VOID Instruction(INS ins, VOID* v)
+    
+VOID Instruction(INS ins, VOID *v)
 {
     static INT32 count = 0;
 
-    switch (count)
+    switch(count)
     {
-        case 0:
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetVal), IARG_RETURN_REGS, REG_INST_G0, IARG_END);
-            break;
+      case 0:
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetVal), IARG_RETURN_REGS, REG_INST_G0, IARG_END);
+        break;
 
-        case 1:
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckVal), IARG_REG_VALUE, REG_INST_G0, IARG_END);
-            break;
+      case 1:
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckVal), IARG_REG_VALUE, REG_INST_G0, IARG_END);
+        break;
 
-        case 2:
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetValNoInline), IARG_RETURN_REGS, REG_INST_G1, IARG_END);
-            break;
+      case 2:
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetValNoInline), IARG_RETURN_REGS, REG_INST_G1, IARG_END);
+        break;
+        
+      case 3:
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckValNoInline), IARG_REG_VALUE, REG_INST_G1, IARG_END);
+        break;
 
-        case 3:
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckValNoInline), IARG_REG_VALUE, REG_INST_G1, IARG_END);
-            break;
-
-        default:
-            break;
+      default:
+        break;
     }
-
+    
     count++;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
     INS_AddInstrumentFunction(Instruction, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

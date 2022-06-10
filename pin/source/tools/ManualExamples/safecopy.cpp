@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,7 +23,7 @@ std::ofstream* out = 0;
 //=======================================================
 
 // Move from memory to register
-ADDRINT DoLoad(REG reg, ADDRINT* addr)
+ADDRINT DoLoad(REG reg, ADDRINT * addr)
 {
     *out << "Emulate loading from addr " << addr << " to " << REG_StringShort(reg) << endl;
     ADDRINT value;
@@ -38,11 +38,21 @@ ADDRINT DoLoad(REG reg, ADDRINT* addr)
 VOID EmulateLoad(INS ins, VOID* v)
 {
     // Find the instructions that move a value from memory to a register
-    if (INS_Opcode(ins) == XED_ICLASS_MOV && INS_IsMemoryRead(ins) && INS_OperandIsReg(ins, 0) && INS_OperandIsMemory(ins, 1))
+    if (INS_Opcode(ins) == XED_ICLASS_MOV &&
+        INS_IsMemoryRead(ins) &&
+        INS_OperandIsReg(ins, 0) &&
+        INS_OperandIsMemory(ins, 1))
     {
         // op0 <- *op1
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoLoad), IARG_UINT32, REG(INS_OperandReg(ins, 0)), IARG_MEMORYREAD_EA,
-                       IARG_RETURN_REGS, INS_OperandReg(ins, 0), IARG_END);
+        INS_InsertCall(ins,
+                       IPOINT_BEFORE,
+                       AFUNPTR(DoLoad),
+                       IARG_UINT32,
+                       REG(INS_OperandReg(ins, 0)),
+                       IARG_MEMORYREAD_EA,
+                       IARG_RETURN_REGS,
+                       INS_OperandReg(ins, 0),
+                       IARG_END);
 
         // Delete the instruction
         INS_Delete(ins);
@@ -64,7 +74,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Write to a file since cout and cerr maybe closed by the application
     out = new std::ofstream("safecopy.out");

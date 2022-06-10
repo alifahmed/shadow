@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,12 +16,12 @@
 #include <stdio.h>
 #include <Windows.h>
 
-int* nullPtr = 0;
+int * nullPtr = 0;
 
 // Define global object with destructor that throws hardware exception.
 class MyClass
 {
-  public:
+public:
     ~MyClass()
     {
         __try

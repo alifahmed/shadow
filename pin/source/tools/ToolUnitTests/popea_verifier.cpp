@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,10 +26,10 @@
 #include "pin.H"
 using std::string;
 
-KNOB< BOOL > KnobTrace(KNOB_MODE_WRITEONCE, "pintool", "t", "0", "trace memory addresses of interest");
-KNOB< string > KnobOutput(KNOB_MODE_WRITEONCE, "pintool", "o", "popea_verifier.out", "Name for log file");
+KNOB<BOOL>   KnobTrace(KNOB_MODE_WRITEONCE, "pintool", "t", "0", "trace memory addresses of interest");
+KNOB<string> KnobOutput(KNOB_MODE_WRITEONCE,"pintool", "o", "popea_verifier.out", "Name for log file");
 
-static FILE* trace = NULL;
+static FILE *trace = NULL;
 
 static UINT32 fails = 0;
 static UINT32 tests = 0;
@@ -39,54 +39,53 @@ static UINT32 tests = 0;
  * We're only looking at pop offset(%esp) instructions.
  */
 
-static VOID validateWriteAddress(ADDRINT ip, ADDRINT writeAddr, ADDRINT esp, ADDRDELTA offset, UINT32 operandSize)
+static VOID validateWriteAddress (ADDRINT ip, ADDRINT writeAddr, ADDRINT esp, ADDRDELTA offset, UINT32 operandSize)
 {
-    ADDRINT expectedAddress = esp + operandSize + offset; /* ESP is incremented *BEFORE* it is used in addressing */
-
+    ADDRINT expectedAddress = esp+operandSize+offset; /* ESP is incremented *BEFORE* it is used in addressing */
+    
     if (writeAddr != expectedAddress)
     {
-        fprintf(trace, "%p: EA %p should be %p\n", (void*)ip, (void*)writeAddr, (void*)expectedAddress);
+        fprintf (trace, "%p: EA %p should be %p\n", (void*)ip, (void*)writeAddr, (void*)expectedAddress);
         fails++;
     }
     else if (KnobTrace)
     {
-        fprintf(trace, "%p: EA %p OK\n", (void*)ip, (void*)writeAddr);
+        fprintf (trace, "%p: EA %p OK\n", (void*)ip, (void*)writeAddr);
     }
     tests++;
 }
 
-static VOID RewriteIns(INS ins, VOID*)
+static VOID RewriteIns(INS ins, VOID *)
 {
-    if (INS_Opcode(ins) != XED_ICLASS_POP) return;
+    if (INS_Opcode(ins) != XED_ICLASS_POP)
+        return;
+    
+    if (!INS_IsMemoryWrite(ins))
+        return;
 
-    if (!INS_IsMemoryWrite(ins)) return;
-
-    if (INS_MemoryBaseReg(ins) != REG_STACK_PTR) return;
-
-    UINT32 readSize = 0;
-    for (UINT32 opIdx = 0; opIdx < INS_MemoryOperandCount(ins); opIdx++)
-    {
-        if (INS_MemoryOperandIsRead(ins, opIdx))
-        {
-            readSize = INS_MemoryOperandSize(ins, opIdx);
-            break;
-        }
-    }
+    if (INS_MemoryBaseReg(ins) != REG_STACK_PTR)
+        return;
 
     // If we get here we have a pop into a stack pointer relative address.
     ADDRDELTA offset = INS_MemoryDisplacement(ins);
-    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(validateWriteAddress), IARG_INST_PTR, IARG_MEMORYWRITE_EA, IARG_REG_VALUE,
-                   REG_STACK_PTR, IARG_ADDRINT, offset, IARG_UINT32, readSize, IARG_END);
+    INS_InsertCall(ins, IPOINT_BEFORE,
+                   AFUNPTR(validateWriteAddress),
+                   IARG_INST_PTR,
+                   IARG_MEMORYWRITE_EA,
+                   IARG_REG_VALUE, REG_STACK_PTR,
+                   IARG_ADDRINT, offset,
+                   IARG_UINT32, INS_MemoryReadSize(ins), 
+                   IARG_END);
 }
 
-void AtEnd(INT32 code, VOID* arg)
+void AtEnd(INT32 code, VOID *arg)
 {
-    fprintf(trace, "Tested: %d, failed: %d\n", tests, fails);
+    fprintf (trace, "Tested: %d, failed: %d\n", tests, fails);
     fclose(trace);
-    exit(fails);
+    exit (fails);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
@@ -103,6 +102,6 @@ int main(int argc, char* argv[])
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

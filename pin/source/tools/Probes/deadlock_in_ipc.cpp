@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -33,17 +33,18 @@ const char* MailSlotName = "\\\\.\\mailslot\\sample_mailslot";
 // main() tool's procedure.
 PIN_THREAD_UID intThreadUid;
 
+
 /*!
  * Print out the error message and exit the process.
  */
-static void AbortProcess(const string& msg, unsigned long code)
+static void AbortProcess(const string & msg, unsigned long code)
 {
     cerr << "Test aborted: " << msg << " with code " << code << endl;
     PIN_WriteErrorMessage(msg.c_str(), 1002, PIN_ERR_FATAL, 0);
     PIN_ExitProcess(1);
 }
 
-VOID IntThread(VOID* arg)
+VOID IntThread(VOID *arg)
 {
     NATIVE_FD hWriteSlot;
     PIN_GetLock(&intThreadCanOpen, 1);
@@ -65,17 +66,17 @@ VOID PrepareForFini()
     BOOL waitStatus;
     INT32 threadExitCode;
     NATIVE_FD hWriteSlot;
-
+    
     PIN_LockClient();
-
+    
     PIN_ReleaseLock(&intThreadCanOpen);
 
     PIN_GetLock(&mainThreadCanOpen, 1);
-
+    
     cerr << "main thread calling OS_OpenFD" << endl;
     OS_OpenFD(MailSlotName, OS_FILE_OPEN_TYPE_WRITE, 0, &hWriteSlot);
     cerr << "main thread returning from OS_OpenFD" << endl;
-
+    
     PIN_UnlockClient();
 
     // First, wait for termination of the main internal thread. When this thread exits,
@@ -94,8 +95,9 @@ VOID PrepareForFini()
     cerr << "Tool's thread finished successfully." << endl;
 }
 
-typedef void (*FUNCPTR)(int status);
-static void (*pf_exit)(int status);
+
+typedef void  (*FUNCPTR)(int status);
+static void  (*pf_exit)(int status);
 
 VOID MyExit(int arg)
 {
@@ -104,15 +106,15 @@ VOID MyExit(int arg)
     (pf_exit)(arg);
 }
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     RTN rtn = RTN_FindByName(img, "exit");
 
-    if (RTN_Valid(rtn))
+    if ( RTN_Valid(rtn))
     {
         if (RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION))
         {
-            pf_exit = (FUNCPTR)RTN_ReplaceProbedEx(rtn, PROBE_MODE_ALLOW_RELOCATION, AFUNPTR(MyExit));
+            pf_exit = (FUNCPTR)RTN_ReplaceProbedEx( rtn, PROBE_MODE_ALLOW_RELOCATION, AFUNPTR(MyExit));
         }
         else
         {
@@ -124,11 +126,11 @@ VOID ImageLoad(IMG img, VOID* v)
 /*!
  * The main procedure of the tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
-
+    
     PIN_InitLock(&intThreadCanOpen);
     PIN_InitLock(&mainThreadCanOpen);
     PIN_GetLock(&intThreadCanOpen, 1);

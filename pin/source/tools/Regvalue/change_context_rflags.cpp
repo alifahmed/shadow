@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,17 +14,17 @@
 #include <cstring>
 #include <cassert>
 #include "pin.H"
-using std::cerr;
-using std::endl;
 using std::flush;
+using std::cerr;
 using std::string;
+using std::endl;
 
 typedef enum
 {
-    ERROR_SHOULD_NOT_RETURN    = 1,
-    ERROR_CONTEXT_WAS_NOT_SET  = 2,
+    ERROR_SHOULD_NOT_RETURN = 1,
+    ERROR_CONTEXT_WAS_NOT_SET = 2,
     ERROR_FLAG_WAS_NOT_CHANGED = 3,
-    ERROR_ILLEGAL_CONTEXT      = 4
+    ERROR_ILLEGAL_CONTEXT = 4
 } ERROR_CODES;
 
 /////////////////////
@@ -34,16 +34,18 @@ typedef enum
 // A knob for defining which context to test. One of:
 // 1. default   - regular CONTEXT passed to the analysis routine using IARG_CONTEXT.
 // 2. partial   - partial CONTEXT passed to the analysis routine using IARG_PARTIAL_CONTEXT.
-KNOB< string > KnobTestContext(KNOB_MODE_WRITEONCE, "pintool", "testcontext", "default",
-                               "specify which context to test. One of default|partial.");
+KNOB<string> KnobTestContext(KNOB_MODE_WRITEONCE, "pintool",
+    "testcontext", "default", "specify which context to test. One of default|partial.");
 
 // A knob for defining the output file name
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "", "specify output file name");
 
 // A knob to specify the bit position of the flag to manipulate
-KNOB< INT32 > KnobChangeFlags(KNOB_MODE_WRITEONCE, "pintool", "cf", "-1", "specify which flag to set. Default no change.");
+KNOB<INT32> KnobChangeFlags(KNOB_MODE_WRITEONCE, "pintool",
+    "cf", "-1", "specify which flag to set. Default no change.");
 
-#define D_FLAG 0x400 // bit 10 set
+#define D_FLAG 0x400  // bit 10 set
 
 // ofstream object for handling the output
 std::ostream* OutFile = &cerr;
@@ -55,23 +57,24 @@ REGSET regsOut;
 BOOL firstBefore = TRUE;
 BOOL doExecuteAt = FALSE;
 ADDRINT changedFlag;
-THREADID myThread = INVALID_THREADID; // we care only about main thread
+THREADID myThread = INVALID_THREADID;   // we care only about main thread
 
 /////////////////////
 // ANALYSIS FUNCTIONS
 /////////////////////
 
-static void GetAndSetRflagsBefore(CONTEXT* ctxt, ADDRINT addr)
+
+static void GetAndSetRflagsBefore(CONTEXT * ctxt, ADDRINT addr)
 {
     BOOL emulateFlagsChange = FALSE;
     // we care only about one/main thread
-    if (firstBefore && PIN_ThreadId() == myThread) // to ensure that next run with changed context run "as is"
+    if (firstBefore && PIN_ThreadId() == myThread)    // to ensure that next run with changed context run "as is"
     {
         rflagsBefore = PIN_GetContextReg(ctxt, REG_GFLAGS);
-        firstBefore  = FALSE;
+        firstBefore = FALSE;
         if (doExecuteAt && (rflagsBefore & D_FLAG)) // in such case we enter with set DFlag so we  dont want to do anything
         {
-            rflagsAfter        = rflagsBefore;
+            rflagsAfter = rflagsBefore;
             emulateFlagsChange = TRUE;
         }
         else if (rflagsBefore & changedFlag)
@@ -80,7 +83,7 @@ static void GetAndSetRflagsBefore(CONTEXT* ctxt, ADDRINT addr)
         }
         else
         {
-            rflagsAfter = rflagsBefore | changedFlag;
+            rflagsAfter = rflagsBefore | changedFlag ;
         }
         if (changedFlag)
         {
@@ -100,7 +103,7 @@ static void GetAndSetRflagsBefore(CONTEXT* ctxt, ADDRINT addr)
     }
 }
 
-static void GetAndRestoreRflagsAfter(CONTEXT* ctxt, ADDRINT addr)
+static void GetAndRestoreRflagsAfter(CONTEXT * ctxt, ADDRINT addr)
 {
     if (PIN_ThreadId() == myThread)
     {
@@ -126,14 +129,19 @@ static void GetAndRestoreRflagsAfter(CONTEXT* ctxt, ADDRINT addr)
     }
 }
 
+
 /////////////////////
 // CALLBACKS
 /////////////////////
 
 static BOOL InstructionUsesFlags(INS ins)
 {
-    if (INS_RegRContain(ins, REG_GFLAGS) || INS_RegRContain(ins, REG_DF_FLAG) || INS_RegRContain(ins, REG_STATUS_FLAGS) ||
-        INS_RegWContain(ins, REG_GFLAGS) || INS_RegWContain(ins, REG_DF_FLAG) || INS_RegWContain(ins, REG_STATUS_FLAGS))
+    if (INS_RegRContain(ins, REG_GFLAGS) ||
+        INS_RegRContain(ins, REG_DF_FLAG) ||
+        INS_RegRContain(ins, REG_STATUS_FLAGS) ||
+        INS_RegWContain(ins, REG_GFLAGS) ||
+        INS_RegWContain(ins, REG_DF_FLAG) ||
+        INS_RegWContain(ins, REG_STATUS_FLAGS))
     {
         return TRUE;
     }
@@ -142,8 +150,10 @@ static BOOL InstructionUsesFlags(INS ins)
 
 inline BOOL IsInstructionsInstrumentable(INS ins, INS nextIns)
 {
-    if (INS_HasFallThrough(ins) && INS_Invalid() != nextIns && !InstructionUsesFlags(ins) && !INS_IsControlFlow(ins) &&
-        !INS_IsSyscall(ins))
+    if (INS_HasFallThrough(ins) &&
+        INS_Invalid() != nextIns &&
+        !InstructionUsesFlags(ins) &&
+        !INS_IsControlFlow(ins) && !INS_IsSyscall(ins))
     {
         return TRUE;
     }
@@ -151,41 +161,45 @@ inline BOOL IsInstructionsInstrumentable(INS ins, INS nextIns)
     return FALSE;
 }
 
-static VOID InstructionForCanonicalContext(INS ins, VOID* v)
+static VOID InstructionForCanonicalContext(INS ins, VOID * v)
 {
     INS nextIns = INS_Next(ins);
     if (IsInstructionsInstrumentable(ins, nextIns))
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(GetAndSetRflagsBefore), IARG_CONTEXT, IARG_INST_PTR, IARG_END);
-        INS_InsertCall(nextIns, IPOINT_BEFORE, AFUNPTR(GetAndRestoreRflagsAfter), IARG_CONTEXT, IARG_INST_PTR, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(GetAndSetRflagsBefore),
+                       IARG_CONTEXT, IARG_INST_PTR, IARG_END);
+        INS_InsertCall(nextIns, IPOINT_BEFORE, AFUNPTR(GetAndRestoreRflagsAfter),
+                       IARG_CONTEXT, IARG_INST_PTR, IARG_END);
     }
 }
 
-static VOID InstructionForPartialContext(INS ins, VOID* v)
+static VOID InstructionForPartialContext(INS ins, VOID * v)
 {
     INS nextIns = INS_Next(ins);
     if (IsInstructionsInstrumentable(ins, nextIns))
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(GetAndSetRflagsBefore), IARG_PARTIAL_CONTEXT, &regsIn, &regsOut, IARG_INST_PTR,
-                       IARG_END);
-        INS_InsertCall(nextIns, IPOINT_BEFORE, AFUNPTR(GetAndRestoreRflagsAfter), IARG_PARTIAL_CONTEXT, &regsIn, &regsOut,
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(GetAndSetRflagsBefore),
+                       IARG_PARTIAL_CONTEXT, &regsIn, &regsOut,
+                       IARG_INST_PTR, IARG_END);
+        INS_InsertCall(nextIns, IPOINT_BEFORE, AFUNPTR(GetAndRestoreRflagsAfter),
+                       IARG_PARTIAL_CONTEXT, &regsIn, &regsOut,
                        IARG_INST_PTR, IARG_END);
     }
 }
 
-static VOID Fini(INT32 code, VOID* v)
+static VOID Fini(INT32 code, VOID *v)
 {
-    if (!KnobOutputFile.Value().empty())
-    {
+    if (!KnobOutputFile.Value().empty()) {
         delete OutFile;
     }
 }
+
 
 /////////////////////
 // MAIN FUNCTION
 /////////////////////
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize Pin
     PIN_InitSymbols();
@@ -193,10 +207,10 @@ int main(int argc, char* argv[])
     REGSET_Clear(regsIn);
     REGSET_Insert(regsIn, REG_GFLAGS);
     REGSET_Clear(regsOut);
-    REGSET_Insert(regsOut, REG_GFLAGS);
+    REGSET_Insert (regsOut, REG_GFLAGS);
 
-    changedFlag = (KnobChangeFlags.Value() == -1 ? 0 : 1 << KnobChangeFlags.Value());
-    myThread    = PIN_ThreadId();
+    changedFlag = (KnobChangeFlags.Value() == -1 ? 0 : 1<<KnobChangeFlags.Value()) ;
+    myThread = PIN_ThreadId();
 
     // Open the output file
     if (!KnobOutputFile.Value().empty())

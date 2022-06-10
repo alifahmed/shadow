@@ -12,7 +12,7 @@
 # this function takes a string in version format (s.a 2.6.16) and makes it an integer (00020006001600000000)
 function digit_version { echo $1 | awk -F. '{ printf("%04d%04d%04d\n", $1, $2, $3); }'; }
 
-libc_ver=$(digit_version `ldd --version| egrep -o "[1-9]+\.[0-9]+(\.[0-9]*)?" | head -1`)
+libc_ver=$(digit_version `ldd --version| egrep -o "[1-9]+\.[1-9]+(\.[0-9]*)?" | head -1`)
 arg_ver=$(digit_version $2)
 
 case $1 in

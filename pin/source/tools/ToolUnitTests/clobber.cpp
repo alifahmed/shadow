@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,9 +17,12 @@
 
 extern "C" void clobberRegs();
 
-VOID Instruction(INS ins, VOID* v) { INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(clobberRegs), IARG_END); }
+VOID Instruction(INS ins, VOID *v)
+{
+    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(clobberRegs), IARG_END);
+}
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     PIN_Init(argc, argv);
@@ -29,6 +32,6 @@ int main(int argc, char* argv[])
 
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

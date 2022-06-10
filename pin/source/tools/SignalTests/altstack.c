@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,13 +22,14 @@ char Stack[SIGSTKSZ];
 
 static void Handle(int);
 
+
 int main()
 {
     struct sigaction act;
     stack_t ss;
 
-    ss.ss_sp    = Stack;
-    ss.ss_size  = sizeof(Stack);
+    ss.ss_sp = Stack;
+    ss.ss_size = sizeof(Stack);
     ss.ss_flags = 0;
     if (sigaltstack(&ss, 0) != 0)
     {
@@ -38,7 +39,7 @@ int main()
     printf("Alternate stack is %p - %p\n", Stack, &Stack[SIGSTKSZ]);
 
     act.sa_handler = Handle;
-    act.sa_flags   = SA_ONSTACK;
+    act.sa_flags = SA_ONSTACK;
     sigemptyset(&act.sa_mask);
     if (sigaction(SIGUSR1, &act, 0) != 0)
     {
@@ -50,9 +51,10 @@ int main()
     return 0;
 }
 
+
 static void Handle(int sig)
 {
-    char* sp = (char*)&sig;
+    char *sp = (char *)&sig;
 
     printf("Got signal %d with SP=%p\n", sig, sp);
     if (sp < Stack || sp > &Stack[SIGSTKSZ])

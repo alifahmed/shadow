@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,23 +22,25 @@
 #include <fstream>
 #include <set>
 #include "pin.H"
-using std::cerr;
-using std::dec;
-using std::endl;
-using std::flush;
-using std::hex;
-using std::ofstream;
-using std::ostringstream;
 using std::set;
 using std::string;
+using std::hex;
+using std::ostringstream;
+using std::cerr;
+using std::flush;
+using std::ofstream;
+using std::dec;
+using std::endl;
+
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< BOOL > KnobSafeStart(KNOB_MODE_WRITEONCE, "pintool", "safestart", "0",
-                           "Ensure all internal threads are started prior to application exit");
-static KNOB< string > KnobOutput(KNOB_MODE_WRITEONCE, "pintool", "o", "mt_tool.out", "output file");
+KNOB<BOOL> KnobSafeStart(KNOB_MODE_WRITEONCE, "pintool",
+    "safestart", "0", "Ensure all internal threads are started prior to application exit");
+static KNOB<string> KnobOutput(KNOB_MODE_WRITEONCE, "pintool", "o", "mt_tool.out", "output file");
+
 
 /*!
  * Global variables.
@@ -49,25 +51,25 @@ PIN_LOCK pinLock; // lock that serializes access to global vars
 static ofstream out;
 
 // Thread counters
-int appThreadsStarted           = 0;
-int appThreadsFinished          = 0;
-int toolThreadsCreated          = 0;
-int toolThreadsFinished         = 0;
+int appThreadsStarted = 0;
+int appThreadsFinished = 0;
+int toolThreadsCreated = 0;
+int toolThreadsFinished = 0;
 volatile int toolThreadsStarted = 0;
 
 // TLS slot for passing data to exception handlers.
 TLS_KEY exceptionTlsKey;
 
 // Argument of the main internal thread
-void* rootThreadArg = (void*)0xABBA;
+void * rootThreadArg = (void *)0xABBA;
 
 // Address of the DoFlush function in the application's image
 volatile ADDRINT addrDoFlush = 0;
 
 // Flags (events) that synchronize an application thread that executes DoFlush
 // and tool's threads that test RTN API and CodeCache API
-volatile BOOL isDoFlushCalled      = FALSE;
-volatile BOOL isRtnTestCompleted   = FALSE;
+volatile BOOL isDoFlushCalled = FALSE;
+volatile BOOL isRtnTestCompleted = FALSE;
 volatile BOOL isCacheTestCompleted = FALSE;
 
 volatile BOOL isCacheFlushHappened = FALSE;
@@ -76,8 +78,7 @@ volatile BOOL isCacheFlushHappened = FALSE;
 volatile BOOL isProcessExiting = FALSE;
 
 // IDs of internal threads
-typedef enum
-{
+typedef enum {
     idRootThread = 0,
     idThreadSafeCopy,
     idThreadException,
@@ -88,11 +89,17 @@ typedef enum
 } ID_TOOL_THREAD;
 
 // Names of internal threads
-const CHAR* threadNameStr[] = {"RootThread", "ThreadSafeCopy", "ThreadException", "ThreadRtn", "ThreadCodeCache", "DummyThread"};
+const CHAR * threadNameStr[] = {
+    "RootThread",
+    "ThreadSafeCopy",
+    "ThreadException",
+    "ThreadRtn",
+    "ThreadCodeCache",
+    "DummyThread"
+};
 
 // Internal thread status (for debugging purposes)
-typedef enum
-{
+typedef enum {
     statusInit = 0,
     statusCreated,
     statusRun,
@@ -117,7 +124,7 @@ static void NotifyToolThreadExit(ID_TOOL_THREAD idToolThread);
 /*!
  * Convert a (function) pointer to ADDRINT.
  */
-template< typename PF > ADDRINT Ptr2Addrint(PF pf)
+template <typename PF> ADDRINT Ptr2Addrint(PF pf)
 {
     union CAST
     {
@@ -131,26 +138,27 @@ template< typename PF > ADDRINT Ptr2Addrint(PF pf)
 /*!
  * Print out the error message and exit the process.
  */
-static void AbortProcess(const string& msg)
+static void AbortProcess(const string & msg)
 {
     THREADID myTid = PIN_ThreadId();
 
     PIN_GetLock(&pinLock, myTid + 1);
-    out << "mt_tool test aborted: " << msg << "." << endl << flush;
+    out << "mt_tool test aborted: "<< msg << "." << endl << flush;
     PIN_ReleaseLock(&pinLock);
     PIN_WriteErrorMessage(msg.c_str(), 1002, PIN_ERR_FATAL, 0);
 }
 
+
 /*!
  * Print out the error message and exit the thread.
  */
-static void AbortThread(const string& msg, ID_TOOL_THREAD idToolThread)
+static void AbortThread(const string & msg, ID_TOOL_THREAD idToolThread)
 {
     THREADID myTid = PIN_ThreadId();
 
     PIN_GetLock(&pinLock, myTid + 1);
-    out << "mt_tool thread aborted: " << msg << ". Thread name = " << threadNameStr[idToolThread] << ", tid = " << myTid << endl
-        << flush;
+    out << "mt_tool thread aborted: "<< msg << ". Thread name = " << threadNameStr[idToolThread]
+         << ", tid = " << myTid << endl << flush;
     PIN_ReleaseLock(&pinLock);
     NotifyToolThreadExit(idToolThread);
     PIN_ExitThread(-1);
@@ -168,14 +176,14 @@ static void NotifyToolThreadCreated(THREADID threadId, PIN_THREAD_UID threadUid,
     PIN_GetLock(&pinLock, myTid + 1);
 
     ++toolThreadsCreated;
-    out << "Tool spawned a private thread. Thread name = " << threadNameStr[idToolThread] << ", tid = " << threadId << endl
-        << flush;
+    out << "Tool spawned a private thread. Thread name = " << threadNameStr[idToolThread]
+         << ", tid = " << threadId << endl << flush;
 
     BOOL insertStatus = FALSE;
     if (threadUids[idToolThread] == INVALID_PIN_THREAD_UID)
     {
         threadUids[idToolThread] = threadUid;
-        insertStatus             = TRUE;
+        insertStatus = TRUE;
     }
 
     PIN_ReleaseLock(&pinLock);
@@ -217,7 +225,7 @@ static void NotifyToolThreadExit(ID_TOOL_THREAD idToolThread)
 
     PIN_GetLock(&pinLock, myTid + 1);
     ++toolThreadsFinished;
-    out << "Tool's thread finished, name = " << threadNameStr[idToolThread] << ", tid = " << myTid << endl << flush;
+    out << "Tool's thread finished, name = " << threadNameStr[idToolThread] << ", tid = " << myTid << endl  << flush;
     PIN_ReleaseLock(&pinLock);
 }
 
@@ -226,12 +234,6 @@ static void NotifyToolThreadExit(ID_TOOL_THREAD idToolThread)
  */
 static void WaitForProcessExit()
 {
-    THREADID myTid = PIN_ThreadId();
-
-    PIN_GetLock(&pinLock, myTid + 1);
-    out << "Internal thread " << myTid << " waits for process exit." << endl << flush;
-    PIN_ReleaseLock(&pinLock);
-
     unsigned i = 0;
     while (!isProcessExiting)
     {
@@ -259,7 +261,7 @@ static void SafeStart()
     // Note: Assume other threads are not blocked by OS at this point!
     // Note: RootThread that spawns other internal threads doesn't acquire
     // either Pin VM or Pin client lock and uses only Pin APIs that don't aquire these locks.
-    for (int i = 0; i < 30; ++i)
+    for (int i = 0; i < 30; i++)
     {
         if (toolThreadsStarted == numThreadIds)
         {
@@ -281,10 +283,13 @@ static void SafeStart()
 /*!
  * Exception handler for the ThreadException() procedure
  */
-EXCEPT_HANDLING_RESULT ExceptionHandler(THREADID tid, EXCEPTION_INFO* pExceptInfo, PHYSICAL_CONTEXT* pPhysCtxt, VOID* arg)
+EXCEPT_HANDLING_RESULT ExceptionHandler(THREADID tid,
+                                        EXCEPTION_INFO * pExceptInfo,
+                                        PHYSICAL_CONTEXT * pPhysCtxt,
+                                        VOID * arg)
 {
     // Read the page address from the TLS slot. The same address is passed in <arg>.
-    VOID* page = PIN_GetThreadData(exceptionTlsKey, tid);
+    VOID * page = PIN_GetThreadData(exceptionTlsKey, tid);
     if (page != arg)
     {
         AbortThread("PIN_GetThreadData failed", idThreadException);
@@ -292,9 +297,8 @@ EXCEPT_HANDLING_RESULT ExceptionHandler(THREADID tid, EXCEPTION_INFO* pExceptInf
 
     // Allow write access to the page. This should fix the problem in the thread that
     // attempts to write into this page.
-    OS_RETURN_CODE res =
-        OS_ProtectMemory(NATIVE_PID_CURRENT, page, getpagesize(),
-                         OS_PAGE_PROTECTION_TYPE_READ | OS_PAGE_PROTECTION_TYPE_WRITE | OS_PAGE_PROTECTION_TYPE_EXECUTE);
+    OS_RETURN_CODE res = OS_ProtectMemory(NATIVE_PID_CURRENT, page, getpagesize(),
+                                          OS_PAGE_PROTECTION_TYPE_WRITE|OS_PAGE_PROTECTION_TYPE_EXECUTE);
     ASSERTX(OS_RETURN_CODE_IS_SUCCESS(res));
 
     return EHR_HANDLED;
@@ -307,7 +311,7 @@ EXCEPT_HANDLING_RESULT ExceptionHandler(THREADID tid, EXCEPTION_INFO* pExceptInf
 /*!
  * Tool's thread that verifies PIN_SafeCopy
  */
-static VOID ThreadSafeCopy(VOID* arg)
+static VOID ThreadSafeCopy(VOID * arg)
 {
     NotifyToolThreadStart(idThreadSafeCopy);
 
@@ -315,23 +319,11 @@ static VOID ThreadSafeCopy(VOID* arg)
     char src[16];
     size_t size;
 
-    THREADID myTid = PIN_ThreadId();
-
-    PIN_GetLock(&pinLock, myTid + 1);
-    out << "Safe copy 0 => dst" << endl << flush;
-    PIN_ReleaseLock(&pinLock);
-
-    /* TODO: Enable once Mantis 4906 is fixed.
     size = PIN_SafeCopy(dst, NULL, sizeof(dst));
     if (size != 0)
     {
         AbortThread("First PIN_SafeCopy failed", idThreadSafeCopy);
     }
-*/
-
-    PIN_GetLock(&pinLock, myTid + 1);
-    out << "Safe copy src => dst" << endl << flush;
-    PIN_ReleaseLock(&pinLock);
 
     size = PIN_SafeCopy(dst, src, sizeof(src));
     if (size != sizeof(src))
@@ -347,16 +339,16 @@ static VOID ThreadSafeCopy(VOID* arg)
 /*!
  * Tool's thread that verifies handling of internal exceptions
  */
-static VOID ThreadException(VOID* arg)
+static VOID ThreadException(VOID * arg)
 {
     NotifyToolThreadStart(idThreadException);
 
     THREADID myTid = PIN_ThreadId();
 
     // Allocate a non-writable page and
-    char* page = NULL;
-    OS_AllocateMemory(NATIVE_PID_CURRENT, OS_PAGE_PROTECTION_TYPE_READ | OS_PAGE_PROTECTION_TYPE_EXECUTE, getpagesize(),
-                      OS_MEMORY_FLAGS_PRIVATE, (void**)&page);
+    char * page = NULL;
+    OS_AllocateMemory(NATIVE_PID_CURRENT, OS_PAGE_PROTECTION_TYPE_READ|OS_PAGE_PROTECTION_TYPE_EXECUTE,
+                      getpagesize(), OS_MEMORY_FLAGS_PRIVATE, (void**)&page);
     ASSERTX(page != 0);
 
     // To verify TLS API, we pass the page address to the exception handler in the TLS slot
@@ -385,17 +377,26 @@ static VOID ThreadException(VOID* arg)
 /*!
  * Tool's thread that verifies RTN API
  */
-static VOID ThreadRtn(VOID* arg)
+static VOID ThreadRtn(VOID * arg)
 {
     NotifyToolThreadStart(idThreadRtn);
+
+    string errMsg;
+    ADDRINT addr;
+    RTN rtn;
+
+    THREADID myTid = PIN_ThreadId();
 
     // Wait until <addrDoFlush> is initialized in the ImageLoad() callback
     while (addrDoFlush == 0)
     {
         PIN_Yield();
     }
+    PIN_GetLock(&pinLock, myTid + 1);
+    addr = addrDoFlush;
+    PIN_ReleaseLock(&pinLock);
 
-    if (addrDoFlush == ADDRINT(-1))
+    if (addr == ADDRINT(-1))
     {
         // There is no DoFlush routine in the application image
         NotifyToolThreadExit(idThreadRtn);
@@ -408,17 +409,15 @@ static VOID ThreadRtn(VOID* arg)
         PIN_Yield();
     }
 
-    string errMsg;
-
     // Look for a routine at the <addrDoFlush> address and check its name
     PIN_LockClient();
 
-    RTN rtn = RTN_FindByAddress(addrDoFlush);
+    rtn = RTN_FindByAddress(addr);
     if (!RTN_Valid(rtn))
     {
         errMsg = "RTN_FindByAddress failed";
     }
-    else if (RTN_Name(rtn) != "DoFlush")
+    else if (RTN_Name(rtn)  != "DoFlush")
     {
         errMsg = "RTN_Name failed";
     }
@@ -441,17 +440,23 @@ static VOID ThreadRtn(VOID* arg)
 /*!
  * Tool's thread that verifies CodeCache API
  */
-static VOID ThreadCodeCache(VOID* arg)
+static VOID ThreadCodeCache(VOID * arg)
 {
     NotifyToolThreadStart(idThreadCodeCache);
+
+    ADDRINT addr;
+    THREADID myTid = PIN_ThreadId();
 
     // Wait until <addrDoFlush> is initialized in the ImageLoad() callback
     while (addrDoFlush == 0)
     {
         PIN_Yield();
     }
+    PIN_GetLock(&pinLock, myTid + 1);
+    addr = addrDoFlush;
+    PIN_ReleaseLock(&pinLock);
 
-    if (addrDoFlush == ADDRINT(-1))
+    if (addr == ADDRINT(-1))
     {
         // There is no DoFlush routine in the application image
         NotifyToolThreadExit(idThreadCodeCache);
@@ -475,10 +480,11 @@ static VOID ThreadCodeCache(VOID* arg)
     PIN_ExitThread(0);
 }
 
+
 /*!
  * Tool's thread that does nothing
  */
-static VOID DummyThread(VOID* arg)
+static VOID DummyThread(VOID * arg)
 {
     NotifyToolThreadStart(idDummyThread);
     NotifyToolThreadExit(idDummyThread);
@@ -488,7 +494,7 @@ static VOID DummyThread(VOID* arg)
  * Main tool's thread. It is created in the application thread by the
  * main() tool's procedure.
  */
-static VOID RootThread(VOID* arg)
+static VOID RootThread(VOID * arg)
 {
     NotifyToolThreadStart(idRootThread);
 
@@ -523,7 +529,7 @@ static VOID RootThread(VOID* arg)
     {
         NotifyToolThreadCreated(threadId, threadUid, idDummyThread);
 
-        BOOL waitStatus = PIN_WaitForThreadTermination(threadUid, waitTimeout, 0); // Wait waitTimeout/1000 sec
+        BOOL waitStatus = PIN_WaitForThreadTermination(threadUid, waitTimeout, 0);  // Wait waitTimeout/1000 sec
         if (!waitStatus)
         {
             ostringstream ostr;
@@ -644,7 +650,7 @@ static VOID OnDoFlush()
     isDoFlushCalled = TRUE;
 
     // Wait until completion of all dependent tests
-    while (!(isRtnTestCompleted && isCacheTestCompleted))
+    while (!(isRtnTestCompleted  && isCacheTestCompleted))
     {
         PIN_Yield();
     }
@@ -656,7 +662,7 @@ static VOID OnDoFlush()
 /*!
  * RTN instrumentation routine.
  */
-static VOID InstrumentRoutine(RTN rtn, VOID*)
+static VOID InstrumentRoutine(RTN rtn, VOID *)
 {
     if (RTN_Name(rtn) == "DoFlush")
     {
@@ -669,7 +675,7 @@ static VOID InstrumentRoutine(RTN rtn, VOID*)
 /*!
  * Trace instrumentation routine.
  */
-static VOID InstrumentTrace(TRACE trace, VOID* v)
+static VOID InstrumentTrace(TRACE trace, VOID *v)
 {
     const ADDRINT traceAddress = TRACE_Address(trace);
     ASSERTX(0 != traceAddress);
@@ -680,18 +686,14 @@ static VOID InstrumentTrace(TRACE trace, VOID* v)
 
     if (isCacheFlushHappened) return; // only need to record traces until the codecache flush
 
-    static set< ADDRINT > addresses;
+    static set<ADDRINT> addresses;
     if (isCacheTestCompleted)
     {
         if (addresses.end() != addresses.find(traceAddress))
         {
             ASSERTX(!isCacheFlushHappened);
             isCacheFlushHappened = TRUE;
-
-            THREADID myTid = PIN_ThreadId();
-            PIN_GetLock(&pinLock, myTid + 1);
             out << "Re-jitting TRACE at address 0x" << hex << traceAddress << dec << ", assuming codecache flush." << endl;
-            PIN_ReleaseLock(&pinLock);
             return;
         }
     }
@@ -701,9 +703,9 @@ static VOID InstrumentTrace(TRACE trace, VOID* v)
 /*!
  * Image load callback.
  */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    if (IMG_IsMainExecutable(img))
+    if ( IMG_IsMainExecutable(img))
     {
         ADDRINT addr;
         RTN rtn = RTN_FindByName(img, "DoFlush");
@@ -715,14 +717,18 @@ VOID ImageLoad(IMG img, VOID* v)
         {
             addr = ADDRINT(-1);
         }
+
+        THREADID myTid = PIN_ThreadId();
+        PIN_GetLock(&pinLock, myTid + 1);
         addrDoFlush = addr;
+        PIN_ReleaseLock(&pinLock);
     }
 }
 
 /*!
  * Thread start/exit callbacks in application's  threads.
  */
-static VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+static VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     if (!PIN_IsApplicationThread())
     {
@@ -730,15 +736,15 @@ static VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
     }
 
     PIN_GetLock(&pinLock, threadid + 1);
-    ++appThreadsStarted;
-    out << "Application's thread started running, tid = " << threadid << endl << flush;
+    appThreadsStarted++;
+    out << "Application's thread started running, tid = " << threadid << endl  << flush;
     PIN_ReleaseLock(&pinLock);
 }
 
-static VOID ThreadFini(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID* v)
+static VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
     PIN_GetLock(&pinLock, threadid + 1);
-    ++appThreadsFinished;
+    appThreadsFinished++;
     out << "Application's thread finished, tid = " << threadid << endl << flush;
     PIN_ReleaseLock(&pinLock);
 }
@@ -746,7 +752,7 @@ static VOID ThreadFini(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID*
 /*!
  * Process exit callback (unlocked).
  */
-static VOID PrepareForFini(VOID* v)
+static VOID PrepareForFini(VOID *v)
 {
     if (!PIN_IsApplicationThread())
     {
@@ -763,7 +769,7 @@ static VOID PrepareForFini(VOID* v)
     THREADID myTid = PIN_ThreadId();
 
     // Wait until all internal threads exit
-    for (int i = 0; i < numThreadIds; ++i)
+    for (int i = 0; i < numThreadIds; i++)
     {
         if (threadUids[i] == INVALID_PIN_THREAD_UID)
         {
@@ -797,23 +803,25 @@ static VOID PrepareForFini(VOID* v)
     }
 
     PIN_GetLock(&pinLock, myTid + 1);
-    out << "mt_tool test: All tool's threads finished successfully." << endl << flush;
+    out << "mt_tool test: All tool's threads finished successfully." << endl  << flush;
     PIN_ReleaseLock(&pinLock);
+
 }
 
 /*!
  * Process exit callback (locked).
  */
-static VOID Fini(INT32 code, VOID* v)
+static VOID Fini(INT32 code, VOID *v)
 {
-    out << "Number of application's threads started: " << appThreadsStarted << endl << flush;
+    out << "Number of application's threads started: "  << appThreadsStarted  << endl  << flush;
     out << "Number of application's threads finished: " << appThreadsFinished << endl << flush;
-    out << "Number of tool's threads created: " << toolThreadsCreated << endl << flush;
+    out << "Number of tool's threads created: "  << toolThreadsCreated << endl << flush;
     out << "Number of tool's threads started: " << toolThreadsStarted << endl << flush;
     out << "Number of tool's threads finished: " << toolThreadsFinished << endl << flush;
     if (toolThreadsCreated != toolThreadsStarted)
     {
-        out << "toolThreadsCreated: " << toolThreadsCreated << ", toolThreadsStarted: " << toolThreadsStarted << endl << flush;
+        out << "toolThreadsCreated: " << toolThreadsCreated
+             << ", toolThreadsStarted: " << toolThreadsStarted << endl << flush;
         if (KnobSafeStart)
         {
             // We expect all created internal threads are started if safe start is applied.
@@ -825,13 +833,14 @@ static VOID Fini(INT32 code, VOID* v)
     }
     if (toolThreadsStarted != toolThreadsFinished)
     {
-        out << "toolThreadsStarted: " << toolThreadsStarted << ", toolThreadsFinished: " << toolThreadsFinished << endl << flush;
+        out << "toolThreadsStarted: " << toolThreadsStarted
+             << ", toolThreadsFinished: " << toolThreadsFinished << endl << flush;
         PIN_ExitProcess(1);
     }
 
     if (isCacheTestCompleted && !isCacheFlushHappened)
     {
-        out << "Code Cache flush did not happen" << endl << flush;
+        out << "Code Cache flush did not happen" << endl  << flush;
         PIN_ExitProcess(1);
     }
 }
@@ -850,7 +859,7 @@ INT32 Usage()
 /*!
  * The main procedure of the tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitSymbols();
 
@@ -876,10 +885,10 @@ int main(int argc, char* argv[])
         AbortProcess("PIN_CreateThreadDataKey failed");
     }
 
-    for (int i = 0; i < numThreadIds; ++i)
+    for (int i = 0; i < numThreadIds; i++)
     {
         threadStatus[i] = statusInit;
-        threadUids[i]   = INVALID_PIN_THREAD_UID;
+        threadUids[i] = INVALID_PIN_THREAD_UID;
     }
 
     // Spawn the main internal thread. When this thread starts it spawns all other internal threads.

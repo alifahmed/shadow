@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -38,56 +38,54 @@
 
 #endif
 
-#define TLS_GET_GS_REG()                           \
-    (                                              \
-        {                                          \
-            int __seg;                             \
-            __asm("movw %%gs, %w0" : "=q"(__seg)); \
-            __seg & 0xffff;                        \
-        })
+# define TLS_GET_GS_REG() \
+  ({ int __seg; __asm ("movw %%gs, %w0" : "=q" (__seg)); __seg & 0xffff; })
 
-volatile bool loop1, loop2;
-void* thread_func(void* arg)
-{
+
+volatile bool loop1, loop2 ;
+void * thread_func (void *arg)
+{    
     while (loop2)
     {
-        void* space = malloc(300);
+        void *space = malloc(300);
         //sleep(1);
         free(space);
     }
     return 0;
+
 }
 
-typedef double (*DLL_FUNC)(double x);
-typedef int (*DLL_INT_FUNC)(int x);
+typedef  double (*DLL_FUNC)(double x);
+typedef  int (*DLL_INT_FUNC)(int x);
 
-void* thread_dlopen_func(void* arg)
-{
-    double number          = 0.2;
+
+void * thread_dlopen_func (void *arg)
+{    
+    double number = 0.2;
     double calculatedValue = 0;
     while (loop1)
     {
-        void* handle = dlopen("libmy_dll" DLL_SUFFIX, RTLD_LAZY);
+        void *handle = dlopen("libmy_dll" DLL_SUFFIX, RTLD_LAZY);
         if (handle)
         {
             DLL_FUNC fptr = (DLL_FUNC)dlsym(handle, "my_dll_sin");
             calculatedValue += (*fptr)(number);
-
+            
             //sleep(1);
             dlclose(handle);
         }
-        else
+        else 
         {
             fprintf(stderr, "error opening my_dll" DLL_SUFFIX ", thread %ld\n", GetTid());
             exit(-1);
-        }
+        } 
         number += 0.01;
     }
-
+        
     return 0;
 }
 
-int main(int argc, char* argv[])
+int main (int argc, char *argv[])
 {
     unsigned long gs_val = TLS_GET_GS_REG();
     while (1)
@@ -95,11 +93,11 @@ int main(int argc, char* argv[])
         loop1 = true;
         loop2 = true;
         pthread_t h[NTHREADS];
-
-        pthread_create(&h[0], 0, thread_dlopen_func, 0);
+        
+        pthread_create (&h[0], 0, thread_dlopen_func, 0);
         for (unsigned long i = 1; i < NTHREADS; i++)
         {
-            pthread_create(&h[i], 0, thread_func, 0);
+            pthread_create (&h[i], 0, thread_func, 0);
         }
         sleep(1);
 
@@ -108,8 +106,9 @@ int main(int argc, char* argv[])
 
         for (unsigned long i = 0; i < NTHREADS; i++)
         {
-            pthread_join(h[i], 0);
+            pthread_join (h[i], 0);
         }
-    }
+    }    
     return 0;
 }
+

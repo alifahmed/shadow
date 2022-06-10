@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,22 +26,24 @@ typedef void (*FUNPTR)();
 static bool PrintAddress = false;
 static unsigned NumThreads;
 
-static bool ParseArgs(int, char**);
-static void* Worker(void*);
+static bool ParseArgs(int, char **);
+static void *Worker(void *);
 
-int main(int argc, char** argv)
+
+int main(int argc, char **argv)
 {
-    if (!ParseArgs(argc, argv)) return 1;
+    if (!ParseArgs(argc, argv))
+        return 1;
 
     if (PrintAddress)
     {
-        PTRINT fp = reinterpret_cast< PTRINT >(GlobalFunction);
+        PTRINT fp = reinterpret_cast<PTRINT>(GlobalFunction);
         std::cout << "0x" << std::hex << std::noshowbase << fp << "\n";
         return 0;
     }
 
-    pthread_t* workers = new pthread_t[NumThreads];
-    for (unsigned i = 0; i < NumThreads; i++)
+    pthread_t *workers = new pthread_t[NumThreads];
+    for (unsigned i = 0;  i < NumThreads;  i++)
     {
         if (pthread_create(&workers[i], 0, Worker, 0) != 0)
         {
@@ -50,25 +52,25 @@ int main(int argc, char** argv)
         }
     }
 
-    for (unsigned i = 0; i < NumThreads; i++)
+    for (unsigned i = 0;  i < NumThreads;  i++)
         pthread_join(workers[i], 0);
 
     delete[] workers;
     return 0;
 }
 
-static bool ParseArgs(int argc, char** argv)
+static bool ParseArgs(int argc, char **argv)
 {
     if (argc == 3 && std::strcmp(argv[1], "-threads") == 0)
     {
-        char* end;
+        char *end;
         unsigned long val = std::strtoul(argv[2], &end, 10);
         if (*(argv[2]) == '\0' || val > UINT_MAX || val == 0 || *end != '\0')
         {
             std::cerr << "Invalid parameter to -threads: " << argv[2] << std::endl;
             return false;
         }
-        NumThreads = static_cast< unsigned >(val);
+        NumThreads = static_cast<unsigned>(val);
         return true;
     }
     else if (argc == 2 && std::strcmp(argv[1], "-print-address") == 0)
@@ -82,7 +84,7 @@ static bool ParseArgs(int argc, char** argv)
     return false;
 }
 
-static void* Worker(void*)
+static void *Worker(void *)
 {
     // Call through a volatile pointer to prevent the compiler from in-lining.
     //
