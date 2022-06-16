@@ -24,6 +24,9 @@
 #include <set>
 
 #include "pinplay.H"
+#include "dcfg_pin_api.H"
+#include "dcfg_api.H"
+#include "pin.H"
 
 using namespace std;
 
@@ -59,12 +62,10 @@ KNOB<UINT64> knobMaxInst(KNOB_MODE_WRITEONCE, "pintool", "maxinst", "-1",
 
 // PinPlay intergration
 PINPLAY_ENGINE pinplay_engine;
-KNOB<BOOL> KnobPinPlayLogger(KNOB_MODE_WRITEONCE, 
-                      "pintool", "log", "0",
-                      "Activate the pinplay logger");
 KNOB<BOOL> KnobPinPlayReplayer(KNOB_MODE_WRITEONCE, 
                       "pintool", "replay", "0",
                       "Activate the pinplay replayer");
+dcfg_pin_api::DCFG_PIN_MANAGER* dcfgMgr;
 
 // Max threads
 //KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",	"Upper limit of the number of threads that can be used by the program being profiled.");
@@ -1582,6 +1583,12 @@ VOID Fini(INT32 code, VOID *v) {
 	cout << "Entered FINI" << endl;
 	processInterval();
 
+	dcfg_api::DCFG_DATA_CPTR dcfg_data = dcfgMgr->get_dcfg_data();
+	ofstream ofs;
+	ofs.open("output.txt", ofstream::out);
+	dcfg_data->write(ofs);
+	ofs.close();
+
 	generateCode(out_file_name.c_str());
 
 	for (InsRoot *it : insRootList) {
@@ -1901,6 +1908,19 @@ void Instruction(INS ins, VOID *v) {
 
 }
 
+VOID dcfg_gen() {
+	dcfg_api::DCFG_DATA_CPTR dcfg_data = dcfgMgr->get_dcfg_data();
+	dcfg_data->write(cout);
+}
+
+
+VOID Trace(TRACE trace, VOID *v) {
+	// for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+	// 	if (BBL_HasFallThrough(bbl))
+	// 		BBL_InsertCall(bbl, IPOINT_AFTER, AFUNPTR(dcfg_gen), IARG_END);
+	// }
+}
+
 /*******************************************************************************
  * PIN Entry
  ******************************************************************************/
@@ -1938,8 +1958,16 @@ int main(int argc, char *argv[]) {
 		insTrace.reserve(interval);
 	}
 
+	// pinplay_engine.Activate(argc, argv, 
+	// 	knobLogEn, KnobPinPlayReplayer);
+	// &pinplay_engine
+
+	dcfgMgr = dcfg_pin_api::DCFG_PIN_MANAGER::new_manager();
+	dcfgMgr->activate();
+
 	IMG_AddInstrumentFunction(ImgCallback, NULL);
 	INS_AddInstrumentFunction(Instruction, NULL);
+	TRACE_AddInstrumentFunction(Trace, NULL);
 	PIN_AddFiniFunction(Fini, NULL);
 
 	// Start the program, never returns

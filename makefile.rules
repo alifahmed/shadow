@@ -25,17 +25,19 @@ TEST_ROOTS :=
 # This defines the tools which will be run during the the tests, and were not already defined in
 # TEST_TOOL_ROOTS.
 
-TARGET_LONG=intel64
 PINPLAY_HOME=$(PIN_ROOT)/extras/pinplay/
 PINPLAY_INCLUDE_HOME=$(PINPLAY_HOME)/include
-PINPLAY_LIB_HOME=$(PINPLAY_HOME)/lib/$(TARGET_LONG)
-EXT_LIB_HOME=$(PINPLAY_HOME)/lib-ext/$(TARGET_LONG)
+PINPLAY_LIB_HOME=$(PINPLAY_HOME)/lib/$(TARGET)
+EXT_LIB_HOME=$(PINPLAY_HOME)/lib-ext/$(TARGET)
+DCFG_HOME=$(PIN_ROOT)/extras/dcfg/
+DCFG_INCLUDE_HOME=$(DCFG_HOME)/include
+DCFG_LIB_HOME=$(DCFG_HOME)/lib/$(TARGET)
 
 TOOL_ROOTS :=
 #TOOL_CXXFLAGS += lib/libfort/fort.c
-TOOL_CXXFLAGS += -I$(ALIF_IDIR) -I$(PINPLAY_INCLUDE_HOME)
+TOOL_CXXFLAGS += -I$(ALIF_IDIR) -I$(PINPLAY_INCLUDE_HOME) -I$(DCFG_INCLUDE_HOME)
 
-TOOL_LIBS += $(PINPLAY_LIB_HOME)/libpinplay.a $(EXT_LIB_HOME)/libbz2.a $(EXT_LIB_HOME)/libzlib.a
+TOOL_LIBS := $(DCFG_LIB_HOME)/libdcfg-pinplay.a $(DCFG_LIB_HOME)/libintelzipstream.a $(PINPLAY_LIB_HOME)/libpinplay.a $(EXT_LIB_HOME)/libbz2.a $(EXT_LIB_HOME)/libzlib.a $(TOOL_LIBS)
 
 # This defines the static analysis tools which will be run during the the tests. They should not
 # be defined in TEST_TOOL_ROOTS. If a test with the same name exists, it should be defined in

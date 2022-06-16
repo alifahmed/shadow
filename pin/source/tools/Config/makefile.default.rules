@@ -223,7 +223,7 @@ $(OBJDIR)%$(OBJ_SUFFIX): %.c
 
 # Build the tool as a dll (shared object).
 $(OBJDIR)%$(PINTOOL_SUFFIX): $(OBJDIR)%$(OBJ_SUFFIX) $(ALIF_OBJS) $(CONTROLLERLIB)
-	$(LINKER) $(TOOL_LDFLAGS) $(LINK_EXE)$@ $< $(TOOL_LPATHS) $(ALIF_OBJS) $(TOOL_LIBS) $(CONTROLLERLIB) 
+	$(LINKER) $(TOOL_LDFLAGS) $(LINK_EXE)$@ $< $(ALIF_OBJS) $(TOOL_LPATHS) $(TOOL_LIBS) $(CONTROLLERLIB) 
 
 # Build the static analysis tools.
 $(SA_TOOLS): %$(SATOOL_SUFFIX): %$(OBJ_SUFFIX)
