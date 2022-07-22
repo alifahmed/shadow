@@ -25,6 +25,7 @@
 
 #include "pinplay.H"
 #include "dcfg_pin_api.H"
+#include "dcfg_trace_api.H"
 #include "dcfg_api.H"
 #include "pin.H"
 
@@ -66,6 +67,7 @@ KNOB<BOOL> KnobPinPlayReplayer(KNOB_MODE_WRITEONCE,
                       "pintool", "replay", "0",
                       "Activate the pinplay replayer");
 dcfg_pin_api::DCFG_PIN_MANAGER* dcfgMgr;
+dcfg_trace_api::DCFG_TRACE_READER* dcfgTraceReader;
 
 // Max threads
 //KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",	"Upper limit of the number of threads that can be used by the program being profiled.");
@@ -1589,6 +1591,15 @@ VOID Fini(INT32 code, VOID *v) {
 	dcfg_data->write(ofs);
 	ofs.close();
 
+	dcfg_api::DCFG_ID_VECTOR edge_ids;
+	bool done = false;
+	string errMsg;
+	dcfgTraceReader->get_edge_ids(edge_ids, done, errMsg);	
+	for (dcfg_api::DCFG_ID id : edge_ids) {
+		cout << id << " ";
+	}
+	cout << endl;
+
 	generateCode(out_file_name.c_str());
 
 	for (InsRoot *it : insRootList) {
@@ -1964,6 +1975,12 @@ int main(int argc, char *argv[]) {
 
 	dcfgMgr = dcfg_pin_api::DCFG_PIN_MANAGER::new_manager();
 	dcfgMgr->activate();
+	dcfg_api::DCFG_ID_VECTOR process_ids;
+	int process_count = dcfgMgr->get_dcfg_data()->get_process_ids(process_ids);
+	cout << "process cnt = " << process_count << endl;
+	assert(process_count >= 1);
+	dcfgTraceReader = dcfg_trace_api::DCFG_TRACE_READER::new_reader(process_ids[0]);
+
 
 	IMG_AddInstrumentFunction(ImgCallback, NULL);
 	INS_AddInstrumentFunction(Instruction, NULL);
