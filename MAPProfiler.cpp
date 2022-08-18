@@ -61,13 +61,11 @@ KNOB<INT64> knobStart(KNOB_MODE_WRITEONCE, "pintool", "start", "0",
 KNOB<UINT64> knobMaxInst(KNOB_MODE_WRITEONCE, "pintool", "maxinst", "-1",
 		"Profile upto maxinst number of instructions (any type, not just memory instructions)");
 
-// PinPlay intergration
+// DCFG and PinPlay intergration
 PINPLAY_ENGINE pinplay_engine;
 KNOB<BOOL> KnobPinPlayReplayer(KNOB_MODE_WRITEONCE, 
                       "pintool", "replay", "0",
                       "Activate the pinplay replayer");
-dcfg_pin_api::DCFG_PIN_MANAGER* dcfgMgr;
-dcfg_trace_api::DCFG_TRACE_READER* dcfgTraceReader;
 
 // Max threads
 //KNOB<UINT64> knobMaxThreads(KNOB_MODE_WRITEONCE, "pintool", "threads", "10000",	"Upper limit of the number of threads that can be used by the program being profiled.");
@@ -148,6 +146,21 @@ typedef struct {
 static FilterInfo fInfoOrig;
 static FilterInfo fInfoAfterZero;
 static FilterInfo fInfoTop;
+
+// DCFG Global variables
+static string dcfg_cfg_file, dcfg_trace_file;
+static ofstream shadow_output, dcfg_output;
+// static uint64_t shadow_cnt = 0, dcfg_cnt = 0;
+static bool dcfg_trace_done;
+dcfg_pin_api::DCFG_PIN_MANAGER *dcfgMgr;
+dcfg_api::DCFG_DATA *dcfgData;
+dcfg_api::DCFG_PROCESS_CPTR dcfgProcInfo;
+dcfg_trace_api::DCFG_TRACE_READER* dcfgTraceReader;
+
+dcfg_api::DCFG_ID_VECTOR dcfgTraceBuffer;
+dcfg_api::DCFG_ID_VECTOR::iterator dcfgTraceBufferPtr;
+
+static UINT64 total_addr = 0, total_addr_in_bbl = 0;
 
 /*******************************************************************************
  * Pattern Classes
@@ -1581,24 +1594,56 @@ void resetState() {
 	//cout << "Reset Done" << endl;
 }
 
+bool reloadDcfgTraceBuffer() {
+	string msg;
+	dcfgTraceBuffer.clear();
+	if (!dcfg_trace_done) {
+		if (!dcfgTraceReader->get_edge_ids(dcfgTraceBuffer, dcfg_trace_done, msg)) {
+			cerr << " error: " << msg << endl;
+			dcfg_trace_done = true;
+			return false;
+		}
+		dcfgTraceBufferPtr = dcfgTraceBuffer.begin();
+		return true;
+	}
+	return false;
+}
+
+UINT64 getDcfgEdgeAddress(dcfg_api::DCFG_ID_VECTOR::iterator &edgePtr) {
+	dcfg_api::DCFG_EDGE_CPTR edge = dcfgProcInfo->get_edge_info(*edgePtr);
+	if (!edge) {
+		cerr << "error: invalid edge" << endl;
+		return 0; 
+	}
+	dcfg_api::DCFG_ID bbId = edge->get_target_node_id();
+	dcfg_api::DCFG_BASIC_BLOCK_CPTR bb = dcfgProcInfo->get_basic_block_info(bbId);
+	
+	if (!bb) return 0;
+	// if (edge->is_exit_edge_type()) {
+	// 	dcfg_output << bbId << " " << (void *)bb->get_first_instr_addr() << ",end" << endl;
+	// 	return 0;
+	// }
+	return bb->get_first_instr_addr();
+}
+
 VOID Fini(INT32 code, VOID *v) {
 	cout << "Entered FINI" << endl;
 	processInterval();
 
-	dcfg_api::DCFG_DATA_CPTR dcfg_data = dcfgMgr->get_dcfg_data();
-	ofstream ofs;
-	ofs.open("output.txt", ofstream::out);
-	dcfg_data->write(ofs);
-	ofs.close();
+	dcfg_api::DCFG_DATA_CPTR data = dcfgMgr->get_dcfg_data();
+	string msg;
+	data->write("output.txt", msg);
 
-	dcfg_api::DCFG_ID_VECTOR edge_ids;
-	bool done = false;
-	string errMsg;
-	dcfgTraceReader->get_edge_ids(edge_ids, done, errMsg);	
-	for (dcfg_api::DCFG_ID id : edge_ids) {
-		cout << id << " ";
-	}
-	cout << endl;
+
+	// for (; dcfgTraceBufferPtr != dcfgTraceBuffer.end(); ++dcfgTraceBufferPtr) {
+	// 	shadow_output << (void *)getDcfgEdgeAddress(dcfgTraceBufferPtr) << endl;
+	// }
+	// while (!dcfg_trace_done) {
+	// 	reloadDcfgTraceBuffer();
+	// 	for (; dcfgTraceBufferPtr != dcfgTraceBuffer.end(); ++dcfgTraceBufferPtr) {
+	// 		shadow_output << (void *)getDcfgEdgeAddress(dcfgTraceBufferPtr) << endl;
+	// 	}
+	// }
 
 	generateCode(out_file_name.c_str());
 
@@ -1623,6 +1668,8 @@ VOID Fini(INT32 code, VOID *v) {
 	cout << "Total instructions executed: " << instCount << endl;
 
 	cloneLog << "Total instructions executed: " << instCount << endl;
+
+	cout << "percentage of in-bbl instrs: " << (double_t)total_addr_in_bbl / total_addr << endl;
 	cloneLog.close();
 }
 
@@ -1919,17 +1966,62 @@ void Instruction(INS ins, VOID *v) {
 
 }
 
-VOID dcfg_gen() {
-	dcfg_api::DCFG_DATA_CPTR dcfg_data = dcfgMgr->get_dcfg_data();
-	dcfg_data->write(cout);
+
+
+VOID shadow_outfunc(ADDRINT addr) {
+	// shadow_output << "outfunc " << (void*) addr << endl;
+	// while (true) {
+	// 	if (dcfgTraceBufferPtr == dcfgTraceBuffer.end()) {
+	// 		if (!reloadDcfgTraceBuffer()) {
+	// 			shadow_cnt++;
+	// 			shadow_output << string(19, ' ') << (void *) addr << " " << shadow_cnt << "/" << dcfg_cnt << endl;
+	// 		}
+	// 		break;
+	// 	}
+		
+	// 	UINT64 dcfg_addr = getDcfgEdgeAddress(dcfgTraceBufferPtr);
+	// 	if ((addr & 0xffff) == 0xbac0) {
+	// 		shadow_output << "wowow " << (void *)addr << ' ' << (void *)dcfg_addr << endl;
+	// 	}
+		
+	// 	if ((dcfg_addr & 0xfff) == (addr & 0xfff)) {
+	// 		dcfg_cnt++;
+	// 		shadow_cnt++;
+	// 		shadow_output << (void *) dcfg_addr << " " << (void *) addr << (dcfg_addr == addr ? "" : " diff") << " " << shadow_cnt << "/" << dcfg_cnt << endl;
+	// 		++dcfgTraceBufferPtr;
+	// 		break;
+	// 	}
+	// 	else {
+	// 		dcfg_cnt++;
+	// 		shadow_output << (void *) dcfg_addr << " " << shadow_cnt << "/" << dcfg_cnt << " curaddr=" << (void*)addr << endl;
+	// 		++dcfgTraceBufferPtr;
+	// 	}
+	// }
+
+	// dcfg_api::DCFG_DATA_CPTR data = dcfgMgr->get_dcfg_data();
+	// dcfg_api::DCFG_ID_VECTOR process_ids;
+	// int process_count = data->get_process_ids(process_ids);
+	// assert(process_count >= 1);
+	// dcfg_api::DCFG_PROCESS_CPTR proc_info = data->get_process_info(process_ids[0]);
+	
+	dcfg_api::DCFG_ID_VECTOR bbl_ids;
+	total_addr++;
+
+	dcfgProcInfo->get_basic_block_ids_by_addr(addr, bbl_ids);
+	if (bbl_ids.size() > 0) total_addr_in_bbl++;
+	dcfg_output << (void *)addr;
+	for (auto &id : bbl_ids) {
+		dcfg_output << " " << id;
+	}
+	dcfg_output << endl;
 }
 
 
 VOID Trace(TRACE trace, VOID *v) {
-	// for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
-	// 	if (BBL_HasFallThrough(bbl))
-	// 		BBL_InsertCall(bbl, IPOINT_AFTER, AFUNPTR(dcfg_gen), IARG_END);
-	// }
+	for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+		if (BBL_HasFallThrough(bbl))
+			BBL_InsertCall(bbl, IPOINT_AFTER, AFUNPTR(shadow_outfunc), IARG_ADDRINT, BBL_Address(bbl), IARG_END);
+	}
 }
 
 /*******************************************************************************
@@ -1973,14 +2065,39 @@ int main(int argc, char *argv[]) {
 	// 	knobLogEn, KnobPinPlayReplayer);
 	// &pinplay_engine
 
-	dcfgMgr = dcfg_pin_api::DCFG_PIN_MANAGER::new_manager();
-	dcfgMgr->activate();
-	dcfg_api::DCFG_ID_VECTOR process_ids;
-	int process_count = dcfgMgr->get_dcfg_data()->get_process_ids(process_ids);
-	cout << "process cnt = " << process_count << endl;
-	assert(process_count >= 1);
-	dcfgTraceReader = dcfg_trace_api::DCFG_TRACE_READER::new_reader(process_ids[0]);
+	// dcfg_cfg_file = "dcfg-out.dcfg.json.bz2";
+	// dcfg_trace_file = "dcfg-out.trace.json.bz2";
+	dcfg_cfg_file = "output.txt";
 
+	shadow_output.open("shadow_output.out", ofstream::out);
+	dcfg_output.open("dcfg_output.out", ofstream::out);
+
+	dcfgMgr = dcfg_pin_api::DCFG_PIN_MANAGER::new_manager();
+	dcfgMgr->set_cfg_collection(true);
+	dcfgMgr->activate();
+
+
+	dcfgData = dcfg_api::DCFG_DATA::new_dcfg();
+	string msg;
+	if (!dcfgData->read(dcfg_cfg_file, msg)) {
+		cerr << "error: " << msg << endl;
+        return 1;
+	}
+
+	dcfg_api::DCFG_ID_VECTOR process_ids;
+	int process_count = dcfgData->get_process_ids(process_ids);
+	assert(process_count >= 1);
+	
+	dcfgProcInfo = dcfgData->get_process_info(process_ids[0]);
+	// dcfgTraceReader = dcfg_trace_api::DCFG_TRACE_READER::new_reader(process_ids[0]);
+	
+	// if (!dcfgTraceReader->open(dcfg_trace_file, 0, msg)) {
+    //     cerr << "error: " << msg << endl;
+    //     return 1;
+    // }
+
+	// dcfgTraceBuffer.clear();
+	// dcfgTraceBufferPtr = dcfgTraceBuffer.end();
 
 	IMG_AddInstrumentFunction(ImgCallback, NULL);
 	INS_AddInstrumentFunction(Instruction, NULL);
