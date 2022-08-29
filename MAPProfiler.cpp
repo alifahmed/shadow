@@ -166,7 +166,7 @@ DCFG_ID_VECTOR::iterator dcfgTraceBufferPtr;
 // static UINT64 total_addr = 0, total_addr_in_bbl = 0;
 const UINT64 BBL_INVALID = 0xFFFFFFFFFFFFFFFF;
 
-set<InsBlock*> DCFG;
+unordered_map<UINT64, InsBlock*> DCFGMap;
 
 /*******************************************************************************
  * Pattern Classes
@@ -946,7 +946,7 @@ set<InsBlock*> createDCFGfromInstTrace(vector<InsMem*> &trace) {
 
 	vector<InsMem*>().swap(trace);  //free trace memory
 	//cout << "Created initial CFG with " << topInsBlocks.size() << " blocks." << endl;
-	printDotFile("dcfgBC.gv");
+	// printDotFile("dcfgBC.gv");
 
 	compressCFG(topInsBlocks);
 	//printDotFile("dcfgLC.gv");
@@ -956,8 +956,7 @@ set<InsBlock*> createDCFGfromInstTrace(vector<InsMem*> &trace) {
 }
 
 
-set<InsBlock*> createDCFGfromDCFGFile() {
-	unordered_map<UINT64, InsBlock*> topInsBlocksMap;
+void createDCFGfromDCFGFile(unordered_map<UINT64, InsBlock*> &topInsBlocksMap) {
 	beginBlock = new InsBlock();
 	endBlock = new InsBlock();
 
@@ -985,7 +984,7 @@ set<InsBlock*> createDCFGfromDCFGFile() {
 		DCFG_ID src = e->get_source_node_id();
 		DCFG_ID dst = e->get_target_node_id();
 		
-		UINT64 cnt = e->get_exec_count_for_thread(dcfgProcInfo->get_process_id());
+		UINT64 cnt = e->get_exec_count();
 		cout << src << " " << dst << " " << cnt << endl;
 		InsBlock *src_block = (src == begin_id ? beginBlock : topInsBlocksMap[src]);
 		InsBlock *dst_block = (dst == end_id ? endBlock : topInsBlocksMap[dst]);
@@ -994,11 +993,13 @@ set<InsBlock*> createDCFGfromDCFGFile() {
 		dst_block->inEdges.insert(src_block);
 	}
 
-	set<InsBlock*> topInsBlocks;
-	for (auto it : topInsBlocksMap) {
-		topInsBlocks.insert(it.second);
-	}
-	return topInsBlocks;
+	printDotFile("dcfgBC.gv");
+
+	// set<InsBlock*> topInsBlocks;
+	// for (auto it : topInsBlocksMap) {
+	// 	topInsBlocks.insert(it.second);
+	// }
+	// return topInsBlocks;
 }
 
 void printInfo(vector<InsMem*> &res) {
@@ -1623,12 +1624,16 @@ void processInterval() {
 
 	//cout << "Inst Trace size: " << insTrace.size() << endl;
 	// set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
+	set<InsBlock *> cfg;
+	for (auto it : DCFGMap) {
+		cfg.insert(it.second);
+	}
 	
-	// updateParentLoops(cfg);
-	// derivePattern(filteredInsList);
+	updateParentLoops(cfg);
+	derivePattern(filteredInsList);
 
-	// printInfo(filteredInsList);
-	generateCodeFragment(1, filteredInsList, DCFG);
+	printInfo(filteredInsList);
+	generateCodeFragment(1, filteredInsList, cfg);
 	//cout << "Process Done" << endl;
 	// update_pat_dist(filteredInsList);
 }
@@ -1861,6 +1866,9 @@ void record(InsRoot *root, ADDRINT ea, UINT32 op) {
 			exit(-1);
 		}*/
 		insTrace.push_back(ins);
+		if (ins->parentBlock == nullptr) {
+			ins->parentBlock = root->parentBlock;
+		}
 		//make the address aligned
 		ea &= ~(ins->accSz - 1ULL);
 		if (ea > ins->maxAddr) {
@@ -1879,7 +1887,7 @@ void record(InsRoot *root, ADDRINT ea, UINT32 op) {
 	}
 }
 
-InsRoot* createInsRoot(INS &ins, UINT64 bblid) {
+InsRoot* createInsRoot(INS &ins, InsBlock *parentBlock) {
 	static UINT64 rootId = 0;
 	static unordered_map<ADDRINT, InsRoot*> processedIns; //set of already processed instructions
 
@@ -1892,7 +1900,7 @@ InsRoot* createInsRoot(INS &ins, UINT64 bblid) {
 
 	InsRoot *root = new InsRoot();
 	root->id = rootId++;
-	root->bblid = bblid;
+	root->parentBlock = parentBlock;
 	PIN_GetSourceLocation(addr, NULL, &root->srcLine, &root->srcFile);
 	root->dis = INS_Disassemble(ins);
 	root->opCnt = INS_MemoryOperandCount(ins);
@@ -2002,6 +2010,11 @@ VOID Trace(TRACE trace, VOID *v) {
 		if (bblids.size() > 0) {
 			bblid = bblids[0];
 		}
+		auto blk = DCFGMap.find(bblid);
+
+		if (blk == DCFGMap.end()) {
+			continue;
+		}
 		for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) {
 			INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) inst_count, IARG_END);
 
@@ -2011,7 +2024,7 @@ VOID Trace(TRACE trace, VOID *v) {
 			UINT32 memOperands = INS_MemoryOperandCount(ins);
 
 			if (memOperands && INS_IsMov(ins)) {
-				InsRoot *root = createInsRoot(ins, bblid);
+				InsRoot *root = createInsRoot(ins, blk->second);
 				for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
 					const int accSz = INS_MemoryOperandSize(ins, memOp);
 					if((accSz == 1) || (accSz == 2) || (accSz == 4) || (accSz == 8) || (accSz == 16) || (accSz == 32) || (accSz == 64)){
@@ -2134,7 +2147,7 @@ int main(int argc, char *argv[]) {
 	
 	dcfgProcInfo = dcfgData->get_process_info(process_ids[0]);
 
-	DCFG = createDCFGfromDCFGFile();
+	createDCFGfromDCFGFile(DCFGMap);
 	// dcfgTraceReader = DCFG_TRACE_READER::new_reader(process_ids[0]);
 	
 	// if (!dcfgTraceReader->open(dcfg_trace_file, 0, msg)) {
