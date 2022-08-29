@@ -30,6 +30,9 @@
 #include "pin.H"
 
 using namespace std;
+using namespace dcfg_pin_api;
+using namespace dcfg_trace_api;
+using namespace dcfg_api;
 
 /*******************************************************************************
  * Knobs for configuring the instrumentation
@@ -147,20 +150,23 @@ static FilterInfo fInfoOrig;
 static FilterInfo fInfoAfterZero;
 static FilterInfo fInfoTop;
 
-// DCFG Global variables
+/************************* DCFG Global variables ******************************/
 static string dcfg_cfg_file, dcfg_trace_file;
 static ofstream shadow_output, dcfg_output;
 // static uint64_t shadow_cnt = 0, dcfg_cnt = 0;
 static bool dcfg_trace_done;
-dcfg_pin_api::DCFG_PIN_MANAGER *dcfgMgr;
-dcfg_api::DCFG_DATA *dcfgData;
-dcfg_api::DCFG_PROCESS_CPTR dcfgProcInfo;
-dcfg_trace_api::DCFG_TRACE_READER* dcfgTraceReader;
+DCFG_PIN_MANAGER *dcfgMgr;
+DCFG_DATA *dcfgData;
+DCFG_PROCESS_CPTR dcfgProcInfo;
+DCFG_TRACE_READER* dcfgTraceReader;
 
-dcfg_api::DCFG_ID_VECTOR dcfgTraceBuffer;
-dcfg_api::DCFG_ID_VECTOR::iterator dcfgTraceBufferPtr;
+DCFG_ID_VECTOR dcfgTraceBuffer;
+DCFG_ID_VECTOR::iterator dcfgTraceBufferPtr;
 
-static UINT64 total_addr = 0, total_addr_in_bbl = 0;
+// static UINT64 total_addr = 0, total_addr_in_bbl = 0;
+const UINT64 BBL_INVALID = 0xFFFFFFFFFFFFFFFF;
+
+set<InsBlock*> DCFG;
 
 /*******************************************************************************
  * Pattern Classes
@@ -929,6 +935,7 @@ void writeLog(const char *logFile) {
 //	}
 }
 
+
 set<InsBlock*> createDCFGfromInstTrace(vector<InsMem*> &trace) {
 	//cout << "Creating DCFG from trace..." << endl;
 	set<InsBlock*> topInsBlocks = cfgFromTrace(trace);
@@ -939,12 +946,58 @@ set<InsBlock*> createDCFGfromInstTrace(vector<InsMem*> &trace) {
 
 	vector<InsMem*>().swap(trace);  //free trace memory
 	//cout << "Created initial CFG with " << topInsBlocks.size() << " blocks." << endl;
-	//printDotFile("dcfgBC.gv");
+	printDotFile("dcfgBC.gv");
 
 	compressCFG(topInsBlocks);
 	//printDotFile("dcfgLC.gv");
 	//cout << "Compressed CFG with " << topInsBlocks.size() << " blocks." << endl;
 
+	return topInsBlocks;
+}
+
+
+set<InsBlock*> createDCFGfromDCFGFile() {
+	unordered_map<UINT64, InsBlock*> topInsBlocksMap;
+	beginBlock = new InsBlock();
+	endBlock = new InsBlock();
+
+	DCFG_ID_VECTOR bblids, edge_ids, temp_ids;
+	dcfgProcInfo->get_basic_block_ids(bblids);
+	topInsBlocksMap[3] = new InsBlock();
+	for (DCFG_ID id: bblids) {
+		topInsBlocksMap[id] = new InsBlock();
+		// DCFG_BASIC_BLOCK_CPTR bbl = dcfgProcInfo->get_basic_block_info(id);
+	}
+
+	dcfgProcInfo->get_internal_edge_ids(edge_ids);
+	temp_ids.clear();
+	dcfgProcInfo->get_inbound_edge_ids(temp_ids);
+	edge_ids.insert(edge_ids.end(), temp_ids.begin(), temp_ids.end());
+	temp_ids.clear();
+	dcfgProcInfo->get_outbound_edge_ids(temp_ids);
+	edge_ids.insert(edge_ids.end(), temp_ids.begin(), temp_ids.end());
+
+	DCFG_ID begin_id = dcfgProcInfo->get_start_node_id();
+	DCFG_ID end_id = dcfgProcInfo->get_end_node_id();
+
+	for (DCFG_ID id: edge_ids) {
+		DCFG_EDGE_CPTR e = dcfgProcInfo->get_edge_info(id);
+		DCFG_ID src = e->get_source_node_id();
+		DCFG_ID dst = e->get_target_node_id();
+		
+		UINT64 cnt = e->get_exec_count_for_thread(dcfgProcInfo->get_process_id());
+		cout << src << " " << dst << " " << cnt << endl;
+		InsBlock *src_block = (src == begin_id ? beginBlock : topInsBlocksMap[src]);
+		InsBlock *dst_block = (dst == end_id ? endBlock : topInsBlocksMap[dst]);
+		src_block->outEdges.insert(dst_block);
+		src_block->outEdgesStack.push_back({dst_block, cnt});
+		dst_block->inEdges.insert(src_block);
+	}
+
+	set<InsBlock*> topInsBlocks;
+	for (auto it : topInsBlocksMap) {
+		topInsBlocks.insert(it.second);
+	}
 	return topInsBlocks;
 }
 
@@ -1569,14 +1622,15 @@ void processInterval() {
 	updateAddrInfo(filteredInsList);
 
 	//cout << "Inst Trace size: " << insTrace.size() << endl;
-	set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
-	updateParentLoops(cfg);
-	derivePattern(filteredInsList);
+	// set<InsBlock*> cfg = createDCFGfromInstTrace(insTrace);
+	
+	// updateParentLoops(cfg);
+	// derivePattern(filteredInsList);
 
-	printInfo(filteredInsList);
-	generateCodeFragment(1, filteredInsList, cfg);
+	// printInfo(filteredInsList);
+	generateCodeFragment(1, filteredInsList, DCFG);
 	//cout << "Process Done" << endl;
-	update_pat_dist(filteredInsList);
+	// update_pat_dist(filteredInsList);
 }
 
 void resetState() {
@@ -1609,14 +1663,14 @@ bool reloadDcfgTraceBuffer() {
 	return false;
 }
 
-UINT64 getDcfgEdgeAddress(dcfg_api::DCFG_ID_VECTOR::iterator &edgePtr) {
-	dcfg_api::DCFG_EDGE_CPTR edge = dcfgProcInfo->get_edge_info(*edgePtr);
+UINT64 getDcfgEdgeAddress(DCFG_ID_VECTOR::iterator &edgePtr) {
+	DCFG_EDGE_CPTR edge = dcfgProcInfo->get_edge_info(*edgePtr);
 	if (!edge) {
 		cerr << "error: invalid edge" << endl;
 		return 0; 
 	}
-	dcfg_api::DCFG_ID bbId = edge->get_target_node_id();
-	dcfg_api::DCFG_BASIC_BLOCK_CPTR bb = dcfgProcInfo->get_basic_block_info(bbId);
+	DCFG_ID bbId = edge->get_target_node_id();
+	DCFG_BASIC_BLOCK_CPTR bb = dcfgProcInfo->get_basic_block_info(bbId);
 	
 	if (!bb) return 0;
 	// if (edge->is_exit_edge_type()) {
@@ -1630,7 +1684,7 @@ VOID Fini(INT32 code, VOID *v) {
 	cout << "Entered FINI" << endl;
 	processInterval();
 
-	dcfg_api::DCFG_DATA_CPTR data = dcfgMgr->get_dcfg_data();
+	DCFG_DATA_CPTR data = dcfgMgr->get_dcfg_data();
 	string msg;
 	data->write("output.txt", msg);
 
@@ -1669,7 +1723,6 @@ VOID Fini(INT32 code, VOID *v) {
 
 	cloneLog << "Total instructions executed: " << instCount << endl;
 
-	cout << "percentage of in-bbl instrs: " << (double_t)total_addr_in_bbl / total_addr << endl;
 	cloneLog.close();
 }
 
@@ -1826,7 +1879,7 @@ void record(InsRoot *root, ADDRINT ea, UINT32 op) {
 	}
 }
 
-InsRoot* createInsRoot(INS &ins) {
+InsRoot* createInsRoot(INS &ins, UINT64 bblid) {
 	static UINT64 rootId = 0;
 	static unordered_map<ADDRINT, InsRoot*> processedIns; //set of already processed instructions
 
@@ -1839,6 +1892,7 @@ InsRoot* createInsRoot(INS &ins) {
 
 	InsRoot *root = new InsRoot();
 	root->id = rootId++;
+	root->bblid = bblid;
 	PIN_GetSourceLocation(addr, NULL, &root->srcLine, &root->srcFile);
 	root->dis = INS_Disassemble(ins);
 	root->opCnt = INS_MemoryOperandCount(ins);
@@ -1901,126 +1955,116 @@ void inst_mix_count(InsMix::InsMixType ty) {
 	insMixCnt.cnt[ty] += 1;
 }
 
-void Instruction(INS ins, VOID *v) {
-	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) inst_count, IARG_END);
-
-	// do some filtering
-
-	// Get the memory operand count of the current instruction.
-	UINT32 memOperands = INS_MemoryOperandCount(ins);
-
-	if (memOperands && INS_IsMov(ins)) {
-		InsRoot *root = createInsRoot(ins);
-		for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
-			const int accSz = INS_MemoryOperandSize(ins, memOp);
-			if((accSz == 1) || (accSz == 2) || (accSz == 4) || (accSz == 8) || (accSz == 16) || (accSz == 32) || (accSz == 64)){
-				INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record,
-						IARG_PTR, root, IARG_MEMORYOP_EA, memOp, IARG_UINT32, memOp,
-						IARG_END);
-			}
-		}
-	}
-
-	if (INS_IsMemoryRead(ins) || INS_HasMemoryRead2(ins)) {
-		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::LOAD, IARG_END);
-	}
-	if (INS_IsMemoryWrite(ins)) {
-		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::STORE, IARG_END);
-	}
-	if (INS_IsControlFlow(ins)) { // account for func calls
-		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::CONTROL, IARG_END);
-	}
-	if (INS_IsBranch(ins)) {
-		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::BRANCH, IARG_END);
-	}
-	if (INS_IsSyscall(ins)) {
-		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::SYSCALL, IARG_END);
-	}
-
-	xed_iclass_enum_t iclass = static_cast<xed_iclass_enum_t>(INS_Opcode(ins));
-	if ((INS_Category(ins) == XED_CATEGORY_FCMOV) || (INS_Category(ins) == XED_CATEGORY_X87_ALU) || (INS_Category(ins) == XED_CATEGORY_LOGICAL_FP)) {	
-		if ((iclass == XED_ICLASS_FMUL) || (iclass == XED_ICLASS_PFMUL) || (iclass == XED_ICLASS_FMULP)) {
-			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::FPMUL, IARG_END);
-		}
-		else if ((iclass == XED_ICLASS_FDIV) || (iclass == XED_ICLASS_FDIVR) || (iclass == XED_ICLASS_FDIVRP) || (iclass == XED_ICLASS_FDIVP)) {
-			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::FPDIV, IARG_END);
-		}
-		else {
-			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::FPOTHER, IARG_END);
-		}
-	}
-	else if ((INS_Category(ins) == XED_CATEGORY_LOGICAL) || (INS_Category(ins) == XED_CATEGORY_BINARY) || (INS_Category(ins) == XED_CATEGORY_BITBYTE) || (INS_Category(ins) == XED_CATEGORY_FLAGOP)) {
-		if((iclass == XED_ICLASS_IMUL) || (iclass == XED_ICLASS_MUL) || (iclass == XED_ICLASS_PMULLW) || (iclass == XED_ICLASS_PMULUDQ) || (iclass == XED_ICLASS_PMULHUW) || (iclass == XED_ICLASS_PMULHW) || (iclass == XED_ICLASS_MULPS) || (iclass == XED_ICLASS_MULSS) || (iclass == XED_ICLASS_MULPD) || (iclass == XED_ICLASS_MULSD)) {
-			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::INTMUL, IARG_END);
-		}
-		else if ((iclass == XED_ICLASS_DIV) || (iclass == XED_ICLASS_IDIV) || (iclass == XED_ICLASS_DIVPS) || (iclass == XED_ICLASS_DIVSS) || (iclass == XED_ICLASS_DIVPD) || (iclass == XED_ICLASS_DIVSD)) {
-			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::INTDIV, IARG_END);
-		}
-		else {
-			INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::INTOTHER, IARG_END);
-		}
-	}
-	else {
-		INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::OTHER, IARG_END);
-	}
-
-}
-
-
-
-VOID shadow_outfunc(ADDRINT addr) {
-	// shadow_output << "outfunc " << (void*) addr << endl;
-	// while (true) {
-	// 	if (dcfgTraceBufferPtr == dcfgTraceBuffer.end()) {
-	// 		if (!reloadDcfgTraceBuffer()) {
-	// 			shadow_cnt++;
-	// 			shadow_output << string(19, ' ') << (void *) addr << " " << shadow_cnt << "/" << dcfg_cnt << endl;
-	// 		}
-	// 		break;
-	// 	}
+// VOID shadow_outfunc(ADDRINT addr) {
+// 	shadow_output << "outfunc " << (void*) addr << endl;
+// 	while (true) {
+// 		if (dcfgTraceBufferPtr == dcfgTraceBuffer.end()) {
+// 			if (!reloadDcfgTraceBuffer()) {
+// 				shadow_cnt++;
+// 				shadow_output << string(19, ' ') << (void *) addr << " " << shadow_cnt << "/" << dcfg_cnt << endl;
+// 			}
+// 			break;
+// 		}
 		
-	// 	UINT64 dcfg_addr = getDcfgEdgeAddress(dcfgTraceBufferPtr);
-	// 	if ((addr & 0xffff) == 0xbac0) {
-	// 		shadow_output << "wowow " << (void *)addr << ' ' << (void *)dcfg_addr << endl;
-	// 	}
+// 		UINT64 dcfg_addr = getDcfgEdgeAddress(dcfgTraceBufferPtr);
+// 		if ((addr & 0xffff) == 0xbac0) {
+// 			shadow_output << "wowow " << (void *)addr << ' ' << (void *)dcfg_addr << endl;
+// 		}
 		
-	// 	if ((dcfg_addr & 0xfff) == (addr & 0xfff)) {
-	// 		dcfg_cnt++;
-	// 		shadow_cnt++;
-	// 		shadow_output << (void *) dcfg_addr << " " << (void *) addr << (dcfg_addr == addr ? "" : " diff") << " " << shadow_cnt << "/" << dcfg_cnt << endl;
-	// 		++dcfgTraceBufferPtr;
-	// 		break;
-	// 	}
-	// 	else {
-	// 		dcfg_cnt++;
-	// 		shadow_output << (void *) dcfg_addr << " " << shadow_cnt << "/" << dcfg_cnt << " curaddr=" << (void*)addr << endl;
-	// 		++dcfgTraceBufferPtr;
-	// 	}
-	// }
+// 		if ((dcfg_addr & 0xfff) == (addr & 0xfff)) {
+// 			dcfg_cnt++;
+// 			shadow_cnt++;
+// 			shadow_output << (void *) dcfg_addr << " " << (void *) addr << (dcfg_addr == addr ? "" : " diff") << " " << shadow_cnt << "/" << dcfg_cnt << endl;
+// 			++dcfgTraceBufferPtr;
+// 			break;
+// 		}
+// 		else {
+// 			dcfg_cnt++;
+// 			shadow_output << (void *) dcfg_addr << " " << shadow_cnt << "/" << dcfg_cnt << " curaddr=" << (void*)addr << endl;
+// 			++dcfgTraceBufferPtr;
+// 		}
+// 	}
 
-	// dcfg_api::DCFG_DATA_CPTR data = dcfgMgr->get_dcfg_data();
-	// dcfg_api::DCFG_ID_VECTOR process_ids;
-	// int process_count = data->get_process_ids(process_ids);
-	// assert(process_count >= 1);
-	// dcfg_api::DCFG_PROCESS_CPTR proc_info = data->get_process_info(process_ids[0]);
-	
-	dcfg_api::DCFG_ID_VECTOR bbl_ids;
-	total_addr++;
-
-	dcfgProcInfo->get_basic_block_ids_by_addr(addr, bbl_ids);
-	if (bbl_ids.size() > 0) total_addr_in_bbl++;
-	dcfg_output << (void *)addr;
-	for (auto &id : bbl_ids) {
-		dcfg_output << " " << id;
-	}
-	dcfg_output << endl;
-}
+// 	DCFG_DATA_CPTR data = dcfgMgr->get_dcfg_data();
+// 	DCFG_ID_VECTOR process_ids;
+// 	int process_count = data->get_process_ids(process_ids);
+// 	assert(process_count >= 1);
+// 	DCFG_PROCESS_CPTR proc_info = data->get_process_info(process_ids[0]);
+// }
 
 
 VOID Trace(TRACE trace, VOID *v) {
+	// acquire BBL ID in DCFG, then mark each instruction with that ID
 	for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
-		if (BBL_HasFallThrough(bbl))
-			BBL_InsertCall(bbl, IPOINT_AFTER, AFUNPTR(shadow_outfunc), IARG_ADDRINT, BBL_Address(bbl), IARG_END);
+		DCFG_ID_VECTOR bblids;
+		dcfgProcInfo->get_basic_block_ids_by_addr(BBL_Address(bbl), bblids);
+		UINT64 bblid = BBL_INVALID;
+		if (bblids.size() > 0) {
+			bblid = bblids[0];
+		}
+		for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) {
+			INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) inst_count, IARG_END);
+
+			// do some filtering
+
+			// Get the memory operand count of the current instruction.
+			UINT32 memOperands = INS_MemoryOperandCount(ins);
+
+			if (memOperands && INS_IsMov(ins)) {
+				InsRoot *root = createInsRoot(ins, bblid);
+				for (UINT32 memOp = 0; memOp < memOperands; memOp++) {
+					const int accSz = INS_MemoryOperandSize(ins, memOp);
+					if((accSz == 1) || (accSz == 2) || (accSz == 4) || (accSz == 8) || (accSz == 16) || (accSz == 32) || (accSz == 64)){
+						INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) record,
+								IARG_PTR, root, IARG_MEMORYOP_EA, memOp, IARG_UINT32, memOp,
+								IARG_END);
+					}
+				}
+			}
+
+			if (INS_IsMemoryRead(ins) || INS_HasMemoryRead2(ins)) {
+				INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::LOAD, IARG_END);
+			}
+			if (INS_IsMemoryWrite(ins)) {
+				INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::STORE, IARG_END);
+			}
+			if (INS_IsControlFlow(ins)) { // account for func calls
+				INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::CONTROL, IARG_END);
+			}
+			if (INS_IsBranch(ins)) {
+				INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::BRANCH, IARG_END);
+			}
+			if (INS_IsSyscall(ins)) {
+				INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::SYSCALL, IARG_END);
+			}
+
+			xed_iclass_enum_t iclass = static_cast<xed_iclass_enum_t>(INS_Opcode(ins));
+			if ((INS_Category(ins) == XED_CATEGORY_FCMOV) || (INS_Category(ins) == XED_CATEGORY_X87_ALU) || (INS_Category(ins) == XED_CATEGORY_LOGICAL_FP)) {	
+				if ((iclass == XED_ICLASS_FMUL) || (iclass == XED_ICLASS_PFMUL) || (iclass == XED_ICLASS_FMULP)) {
+					INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::FPMUL, IARG_END);
+				}
+				else if ((iclass == XED_ICLASS_FDIV) || (iclass == XED_ICLASS_FDIVR) || (iclass == XED_ICLASS_FDIVRP) || (iclass == XED_ICLASS_FDIVP)) {
+					INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::FPDIV, IARG_END);
+				}
+				else {
+					INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::FPOTHER, IARG_END);
+				}
+			}
+			else if ((INS_Category(ins) == XED_CATEGORY_LOGICAL) || (INS_Category(ins) == XED_CATEGORY_BINARY) || (INS_Category(ins) == XED_CATEGORY_BITBYTE) || (INS_Category(ins) == XED_CATEGORY_FLAGOP)) {
+				if((iclass == XED_ICLASS_IMUL) || (iclass == XED_ICLASS_MUL) || (iclass == XED_ICLASS_PMULLW) || (iclass == XED_ICLASS_PMULUDQ) || (iclass == XED_ICLASS_PMULHUW) || (iclass == XED_ICLASS_PMULHW) || (iclass == XED_ICLASS_MULPS) || (iclass == XED_ICLASS_MULSS) || (iclass == XED_ICLASS_MULPD) || (iclass == XED_ICLASS_MULSD)) {
+					INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::INTMUL, IARG_END);
+				}
+				else if ((iclass == XED_ICLASS_DIV) || (iclass == XED_ICLASS_IDIV) || (iclass == XED_ICLASS_DIVPS) || (iclass == XED_ICLASS_DIVSS) || (iclass == XED_ICLASS_DIVPD) || (iclass == XED_ICLASS_DIVSD)) {
+					INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::INTDIV, IARG_END);
+				}
+				else {
+					INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::INTOTHER, IARG_END);
+				}
+			}
+			else {
+				INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(inst_mix_count), IARG_UINT32, InsMix::InsMixType::OTHER, IARG_END);
+			}
+		}
 	}
 }
 
@@ -2072,24 +2116,26 @@ int main(int argc, char *argv[]) {
 	shadow_output.open("shadow_output.out", ofstream::out);
 	dcfg_output.open("dcfg_output.out", ofstream::out);
 
-	dcfgMgr = dcfg_pin_api::DCFG_PIN_MANAGER::new_manager();
+	dcfgMgr = DCFG_PIN_MANAGER::new_manager();
 	dcfgMgr->set_cfg_collection(true);
 	dcfgMgr->activate();
 
 
-	dcfgData = dcfg_api::DCFG_DATA::new_dcfg();
+	dcfgData = DCFG_DATA::new_dcfg();
 	string msg;
 	if (!dcfgData->read(dcfg_cfg_file, msg)) {
 		cerr << "error: " << msg << endl;
         return 1;
 	}
 
-	dcfg_api::DCFG_ID_VECTOR process_ids;
+	DCFG_ID_VECTOR process_ids;
 	int process_count = dcfgData->get_process_ids(process_ids);
 	assert(process_count >= 1);
 	
 	dcfgProcInfo = dcfgData->get_process_info(process_ids[0]);
-	// dcfgTraceReader = dcfg_trace_api::DCFG_TRACE_READER::new_reader(process_ids[0]);
+
+	DCFG = createDCFGfromDCFGFile();
+	// dcfgTraceReader = DCFG_TRACE_READER::new_reader(process_ids[0]);
 	
 	// if (!dcfgTraceReader->open(dcfg_trace_file, 0, msg)) {
     //     cerr << "error: " << msg << endl;
@@ -2100,7 +2146,6 @@ int main(int argc, char *argv[]) {
 	// dcfgTraceBufferPtr = dcfgTraceBuffer.end();
 
 	IMG_AddInstrumentFunction(ImgCallback, NULL);
-	INS_AddInstrumentFunction(Instruction, NULL);
 	TRACE_AddInstrumentFunction(Trace, NULL);
 	PIN_AddFiniFunction(Fini, NULL);
 

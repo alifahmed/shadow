@@ -11,6 +11,7 @@ class InsHashedRoot;
 class InsRoot{
 public:
   UINT64 id;
+  UINT64 bblid;
   INT32 srcLine;
   std::string srcFile;
   std::string dis;
