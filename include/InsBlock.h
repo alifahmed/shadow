@@ -37,6 +37,7 @@ public:
   std::set<InsBlock*> inEdges;
   std::vector<InsBase*> ins;
   bool isUsed = true;
+  UINT64 dcfgid = -1;
 
   //constructors
   explicit InsBlock();

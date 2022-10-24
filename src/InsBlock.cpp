@@ -151,6 +151,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
   stringstream out;
 
   out << "block" << id << ":\n";
+  out << "// ins size = " << ins.size() << ", dcfg id = " << dcfgid << endl;
   for (InsBase *base : ins) {
     out << base->printCodeBody(indent);
   }
@@ -416,6 +417,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
   out << _tab(indent) << "goto block" << lastEntry.first->id << ";\n";
 
   out << endl << endl;
+  // }
   return out.str();
 }
 
