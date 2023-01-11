@@ -11,6 +11,9 @@ private:
   static UINT64 _idCnt;
   UINT64 id = -1;
 
+  // TODO: for now generate an edge order 
+  void calcOutEdgesOrder(std::vector<InsBlock*> &order) const;
+
   //checks if out edges are entered in same order every time
   bool isOutOrderConst(std::vector<InsBlock*> &order) const;
 
@@ -37,7 +40,9 @@ public:
   std::set<InsBlock*> inEdges;
   std::vector<InsBase*> ins;
   bool isUsed = true;
-  UINT64 dcfgid = -1;
+
+  INT64 dcfgid = -1;
+  std::vector< std::pair<InsBlock*, UINT64> > outEdgesTrace; 
 
   //constructors
   explicit InsBlock();

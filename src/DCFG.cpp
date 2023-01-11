@@ -42,11 +42,6 @@ void DCFG::initDCFGMap(InsBlock *&beginBlock, InsBlock *&endBlock) {
 	for (DCFG_ID id: bblids) {
 		DCFGMap[id] = new InsBlock();
 		DCFGMap[id]->dcfgid = id;
-		if (id == 26) {
-			cout << "wow" << endl;
-			cout << (void *)dcfgProcInfo->get_basic_block_info(id) << endl;
-		}
-		// DCFG_BASIC_BLOCK_CPTR bbl = dcfgProcInfo->get_basic_block_info(id);
 	}
 
 	dcfgProcInfo->get_internal_edge_ids(edge_ids);
