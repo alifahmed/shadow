@@ -5,8 +5,9 @@
 ##############################################################
 
 # If the tool is built out of the kit, PIN_ROOT must be specified in the make invocation and point to the kit root.
-PIN_ROOT ?= ./pin
 ALIF_ROOTDIR=$(PWD)
+PIN_ROOT ?= $(ALIF_ROOTDIR)/pin
+
 
 ALIF_IDIR=$(ALIF_ROOTDIR)/include
 ALIF_HEADERS:=$(shell find $(ALIF_IDIR) -name '*.h')

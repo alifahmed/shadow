@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,21 +22,22 @@
 #include <fstream>
 #include <cstdlib>
 #include "pin.H"
+using std::string;
+using std::ofstream;
 using std::cerr;
 using std::endl;
 using std::hex;
-using std::ofstream;
-using std::string;
 
 /*
  * Name of the output file
  */
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "buffer.out", "output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "buffer.out", "output file");
+
 
 /*
  * Control of writing to the output file
  */
-KNOB< BOOL > KnobDoWriteToOutputFile(KNOB_MODE_WRITEONCE, "pintool", "emit", "1", "control output to file");
+KNOB<BOOL> KnobDoWriteToOutputFile(KNOB_MODE_WRITEONCE, "pintool", "emit", "1", "control output to file");
 
 /*
  * The ID of the buffer
@@ -61,6 +62,7 @@ ofstream ofile;
  */
 #define NUM_BUF_PAGES 1024
 
+
 /*
  * Record of memory references.  Rather than having two separate
  * buffers for reads and writes, we just use one struct that includes a
@@ -68,12 +70,14 @@ ofstream ofile;
  */
 struct MEMREF
 {
-    THREADID tid;
-    ADDRINT pc;
-    ADDRINT ea;
-    UINT32 size;
-    UINT32 read;
+    THREADID    tid;
+    ADDRINT     pc;
+    ADDRINT     ea;
+    UINT32      size;
+    UINT32      read;
 };
+
+
 
 /**************************************************************************
  *
@@ -85,11 +89,11 @@ struct MEMREF
  * Insert code to write data to a thread-specific buffer for instructions
  * that access memory.
  */
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
+    for(BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl=BBL_Next(bbl))
     {
-        for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
+        for(INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins=INS_Next(ins))
         {
             UINT32 memoryOperands = INS_MemoryOperandCount(ins);
 
@@ -101,21 +105,28 @@ VOID Trace(TRACE trace, VOID* v)
                 // for each.
                 if (INS_MemoryOperandIsRead(ins, memOp))
                 {
-                    INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId, IARG_INST_PTR, offsetof(struct MEMREF, pc), IARG_MEMORYOP_EA,
-                                         memOp, offsetof(struct MEMREF, ea), IARG_UINT32, refSize, offsetof(struct MEMREF, size),
-                                         IARG_BOOL, TRUE, offsetof(struct MEMREF, read), IARG_END);
+                    INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId,
+                                         IARG_INST_PTR, offsetof(struct MEMREF, pc),
+                                         IARG_MEMORYOP_EA, memOp, offsetof(struct MEMREF, ea),
+                                         IARG_UINT32, refSize, offsetof(struct MEMREF, size),
+                                         IARG_BOOL, TRUE, offsetof(struct MEMREF, read),
+                                         IARG_END);
                 }
 
                 if (INS_MemoryOperandIsWritten(ins, memOp))
                 {
-                    INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId, IARG_INST_PTR, offsetof(struct MEMREF, pc), IARG_MEMORYOP_EA,
-                                         memOp, offsetof(struct MEMREF, ea), IARG_UINT32, refSize, offsetof(struct MEMREF, size),
-                                         IARG_BOOL, FALSE, offsetof(struct MEMREF, read), IARG_END);
+                    INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId,
+                                         IARG_INST_PTR, offsetof(struct MEMREF, pc),
+                                         IARG_MEMORYOP_EA, memOp, offsetof(struct MEMREF, ea),
+                                         IARG_UINT32, refSize, offsetof(struct MEMREF, size),
+                                         IARG_BOOL, FALSE, offsetof(struct MEMREF, read),
+                                         IARG_END);
                 }
             }
         }
     }
 }
+
 
 /**************************************************************************
  *
@@ -134,7 +145,8 @@ VOID Trace(TRACE trace, VOID* v)
  * @param[in] v			callback value
  * @return  A pointer to the buffer to resume filling.
  */
-VOID* BufferFull(BUFFER_ID id, THREADID tid, const CONTEXT* ctxt, VOID* buf, UINT64 numElements, VOID* v)
+VOID * BufferFull(BUFFER_ID id, THREADID tid, const CONTEXT *ctxt, VOID *buf,
+                  UINT64 numElements, VOID *v)
 {
     /*
     This code will work - but it is very slow, so for testing purposes we run with the Knob turned off
@@ -143,11 +155,12 @@ VOID* BufferFull(BUFFER_ID id, THREADID tid, const CONTEXT* ctxt, VOID* buf, UIN
     {
         PIN_GetLock(&fileLock, 1);
 
-        struct MEMREF* reference = (struct MEMREF*)buf;
+        struct MEMREF * reference=(struct MEMREF*)buf;
 
-        for (UINT64 i = 0; i < numElements; i++, reference++)
+        for(UINT64 i=0; i<numElements; i++, reference++)
         {
-            if (reference->ea != 0) ofile << tid << "   " << reference->pc << "   " << reference->ea << endl;
+            if (reference->ea != 0)
+                ofile << tid << "   "  << reference->pc << "   " << reference->ea << endl;
         }
         PIN_ReleaseLock(&fileLock);
     }
@@ -155,8 +168,9 @@ VOID* BufferFull(BUFFER_ID id, THREADID tid, const CONTEXT* ctxt, VOID* buf, UIN
     return buf;
 }
 
+
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     PIN_GetLock(&fileLock, 1);
     ofile.close();
@@ -169,7 +183,7 @@ VOID Fini(INT32 code, VOID* v)
 
 INT32 Usage()
 {
-    cerr << "This tool demonstrates the basic use of the buffering API." << endl;
+    cerr << "This tool demonstrates the basic use of the buffering API." << endl ;
     cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
     return -1;
 }
@@ -184,11 +198,11 @@ INT32 Usage()
  * @param[in]   argv            array of command line arguments,
  *                              including pin -t <toolname> -- ...
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialize PIN library. Print help message if -h(elp) is specified
     // in the command line or the command line is invalid
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -196,9 +210,10 @@ int main(int argc, char* argv[])
     // Initialize the memory reference buffer;
     // set up the callback to process the buffer.
     //
-    bufId = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES, BufferFull, 0);
+    bufId = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES,
+                                  BufferFull, 0);
 
-    if (bufId == BUFFER_ID_INVALID)
+    if(bufId == BUFFER_ID_INVALID)
     {
         cerr << "Error: could not allocate initial buffer" << endl;
         return 1;
@@ -210,7 +225,7 @@ int main(int argc, char* argv[])
     // Open the output file.
     string filename = KnobOutputFile.Value();
     ofile.open(filename.c_str());
-    if (!ofile)
+    if ( ! ofile )
     {
         cerr << "Error: could not open output file." << endl;
         exit(1);
@@ -223,8 +238,10 @@ int main(int argc, char* argv[])
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
 
-    // Start the program, never returns
+   // Start the program, never returns
     PIN_StartProgram();
 
     return 0;
 }
+
+

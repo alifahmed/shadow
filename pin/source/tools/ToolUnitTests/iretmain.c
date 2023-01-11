@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,16 +19,16 @@
 #define __USE_GNU
 #include <ucontext.h>
 
-typedef unsigned int UINT32;
+typedef unsigned int  UINT32;
 
 extern int iretTest();
 
-#define registerSegvHandler() ((void)0)
+# define registerSegvHandler() ((void)0)
 
-int main(int argc, char** argv)
+int main (int argc, char ** argv)
 {
     int result;
-    int ok    = 0;
+    int ok = 0;
     int tests = 0;
 
     registerSegvHandler();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,26 +13,27 @@
 #include <stdio.h>
 #include "../Utils/threadlib.h"
 
+
 #if defined(TARGET_WINDOWS)
 #include <windows.h>
-#define EXPORT_CSYM extern "C" __declspec(dllexport)
+#define EXPORT_CSYM extern "C" __declspec( dllexport )
 
 #else
-#define EXPORT_CSYM extern "C"
+#define EXPORT_CSYM extern "C" 
 
 #endif
 
 int a[100000];
-int n                                      = 10;
-long numthreads                            = 16;
+int n = 10;
+long numthreads = 16;
 EXPORT_CSYM unsigned int numthreadsStarted = 0;
 
 extern "C" void AtomicIncrement();
 
-EXPORT_CSYM void DoWork()
+EXPORT_CSYM void  DoWork()
 {
-    int i, j;
-
+    int i,j;
+    
     for (j = 0; j < 1000; j++)
     {
         for (i = 0; i < n; i++)
@@ -42,31 +43,34 @@ EXPORT_CSYM void DoWork()
     }
 }
 
+
 EXPORT_CSYM void WaitForAllThreadsStarted()
 {
-    AtomicIncrement(); // atomically increments numthreadsStarted
+    AtomicIncrement(); // atomically increments numthreadsStarted 
     while (numthreadsStarted != numthreads)
     {
     }
 }
 
-EXPORT_CSYM void* ThreadStart(void* arg)
+EXPORT_CSYM void * ThreadStart(void * arg)
 {
     int i;
     // no thread starts the work loop until all threads are in the ThreadStart function
     WaitForAllThreadsStarted();
-    for (i = 0; i < 100; i++)
+    for (i = 0; i< 100; i++)
     {
         DoWork();
     }
     return (NULL);
 }
 
+
+
 THREAD_HANDLE threads[MAXTHREADS];
 
-EXPORT_CSYM int main(int argc, char* argv[])
+EXPORT_CSYM int main(int argc, char *argv[])
 {
-    int i, j;
+    int i,j;
 
     for (i = 0; i < numthreads; i++)
     {
@@ -76,7 +80,7 @@ EXPORT_CSYM int main(int argc, char* argv[])
     for (i = 0; i < numthreads; i++)
     {
         BOOL success;
-        success = JoinOneThread(threads[i]);
+        success = JoinOneThread (threads[i]);
     }
 
     return 0;

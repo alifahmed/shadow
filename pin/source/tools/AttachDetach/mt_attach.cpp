@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -10,7 +10,7 @@
  */
 
 #ifdef NDEBUG
-#undef NDEBUG
+# undef NDEBUG
 #endif
 #include <assert.h>
 #include <stdio.h>
@@ -33,6 +33,7 @@
 using std::list;
 using std::string;
 
+
 bool shouldCancelThreads = true;
 void CancelAllThreads();
 void BlockSignal(int sigNo);
@@ -47,14 +48,14 @@ unsigned int numOfSecondaryThreads = 4;
 /*
  * try to attach pin twice to the same process
  */
-bool attachTwice   = false;
+bool attachTwice = false;
 bool endlessSelect = false;
 
 void UnblockAllSignals()
 {
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigprocmask(SIG_SETMASK, &mask, 0);
+     sigset_t mask;
+     sigemptyset(&mask);
+     sigprocmask(SIG_SETMASK, &mask, 0);
 }
 
 /*
@@ -74,7 +75,7 @@ void SigUsr1Handler(int sig)
  * An endless-loop function for secondary threads
  */
 
-void* ThreadEndlessLoopFunc(void* arg)
+void * ThreadEndlessLoopFunc(void * arg)
 {
     int x = 0;
 
@@ -82,10 +83,10 @@ void* ThreadEndlessLoopFunc(void* arg)
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-    while (1)
+    while (1) 
     {
         x++;
-        if (x > 10)
+        if (x > 10) 
         {
             x = 0;
         }
@@ -94,11 +95,11 @@ void* ThreadEndlessLoopFunc(void* arg)
     return 0;
 }
 
-void* ThreadEndlessSelectFunc(void* arg)
+void * ThreadEndlessSelectFunc(void * arg)
 {
     int sock[2];
     int err = socketpair(PF_LOCAL, SOCK_DGRAM, 0, sock);
-    assert(err >= 0);
+    assert (err >= 0);
     fd_set fd_read;
 
     FD_ZERO(&fd_read);
@@ -114,68 +115,65 @@ void* ThreadEndlessSelectFunc(void* arg)
     return 0;
 }
 
-#define DECSTR(buf, num)         \
-    {                            \
-        buf = (char*)malloc(10); \
-        sprintf(buf, "%d", num); \
-    }
+#define DECSTR(buf, num) { buf = (char *)malloc(10); sprintf(buf, "%d", num); }
 
-inline void PrintArguments(char** inArgv)
+inline void PrintArguments(char **inArgv)
 {
     fprintf(stderr, "Going to run: ");
-    for (unsigned int i = 0; inArgv[i] != 0; ++i)
+    for(unsigned int i=0; inArgv[i] != 0; ++i)
     {
         fprintf(stderr, "%s ", inArgv[i]);
     }
     fprintf(stderr, "\n");
 }
 
+
 /* AttachAndInstrument()
  * a special routine that runs $PIN
  */
-pid_t AttachAndInstrument(list< string >* pinArgs)
+pid_t AttachAndInstrument(list <string > * pinArgs)
 {
-    list< string >::iterator pinArgIt = pinArgs->begin();
+    list <string >::iterator pinArgIt = pinArgs->begin();
 
     string pinBinary = *pinArgIt;
     pinArgIt++;
 
     pid_t parent_pid = getpid();
-
+    
     pid_t child = fork();
 
     assert(child >= 0);
-    if (child)
+    if (child) 
     {
         fprintf(stderr, "Pin injector pid %d\n", child);
         // inside parent
-        return child;
+        return child;  
     }
     else
     {
         // inside child
 
         UnblockAllSignals();
-        char** inArgv = new char*[pinArgs->size() + 10];
+        char **inArgv = new char*[pinArgs->size()+10];
 
         unsigned int idx = 0;
-        inArgv[idx++]    = (char*)pinBinary.c_str();
-        inArgv[idx++]    = (char*)"-pid";
-        inArgv[idx]      = (char*)malloc(10);
+        inArgv[idx++] = (char *)pinBinary.c_str(); 
+        inArgv[idx++] = (char*)"-pid"; 
+        inArgv[idx] = (char *)malloc(10);
         sprintf(inArgv[idx++], "%d", parent_pid);
 
         for (; pinArgIt != pinArgs->end(); pinArgIt++)
         {
-            inArgv[idx++] = (char*)pinArgIt->c_str();
+            inArgv[idx++]= (char *)pinArgIt->c_str();
         }
         inArgv[idx] = 0;
-
+        
         PrintArguments(inArgv);
 
         execvp(inArgv[0], inArgv);
         fprintf(stderr, "ERROR: execv %s failed\n", inArgv[0]);
         kill(parent_pid, 9);
-        return 0;
+        return 0; 
     }
 }
 
@@ -184,42 +182,44 @@ pid_t AttachAndInstrument(list< string >* pinArgs)
  */
 void SendSignals(int signo)
 {
+    
     pid_t parentPid = getpid();
-    pid_t pid       = fork();
+    pid_t pid = fork();
     if (pid)
     {
         fprintf(stderr, "Send signals pid %d\n", pid);
         waitpid(pid, NULL, 0);
         // inside parent
-        return;
+        return;          
     }
-    if (pid == 0) // child
+    if ( pid == 0 ) // child
     {
-        char** inArgv = new char*[15];
-
+        char **inArgv = new char*[15];
+    
         unsigned int idx = 0;
-        inArgv[idx++]    = (char*)"./send_signals.sh";
+        inArgv[idx++] = (char *)"./send_signals.sh"; 
         DECSTR(inArgv[idx], parentPid);
         idx++;
         DECSTR(inArgv[idx], signo);
         idx++;
         inArgv[idx] = 0;
-
+    
         PrintArguments(inArgv);
-
+    
         execvp(inArgv[0], inArgv);
         fprintf(stderr, "ERROR: execv %s failed\n", inArgv[0]);
     }
 }
 
+
 /*
  * Expected command line: <this exe> [-th_num NUM] -pin $PIN -pinarg <pin args > -t tool <tool args>
  */
 
-void ParseCommandLine(int argc, char* argv[], list< string >* pinArgs)
+void ParseCommandLine(int argc, char *argv[], list < string>* pinArgs)
 {
     string pinBinary;
-    for (int i = 1; i < argc; i++)
+    for (int i=1; i<argc; i++)
     {
         string arg = string(argv[i]);
         if (arg == "-th_num")
@@ -255,23 +255,22 @@ void ParseCommandLine(int argc, char* argv[], list< string >* pinArgs)
     pinArgs->push_front(pinBinary);
 }
 
-pthread_t* thHandle;
+pthread_t *thHandle;
 
 extern "C" int ThreadsReady(unsigned int numOfThreads)
 {
-    assert(numOfThreads == numOfSecondaryThreads + 1);
+    assert(numOfThreads == numOfSecondaryThreads+1);
     return 0;
 }
-
-int main(int argc, char* argv[])
+    
+int main(int argc, char *argv[])
 {
-    list< string > pinArgs;
+    list <string> pinArgs;
     int status = 0;
-    int retval = 0;
     ParseCommandLine(argc, argv, &pinArgs);
-
+    
     signal(SIGUSR1, SigUsr1Handler);
-
+    
     thHandle = new pthread_t[numOfSecondaryThreads];
 
     // start all secondary threads
@@ -279,35 +278,24 @@ int main(int argc, char* argv[])
     BlockSignal(SIGUSR1);
     for (intptr_t i = 0; i < numOfSecondaryThreads; i++)
     {
-        retval = pthread_create(&thHandle[i], 0, endlessSelect ? ThreadEndlessSelectFunc : ThreadEndlessLoopFunc, (void*)i);
-        assert(retval == 0);
+        pthread_create(&thHandle[i], 0,
+                       endlessSelect?ThreadEndlessSelectFunc:ThreadEndlessLoopFunc,
+                       (void *)i);
     }
     UnblockSignal(SIGUSR1);
 
-    sigset_t sigMask, sigMaskAfterAttach;
-    // Just to be on the safe side, reset to all zeros.
-    memset(&sigMask, 0, sizeof(sigMask));
-    memset(&sigMaskAfterAttach, 0, sizeof(sigMaskAfterAttach));
-    retval = sigemptyset(&sigMask);
-    assert(retval == 0);
-    retval = sigemptyset(&sigMaskAfterAttach);
-    assert(retval == 0);
-
-    //unsigned char* p = (unsigned char*)&sigMask;
-    //for (int i=0; i<(int)sizeof(sigset_t); i++){cerr << dec << i << "\t" << (int)p[i] << endl;}
+    sigset_t newMask, oldMask;
+    sigemptyset(&newMask);
+    sigemptyset(&oldMask);
 
     // If we block SIGTRAP then Pin attach might unblock it - see Mantis #3879
 #ifndef TARGET_LINUX
-    retval = sigaddset(&sigMask, SIGTRAP);
-    assert(retval == 0);
+    sigaddset(&newMask, SIGTRAP);
 #endif
-    retval = sigaddset(&sigMask, SIGHUP);
-    assert(retval == 0);
-    retval = sigaddset(&sigMask, SIGQUIT);
-    assert(retval == 0);
+    sigaddset(&newMask, SIGHUP);
+    sigaddset(&newMask, SIGQUIT);
 
-    retval = pthread_sigmask(SIG_SETMASK, &sigMask, NULL);
-    assert(retval == 0);
+    pthread_sigmask(SIG_SETMASK, &newMask, NULL);
 
     pid_t pinInjectorPid = AttachAndInstrument(&pinArgs);
     while (pinInjectorPid != waitpid(pinInjectorPid, &status, 0))
@@ -325,16 +313,15 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    // Give enough time for all threads to get started
-    while (!ThreadsReady(numOfSecondaryThreads + 1))
+    // Give enough time for all threads to get started 
+    while (!ThreadsReady(numOfSecondaryThreads+1))
     {
         sched_yield();
     }
 
     // Check that the signal mask was not changed due to Pin attach
-    retval = pthread_sigmask(SIG_SETMASK, NULL, &sigMaskAfterAttach);
-    assert(retval == 0);
-    assert(0 == memcmp(&sigMask, &sigMaskAfterAttach, sizeof(sigMask)));
+    pthread_sigmask(SIG_SETMASK, NULL, &oldMask);
+    assert(0 == memcmp(&newMask, &oldMask, sizeof(newMask)));
 
     if (attachTwice)
     {
@@ -355,11 +342,12 @@ int main(int argc, char* argv[])
         }
         printf("Second attach exited with status %d\n", WEXITSTATUS(status));
     }
-
+    
+        
     fprintf(stderr, "Sending SIGUSR1\n");
     SendSignals(SIGUSR1);
-
-    while (shouldCancelThreads)
+    
+    while(shouldCancelThreads)
     {
         sched_yield();
     }
@@ -372,36 +360,21 @@ void CancelAllThreads()
 {
     for (unsigned int i = 0; i < numOfSecondaryThreads; i++)
     {
-        int retval = pthread_cancel(thHandle[i]);
-        assert(retval == 0);
+        pthread_cancel(thHandle[i]);
     }
 }
 
 void BlockSignal(int sigNo)
 {
     sigset_t mask;
-    int retval;
-
-    retval = sigemptyset(&mask);
-    assert(retval == 0);
-
-    retval = sigaddset(&mask, sigNo);
-    assert(retval == 0);
-
-    retval = sigprocmask(SIG_BLOCK, &mask, 0);
-    assert(retval == 0);
+    sigemptyset(&mask);
+    sigaddset(&mask, sigNo);   
+    sigprocmask(SIG_BLOCK, &mask, 0);
 }
 void UnblockSignal(int sigNo)
 {
     sigset_t mask;
-    int retval;
-
-    retval = sigemptyset(&mask);
-    assert(retval == 0);
-
-    retval = sigaddset(&mask, sigNo);
-    assert(retval == 0);
-
-    retval = sigprocmask(SIG_UNBLOCK, &mask, 0);
-    assert(retval == 0);
+    sigemptyset(&mask);
+    sigaddset(&mask, sigNo);
+    sigprocmask(SIG_UNBLOCK, &mask, 0);
 }

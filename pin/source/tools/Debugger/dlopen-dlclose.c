@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,10 +18,13 @@
 
 // Macro to create empty function which won't be opt-out by
 // the compiler
-#define EMPTY_FUNCTION(name)                  \
-    void name();                              \
-    __asm__(".global " #name "\n" #name ":\n" \
-            "ret\n")
+#define EMPTY_FUNCTION(name) \
+    void name();        \
+    __asm__(              \
+    ".global " #name "\n" \
+    #name ":\n"          \
+    "ret\n"               \
+    )
 
 EMPTY_FUNCTION(AfterLoadLibrary);
 EMPTY_FUNCTION(AfterUnloadLibrary);
@@ -36,10 +39,10 @@ int main(int argc, char* argv[])
     const char* file = argv[1];
     printf("Loading shared object %s\n", file);
     fflush(stdout);
-    void* handle = dlopen(file, RTLD_NOW | RTLD_LOCAL);
+    void *handle = dlopen(file, RTLD_NOW | RTLD_LOCAL);
     if (NULL == handle)
     {
-        fprintf(stderr, "Failed to load %s - %s\n", file, dlerror());
+        fprintf(stderr,"Failed to load %s - %s\n", file, dlerror());
         exit(1);
     }
     AfterLoadLibrary();

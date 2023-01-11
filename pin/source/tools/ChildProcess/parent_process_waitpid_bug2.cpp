@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,7 +12,7 @@
 // Application that when running under Pin, may reproduce a bug in macOS* kernel that
 // causes wait*() calls to inproperly fail with ECHILD.
 #ifndef NDEBUG
-#undef NDEBUG
+# undef NDEBUG
 #endif
 #include <assert.h>
 #include <sys/types.h>
@@ -25,10 +25,10 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-using std::cerr;
+using std::string;
 using std::cout;
 using std::endl;
-using std::string;
+using std::cerr;
 
 pid_t executeProcess(int closePip, int* outPip)
 {
@@ -66,8 +66,7 @@ void* WaitPidThread(void* arg)
 
     int status;
     pid_t ret;
-    while (0 > (ret = waitpid(pid, &status, 0)) && errno == EINTR)
-        ;
+    while (0 > (ret = waitpid(pid, &status, 0)) && errno == EINTR);
     if (ret < 0)
     {
         cout << "waitpid() failed with errno " << errno << endl;
@@ -78,9 +77,9 @@ void* WaitPidThread(void* arg)
         cout << "waitpid() waited for the wrong process" << endl;
         abort();
     }
-    else if (status != 0)
+    else if (status !=0)
     {
-        cout << "Parent report: Child process failed. Status of the child process is " << WEXITSTATUS(status) << endl;
+        cout << "Parent report: Child process failed. Status of the child process is "<< WEXITSTATUS(status) << endl;
         abort();
     }
 
@@ -97,7 +96,7 @@ void* WaitIdThread(void* arg)
     {
         siginfo.si_pid = 0;
     }
-    while (0 > (ret = waitid(P_PID, pid, &siginfo, WEXITED)) && errno == EINTR);
+    while (0 > (ret = waitid(P_PID, pid, &siginfo, WEXITED)) &&  errno == EINTR);
     if (ret < 0)
     {
         cout << "waitid() failed with errno " << errno << endl;
@@ -108,9 +107,9 @@ void* WaitIdThread(void* arg)
         cout << "waitid() waited for the wrong process" << endl;
         abort();
     }
-    else if (siginfo.si_status != 0)
+    else if (siginfo.si_status !=0)
     {
-        cout << "Parent report: Child process failed. Status of the child process is " << WEXITSTATUS(siginfo.si_status) << endl;
+        cout << "Parent report: Child process failed. Status of the child process is "<< WEXITSTATUS(siginfo.si_status) << endl;
         abort();
     }
 
@@ -120,7 +119,7 @@ void* WaitIdThread(void* arg)
 //Wait for a process completion
 //Verify it returned the expected exit code
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     int pip1, pip2;
     pthread_t thd1, thd2;
@@ -145,3 +144,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

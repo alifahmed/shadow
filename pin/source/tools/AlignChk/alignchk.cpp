@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,14 +19,16 @@
 #include "alignchk.H"
 using std::cerr;
 using std::endl;
-void usage()
+void
+usage()
 {
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
 }
 
 INSTLIB::ALIGN_CHECK align_check;
-int main(int argc, char** argv)
+int 
+main(int argc, char** argv)
 {
     if (PIN_Init(argc, argv))
     {
@@ -35,7 +37,7 @@ int main(int argc, char** argv)
     }
 
     align_check.Activate();
-
+    
     // Never returns
     PIN_StartProgram();
 

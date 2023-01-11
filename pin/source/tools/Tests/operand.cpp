@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,15 +13,15 @@
 
 #include <iostream>
 #include <fstream>
-using std::endl;
 using std::ofstream;
+using std::endl;
 
 ofstream dis("operand.out");
 
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     INT32 count = INS_OperandCount(ins);
-
+    
     for (INT32 i = 0; i < 5; i++)
     {
         if (i >= count)
@@ -29,7 +29,7 @@ VOID Instruction(INS ins, VOID* v)
             dis << "        ";
             continue;
         }
-
+        
         else if (INS_OperandIsAddressGenerator(ins, i))
             dis << "AGN";
         else if (INS_OperandIsMemory(ins, i))
@@ -50,19 +50,21 @@ VOID Instruction(INS ins, VOID* v)
             dis << ":IMP ";
         else
             dis << "     ";
+                
+        
     }
 
     dis << INS_Disassemble(ins) << endl;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
     INS_AddInstrumentFunction(Instruction, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

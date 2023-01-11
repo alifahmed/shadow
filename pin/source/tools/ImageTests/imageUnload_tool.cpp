@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,27 +21,28 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "pin.H"
-using std::cout;
 using std::endl;
 using std::string;
+using std::cout;
+
 
 const string SO_NAME = "one.so";
 
 const int BUFF_SIZE = 1024;
 
-VOID ImageUnload(IMG img, VOID* v)
+VOID ImageUnload(IMG img, VOID *v)
 {
-    size_t found1 = IMG_Name(img).find(SO_NAME);
-    if (found1 != string::npos)
+    size_t found1=IMG_Name(img).find(SO_NAME);
+    if (found1!=string::npos)
     {
         // verify that "one.so" is in the mapped memory regions of the process.
         string mapFile = string("/proc/") + decstr(getpid()) + "/maps";
-        FILE* fp       = fopen(mapFile.c_str(), "r");
+        FILE *fp = fopen(mapFile.c_str(), "r");
         char buff[BUFF_SIZE];
 
-        while (fgets(buff, BUFF_SIZE, fp) != NULL)
+        while(fgets(buff, BUFF_SIZE, fp) != NULL)
         {
-            if (strstr(buff, SO_NAME.c_str()) != 0)
+            if (strstr(buff, SO_NAME.c_str())!=0)
             {
                 cout << "one.so is mapped in the memory." << endl;
             }
@@ -65,7 +66,7 @@ static INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize symbol processing
     PIN_InitSymbols();

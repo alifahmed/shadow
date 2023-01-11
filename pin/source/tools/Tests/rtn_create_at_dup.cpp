@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,17 +21,16 @@
 #include "pin.H"
 using std::string;
 
-using std::cerr;
 using std::cout;
+using std::cerr;
 using std::endl;
 
-static VOID ImageLoad(IMG img, VOID* v)
-{
+static VOID ImageLoad(IMG img, VOID * v) {
     // For simplicity, instrument only the main image. This can be extended to any other image of course.
-    if (IMG_IsMainExecutable(img))
-    {
-        for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
-        {
+    if (IMG_IsMainExecutable(img)) {
+
+        for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) {
+
             // For each section, process all RTNs.
             RTN rtn = SEC_RtnHead(sec);
 
@@ -41,7 +40,7 @@ static VOID ImageLoad(IMG img, VOID* v)
             // should replace this RTN
             //
             string oldName = RTN_Name(rtn);
-            rtn            = RTN_CreateAt(RTN_Address(rtn), "NEWNAME");
+            rtn = RTN_CreateAt(RTN_Address(rtn), "NEWNAME");
             ASSERT(oldName != RTN_Name(rtn), "FAILED");
         }
     }
@@ -51,11 +50,10 @@ static VOID ImageLoad(IMG img, VOID* v)
 // main
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR** argv)
-{
+int main(INT32 argc, CHAR **argv) {
     PIN_InitSymbols();
 
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     IMG_AddInstrumentFunction(ImageLoad, NULL);
 

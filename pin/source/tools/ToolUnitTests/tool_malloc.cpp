@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,24 +26,24 @@
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
-using std::cerr;
-using std::endl;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
+
 
 const INT BUF_SIZE = 100;
 
-struct REC
-{
+struct REC {
     CHAR data[BUF_SIZE];
-    struct REC* next;
+    struct REC *next;
 };
 
 /* ===================================================================== */
 /* Global Variables */
 /* ===================================================================== */
 
-struct REC* head   = 0;
+struct REC *head = 0;
 UINT64 alloc_count = 0;
 ofstream TraceFile;
 
@@ -51,14 +51,16 @@ ofstream TraceFile;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "tool_malloc.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,         "pintool",
+                            "o", "tool_malloc.out", "specify output file name");
 
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This tool allocate a record for each trace, and report the number of allocated bytes"
-            "\n";
+    cerr <<
+        "This tool allocate a record for each trace, and report the number of allocated bytes"
+        "\n";
 
     cerr << KNOB_BASE::StringKnobSummary();
 
@@ -69,17 +71,17 @@ INT32 Usage()
 
 /* ===================================================================== */
 
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
-    struct REC* rec = (struct REC*)malloc(sizeof(struct REC));
+    struct REC *rec = (struct REC *)malloc(sizeof(struct REC));
     alloc_count += sizeof(struct REC);
     rec->next = head;
-    head      = rec;
+    head = rec;
 }
 
 /* ===================================================================== */
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     TraceFile.open(KnobOutputFile.Value().c_str());
     TraceFile << alloc_count << endl;
@@ -88,19 +90,19 @@ VOID Fini(INT32 code, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
-
+    
     TRACE_AddInstrumentFunction(Trace, 0);
     PIN_AddFiniFunction(Fini, 0);
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -22,8 +22,10 @@
 #include "atomic/lifo-ctr.hpp"
 #include "atomic/nullstats.hpp"
 
-namespace ATOMIC
-{
+
+namespace ATOMIC {
+
+
 /*! @brief  Last-in-first-out queue with pre-allocated elements.
  *
  * A LIFO queue that is thread safe and safe to use from signal handlers.  It uses
@@ -58,21 +60,24 @@ namespace ATOMIC
  *  }
  *                                                                                          \endcode
  */
-template< typename OBJECT, unsigned int Capacity, unsigned int CounterBits = 32, typename STATS = NULLSTATS >
-class /*<UTILITY>*/ FIXED_LIFO
+template<typename OBJECT, unsigned int Capacity, unsigned int CounterBits=32, typename STATS=NULLSTATS>
+ class /*<UTILITY>*/ FIXED_LIFO
 {
   public:
     /*!
      * Construct a new (empty) queue.  This method is NOT atomic.
      */
-    FIXED_LIFO(STATS* stats = 0) : _activeQueue(&_elementHeap, stats), _freeQueue(&_elementHeap, stats) { ClearNonAtomic(); }
+    FIXED_LIFO(STATS *stats=0) : _activeQueue(&_elementHeap, stats), _freeQueue(&_elementHeap, stats)
+    {
+        ClearNonAtomic();
+    }
 
     /*!
      * Set the statistics collection object.  This method is NOT atomic.
      *
      *  @param[in] stats    The new statistics collection object.
      */
-    void SetStatsNonAtomic(STATS* stats)
+    void SetStatsNonAtomic(STATS *stats)
     {
         _activeQueue.SetStatsNonAtomic(stats);
         _freeQueue.SetStatsNonAtomic(stats);
@@ -84,8 +89,8 @@ class /*<UTILITY>*/ FIXED_LIFO
     void ClearNonAtomic()
     {
         unsigned int i = 0;
-        for (i = 0; i + 1 < Capacity; i++)
-            _elementHeap._elements[i]._next = &_elementHeap._elements[i + 1];
+        for (i = 0;  i+1 < Capacity;  i++)
+            _elementHeap._elements[i]._next = &_elementHeap._elements[i+1];
         _elementHeap._elements[i]._next = 0;
 
         _activeQueue.AssignNonAtomic(0);
@@ -101,22 +106,23 @@ class /*<UTILITY>*/ FIXED_LIFO
      *
      * @return  Returns a reference to the copied-to queue.
      */
-    FIXED_LIFO& operator=(const FIXED_LIFO& src)
+    FIXED_LIFO& operator=(const FIXED_LIFO &src)
     {
         unsigned int i;
 
         // Link all of our _elements[] into a list.
         //
-        for (i = 0; i < Capacity - 1; i++)
-            _elementHeap._elements[i]._next = &_elementHeap._elements[i + 1];
+        for (i = 0;  i < Capacity-1;  i++)
+            _elementHeap._elements[i]._next = &_elementHeap._elements[i+1];
         _elementHeap._elements[i]._next = 0;
 
         // Copy each allocated element from 'src' into our list.
         //
         i = 0;
-        for (const ELEMENT* element = src._activeQueue.Head(); element; element = element->_next)
+        for (const ELEMENT *element = src._activeQueue.Head();  element;  element = element->_next)
             _elementHeap._elements[i++]._obj = element->_obj;
-        if (i > 0) _elementHeap._elements[i - 1]._next = 0;
+        if (i > 0)
+            _elementHeap._elements[i-1]._next = 0;
         ATOMIC_CHECK_ASSERT(i <= Capacity);
 
         // Set up the active and free queues.
@@ -141,10 +147,11 @@ class /*<UTILITY>*/ FIXED_LIFO
      *
      * @return  Returns TRUE on success, FALSE if the queue's capacity would be exceeded.
      */
-    bool Push(const OBJECT& userObj)
+    bool Push(const OBJECT &userObj)
     {
-        ELEMENT* element = _freeQueue.Pop();
-        if (!element) return false;
+        ELEMENT *element = _freeQueue.Pop();
+        if (!element)
+            return false;
 
         element->_obj = userObj;
 
@@ -159,10 +166,11 @@ class /*<UTILITY>*/ FIXED_LIFO
      *
      * @return  Returns TRUE if there is an object to pop.  Returns FALSE if the queue is empty.
      */
-    bool Pop(OBJECT* userObj)
+    bool Pop(OBJECT *userObj)
     {
-        ELEMENT* element = _activeQueue.Pop();
-        if (!element) return false;
+        ELEMENT *element = _activeQueue.Pop();
+        if (!element)
+            return false;
 
         *userObj = element->_obj;
 
@@ -177,7 +185,7 @@ class /*<UTILITY>*/ FIXED_LIFO
      */
     bool Empty() const
     {
-        const ELEMENT* head = _activeQueue.Head();
+        const ELEMENT *head = _activeQueue.Head();
         return (head == 0);
     }
 
@@ -192,15 +200,15 @@ class /*<UTILITY>*/ FIXED_LIFO
      *
      * @return  The number of elements copied to \a container.
      */
-    template< typename Container > unsigned MoveToContainer(Container* container)
+    template<typename Container> unsigned MoveToContainer(Container *container)
     {
         unsigned count = 0;
 
-        ELEMENT* element = _activeQueue.Clear();
+        ELEMENT *element = _activeQueue.Clear();
         while (element)
         {
             container->push_back(element->_obj);
-            ELEMENT* next = element->_next;
+            ELEMENT *next = element->_next;
             _freeQueue.Push(element);
             element = next;
             count++;
@@ -223,9 +231,9 @@ class /*<UTILITY>*/ FIXED_LIFO
      *                             queue elements.  The container must implement the
      *                             "push_back" method with the normal STL semantics.
      */
-    template< typename Container > void CopyPointersToContainerNonAtomic(Container* container) const
+    template<typename Container> void CopyPointersToContainerNonAtomic(Container *container) const
     {
-        const ELEMENT* element = _activeQueue.Head();
+        const ELEMENT *element = _activeQueue.Head();
         while (element)
         {
             container->push_back(&element->_obj);
@@ -236,22 +244,24 @@ class /*<UTILITY>*/ FIXED_LIFO
   private:
     struct ELEMENT
     {
-        ELEMENT* volatile _next;
+        ELEMENT * volatile _next;
         OBJECT _obj;
     };
 
     struct ELEMENT_HEAP
     {
-        UINT32 Index(const ELEMENT* element) const
+        UINT32 Index(const ELEMENT *element) const
         {
-            if (!element) return 0;
+            if (!element)
+                return 0;
             return (element - _elements) + 1;
         }
-
-        ELEMENT* Pointer(UINT32 iElement)
+    
+        ELEMENT *Pointer(UINT32 iElement)
         {
-            if (!iElement) return 0;
-            return &_elements[iElement - 1];
+            if (!iElement)
+                return 0;
+            return &_elements[iElement-1];
         }
 
         ELEMENT _elements[Capacity];
@@ -259,14 +269,14 @@ class /*<UTILITY>*/ FIXED_LIFO
 
     ELEMENT_HEAP _elementHeap;
 
-    static const UINT32 CapacityBits = UTIL::NUMBER_BITS< Capacity >::count;
+    static const UINT32 CapacityBits = UTIL::NUMBER_BITS<Capacity>::count;
 
     // _activeQueue is a list of objects that are "in" the FIXED_LIFO.  _freeQueue is a list
     // of unused ELEMENT's.
     //
-    LIFO_CTR< ELEMENT, ELEMENT_HEAP, CapacityBits, CounterBits, UINT64, STATS > _activeQueue;
-    LIFO_CTR< ELEMENT, ELEMENT_HEAP, CapacityBits, CounterBits, UINT64, STATS > _freeQueue;
+    LIFO_CTR<ELEMENT, ELEMENT_HEAP, CapacityBits, CounterBits, UINT64, STATS> _activeQueue;
+    LIFO_CTR<ELEMENT, ELEMENT_HEAP, CapacityBits, CounterBits, UINT64, STATS> _freeQueue;
 };
 
-} // namespace ATOMIC
+} // namespace
 #endif // file guard

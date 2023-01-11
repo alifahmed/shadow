@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,20 +25,28 @@
 #include <semaphore.h>
 #include <sys/syscall.h>
 
-static pthread_mutex_t mutex  = PTHREAD_MUTEX_INITIALIZER;
+
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t one_tid, two_tid;
-static FILE* fd_signals;
-static char* FILE_NAME = const_cast< char* >("signal_list.txt");
-static int MAX_SIZE    = 128; /*maximum line size*/
+static FILE * fd_signals;
+static char * FILE_NAME = const_cast<char *>("signal_list.txt");
+static int MAX_SIZE = 128; /*maximum line size*/
 static int syncPipe[2];
 static volatile int iteration = 0;
 
-extern "C" bool WaitChangeSigmask() { return false; }
 
-void EmptySignalHandler(int param) {}
+extern "C" bool WaitChangeSigmask()
+{
+   return false;
+}
 
-int mutex_lock_check_errno(pthread_mutex_t* mtx)
+
+void EmptySignalHandler(int param)
+{
+}
+
+int mutex_lock_check_errno(pthread_mutex_t *mtx)
 {
     do
     {
@@ -54,7 +62,7 @@ int mutex_lock_check_errno(pthread_mutex_t* mtx)
     return -1;
 }
 
-int mutex_unlock_check_errno(pthread_mutex_t* mtx)
+int mutex_unlock_check_errno(pthread_mutex_t *mtx)
 {
     int r = pthread_mutex_unlock(mtx);
     if (0 != r)
@@ -79,32 +87,34 @@ void BlockUserSignals()
     pthread_sigmask(SIG_BLOCK, &sigmask, NULL);
 }
 
+
 /*
  * block only the signals in the list: "signalsListToBlock"
  */
-void BlockSignals(int signalsListToBlock[], int len, sigset_t* sigmask)
+void BlockSignals(int signalsListToBlock[] , int len, sigset_t * sigmask)
 {
     sigemptyset(sigmask);
     int i;
-    for (i = 0; i < len; ++i)
+    for(i=0; i< len; ++i)
         sigaddset(sigmask, signalsListToBlock[i]);
     pthread_sigmask(SIG_SETMASK, sigmask, NULL);
 }
 
+
 /*
  *  A thread function that processes SIGUSR1 and SIGUSR2 signals sent by the SignalSender thread function
  */
-void* SignalReceiver(void* arg)
+void * SignalReceiver(void *arg)
 {
-    fd_signals     = fopen(FILE_NAME, "w");
+    fd_signals = fopen(FILE_NAME, "w");
     int sigList[1] = {SIGUSR2};
     sigset_t sigmask;
     BlockSignals(sigList, 1, &sigmask);
     signal(SIGUSR2, EmptySignalHandler);
     signal(SIGUSR1, EmptySignalHandler);
-    while (iteration < 10)
-    {
-        int numSigReceived = 0;
+    while (iteration<10)
+    { 
+        int numSigReceived=0;
         pthread_sigmask(SIG_SETMASK, NULL, &sigmask);
 
         time_t start = time(NULL);
@@ -139,15 +149,15 @@ void* SignalReceiver(void* arg)
         signal(SIGUSR2, EmptySignalHandler);
         signal(SIGUSR1, EmptySignalHandler);
 
-        if (numSigReceived == SIGUSR2)
+        if(numSigReceived == SIGUSR2)
         {
             iteration++;
-            fprintf(fd_signals, "%d", 2);
+            fprintf(fd_signals, "%d", 2 );
         }
-        if (numSigReceived == SIGUSR1)
+        if(numSigReceived == SIGUSR1)
         {
             iteration++;
-            fprintf(fd_signals, "%d", 1);
+            fprintf(fd_signals, "%d", 1 );
         }
         mutex_unlock_check_errno(&mutex);
         mutex_lock_check_errno(&mutex1);
@@ -156,11 +166,12 @@ void* SignalReceiver(void* arg)
     return NULL;
 }
 
+
 /*
  *  Send repeatedly signals (SIGUSR1 and SIGUSR2) to the thread which starts execution by invoking the function
  *  SignalReceiver
  */
-void* SignalSender(void* arg)
+void * SignalSender(void *arg)
 {
     bool wasSigmaskChanged = false;
     sigset_t sigmask;
@@ -172,12 +183,11 @@ void* SignalSender(void* arg)
         pthread_kill(two_tid, SIGUSR2); /* Delivers a signal*/
         pthread_kill(two_tid, SIGUSR1); /* Delivers a signal*/
 
-        if (iteration == 2 && !wasSigmaskChanged)
+        if(iteration==2 && !wasSigmaskChanged)
         {
             wasSigmaskChanged = true;
             close(syncPipe[1]); // close the write side - releasing the child process to start PIN
-            while (!WaitChangeSigmask())
-                sched_yield();
+            while(!WaitChangeSigmask()) sched_yield();
         }
 
         mutex_unlock_check_errno(&mutex1);
@@ -186,6 +196,7 @@ void* SignalSender(void* arg)
     while (pthread_kill(two_tid, 0) == 0); // while two_tid is alive
     return NULL;
 }
+
 
 /*
  * Main function
@@ -196,7 +207,7 @@ void* SignalSender(void* arg)
  * 3 - "-slow_asserts" (optional)
  * 4 - tool name
  */
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     pid_t parentPid = getpid();
 
@@ -219,8 +230,7 @@ int main(int argc, char* argv[])
             validNumberOfArgs = false;
         }
     }
-    else
-        validNumberOfArgs = false; // illegal number of arguments
+    else validNumberOfArgs = false; // illegal number of arguments
 
     if (!validNumberOfArgs)
     {
@@ -253,7 +263,7 @@ int main(int argc, char* argv[])
         /*
          * suspended execution until the two threads terminate
          */
-        pthread_join(two_tid, NULL);
+        pthread_join(two_tid,NULL);
         mutex_unlock_check_errno(&mutex); // release mutex as one_tid may wait on it
         pthread_join(one_tid, NULL);
     }
@@ -261,15 +271,15 @@ int main(int argc, char* argv[])
     {
         // In the child process.
         char dummy;
-        close(syncPipe[1]);                       // close the write side of the pipe
+        close(syncPipe[1]); // close the write side of the pipe
         read(syncPipe[0], &dummy, sizeof(dummy)); // wait for parent
-        close(syncPipe[0]);                       // close the read side as we're done
+        close(syncPipe[0]); // close the read side as we're done
         char attachPid[MAX_SIZE];
         sprintf(attachPid, "%d", parentPid);
 
         const char* args[9];
-        int argsco     = 0;
-        int argsci     = 2; // input argument #2 is the Pin executable (see documentation at the top of the main function)
+        int argsco = 0;
+        int argsci = 2; // input argument #2 is the Pin executable (see documentation at the top of the main function)
         args[argsco++] = argv[argsci++]; // pin executable
         if (argc == 5)
         {
@@ -280,13 +290,13 @@ int main(int argc, char* argv[])
         args[argsco++] = attachPid;
         args[argsco++] = "-t";
         args[argsco++] = argv[argsci++]; // tool name
-        args[argsco++] = NULL;           // end
+        args[argsco++] = NULL; // end
 
         /*
          * Pin attach to the parent thread.
          * never return
          */
-        execv(args[0], (char* const*)args);
+        execv(args[0], (char * const *)args);
         perror("execv");
         return 10;
     }

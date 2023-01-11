@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -18,11 +18,6 @@ END_LEGAL */
 #if !defined(XED_ADDRESS_WIDTH_ENUM_H)
 # define XED_ADDRESS_WIDTH_ENUM_H
 #include "xed-common-hdrs.h"
-#define XED_ADDRESS_WIDTH_INVALID_DEFINED 1
-#define XED_ADDRESS_WIDTH_16b_DEFINED 1
-#define XED_ADDRESS_WIDTH_32b_DEFINED 1
-#define XED_ADDRESS_WIDTH_64b_DEFINED 1
-#define XED_ADDRESS_WIDTH_LAST_DEFINED 1
 typedef enum {
   XED_ADDRESS_WIDTH_INVALID=0,
   XED_ADDRESS_WIDTH_16b=2, ///< 16b addressing

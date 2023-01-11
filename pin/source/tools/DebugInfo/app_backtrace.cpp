@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,11 +18,12 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
-void qux_Before(const CONTEXT* ctxt)
+
+void qux_Before(const CONTEXT * ctxt)
 {
     void* buf[128];
     PIN_LockClient();
-    int nptrs = PIN_Backtrace(ctxt, buf, sizeof(buf) / sizeof(buf[0]));
+    int nptrs = PIN_Backtrace(ctxt, buf, sizeof(buf)/sizeof(buf[0]));
     ASSERTX(nptrs > 0);
     char** bt = backtrace_symbols(buf, nptrs);
     PIN_UnlockClient();
@@ -41,7 +42,7 @@ void qux_Before(const CONTEXT* ctxt)
     free(bt);
 }
 
-void InstImage(IMG img, void* v)
+void InstImage(IMG img, void *v)
 {
     if (IMG_IsMainExecutable(img))
     {
@@ -53,7 +54,7 @@ void InstImage(IMG img, void* v)
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     PIN_InitSymbols();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -19,15 +19,16 @@
 
 #include "util/round.hpp"
 
-namespace UTIL
-{
+
+namespace UTIL {
+
 /*!
  * Utility that holds and manipulates an address range.
  */
-template< typename ADDRTYPE > class /*<UTILITY>*/ RANGE
+template<typename ADDRTYPE> class /*<UTILITY>*/ RANGE
 {
-  public:
-    RANGE() : _base(0), _size(0) {} ///< Create an empty address range.
+public:
+    RANGE() : _base(0), _size(0) {}     ///< Create an empty address range.
 
     /*!
      * Create an address range.
@@ -43,7 +44,7 @@ template< typename ADDRTYPE > class /*<UTILITY>*/ RANGE
      *  @param[in] base     Start of the range.
      *  @param[in] size     Size (bytes) of the range.
      */
-    RANGE(void* base, size_t size) : _base(reinterpret_cast< PTRINT >(base)), _size(size) {}
+    RANGE(void *base, size_t size) : _base(reinterpret_cast<PTRINT>(base)), _size(size) {}
 
     /*!
      * Assigns a new value to the range.
@@ -63,20 +64,16 @@ template< typename ADDRTYPE > class /*<UTILITY>*/ RANGE
      *  @param[in] base     Start of the range.
      *  @param[in] size     Size (bytes) of the range.
      */
-    void Assign(void* base, size_t size)
+    void Assign(void *base, size_t size)
     {
-        _base = reinterpret_cast< PTRINT >(base);
+        _base = reinterpret_cast<PTRINT>(base);
         _size = size;
     }
 
-    ADDRTYPE GetBase() const { return _base; }        ///< @return Start of the range.
-    size_t GetSize() const { return _size; }          ///< @return Size of the range.
-    ADDRTYPE GetEnd() const { return _base + _size; } ///< @return Address 1 byte beyond range end.
-    void Clear()
-    {
-        _base = 0;
-        _size = 0;
-    } ///< Makes the range empty.
+    ADDRTYPE GetBase() const    { return _base; }           ///< @return Start of the range.
+    size_t GetSize() const      { return _size; }           ///< @return Size of the range.
+    ADDRTYPE GetEnd() const     { return _base + _size; }   ///< @return Address 1 byte beyond range end.
+    void Clear()                { _base = 0;  _size = 0; }  ///< Makes the range empty.
 
     /*!
      * Aligns the starting and ending addresses of the range.  Afterwards, the
@@ -87,8 +84,8 @@ template< typename ADDRTYPE > class /*<UTILITY>*/ RANGE
     void AlignEndpoints(size_t alignment)
     {
         ADDRTYPE end = RoundUp(GetEnd(), alignment);
-        _base        = RoundDown(_base, alignment);
-        _size        = end - _base;
+        _base = RoundDown(_base, alignment);
+        _size = end - _base;
     }
 
     /*!
@@ -98,7 +95,10 @@ template< typename ADDRTYPE > class /*<UTILITY>*/ RANGE
      *
      * @return  TRUE if range contains the address.
      */
-    bool Contains(ADDRTYPE addr) const { return ((addr - _base) < _size); }
+    bool Contains(ADDRTYPE addr) const
+    {
+        return ((addr - _base) < _size);
+    }
 
     /*!
      * Tells if the range contains all addresses in another range.
@@ -107,16 +107,19 @@ template< typename ADDRTYPE > class /*<UTILITY>*/ RANGE
      *
      * @return  TRUE if range contains \a range.
      */
-    bool Contains(const RANGE& range) const { return (Contains(range.m_base) && !range.Contains(GetEnd())); }
+    bool Contains(const RANGE &range) const
+    {
+        return (Contains(range.m_base) && !range.Contains(GetEnd()));
+    }
 
-  private:
+private:
     ADDRTYPE _base;
     size_t _size;
 };
 
-typedef RANGE< ADDRINT > ARANGE;   ///< A range of target addresses.
-typedef RANGE< ANYADDR > ANYRANGE; ///< A range of ANYADDR's.
-typedef RANGE< PTRINT > PRANGE;    ///< A range of host addresses.
+typedef RANGE<ADDRINT> ARANGE;    ///< A range of target addresses.
+typedef RANGE<ANYADDR> ANYRANGE;  ///< A range of ANYADDR's.
+typedef RANGE<PTRINT> PRANGE;     ///< A range of host addresses.
 
-} // namespace UTIL
+} // namespace
 #endif // file guard

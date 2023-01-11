@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,23 +12,27 @@
 #include <stdio.h>
 
 #if defined(TARGET_WINDOWS)
-#define EXPORT_CSYM __declspec(dllexport)
+#define EXPORT_CSYM  __declspec( dllexport )
 #define NO_INLINE __declspec(noinline)
 #else
-#define EXPORT_CSYM
-#define NO_INLINE
+#define EXPORT_CSYM 
+#define NO_INLINE 
 extern int DoReps();
 #endif
 
-EXPORT_CSYM NO_INLINE void RepAppAtIpointAfterStarted() { printf("RepAppAtIpointAfterStarted\n"); }
-
-int main(int argc, char** argv)
+EXPORT_CSYM NO_INLINE void   RepAppAtIpointAfterStarted()
 {
+    printf ("RepAppAtIpointAfterStarted\n");
+}
+
+int main(int argc, char ** argv)
+{
+    
 #if defined(TARGET_WINDOWS)
-    char stringOne[]    = "IAMHEREE";
-    char stringTwo[]    = "IWASHERE";
-    char stringThree[]  = "ABCDEF20";
-    char stringFour[]   = "BCDEFG21";
+    char stringOne[] = "IAMHEREE";
+    char stringTwo[] = "IWASHERE";
+    char stringThree[] = "ABCDEF20";
+    char stringFour[] =  "BCDEFG21";
     char stringBlanks[] = "          X";
     char stringSource[] = "12345678";
     char stringDest[9];
@@ -38,7 +42,7 @@ int main(int argc, char** argv)
 #define length4 8
     int retVal = 0;
     RepAppAtIpointAfterStarted();
-    printf("Starting...\n");
+    printf ("Starting...\n");
     __asm {
         fnop                                      
 	cld
@@ -116,13 +120,13 @@ l2:
     lea	esi, retVal
     mov dword ptr[esi], 1
 end:
-        fnop
+        fnop                                      
     }
 #else
     int retVal;
     RepAppAtIpointAfterStarted();
     retVal = DoReps();
 #endif
-    printf("Ending... retVal %d\n", retVal);
+    printf ("Ending... retVal %d\n", retVal);
     return retVal;
 }

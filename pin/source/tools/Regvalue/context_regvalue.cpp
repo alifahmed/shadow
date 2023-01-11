@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,6 +18,7 @@ using std::flush;
 
 using std::ofstream;
 
+
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
@@ -26,27 +27,29 @@ using std::ofstream;
 // 1. default   - regular CONTEXT passed to the analysis routine using IARG_CONTEXT.
 // 2. const     - const CONTEXT passed to the analysis routine using IARG_CONST_CONTEXT.
 // 2. partial   - partial CONTEXT passed to the analysis routine using IARG_PARTIAL_CONTEXT.
-KNOB< string > KnobTestContext(KNOB_MODE_WRITEONCE, "pintool", "testcontext", "default",
-                               "specify which context to test. One of default|const|partial.");
+KNOB<string> KnobTestContext(KNOB_MODE_WRITEONCE, "pintool",
+    "testcontext", "default", "specify which context to test. One of default|const|partial.");
 
 // A knob for defining the output file name
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "context_regvalue.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "context_regvalue.out", "specify output file name");
 
 // ofstream object for handling the output
 ofstream OutFile;
+
 
 /////////////////////
 // ANALYSIS FUNCTIONS
 /////////////////////
 
-static void PrintsBefore(CONTEXT* ctxt)
+static void PrintsBefore(CONTEXT * ctxt)
 {
     OutFile << "Context values before ChangeRegs functions" << endl << flush;
     StoreContext(ctxt);
     PrintStoredRegisters(OutFile);
 }
 
-static void ChecksAfter(CONTEXT* ctxt)
+static void ChecksAfter(CONTEXT * ctxt)
 {
     OutFile << "Context values after ChangeRegs functions" << endl << flush;
     StoreContext(ctxt);
@@ -58,11 +61,12 @@ static void ChecksAfter(CONTEXT* ctxt)
     }
 }
 
+
 /////////////////////
 // CALLBACKS
 /////////////////////
 
-static VOID ImageLoad(IMG img, VOID* v)
+static VOID ImageLoad(IMG img, VOID * v)
 {
     if (IMG_IsMainExecutable(img))
     {
@@ -81,11 +85,12 @@ static VOID ImageLoad(IMG img, VOID* v)
         }
         else if (KnobTestContext.Value() == "partial")
         {
-            REGSET regsin  = GetTestRegset();
+            REGSET regsin = GetTestRegset();
             REGSET regsout = GetTestRegset();
-            RTN_InsertCall(changeRegsRtn, IPOINT_BEFORE, (AFUNPTR)PrintsBefore, IARG_PARTIAL_CONTEXT, &regsin, &regsout,
-                           IARG_END);
-            RTN_InsertCall(changeRegsRtn, IPOINT_AFTER, (AFUNPTR)ChecksAfter, IARG_PARTIAL_CONTEXT, &regsin, &regsout, IARG_END);
+            RTN_InsertCall(changeRegsRtn, IPOINT_BEFORE, (AFUNPTR)PrintsBefore, IARG_PARTIAL_CONTEXT,
+                                                                                &regsin, &regsout, IARG_END);
+            RTN_InsertCall(changeRegsRtn, IPOINT_AFTER, (AFUNPTR)ChecksAfter, IARG_PARTIAL_CONTEXT,
+                                                                              &regsin, &regsout, IARG_END);
         }
         else
         {
@@ -96,16 +101,20 @@ static VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-static VOID Fini(INT32 code, VOID* v) { OutFile.close(); }
+static VOID Fini(INT32 code, VOID *v)
+{
+    OutFile.close();
+}
+
 
 /////////////////////
 // MAIN FUNCTION
 /////////////////////
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize Pin
-    PIN_InitSymbolsAlt(EXPORT_SYMBOLS);
+    PIN_InitSymbols();
     PIN_Init(argc, argv);
 
     // Open the output file

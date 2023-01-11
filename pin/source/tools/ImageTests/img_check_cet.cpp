@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -31,30 +31,32 @@
 #include <iostream>
 #include <fstream>
 
-using std::cerr;
-using std::endl;
 using std::string;
+using std::endl;
+using std::cerr;
 
-KNOB< string > KnobImageName(KNOB_MODE_WRITEONCE, "pintool", "m", "", "image name to process");
+KNOB<string> KnobImageName(KNOB_MODE_WRITEONCE, "pintool",
+    "m", "", "image name to process");
 
-KNOB< BOOL > KnobIbt(KNOB_MODE_WRITEONCE, "pintool", "i", "0", "verify indirect branch tracking");
+KNOB<BOOL> KnobIbt(KNOB_MODE_WRITEONCE, "pintool",
+    "i", "0", "verify indirect branch tracking");
 
-KNOB< BOOL > KnobShstk(KNOB_MODE_WRITEONCE, "pintool", "s", "0", "verify shadow stack");
+KNOB<BOOL> KnobShstk(KNOB_MODE_WRITEONCE, "pintool",
+    "s", "0", "verify shadow stack");
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize symbol processing
     PIN_InitSymbols();
-
+    
     // Initialize pin
     if (PIN_Init(argc, argv) != 0)
     {
         PIN_ExitProcess(1);
     }
 
-    if (KnobImageName.Value() == "")
-    {
+    if (KnobImageName.Value() == "") {
         cerr << "image name must be specified" << endl;
         PIN_ExitProcess(1);
     }

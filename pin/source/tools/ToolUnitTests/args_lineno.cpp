@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,11 +11,11 @@
 
 #include "pin.H"
 #include <fstream>
-using std::endl;
 using std::ofstream;
+using std::endl;
 
 VOID PrintArgs(INT32 arg1, INT32 arg2, INT32 arg3, INT32 arg4, INT32 arg5, INT32 arg6, INT32 arg7, INT32 arg8)
-{
+{ 
     ofstream out("args.output");
     out << arg1 << endl;
     out << arg2 << endl;
@@ -26,12 +26,22 @@ VOID PrintArgs(INT32 arg1, INT32 arg2, INT32 arg3, INT32 arg4, INT32 arg5, INT32
     out << arg7 << endl;
     out << arg8 << endl;
 }
-
-VOID CheckIp(ADDRINT ip1, ADDRINT ip2, ADDRINT ip3, ADDRINT ip4, ADDRINT ip5, ADDRINT ip6, ADDRINT ip7, ADDRINT ip8, ADDRINT ip9,
-             ADDRINT ip10)
+    
+VOID CheckIp(ADDRINT ip1,
+             ADDRINT ip2,
+             ADDRINT ip3,
+             ADDRINT ip4,
+             ADDRINT ip5,
+             ADDRINT ip6,
+             ADDRINT ip7,
+             ADDRINT ip8,
+             ADDRINT ip9,
+             ADDRINT ip10
+)
 {
-    if (ip1 != ip2) fprintf(stderr, "ip1 %p ip2 %p\n", (void*)ip1, (void*)ip2);
-
+    if (ip1 != ip2)
+        fprintf(stderr,"ip1 %p ip2 %p\n", (void*)ip1, (void*)ip2);
+    
     ASSERTX(ip1 == ip2);
     ASSERTX(ip1 == ip3);
     ASSERTX(ip1 == ip4);
@@ -43,45 +53,82 @@ VOID CheckIp(ADDRINT ip1, ADDRINT ip2, ADDRINT ip3, ADDRINT ip4, ADDRINT ip5, AD
     ASSERTX(ip1 == ip10);
 }
 
-VOID PIN_FAST_ANALYSIS_CALL CheckIpFast(ADDRINT ip1, ADDRINT ip2, ADDRINT ip3, ADDRINT ip4, ADDRINT ip5, ADDRINT ip6, ADDRINT ip7,
-                                        ADDRINT ip8, ADDRINT ip9, ADDRINT ip10)
+    
+VOID PIN_FAST_ANALYSIS_CALL CheckIpFast(ADDRINT ip1,
+                                        ADDRINT ip2,
+                                        ADDRINT ip3,
+                                        ADDRINT ip4,
+                                        ADDRINT ip5,
+                                        ADDRINT ip6,
+                                        ADDRINT ip7,
+                                        ADDRINT ip8,
+                                        ADDRINT ip9,
+                                        ADDRINT ip10
+)
 {
     CheckIp(ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, ip9, ip10);
 }
 
-VOID Instruction(INS ins, VOID* v)
+
+VOID Instruction(INS ins, VOID *v)
 {
     static INT32 count = 0;
-
+    
     if (count % 64 == 0)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckIp), IARG_INST_PTR, IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT,
-                       INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT,
-                       INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT,
-                       INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_END);
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckIpFast), IARG_FAST_ANALYSIS_CALL, IARG_INST_PTR, IARG_ADDRINT,
-                       INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT,
-                       INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT,
-                       INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_ADDRINT, INS_Address(ins), IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckIp),
+                       IARG_INST_PTR,
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckIpFast),
+                       IARG_FAST_ANALYSIS_CALL,
+                       IARG_INST_PTR,
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_ADDRINT, INS_Address(ins),
+                       IARG_END);
     }
+    
 
     if (count == 0)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(PrintArgs), IARG_UINT32, 1, IARG_UINT32, 2, IARG_UINT32, 3, IARG_UINT32, 4,
-                       IARG_UINT32, 5, IARG_UINT32, 6, IARG_UINT32, 7, IARG_UINT32, 8, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(PrintArgs),
+                       IARG_UINT32, 1,
+                       IARG_UINT32, 2,
+                       IARG_UINT32, 3,
+                       IARG_UINT32, 4,
+                       IARG_UINT32, 5,
+                       IARG_UINT32, 6,
+                       IARG_UINT32, 7,
+                       IARG_UINT32, 8,
+                       IARG_END);
     }
 
     count++;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
     INS_AddInstrumentFunction(Instruction, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,9 +14,9 @@
 #include <Windows.h>
 #include <iostream>
 #include <string>
-using std::cout;
-using std::endl;
 using std::flush;
+using std::endl;
+using std::cout;
 using std::string;
 
 //Wait for a process completion
@@ -56,10 +56,10 @@ bool WaitAndVerify(HANDLE process)
  *                
  * return prefix string
  */
-string SplitString(string* input, const string& delimiter = " ")
+string SplitString(string * input, const string & delimiter = " ")
 {
     string::size_type pos = input->find(delimiter);
-    string substr         = input->substr(0, pos);
+    string substr = input->substr(0, pos);
     if (pos != string::npos)
     {
         *input = input->substr(pos + 1);
@@ -71,22 +71,23 @@ string SplitString(string* input, const string& delimiter = " ")
     return substr;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     string cmdLine = GetCommandLine();
     SplitString(&cmdLine);
-
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-
+    
+    STARTUPINFO         si;
+    PROCESS_INFORMATION  pi;
+    
     {
         memset(&si, 0, sizeof(si));
         si.cb = sizeof(STARTUPINFO);
         memset(&pi, 0, sizeof(pi));
-        if (!CreateProcess(NULL, (LPSTR)cmdLine.c_str(), NULL, NULL, TRUE, DEBUG_ONLY_THIS_PROCESS, NULL, NULL, &si, &pi))
+        if (!CreateProcess(NULL, (LPSTR)cmdLine.c_str(), NULL, NULL, TRUE, DEBUG_ONLY_THIS_PROCESS, 
+                           NULL, NULL, &si, &pi))
         {
-            cout << "Couldn't create child process, command line = " << cmdLine << ", system error = " << GetLastError() << endl
-                 << flush;
+            cout << "Couldn't create child process, command line = " << cmdLine << ", system error = "
+                 << GetLastError() << endl << flush;
             exit(-1);
         }
         if (WaitAndVerify(pi.hProcess) == FALSE)
@@ -95,6 +96,6 @@ int main(int argc, char* argv[])
         }
         cout << "First Child Process was created successfully!" << endl << flush;
     }
-
+      
     return 0;
 }

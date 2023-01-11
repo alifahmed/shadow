@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,16 +14,17 @@
 
 using std::string;
 
-FILE* out;
+FILE * out;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "debugservice_monitor.out", "output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "debugservice_monitor.out", "output file");
 
 /*
  * Return TRUE if baseName matches tail of imageName. Comparison is case-insensitive.
  * @param[in]  imageName  image file name in either form with extension
  * @param[in]  baseName   image base name with extension (e.g. kernel32.dll)
  */
-static BOOL CmpBaseImageName(const string& imageName, const string& baseName)
+static BOOL CmpBaseImageName(const string & imageName, const string & baseName)
 {
     if (imageName.size() >= baseName.size())
     {
@@ -32,19 +33,19 @@ static BOOL CmpBaseImageName(const string& imageName, const string& baseName)
     return FALSE;
 }
 
-void BeforeOutputDebugString()
+void BeforeOutputDebugString ()
 {
     fprintf(out, "BeforeOutputDebugString\n");
-    fflush(out);
+    fflush (out);
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     fprintf(out, "PinFiniFunction\n");
     fclose(out);
 }
 
-VOID Image(IMG img, VOID* v)
+VOID Image(IMG img, VOID *v)
 {
     // Skip all images, but kernel32.dll
     if (!CmpBaseImageName(IMG_Name(img), "kernel32.dll"))
@@ -68,9 +69,10 @@ VOID Image(IMG img, VOID* v)
         RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(BeforeOutputDebugString), IARG_END);
         RTN_Close(rtn);
     }
+    
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);

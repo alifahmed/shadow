@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,15 +16,16 @@
 #include <iostream>
 #include <fstream>
 #include "pin.H"
-using std::endl;
 using std::ofstream;
 using std::string;
+using std::endl;
 
 ofstream out;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "sec.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "sec.out", "specify output file name");
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID * v)
 {
     out << "Tool loading " << IMG_Name(img) << " at " << IMG_LoadOffset(img) << endl;
     for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
@@ -39,17 +40,17 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     out.open(KnobOutputFile.Value().c_str());
-
+    
     PIN_InitSymbols();
     PIN_Init(argc, argv);
-
+    
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

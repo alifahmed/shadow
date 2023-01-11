@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,10 +18,10 @@
 
 #include <string.h>
 #include "pin.H"
-using std::endl;
-using std::hex;
 using std::ofstream;
+using std::hex;
 using std::string;
+using std::endl;
 
 #ifdef TARGET_MAC
 #define NAME(fun) "_" fun
@@ -29,13 +29,16 @@ using std::string;
 #define NAME(fun) fun
 #endif
 
-KNOB< string > KnobOutput(KNOB_MODE_WRITEONCE, "pintool", "o", "ins_fetch_overrun.out", "Name for log file");
+KNOB<string> KnobOutput(KNOB_MODE_WRITEONCE,"pintool", "o", "ins_fetch_overrun.out", "Name for log file");
 
 static ofstream out;
 
-VOID AtRtn(VOID* addr) { out << hex << "Executing the function in address 0x" << reinterpret_cast< ADDRINT >(addr) << endl; }
+VOID AtRtn(VOID* addr)
+{
+    out << hex << "Executing the function in address 0x" << reinterpret_cast<ADDRINT>(addr) << endl;
+}
 
-VOID Image(IMG img, VOID* v)
+VOID Image(IMG img, VOID *v)
 {
     for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
     {
@@ -49,13 +52,15 @@ VOID Image(IMG img, VOID* v)
             out << RTN_Name(rtn) << ": can be probed? " << canBeProbed << endl;
             if (canBeProbed)
             {
-                RTN_InsertCallProbed(rtn, IPOINT_BEFORE, AFUNPTR(AtRtn), IARG_PTR, RTN_Address(rtn), IARG_END);
+                RTN_InsertCallProbed( rtn, IPOINT_BEFORE,  AFUNPTR(AtRtn), IARG_PTR, RTN_Address(rtn), IARG_END);
             }
         }
     }
 }
 
-int main(int argc, char* argv[])
+
+
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
@@ -69,3 +74,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

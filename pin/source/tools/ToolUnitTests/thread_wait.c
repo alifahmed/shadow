@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,15 +17,15 @@
 #include <stdio.h>
 #include <pthread.h>
 
-extern int Add2(int, int);
+extern int Add2( int, int );
 
 int a[100000];
 int n = 10;
 
-void* hello(void* arg)
+void * hello(void * arg)
 {
-    int i, j;
-
+    int i,j;
+    
     for (j = 0; j < 1000; j++)
     {
         for (i = 0; i < n; i++)
@@ -38,37 +38,39 @@ void* hello(void* arg)
     return 0;
 }
 
+
 #define MAXTHREADS 1000
 
 int threads_started;
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int numthreads = 0;
     int i;
     pthread_t threads[MAXTHREADS];
-
+    
 #if defined(i386)
     asm("pusha;popa");
-#endif
+#endif    
 
     numthreads = 20;
     assert(numthreads < MAXTHREADS);
-
+    
     for (threads_started = 0; threads_started < numthreads; threads_started++)
     {
         printf("Creating thread\n");
         fflush(stdout);
-        pthread_create(threads + threads_started, 0, hello, 0);
+        pthread_create(threads+threads_started, 0, hello, 0);
         fflush(stdout);
     }
 
     for (i = 0; i < numthreads; i++)
     {
         pthread_join(threads[i], 0);
-        printf("Joined %d, sum=%d\n", i, Add2(i, i));
+        printf("Joined %d, sum=%d\n", i, Add2(i,i));
     }
     printf("All threads joined\n");
 
     return 0;
 }
+

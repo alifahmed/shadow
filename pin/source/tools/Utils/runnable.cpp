@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,16 +22,16 @@
 // If __USE_GNU is defined, we don't need to do anything.
 // If we defined it ourselves, we need to undefine it later.
 #ifndef __USE_GNU
-#define __USE_GNU
-#define APP_UNDEF_USE_GNU
+# define __USE_GNU
+# define APP_UNDEF_USE_GNU
 #endif
 
 #include <ucontext.h>
 
 // If we defined __USE_GNU ourselves, we need to undefine it here.
 #ifdef APP_UNDEF_USE_GNU
-#undef __USE_GNU
-#undef APP_UNDEF_USE_GNU
+    #undef __USE_GNU
+    #undef APP_UNDEF_USE_GNU
 #endif
 
 #include <unistd.h>
@@ -49,22 +49,22 @@
 /*!
  * Given exception context and record, retrieve the exception address.
  */
-static void* GetExceptIp(LPEXCEPTION_POINTERS exceptPtr)
+static void * GetExceptIp(LPEXCEPTION_POINTERS exceptPtr)
 {
 #if defined(TARGET_IA32)
-    return reinterpret_cast< void* >(exceptPtr->ContextRecord->Eip);
+    return reinterpret_cast<void *>(exceptPtr->ContextRecord->Eip);
 #elif defined(TARGET_IA32E)
-    return reinterpret_cast< void* >(exceptPtr->ContextRecord->Rip);
+    return reinterpret_cast<void *>(exceptPtr->ContextRecord->Rip);
 #endif
 }
 
-FUNC_OBJ& FUNC_OBJ::ExecuteSafe()
+FUNC_OBJ & FUNC_OBJ::ExecuteSafe()
 {
-    void* exceptIp;
+    void * exceptIp;
 
     __try
     {
-        FUNC_OBJ& obj = Execute();
+        FUNC_OBJ& obj =  Execute();
         return obj;
     }
     __except ((exceptIp = GetExceptIp(GetExceptionInformation())), EXCEPTION_EXECUTE_HANDLER)
@@ -76,19 +76,19 @@ FUNC_OBJ& FUNC_OBJ::ExecuteSafe()
 #elif defined(TARGET_LINUX)
 
 static sigjmp_buf jumpBuffer;
-static void* exceptIp;
+static void * exceptIp;
 
 /*!
  * Signal handler: stores exception IP in a global variable and returns with siglongjmp.
  */
-static void HandleSignal(int sig, siginfo_t* i, void* vctxt)
+static void HandleSignal(int sig, siginfo_t *i, void *vctxt)
 {
-    ucontext_t* ctxt = (ucontext_t*)vctxt;
+    ucontext_t *ctxt = (ucontext_t *)vctxt;
 
 #if defined(TARGET_IA32)
-    exceptIp = reinterpret_cast< void* >(ctxt->uc_mcontext.gregs[REG_EIP]);
+    exceptIp = reinterpret_cast<void *>(ctxt->uc_mcontext.gregs[REG_EIP]);
 #elif defined(TARGET_IA32E)
-    exceptIp = reinterpret_cast< void* >(ctxt->uc_mcontext.gregs[REG_RIP]);
+    exceptIp = reinterpret_cast<void *>(ctxt->uc_mcontext.gregs[REG_RIP]);
 #endif
 
     siglongjmp(jumpBuffer, 1);
@@ -102,7 +102,7 @@ static bool SetupSignalHandler()
     struct sigaction sigact;
 
     sigact.sa_sigaction = HandleSignal;
-    sigact.sa_flags     = SA_SIGINFO;
+    sigact.sa_flags = SA_SIGINFO;
     sigemptyset(&sigact.sa_mask);
     if (sigaction(SIGSEGV, &sigact, 0) == -1)
     {
@@ -112,7 +112,7 @@ static bool SetupSignalHandler()
     return true;
 }
 
-FUNC_OBJ& FUNC_OBJ::ExecuteSafe()
+FUNC_OBJ & FUNC_OBJ::ExecuteSafe()
 {
     static bool first = true;
     if (first)
@@ -133,7 +133,7 @@ FUNC_OBJ& FUNC_OBJ::ExecuteSafe()
 
 #else // macOS*
 
-FUNC_OBJ& FUNC_OBJ::ExecuteSafe()
+FUNC_OBJ & FUNC_OBJ::ExecuteSafe()
 {
     // Exception handling is not supported on macOS*
     return Execute();

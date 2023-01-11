@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,15 +15,16 @@
 using std::cerr;
 using std::endl;
 
-static ADDRINT rtn_address      = 0;
-static size_t rtn_size          = 0;
+static ADDRINT rtn_address = 0;
+static size_t rtn_size = 0;
 static unsigned char* rtn_bytes = NULL;
+
 
 void SaveRtnBytes(RTN rtn)
 {
     rtn_address = RTN_Address(rtn);
-    rtn_size    = (size_t)RTN_Size(rtn);
-    rtn_bytes   = (unsigned char*)malloc(rtn_size);
+    rtn_size = (size_t)RTN_Size(rtn);
+    rtn_bytes = (unsigned char*)malloc(rtn_size);
 
     if (rtn_bytes)
     {
@@ -36,8 +37,7 @@ void ValidateProbeSize(int nbytes)
     if (rtn_bytes)
     {
         int compare_probe_bytes = memcmp((const void*)rtn_bytes, (const void*)rtn_address, nbytes);
-        int compare_rest_of_rtn =
-            memcmp((const void*)(rtn_bytes + nbytes), (const void*)(rtn_address + nbytes), rtn_size - nbytes);
+        int compare_rest_of_rtn = memcmp((const void*)(rtn_bytes+nbytes), (const void*)(rtn_address+nbytes), rtn_size-nbytes);
 
         delete[] rtn_bytes;
 
@@ -60,20 +60,22 @@ VOID foo_before(void)
     ValidateProbeSize(expected_probe_size);
 }
 
-VOID ImageLoad(IMG img, VOID* v)
+
+VOID ImageLoad(IMG img, VOID *v)
 {
     RTN rtn = RTN_FindByName(img, "foo");
 
     if (RTN_Valid(rtn))
     {
-        SaveRtnBytes(rtn);
-        RTN_InsertCallProbed(rtn, IPOINT_BEFORE, AFUNPTR(foo_before), IARG_END);
+        SaveRtnBytes( rtn );
+        RTN_InsertCallProbed( rtn, IPOINT_BEFORE, AFUNPTR(foo_before), IARG_END);
     }
 }
 
+
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR* argv[])
+int main(INT32 argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
@@ -84,6 +86,8 @@ int main(INT32 argc, CHAR* argv[])
 
     return 0;
 }
+
+
 
 /* ===================================================================== */
 /* eof */

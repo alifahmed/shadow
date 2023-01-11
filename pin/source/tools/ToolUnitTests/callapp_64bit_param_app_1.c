@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,15 +13,15 @@
 //
 #include <stdio.h>
 
+
 #ifdef TARGET_WINDOWS
 #include <windows.h>
-typedef __int64 i64_type;
+typedef  __int64 i64_type;
 #endif
 
 extern void Bar();
 
-union union_64
-{
+union  union_64{
     double _doub;
     unsigned char _uint8[8];
     i64_type i64;
@@ -29,25 +29,25 @@ union union_64
 
 int main()
 {
-    union union_64 param1, param2;
+    union  union_64 param1, param2;
 
-    param1._uint8[0] = 0xde;
-    param1._uint8[1] = 0xad;
-    param1._uint8[2] = 0xbe;
-    param1._uint8[3] = 0xef;
-    param1._uint8[4] = 0xde;
-    param1._uint8[5] = 0xad;
-    param1._uint8[6] = 0xbe;
-    param1._uint8[7] = 0xef;
+    param1._uint8[0]=0xde;
+    param1._uint8[1]=0xad;
+    param1._uint8[2]=0xbe;
+    param1._uint8[3]=0xef;
+    param1._uint8[4]=0xde;
+    param1._uint8[5]=0xad;
+    param1._uint8[6]=0xbe;
+    param1._uint8[7]=0xef;
 
-    param2._uint8[0] = 0xde;
-    param2._uint8[1] = 0xad;
-    param2._uint8[2] = 0xbe;
-    param2._uint8[3] = 0xef;
-    param2._uint8[4] = 0xde;
-    param2._uint8[5] = 0xad;
-    param2._uint8[6] = 0xbe;
-    param2._uint8[7] = 0x7f;
+    param2._uint8[0]=0xde;
+    param2._uint8[1]=0xad;
+    param2._uint8[2]=0xbe;
+    param2._uint8[3]=0xef;
+    param2._uint8[4]=0xde;
+    param2._uint8[5]=0xad;
+    param2._uint8[6]=0xbe;
+    param2._uint8[7]=0x7f;
 
     Bar(param1.i64, param2.i64);
 

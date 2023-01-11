@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,10 +14,11 @@
 #include <signal.h>
 #include "tool_macros.h"
 
+
 static void HandleSigill(int);
-extern "C" void loadYmm0(const unsigned char*) ASMNAME("loadYmm0");
-extern "C" void loadZmm0(const unsigned char*) ASMNAME("loadZmm0");
-extern "C" void loadK0(const unsigned char*) ASMNAME("loadK0");
+extern "C" void loadYmm0(const unsigned char *) ASMNAME("loadYmm0");
+extern "C" void loadZmm0(const unsigned char *) ASMNAME("loadZmm0");
+extern "C" void loadK0(const unsigned char *) ASMNAME("loadK0");
 
 int main()
 {
@@ -27,7 +28,7 @@ int main()
     //
     struct sigaction act;
     act.sa_handler = HandleSigill;
-    act.sa_flags   = 0;
+    act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
     sigaction(SIGILL, &act, 0);
 #endif
@@ -37,14 +38,14 @@ int main()
     unsigned char zmmVal[64];
     unsigned char kVal[8];
 
-    for (i = 0; i < sizeof(ymmVal); i++)
-        ymmVal[i] = static_cast< unsigned char >(i + 1);
+    for (i = 0;  i < sizeof(ymmVal);  i++)
+        ymmVal[i] = static_cast<unsigned char>(i+1);
 
-    for (i = 0; i < sizeof(zmmVal); i++)
-        zmmVal[i] = static_cast< unsigned char >(i + 1);
+    for (i = 0;  i < sizeof(zmmVal);  i++)
+        zmmVal[i] = static_cast<unsigned char>(i+1);
 
-    for (i = 0; i < sizeof(kVal); i++)
-        kVal[i] = static_cast< unsigned char >(i + 1);
+    for (i = 0;  i < sizeof(kVal);  i++)
+        kVal[i] = static_cast<unsigned char>(i+1);
 
     // If the processor supports AVX512, the debugger stops at a breakpoint
     // immediately after loading each register.  Otherwise, the debugger stops at
@@ -56,13 +57,14 @@ int main()
         loadYmm0(ymmVal);
         loadZmm0(zmmVal);
     }
-    catch (...)
+    catch(...)
     {
         HandleSigill(0);
     }
 
     return 0;
 }
+
 
 static void HandleSigill(int sig)
 {

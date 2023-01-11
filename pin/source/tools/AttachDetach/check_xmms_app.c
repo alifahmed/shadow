@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -29,21 +29,26 @@ unsigned char ymmSaveVals[512];
 
 typedef union /*<POD>*/
 {
-    uint64_t _64[2]; ///< Vector of 2 64-bit elements.
+    uint64_t _64[2];     ///< Vector of 2 64-bit elements.
 } XMM_REG1;
 
 XMM_REG1 _xmmInit[8];
 XMM_REG1 _xmmAfter[8];
 
 extern void CleanXmms() ASMNAME("CleanXmms");
-extern void SaveXmms(XMM_REG1* xmms) ASMNAME("SaveXmms");
+extern void SaveXmms(XMM_REG1 *xmms) ASMNAME("SaveXmms");
 extern void DoNothing() ASMNAME("DoNothing");
 
+
+ 
+
+
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     int hadError = 0;
     int i;
+
 
     CleanXmms();
     SaveXmms(_xmmInit);
@@ -53,14 +58,16 @@ int main(int argc, char* argv[])
     DoNothing();
     SaveXmms(_xmmAfter);
 
-    for (i = 0; i < 8; i++)
+    for (i =0; i<8; i++)
     {
-        if ((_xmmInit[i]._64[0] != _xmmAfter[i]._64[0]) || (_xmmInit[i]._64[1] != _xmmAfter[i]._64[1]))
+        if ( (_xmmInit[i]._64[0] != _xmmAfter[i]._64[0])
+             || (_xmmInit[i]._64[1] != _xmmAfter[i]._64[1]) )
         {
             hadError = 1;
             //printf ("***Error \n");
-            printf("***Error _xmmInit[%d](expected) = 0x%llx 0x%llx :  _xmmAfter[%d](actual) 0x%llx 0x%llx\n", i,
-                   _xmmInit[i]._64[0], _xmmInit[i]._64[1], i, _xmmAfter[i]._64[0], _xmmAfter[i]._64[1]);
+            printf ("***Error _xmmInit[%d](expected) = 0x%llx 0x%llx :  _xmmAfter[%d](actual) 0x%llx 0x%llx\n",
+                    i, _xmmInit[i]._64[0], _xmmInit[i]._64[1],
+                    i, _xmmAfter[i]._64[0], _xmmAfter[i]._64[1]);
         }
         else
         {
@@ -70,8 +77,8 @@ int main(int argc, char* argv[])
 
     if (!hadError)
     {
-        printf("SUCCESS\n");
-        return (0);
+        printf ("SUCCESS\n");
+        return(0);
     }
     return -1;
 }

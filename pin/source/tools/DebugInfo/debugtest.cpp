@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,15 +17,16 @@
 #include <vector>
 #include <string>
 #include "pin.H"
-using std::cerr;
-using std::cout;
 using std::endl;
 using std::flush;
+using std::cerr;
 using std::string;
+using std::cout;
 
-string FILE_TO_FIND = "hello";
 
-void InstImage(IMG img, void* v)
+string FILE_TO_FIND= "hello";
+
+void InstImage(IMG img, void *v)
 {
     cout << "Image name = " << IMG_Name(img) << endl << flush;
 
@@ -38,9 +39,9 @@ void InstImage(IMG img, void* v)
             for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
             {
                 int lineno;
-                string srcfile = "";
+                string srcfile="";
                 PIN_GetSourceLocation(INS_Address(ins), NULL, &lineno, &srcfile);
-                if (srcfile.find(FILE_TO_FIND) != srcfile.npos)
+                if(srcfile.find(FILE_TO_FIND) != srcfile.npos)
                 {
                     fprintf(stderr, "passed\n");
                     break;
@@ -51,7 +52,7 @@ void InstImage(IMG img, void* v)
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     PIN_InitSymbols();
 

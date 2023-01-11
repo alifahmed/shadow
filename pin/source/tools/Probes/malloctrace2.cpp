@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,45 +25,49 @@
 #include <stdio.h>
 #include "tool_macros.h"
 using std::cerr;
-using std::cout;
 using std::endl;
+using std::cout;
 
 #ifdef TARGET_MAC
-#define MALLOC_LIB "libsystem_malloc.dylib"
+# define MALLOC_LIB "libsystem_malloc.dylib"
 #else
-#define MALLOC_LIB "libc.so"
+# define MALLOC_LIB "libc.so"
 #endif
+
+
 
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This pin tool inserts a user-written version of malloc() and free() into the application.\n"
-            "\n";
+    cerr <<
+        "This pin tool inserts a user-written version of malloc() and free() into the application.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
 }
 
+
 /* ===================================================================== */
 /* Definitions for Probe mode */
 /* ===================================================================== */
 
-typedef typeof(malloc)* MallocType;
-typedef typeof(free)* FreeType;
-typedef typeof(dlopen)* DlopenType;
-typedef typeof(dlsym)* DlsymType;
+typedef typeof(malloc) * MallocType;
+typedef typeof(free) * FreeType;
+typedef typeof(dlopen) * DlopenType;
+typedef typeof(dlsym) * DlsymType;
 
 MallocType MallocWrapper = 0;
-MallocType origMalloc    = 0;
+MallocType origMalloc = 0;
 
 FreeType FreeWrapper = 0;
-FreeType origFree    = 0;
+FreeType origFree = 0;
 
-void* MallocTraceHandle = 0;
+void * MallocTraceHandle = 0;
 
 DlopenType AppDlopen = 0;
-DlsymType AppDlsym   = 0;
+DlsymType AppDlsym = 0;
 
 typedef VOID (*SET_ORIG_FPTR)(MallocType mallocPtr, FreeType freePtr);
 
@@ -71,7 +75,7 @@ typedef VOID (*SET_ORIG_FPTR)(MallocType mallocPtr, FreeType freePtr);
 /* Probe mode tool */
 /* ===================================================================== */
 
-VOID* MallocWrapperInTool(size_t size)
+VOID *MallocWrapperInTool(size_t size)
 {
     if (MallocWrapper)
     {
@@ -84,7 +88,7 @@ VOID* MallocWrapperInTool(size_t size)
     }
 }
 
-VOID FreeWrapperInTool(void* p)
+VOID FreeWrapperInTool(void *p)
 {
     if (FreeWrapper)
     {
@@ -111,16 +115,16 @@ VOID MainRtnCallback()
 
     // Get function pointers for the wrappers
     MallocWrapper = MallocType(AppDlsym(MallocTraceHandle, "mallocWrapper"));
-    FreeWrapper   = FreeType(AppDlsym(MallocTraceHandle, "freeWrapper"));
+    FreeWrapper = FreeType(AppDlsym(MallocTraceHandle, "freeWrapper"));
     ASSERTX(MallocWrapper && FreeWrapper);
 
     // Send original function pointers to libmallocwrappers.so
-    SET_ORIG_FPTR setOriginalFptr = (SET_ORIG_FPTR)AppDlsym(MallocTraceHandle, "SetOriginalFptr");
+    SET_ORIG_FPTR setOriginalFptr = (SET_ORIG_FPTR) AppDlsym(MallocTraceHandle, "SetOriginalFptr");
     ASSERTX(setOriginalFptr != 0);
     (*setOriginalFptr)(origMalloc, origFree);
 }
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     if (strstr(IMG_Name(img).c_str(), "libdl.so"))
     {
@@ -138,13 +142,13 @@ VOID ImageLoad(IMG img, VOID* v)
         // future version.
 
 #if defined(TARGET_IA32E)
-#define DLOPEN_VERSION "GLIBC_2.2.5"
-#define DLSYM_VERSION "GLIBC_2.2.5"
+# define DLOPEN_VERSION "GLIBC_2.2.5"
+# define DLSYM_VERSION "GLIBC_2.2.5"
 #elif defined(TARGET_IA32)
-#define DLOPEN_VERSION "GLIBC_2.1"
-#define DLSYM_VERSION "GLIBC_2.0"
+# define DLOPEN_VERSION "GLIBC_2.1"
+# define DLSYM_VERSION "GLIBC_2.0"
 #else
-#error symbol versions unknown for this target
+# error symbol versions unknown for this target
 #endif
 
         RTN dlopenRtn = RTN_FindByName(img, "dlopen@@" DLOPEN_VERSION);
@@ -164,25 +168,25 @@ VOID ImageLoad(IMG img, VOID* v)
 
         // Get the function pointer for the application dlsym
         RTN dlsymRtn = RTN_FindByName(img, "dlsym@@" DLSYM_VERSION);
-        if (!RTN_Valid(dlsymRtn))
-        {
+        if (!RTN_Valid(dlsymRtn)) {
             dlsymRtn = RTN_FindByName(img, "dlsym@" DLSYM_VERSION);
         }
-        if (!RTN_Valid(dlsymRtn))
-        {
+        if (!RTN_Valid(dlsymRtn)) {
             // fallback for the cases in which symbols do not have a version
             dlsymRtn = RTN_FindByName(img, "dlsym");
         }
 
         ASSERTX(RTN_Valid(dlsymRtn));
         AppDlsym = DlsymType(RTN_Funptr(dlsymRtn));
+
+
     }
     if (strstr(IMG_Name(img).c_str(), "libdyld.dylib"))
     {
-        RTN dlopenRtn = RTN_FindByName(img, C_MANGLE("dlopen"));
+        RTN dlopenRtn = RTN_FindByName(img, C_MANGLE("dlopen") );
 
         // Get the function pointer for the application dlsym
-        RTN dlsymRtn = RTN_FindByName(img, C_MANGLE("dlsym"));
+        RTN dlsymRtn = RTN_FindByName(img, C_MANGLE("dlsym") );
 
         // In some systems, dlsym and dlopen symbols don't exist.
         // In this case, exit with special return code.
@@ -193,7 +197,8 @@ VOID ImageLoad(IMG img, VOID* v)
         }
 
         AppDlopen = DlopenType(RTN_Funptr(dlopenRtn));
-        AppDlsym  = DlsymType(RTN_Funptr(dlsymRtn));
+        AppDlsym = DlsymType(RTN_Funptr(dlsymRtn));
+
     }
 
     if (strstr(IMG_Name(img).c_str(), MALLOC_LIB))
@@ -202,7 +207,7 @@ VOID ImageLoad(IMG img, VOID* v)
         RTN mallocRtn = RTN_FindByName(img, C_MANGLE("malloc"));
         ASSERTX(RTN_Valid(mallocRtn));
 
-        if (!RTN_IsSafeForProbedReplacement(mallocRtn))
+        if ( ! RTN_IsSafeForProbedReplacement( mallocRtn ) )
         {
             cout << "Cannot replace malloc in " << IMG_Name(img) << endl;
             exit(1);
@@ -210,7 +215,7 @@ VOID ImageLoad(IMG img, VOID* v)
         RTN freeRtn = RTN_FindByName(img, C_MANGLE("free"));
         ASSERTX(RTN_Valid(freeRtn));
 
-        if (!RTN_IsSafeForProbedReplacement(freeRtn))
+        if ( ! RTN_IsSafeForProbedReplacement( freeRtn ) )
         {
             cout << "Cannot replace free in " << IMG_Name(img) << endl;
             exit(1);
@@ -219,6 +224,7 @@ VOID ImageLoad(IMG img, VOID* v)
         origMalloc = (MallocType)RTN_ReplaceProbed(mallocRtn, AFUNPTR(MallocWrapperInTool));
 
         origFree = (FreeType)RTN_ReplaceProbed(freeRtn, AFUNPTR(FreeWrapperInTool));
+
     }
 
     /* I call dopen before main. If this point is too late for you,
@@ -227,7 +233,8 @@ VOID ImageLoad(IMG img, VOID* v)
     if (IMG_IsMainExecutable(img))
     {
         RTN mainRtn = RTN_FindByName(img, "_main");
-        if (!RTN_Valid(mainRtn)) mainRtn = RTN_FindByName(img, "main");
+        if (!RTN_Valid(mainRtn))
+            mainRtn = RTN_FindByName(img, "main");
 
         if (!RTN_Valid(mainRtn))
         {
@@ -238,15 +245,17 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
+
+
 /* ===================================================================== */
 /* main */
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }

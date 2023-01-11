@@ -50,7 +50,8 @@ LIB_ROOTS :=
 
 # Linux
 ifeq ($(TARGET_OS),linux)
-    TEST_TOOL_ROOTS += set_loader_info_shift
+    TEST_TOOL_ROOTS += record_imageload set_loader_info_shift expand_replayed_rtn
+    APP_ROOTS += expand_replayed_rtn_app
 endif
 
 # Windows
@@ -59,11 +60,7 @@ ifeq ($(TARGET_OS),windows)
     APP_ROOTS += win_exception
 endif
 
-###### Handle exceptions here (OS/arch related) ######
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
+###### Handle exceptions here ######
 
 # See Mantis #4212
 ifeq ($(TARGET_OS),windows)
@@ -115,6 +112,16 @@ call_function_natively.test: $(OBJDIR)call_function_natively$(PINTOOL_SUFFIX) $(
 	$(RM) $(OBJDIR)call_function_natively_app.out $(OBJDIR)call_function_natively.out
 
 # Test record and replay of image load/unload events
+record_imageload.test: $(OBJDIR)record_imageload$(PINTOOL_SUFFIX) $(TESTAPP)
+	# Record the image load/unload information
+	$(PIN) -t $(OBJDIR)record_imageload$(PINTOOL_SUFFIX) -- $(TESTAPP) makefile $(OBJDIR)record_imageload.makefile.copy
+	# Replay it
+	$(PIN) -t $(OBJDIR)record_imageload$(PINTOOL_SUFFIX) -r -- $(TESTAPP) makefile $(OBJDIR)record_imageload.makefile.copy
+	# The output log should be the same at record and replay time
+	$(DIFF) record_imageload_rec.out record_imageload_play.out
+	$(RM) record_imageload_rec.out record_imageload_play.out $(OBJDIR)record_imageload.makefile.copy
+
+# Test record and replay of image load/unload events
 record_imageload2.test: $(OBJDIR)record_imageload2$(PINTOOL_SUFFIX) $(TESTAPP)
 	# Record the image load/unload information
 	$(PIN) -t $(OBJDIR)record_imageload2$(PINTOOL_SUFFIX) -p $(OBJDIR)record_imageload2 \
@@ -139,6 +146,10 @@ set_loader_info_shift.test: $(OBJDIR)set_loader_info_shift$(PINTOOL_SUFFIX) $(TE
 	$(PIN) -t $(OBJDIR)set_loader_info_shift$(PINTOOL_SUFFIX) -- $(TESTAPP) makefile $(OBJDIR)set_loader_info_shift.makefile.copy
 	$(RM) $(OBJDIR)set_loader_info_shift.makefile.copy
 
+expand_replayed_rtn.test: $(OBJDIR)expand_replayed_rtn$(PINTOOL_SUFFIX) $(OBJDIR)expand_replayed_rtn_app$(EXE_SUFFIX)
+	# Expect this test to stuck if there is a bug
+	$(PIN) -t $(OBJDIR)expand_replayed_rtn$(PINTOOL_SUFFIX) -test-image $(OBJDIR)expand_replayed_rtn_app$(EXE_SUFFIX) -- $(OBJDIR)expand_replayed_rtn_app$(EXE_SUFFIX)
+
 
 ##############################################################
 #
@@ -156,3 +167,7 @@ $(OBJDIR)win_exception$(EXE_SUFFIX): win_exception.c
 
 $(OBJDIR)call_function_natively_app$(EXE_SUFFIX): call_function_natively_app.cpp
 	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $< $(APP_LDFLAGS_NOOPT) $(APP_LIBS)
+
+$(OBJDIR)expand_replayed_rtn_app$(EXE_SUFFIX): expand_replayed_rtn_app.c $(OBJDIR)expand_replayed_rtn_app_asm$(OBJ_SUFFIX)
+	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(PIE) $(PIC) $(APP_LIBS)
+

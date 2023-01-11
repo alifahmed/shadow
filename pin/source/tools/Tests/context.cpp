@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,7 +14,7 @@
 
 UINT64 icount = 0;
 
-static VOID PrintContext(CONTEXT* ctxt)
+LOCALFUN VOID PrintContext(CONTEXT * ctxt)
 {
 #if defined(TARGET_IA32) || defined(TARGET_IA32E)
     cout << "gax:   " << ctxt->_gax << endl;
@@ -36,7 +36,7 @@ static VOID PrintContext(CONTEXT* ctxt)
     cout << "r14:   " << ctxt->_r14 << endl;
     cout << "r15:   " << ctxt->_r15 << endl;
 #endif
-
+    
     cout << "ss:    " << ctxt->_ss << endl;
     cout << "cs:    " << ctxt->_cs << endl;
     cout << "ds:    " << ctxt->_ds << endl;
@@ -46,14 +46,15 @@ static VOID PrintContext(CONTEXT* ctxt)
     cout << "gflags:" << ctxt->_gflags << endl;
 
     cout << "mxcsr: " << ctxt->_fxsave._mxcsr << endl;
-
+    
 #endif
 }
 
-VOID ShowContext(VOID* ip, VOID* handle, ADDRINT gax)
+
+VOID ShowContext(VOID * ip, VOID * handle, ADDRINT gax)
 {
     CONTEXT ctxt;
-
+    
     // Capture the context. This must be done first before some floating point
     // registers have been overwritten
     PIN_MakeContext(handle, &ctxt);
@@ -63,7 +64,7 @@ VOID ShowContext(VOID* ip, VOID* handle, ADDRINT gax)
     if (first)
     {
         cout << "ip:    " << ip << endl;
-
+    
         PrintContext(&ctxt);
 
         cout << endl;
@@ -71,25 +72,25 @@ VOID ShowContext(VOID* ip, VOID* handle, ADDRINT gax)
 
 #if defined(TARGET_IA32) || defined(TARGET_IA32E)
     ASSERTX(gax == ctxt._gax);
-#endif
+#endif    
 }
 
-VOID Trace(TRACE tr, VOID* v)
+VOID Trace(TRACE tr, VOID *v)
 {
     TRACE_InsertCall(tr, IPOINT_BEFORE, AFUNPTR(ShowContext), IARG_INST_PTR, IARG_CONTEXT, IARG_REG_VALUE, REG_GAX, IARG_END);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     cout << hex;
     cout.setf(ios::showbase);
-
+    
     PIN_Init(argc, argv);
 
     TRACE_AddInstrumentFunction(Trace, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

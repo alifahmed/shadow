@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,32 +24,32 @@
 typedef struct WIN_THREAD_RTN_ARG_
 {
     THREAD_RTN_PTR m_threadRtn;
-    void* m_arg;
-} WIN_THREAD_RTN_ARG;
+    void * m_arg;
+}WIN_THREAD_RTN_ARG;
 
 // Thread start routine in Windows
 static DWORD WINAPI WinThreadRtn(LPVOID arg)
 {
-    void* retval;
-    WIN_THREAD_RTN_ARG winThreadRtnArg = *((WIN_THREAD_RTN_ARG*)arg);
+    void * retval;
+    WIN_THREAD_RTN_ARG winThreadRtnArg = *((WIN_THREAD_RTN_ARG *)arg);
     free(arg);
     retval = winThreadRtnArg.m_threadRtn(winThreadRtnArg.m_arg);
     return ((DWORD)retval);
 }
 
-BOOL CreateOneThread(THREAD_HANDLE* pThreadHandle, THREAD_RTN_PTR threadRtn, void* arg)
+BOOL CreateOneThread(THREAD_HANDLE * pThreadHandle, THREAD_RTN_PTR threadRtn, void * arg)
 {
     HANDLE winThreadHandle;
-    WIN_THREAD_RTN_ARG* pWinThreadRtnArg = (WIN_THREAD_RTN_ARG*)malloc(sizeof(WIN_THREAD_RTN_ARG));
-    pWinThreadRtnArg->m_threadRtn        = threadRtn;
-    pWinThreadRtnArg->m_arg              = arg;
-
+    WIN_THREAD_RTN_ARG * pWinThreadRtnArg = (WIN_THREAD_RTN_ARG *)malloc(sizeof(WIN_THREAD_RTN_ARG));
+    pWinThreadRtnArg->m_threadRtn = threadRtn;
+    pWinThreadRtnArg->m_arg = arg;
+    
     winThreadHandle = CreateThread(NULL, 0, WinThreadRtn, pWinThreadRtnArg, 0, NULL);
     if (winThreadHandle == NULL)
     {
         return FALSE;
     }
-
+    
     *pThreadHandle = (THREAD_HANDLE)winThreadHandle;
     return TRUE;
 }
@@ -62,6 +62,12 @@ BOOL JoinOneThread(THREAD_HANDLE threadHandle)
     return (waitStatus == WAIT_OBJECT_0);
 }
 
-void ExitCurrentThread() { ExitThread(0); }
+void ExitCurrentThread()
+{
+    ExitThread(0);
+}
 
-void DelayCurrentThread(unsigned int millisec) { Sleep(millisec); }
+void DelayCurrentThread(unsigned int millisec)
+{
+    Sleep(millisec);
+}

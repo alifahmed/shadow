@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,11 +17,13 @@
 #include <iostream>
 #include <pin.H>
 
-static void InstrumentIns(INS, VOID*);
+
+static void InstrumentIns(INS, VOID *);
 static REG GetScratchReg(UINT32);
 static ADDRINT GetMemAddress(ADDRINT);
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     INS_AddInstrumentFunction(InstrumentIns, 0);
@@ -29,20 +31,22 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static void InstrumentIns(INS ins, VOID*)
+static void InstrumentIns(INS ins, VOID *)
 {
-    for (UINT32 memIndex = 0; memIndex < INS_MemoryOperandCount(ins); memIndex++)
+    for (UINT32 memIndex = 0;  memIndex < INS_MemoryOperandCount(ins);  memIndex++)
     {
         REG scratchReg = GetScratchReg(memIndex);
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(GetMemAddress), IARG_MEMORYOP_EA, memIndex, IARG_RETURN_REGS, scratchReg,
-                       IARG_END);
-        INS_RewriteMemoryOperand(ins, memIndex, scratchReg);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(GetMemAddress),
+            IARG_MEMORYOP_EA, memIndex,
+            IARG_RETURN_REGS, scratchReg,
+            IARG_END);
+        INS_RewriteMemoryOperand(ins, memIndex, scratchReg); 
     }
 }
 
 static REG GetScratchReg(UINT32 index)
 {
-    static std::vector< REG > regs;
+    static std::vector<REG> regs;
 
     while (index >= regs.size())
     {
@@ -59,4 +63,7 @@ static REG GetScratchReg(UINT32 index)
     return regs[index];
 }
 
-static ADDRINT GetMemAddress(ADDRINT ea) { return ea; }
+static ADDRINT GetMemAddress(ADDRINT ea)
+{
+    return ea;
+}

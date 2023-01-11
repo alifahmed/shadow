@@ -1,4 +1,4 @@
-; Copyright 2002-2020 Intel Corporation.
+; Copyright 2002-2019 Intel Corporation.
 ; 
 ; This software is provided to you as Sample Source Code as defined in the accompanying
 ; End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -52,7 +52,7 @@ lbl7:
     mov [esp + 8], eax
 
 lbl8:
-    lea eax, fs:-8  ; -8 is 32-bit segment offset
+    lea eax, fs:[-8]
 
     mov eax, 0deadbeefH
 lbl9:

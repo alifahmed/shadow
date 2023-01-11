@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,13 +24,15 @@
 #define EXPORT_CSYM EXTERNC __declspec(dllexport)
 #else
 #define NOINLINE __attribute__((noinline))
-#define IMPORT EXTERNC
+#define IMPORT EXTERNC 
 #define EXPORT_CSYM EXTERNC
 #endif
 
 extern int IMPORT one();
 
-int EXPORT_CSYM NOINLINE two() { return 2; }
+int EXPORT_CSYM NOINLINE two() {
+    return 2;
+}
 
 int (*two_ptr)(void);
 

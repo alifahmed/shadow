@@ -1,5 +1,7 @@
 .cproject
 .project
+.vscode/
 .settings/
 
-obj-inte64/
+obj-intel64/
+output/

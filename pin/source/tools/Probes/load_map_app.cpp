@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,7 +19,7 @@ extern "C" void one();
 extern "C" void do_nothing()
 {
     int n;
-    for (int i = 0; i < 100; i++)
+    for (int i=0; i< 100; i++)
     {
         printf(".");
         n++;
@@ -34,3 +34,4 @@ int main()
     printf("Hello, world\n");
     return 0;
 }
+

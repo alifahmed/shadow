@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -28,10 +28,10 @@
 static int total_compares = 0;
 
 // compare function for qsort and merge sort
-int compare_int(const void* p, const void* q)
+int compare_int(const void *p, const void *q)
 {
-    const int* pi = (const int*)p;
-    const int* qi = (const int*)q;
+    const int *pi = (const int *)p;
+    const int *qi = (const int *)q;
 
     total_compares++;
 
@@ -39,7 +39,7 @@ int compare_int(const void* p, const void* q)
 }
 
 // a naive version of merge sort that uses the stack a lot
-void stacksort(int* array, size_t nelem, int (*compar)(const void*, const void*))
+void stacksort(int *array, size_t nelem, int (*compar)(const void *, const void *))
 {
     int left[ARRAY_SIZE];
     int right[ARRAY_SIZE];
@@ -47,13 +47,14 @@ void stacksort(int* array, size_t nelem, int (*compar)(const void*, const void*)
     int i, nleft, nright, il, ir;
 
     // stop condition
-    if (nelem == 1) return;
+    if (nelem == 1)
+        return;
 
     if (nelem == 2)
     {
         if (compar(&array[0], &array[1]) > 0)
         {
-            int t    = array[0];
+            int t = array[0];
             array[0] = array[1];
             array[1] = t;
         }
@@ -61,13 +62,13 @@ void stacksort(int* array, size_t nelem, int (*compar)(const void*, const void*)
     }
 
     // split the array to the left and right arrays
-    for (i = 0; i < nelem / 2; i++)
+    for (i = 0; i < nelem/2; i++)
     {
-        left[i]  = array[2 * i];
+        left[i] = array[2 * i];
         right[i] = array[2 * i + 1];
     }
 
-    nleft = nright = nelem / 2;
+    nleft = nright = nelem/2;
     if (nelem % 2)
     {
         left[nleft++] = array[nelem - 1];
@@ -98,11 +99,11 @@ void stacksort(int* array, size_t nelem, int (*compar)(const void*, const void*)
     }
 }
 
-void use_array(int* arr)
+void use_array(int *arr)
 {
     int i = 0, b[ARRAY_SIZE];
 
-    for (i = 0; i < ARRAY_SIZE; i++)
+    for(i = 0; i < ARRAY_SIZE; i++)
     {
         b[i] = arr[i] = random() % BUCKET;
     }
@@ -116,7 +117,7 @@ void use_array(int* arr)
     total_compares = 0;
 }
 
-void* thread(void* dummy)
+void* thread(void *dummy)
 {
     int a[ARRAY_SIZE];
 
@@ -124,6 +125,7 @@ void* thread(void* dummy)
 
     return 0;
 }
+
 
 int main(int argc, char* argv[])
 {
@@ -134,10 +136,11 @@ int main(int argc, char* argv[])
     pthread_attr_init(&attr);
     pthread_attr_setstacksize(&attr, STACK_SIZE);
 
-    fprintf(stderr, "Start\n");
-    pthread_create(&l, &attr, thread, 0);
+    fprintf(stderr,"Start\n");
+    pthread_create(&l,&attr,thread,0);
 
     pthread_join(l, 0);
 
     return 0;
 }
+

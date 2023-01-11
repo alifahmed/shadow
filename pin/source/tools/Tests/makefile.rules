@@ -41,7 +41,7 @@ TOOL_ROOTS := segv probe traceusage rtn_insert_call_probed tracecount smc_check 
 SA_TOOL_ROOTS :=
 
 # This defines all the applications that will be run during the tests.
-APP_ROOTS := foobar jecxz check_env trace_address_app empty_str_app
+APP_ROOTS := foobar jecxz check_env trace_address_app
 
 # This defines any additional object files that need to be compiled.
 OBJECT_ROOTS := jecxz_$(TARGET) df_flag_utils_asm
@@ -73,7 +73,7 @@ endif
 # Linux
 ifeq ($(TARGET_OS),linux)
     TEST_TOOL_ROOTS += reg_ref_inlined ifunc_tst exitProcess context_stack_and_spill ifuncmemcpy callargs_probe_tool
-    TEST_ROOTS += launcher_linux context_stack_and_spill_noinline_bridge tool_without_extension imageLoader \
+    TEST_ROOTS += launcher_linux context_stack_and_spill_noinline_bridge toolwithoutso toolpathwithoutso imageLoader \
                   illegal_envp sourceLocation statdyn callargs_probe illegal_envp_probed ifunc_tst_probe helpmsg_app \
                   helpmsg_app_nofilename
     TOOL_ROOTS += launcher_tool ea_verifier sourceLocation_tool statdyn_tool
@@ -114,7 +114,7 @@ ifeq ($(TARGET_OS),windows)
     endif
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 # The launcher is only relevant when running from the kit structure.
 ifneq ($(KIT),1)
@@ -123,13 +123,23 @@ ifneq ($(KIT),1)
     APP_ROOTS := $(filter-out launcher_app, $(APP_ROOTS))
 endif
 
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
-
+# For check_env see Mantis 3077.
 ifeq ($(TARGET_OS),windows)
-    # For check_env see Mantis 3077.
     TEST_ROOTS := $(filter-out check_env, $(TEST_ROOTS))
+    ifeq ($(TARGET),intel64)
+        ifeq ($(MSVCVER_GE_15), 1)
+            # See Mantis 4213 - this only fails for Windows7.
+            TEST_TOOL_ROOTS := $(filter-out context-pc, $(TEST_TOOL_ROOTS))
+            TEST_ROOTS := $(filter-out on_stack_context_pc, $(TEST_ROOTS))
+        endif
+        # This test always fails in Win7 with MSVC14.
+        # Once resolved with MSVC15, try to enable this one too.
+        ifeq ($(VisualStudioVersion),14.0)
+            # See Mantis 4213
+            TEST_TOOL_ROOTS := $(filter-out context-pc, $(TEST_TOOL_ROOTS))
+            TEST_ROOTS := $(filter-out on_stack_context_pc, $(TEST_ROOTS))
+        endif
+    endif
     # See Mantis 4468
     ifeq ($(ICC),1)
         TEST_ROOTS := $(filter-out test_ebx_in_exceptions, $(TEST_ROOTS))
@@ -146,12 +156,6 @@ ifeq ($(TARGET_OS),linux)
         TEST_TOOL_ROOTS := $(filter-out ifuncmemcpy, $(TEST_TOOL_ROOTS))
     endif
 endif
-
-
-###### Define the serial subset ######
-
-# Defines which tests need to be run serially as may cause issues when running in parallel 
-SERIAL_SUBSET := helpmsg_tool_nofilename helpmsg_nofilename
 
 
 ###### Define the sanity subset ######
@@ -315,12 +319,11 @@ on_stack_context_pc.test: $(OBJDIR)context-pc$(PINTOOL_SUFFIX) $(TESTAPP)
 	$(CMP) makefile $(OBJDIR)on_stack_context_pc.makefile.copy
 	$(RM) $(OBJDIR)on_stack_context_pc.makefile.copy $(OBJDIR)on_stack_context_pc.out
 
-# This is a negative test, it should fail since PinTool is passed without extension 
-tool_without_extension.test: $(OBJDIR)callargs$(PINTOOL_SUFFIX) $(OBJDIR)foobar$(EXE_SUFFIX)
-	-$(PIN) -t $(OBJDIR)callargs -- $(OBJDIR)foobar$(EXE_SUFFIX) > $(OBJDIR)tool_without_extension.out
-	@echo "tool_without_extension is a negative test - loading PinTool without extension should fail"
-	$(QGREP) "E: Unable to resolve tool path" $(OBJDIR)tool_without_extension.out
-	$(RM) $(OBJDIR)tool_without_extension.out
+toolwithoutso.test: $(OBJDIR)callargs$(PINTOOL_SUFFIX) $(OBJDIR)foobar$(EXE_SUFFIX)
+	$(PIN) -t $(OBJDIR)callargs -- $(OBJDIR)foobar$(EXE_SUFFIX)
+
+toolpathwithoutso.test: $(OBJDIR)callargs$(PINTOOL_SUFFIX) $(OBJDIR)foobar$(EXE_SUFFIX)
+	$(PIN) -t $(TOOLS_ROOT)/Tests/$(OBJDIR)callargs -- $(OBJDIR)foobar$(EXE_SUFFIX)
 
 verify-ia32.test: $(OBJDIR)verify$(PINTOOL_SUFFIX) $(OBJDIR)loop$(EXE_SUFFIX)
 	$(PIN) -t $(OBJDIR)verify$(PINTOOL_SUFFIX) -- $(OBJDIR)loop$(EXE_SUFFIX)
@@ -427,8 +430,8 @@ helpmsg.test: | $(OBJDIR)
 
 helpmsg_nofilename.test: | $(OBJDIR)
 	-$(PIN) -help -logfile > $(OBJDIR)$(@:.test=.out) 2>&1
-	$(QGREP) "E: \[tid:.*\] missing argument for -logfile" $(OBJDIR)$(@:.test=.out)
-	$(QGREP) "E:  \[tid:.*\] missing argument for -logfile" pin.log
+	$(QGREP) "E: missing argument for -logfile" $(OBJDIR)$(@:.test=.out)
+	$(QGREP) "E:  missing argument for -logfile" pin.log
 	$(RM) $(OBJDIR)$(@:.test=.out) pin.log
 
 helpmsg_tool.test: | $(OBJDIR)
@@ -439,8 +442,8 @@ helpmsg_tool.test: | $(OBJDIR)
 
 helpmsg_tool_nofilename.test: | $(OBJDIR)
 	-$(PIN) -help -logfile -t $(OBJDIR)this_tool_does_not_exist$(PINTOOL_SUFFIX) > $(OBJDIR)$(@:.test=.out) 2>&1
-	$(QGREP) "E: \[tid:.*\] missing argument for -logfile" $(OBJDIR)$(@:.test=.out)
-	$(QGREP) "E:  \[tid:.*\] missing argument for -logfile" pin.log
+	$(QGREP) "E: missing argument for -logfile" $(OBJDIR)$(@:.test=.out)
+	$(QGREP) "E:  missing argument for -logfile" pin.log
 	$(RM) $(OBJDIR)$(@:.test=.out) pin.log
 
 helpmsg_app.test: | $(OBJDIR)
@@ -451,8 +454,8 @@ helpmsg_app.test: | $(OBJDIR)
 
 helpmsg_app_nofilename.test: | $(OBJDIR)
 	-$(PIN) -help -logfile -- $(OBJDIR)this_app_does_not_exist$(EXE_SUFFIX) > $(OBJDIR)$(@:.test=.out) 2>&1
-	$(QGREP) "E: \[tid:.*\] missing argument for -logfile" $(OBJDIR)$(@:.test=.out)
-	$(QGREP) "E:  \[tid:.*\] missing argument for -logfile" pin.log
+	$(QGREP) "E: missing argument for -logfile" $(OBJDIR)$(@:.test=.out)
+	$(QGREP) "E:  missing argument for -logfile" pin.log
 	$(RM) $(OBJDIR)$(@:.test=.out) pin.log
 
 trace_address.test: $(OBJDIR)trace_address$(PINTOOL_SUFFIX) $(OBJDIR)trace_address_app$(EXE_SUFFIX)
@@ -464,9 +467,6 @@ trace_address.test: $(OBJDIR)trace_address$(PINTOOL_SUFFIX) $(OBJDIR)trace_addre
 	$(RM) $(OBJDIR)trace_address_tool.out.tmp $(OBJDIR)trace_address_app.out.tmp 
 	$(RM) $(OBJDIR)trace_address_tool.out $(OBJDIR)trace_address_app.out
 
-# invoke the test application with empty argument (test app checks argv[2] to be empty)
-empty_str.test: $(OBJDIR)empty_str_app$(EXE_SUFFIX)
-	$(PIN) -- $(OBJDIR)empty_str_app$(EXE_SUFFIX) "A" "" "B" > $(OBJDIR)empty_str_app.out
 
 ##############################################################
 #
@@ -569,20 +569,17 @@ $(OBJDIR)trace_address_app$(EXE_SUFFIX): trace_address_app.cpp
 	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(DBG_INFO_CXX_ALWAYS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT) \
 	  $(DBG_INFO_LD_ALWAYS) $(APP_LIBS)
 
-$(OBJDIR)empty_str_app$(EXE_SUFFIX): empty_str_app.c
-	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT)
-
 ###### Special objects' build rules ######
 
 # This object is part of an application, however it needs to be be built with the static MT library so we
 # use TOOL_CXXFLAGS_NOOPT instead of APP_CXXFLAGS_NOOPT.
 $(OBJDIR)test_ebx_in_exceptions$(OBJ_SUFFIX): test_ebx_in_exceptions_$(OS_TYPE).cpp
-	$(APP_CXX) $(PIC) $(SATOOL_CXXFLAGS_NOOPT) $(COMP_OBJ)$@ $<
+	$(APP_CXX) $(PIC) $(TOOL_CXXFLAGS_NOOPT) $(COMP_OBJ)$@ $<
 
 # This object is part of an application. However, it uses some Xed and Pin interfaces, so it should be
 # compiled with all the flags of a tool.
 $(OBJDIR)test_ebx_in_exceptions_xed_interface$(OBJ_SUFFIX): test_ebx_in_exceptions_xed_interface.cpp
-	$(APP_CXX) $(PIC) $(SATOOL_CXXFLAGS_NOOPT) $(COMP_OBJ)$@ $<
+	$(CXX) $(PIC) $(TOOL_CXXFLAGS) $(COMP_OBJ)$@ $<
 
 ###### Special dlls' build rules ######
 

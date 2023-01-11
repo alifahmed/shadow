@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,23 +25,32 @@
 #define FASTCALL __fastcall
 #define DLLEXPORT __declspec(dllexport)
 #else
-#define FASTCALL
-#define DLLEXPORT
+#define FASTCALL 
+#define DLLEXPORT 
 #endif
 
 bool destructed = false;
 
-// cpp exceptions - Exercise windows exception mechanism
+// cpp exceptions - Exercise windows exception mechanism 
 class MyClass
 {
-  public:
-    ~MyClass() { destructed = true; }
+public:
+    ~MyClass() 
+    { 
+        destructed = true;
+    }
 };
+
 
 static int (*pBar)() = 0;
 
-int bar() { return 0; }
-extern "C" DLLEXPORT int foo()
+int bar()
+{
+    return 0;
+}
+extern "C"
+DLLEXPORT
+int foo()
 {
 #if defined(TARGET_LINUX) || defined(TARGET_MAC)
     if (!pBar) throw(0);
@@ -52,16 +61,16 @@ extern "C" DLLEXPORT int foo()
 
 int main()
 {
-    int i     = 2;
+    int i = 2;
     int local = 1;
 
     try
     {
         MyClass ins;
-        i     = foo();
+        i = foo();
         local = 0;
     }
-    catch (...)
+    catch(...)
     {
         // If Pin translated probed code properly, exception will reach the handler
         printf("Exception\n");
@@ -79,7 +88,7 @@ int main()
     {
         i = foo();
     }
-    catch (...)
+    catch(...)
     {
         // No exception expected
         printf("Exception\n");

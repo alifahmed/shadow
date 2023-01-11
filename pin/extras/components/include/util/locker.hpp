@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -17,24 +17,25 @@
 #ifndef UTIL_LOCKER_HPP
 #define UTIL_LOCKER_HPP
 
-namespace UTIL
-{
+namespace UTIL {
+
 /*!
  * A simple utility that manages a mutex lock.  The lock is automatically acquired on
  * entry to the scope and released on exit.
  *
  *  @param LOCK     Any type that supports Lock() and Unlock() methods with the usual semantics.
  */
-template< class LOCK > class /*<UTILITY>*/ LOCKER
+template<class LOCK> class /*<UTILITY>*/ LOCKER
 {
-  public:
+public:
     /*!
      *  @param[in] lock     The lock to acquire.
      *  @param[in] acquire  If TRUE, the constructor acquires the lock.
      */
-    LOCKER(LOCK* lock, bool acquire = true) : _lock(lock), _isLocked(acquire)
+    LOCKER(LOCK *lock, bool acquire = true) : _lock(lock), _isLocked(acquire)
     {
-        if (acquire) _lock->Lock();
+        if (acquire)
+            _lock->Lock();
     }
 
     /*!
@@ -42,7 +43,8 @@ template< class LOCK > class /*<UTILITY>*/ LOCKER
      */
     ~LOCKER()
     {
-        if (_isLocked) _lock->Unlock();
+        if (_isLocked)
+            _lock->Unlock();
     }
 
     /*!
@@ -69,15 +71,19 @@ template< class LOCK > class /*<UTILITY>*/ LOCKER
      *
      *  @param[in] isLocked     TRUE if the lock has been acquired.
      */
-    void SetLocked(bool isLocked) { _isLocked = isLocked; }
+    void SetLocked(bool isLocked)
+    {
+        _isLocked = isLocked;
+    }
 
-  private:
-    LOCK* _lock;
+private:
+    LOCK *_lock;
 
     // _lock might be dead/deallocated while we are inside a scope, we don't want to unlock it in this case (will cause exception).
     // _isLocked gives us a way out in such a case (See SetLocked()).
     bool _isLocked;
 };
+
 
 /*!
  * A simple utility that manages a RW mutex lock for READ lock oprtations.  The lock is automatically acquired on
@@ -85,9 +91,9 @@ template< class LOCK > class /*<UTILITY>*/ LOCKER
  *
  *  @param LOCK     Any type that supports ReadLock(), WriteLock() and Unlock() methods with the usual semantics.
  */
-template< class LOCK > class /*<UTILITY>*/ RWLOCKER
+template<class LOCK> class /*<UTILITY>*/ RWLOCKER
 {
-  public:
+public:
     enum LockType
     {
         READ,
@@ -98,7 +104,7 @@ template< class LOCK > class /*<UTILITY>*/ RWLOCKER
      *  @param[in] lock     The lock to acquire.
      *  @param[in] acquire  If TRUE, the constructor acquires the lock.
      */
-    RWLOCKER(LOCK* lock, LockType lock_type, bool acquire = true) : _lock(lock), _isLocked(false)
+    RWLOCKER(LOCK *lock, LockType lock_type, bool acquire = true) : _lock(lock), _isLocked(false)
     {
         if (acquire)
         {
@@ -109,7 +115,10 @@ template< class LOCK > class /*<UTILITY>*/ RWLOCKER
     /*!
      * The destructor releases the lock unless it was manually released via Unlock().
      */
-    ~RWLOCKER() { Unlock(); }
+    ~RWLOCKER()
+    {
+        Unlock();
+    }
 
     /*!
      * Manually release the lock.
@@ -132,25 +141,22 @@ template< class LOCK > class /*<UTILITY>*/ RWLOCKER
      */
     void Lock(LockType lock_type)
     {
-        if (NULL != _lock)
+        if  (NULL != _lock)
         {
             switch (lock_type)
             {
-                case RWLOCKER::READ:
-                    _lock->ReadLock();
-                    break;
-                case RWLOCKER::WRITE:
-                    _lock->WriteLock();
-                    break;
+            case RWLOCKER::READ:  _lock->ReadLock();     break;
+            case RWLOCKER::WRITE: _lock->WriteLock();    break;
             }
         }
         _isLocked = true;
     }
 
-  private:
-    LOCK* _lock;
+private:
+    LOCK *_lock;
     bool _isLocked;
 };
+
 
 #ifdef CC_FAST_LOOKUP
 /*!
@@ -159,9 +165,9 @@ template< class LOCK > class /*<UTILITY>*/ RWLOCKER
  *
  *  @param LOCK     Any type that supports ReadLock(), WriteLock() and Unlock() methods with the usual semantics.
  */
-template< class LOCK, NATIVE_TID (*GetTidFn)() > class /*<UTILITY>*/ RWLOCKER_WITH_TID
+template<class LOCK, NATIVE_TID (*GetTidFn)()> class /*<UTILITY>*/ RWLOCKER_WITH_TID
 {
-  public:
+public:
     enum LockType
     {
         READ,
@@ -172,7 +178,7 @@ template< class LOCK, NATIVE_TID (*GetTidFn)() > class /*<UTILITY>*/ RWLOCKER_WI
      *  @param[in] lock     The lock to acquire.
      *  @param[in] acquire  If TRUE, the constructor acquires the lock.
      */
-    RWLOCKER_WITH_TID(LOCK* lock, LockType lock_type, bool acquire = true) : _lock(lock), _tid(INVALID_NATIVE_TID)
+    RWLOCKER_WITH_TID(LOCK *lock, LockType lock_type, bool acquire = true) : _lock(lock), _tid(INVALID_NATIVE_TID)
     {
         if (acquire)
         {
@@ -183,7 +189,10 @@ template< class LOCK, NATIVE_TID (*GetTidFn)() > class /*<UTILITY>*/ RWLOCKER_WI
     /*!
      * The destructor releases the lock unless it was manually released via Unlock().
      */
-    ~RWLOCKER_WITH_TID() { Unlock(); }
+    ~RWLOCKER_WITH_TID()
+    {
+        Unlock();
+    }
 
     /*!
      * Manually release the lock.
@@ -207,20 +216,17 @@ template< class LOCK, NATIVE_TID (*GetTidFn)() > class /*<UTILITY>*/ RWLOCKER_WI
         _tid = GetTidFn();
         switch (lock_type)
         {
-            case RWLOCKER_WITH_TID< LOCK, GetTidFn >::READ:
-                _lock->ReadLock(_tid);
-                break;
-            case RWLOCKER_WITH_TID< LOCK, GetTidFn >::WRITE:
-                _lock->WriteLock(_tid);
-                break;
+            case RWLOCKER_WITH_TID<LOCK, GetTidFn>::READ:  _lock->ReadLock(_tid);     break;
+            case RWLOCKER_WITH_TID<LOCK, GetTidFn>::WRITE: _lock->WriteLock(_tid);    break;
         }
     }
 
-  private:
-    LOCK* _lock;
+private:
+    LOCK *_lock;
     NATIVE_TID _tid;
 };
 #endif
+
 
 /*!
  * A simple utility that manages a Microsoft CRITICAL_SECTION.  The critical section
@@ -230,16 +236,17 @@ template< class LOCK, NATIVE_TID (*GetTidFn)() > class /*<UTILITY>*/ RWLOCKER_WI
  *                   use any type that works with functions named EnterCriticalSection()
  *                   and LeaveCriticalSection().
  */
-template< typename CSTYPE > class /*<UTILITY>*/ SCOPED_CRITICAL_SECTION
+template <typename CSTYPE> class /*<UTILITY>*/ SCOPED_CRITICAL_SECTION
 {
-  public:
+public:
     /*!
      *  @param[in] cs       The critical section to acquire.
      *  @param[in] acquire  If TRUE, the constructor acquires the critical section.
      */
-    SCOPED_CRITICAL_SECTION(CSTYPE* cs, bool acquire = true) : _cs(cs), _isLocked(acquire)
+    SCOPED_CRITICAL_SECTION(CSTYPE *cs, bool acquire = true) : _cs(cs), _isLocked(acquire)
     {
-        if (acquire) EnterCriticalSection(cs);
+        if (acquire)
+            EnterCriticalSection(cs);
     }
 
     /*!
@@ -247,7 +254,8 @@ template< typename CSTYPE > class /*<UTILITY>*/ SCOPED_CRITICAL_SECTION
      */
     ~SCOPED_CRITICAL_SECTION()
     {
-        if (_isLocked) LeaveCriticalSection(_cs);
+        if (_isLocked)
+            LeaveCriticalSection(_cs);
     }
 
     /*!
@@ -274,12 +282,15 @@ template< typename CSTYPE > class /*<UTILITY>*/ SCOPED_CRITICAL_SECTION
      *
      *  @param[in] isLocked     TRUE if the critical section has been acquired.
      */
-    void SetLocked(bool isLocked) { _isLocked = isLocked; }
+    void SetLocked(bool isLocked)
+    {
+        _isLocked = isLocked;
+    }
 
-  private:
-    CSTYPE* _cs;
+private:
+    CSTYPE *_cs;
     bool _isLocked;
 };
 
-} // namespace UTIL
+} // namespace
 #endif // file guard

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -27,9 +27,11 @@
 #define MAXMASK 64
 #endif
 
+
 static void Handle(int);
-static void PrintCurrentMask(const char*);
-static void PrintMask(const char*, sigset_t*);
+static void PrintCurrentMask(const char *);
+static void PrintMask(const char *, sigset_t *);
+
 
 int main()
 {
@@ -48,7 +50,7 @@ int main()
     PrintCurrentMask("Initial: ");
 
     act.sa_handler = Handle;
-    act.sa_flags   = SA_NODEFER;
+    act.sa_flags = SA_NODEFER;
     sigemptyset(&act.sa_mask);
     sigaddset(&act.sa_mask, SIGSEGV);
     sigaddset(&act.sa_mask, SIGHUP);
@@ -91,6 +93,7 @@ int main()
     return 0;
 }
 
+
 static void Handle(int sig)
 {
     if (sig == SIGUSR1)
@@ -104,7 +107,8 @@ static void Handle(int sig)
     }
 }
 
-static void PrintCurrentMask(const char* prefix)
+
+static void PrintCurrentMask(const char *prefix)
 {
     sigset_t mask;
 
@@ -114,18 +118,20 @@ static void PrintCurrentMask(const char* prefix)
         printf("%s[ERROR]\n", prefix);
 }
 
-static void PrintMask(const char* prefix, sigset_t* mask)
+
+static void PrintMask(const char *prefix, sigset_t *mask)
 {
     int sig;
     int first;
 
     first = 1;
     printf("%s[", prefix);
-    for (sig = 1; sig < MAXMASK; sig++)
+    for (sig = 1;  sig < MAXMASK;  sig++)
     {
         if (sigismember(mask, sig))
         {
-            if (!first) printf(" ");
+            if (!first)
+                printf(" ");
             first = 0;
             printf("%d", sig);
         }

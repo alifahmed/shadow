@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -17,8 +17,10 @@
 #ifndef DEBUGGER_PROTOCOL_EVENT_WINDOWS_HPP
 #define DEBUGGER_PROTOCOL_EVENT_WINDOWS_HPP
 
-namespace DEBUGGER_PROTOCOL
-{
+
+
+namespace DEBUGGER_PROTOCOL {
+
 /*!
  * In the future, new fields may be added to the end of the EVENT_INFO_WINDOWS32
  * or EVENT_INFO_WINDOWS64 structures.  If this happens, clients can use the
@@ -34,10 +36,11 @@ namespace DEBUGGER_PROTOCOL
  */
 enum EVENT_INFO_WINDOWS_VERSION
 {
-    EVENT_INFO_WINDOWS_VERSION_0 ///< This is the only defined version currently.
+    EVENT_INFO_WINDOWS_VERSION_0    ///< This is the only defined version currently.
 };
 
-static const unsigned MAX_EXCEPTION_PARAMETERS = 15; ///< Maximum number of exception parameters.
+
+static const unsigned MAX_EXCEPTION_PARAMETERS = 15;    ///< Maximum number of exception parameters.
 
 /*!
  * This has the same layout as EXCEPTION_RECORD32.  If you are compiling on Windows,
@@ -68,14 +71,15 @@ struct /*<POD>*/ EXCEPTION64
     UINT64 _exceptionInformation[MAX_EXCEPTION_PARAMETERS];
 };
 
+
 /*!
  * Information about an exception received on a 32-bit Windows target.
  */
 struct /*<POD>*/ EVENT_INFO_WINDOWS32
 {
-    EVENT_INFO_WINDOWS_VERSION _version; ///< Tells which fields in this structure are valid.
-    bool _firstChance;                   ///< TRUE if this is a first-chance exception.
-    EXCEPTION32 _exception;              ///< Windows exception record.
+    EVENT_INFO_WINDOWS_VERSION _version;    ///< Tells which fields in this structure are valid.
+    bool _firstChance;                      ///< TRUE if this is a first-chance exception.
+    EXCEPTION32 _exception;                 ///< Windows exception record.
 };
 
 /*!
@@ -83,10 +87,10 @@ struct /*<POD>*/ EVENT_INFO_WINDOWS32
  */
 struct /*<POD>*/ EVENT_INFO_WINDOWS64
 {
-    EVENT_INFO_WINDOWS_VERSION _version; ///< Tells which fields in this structure are valid.
-    bool _firstChance;                   ///< TRUE if this is a first-chance exception.
-    EXCEPTION64 _exception;              ///< Windows exception record.
+    EVENT_INFO_WINDOWS_VERSION _version;    ///< Tells which fields in this structure are valid.
+    bool _firstChance;                      ///< TRUE if this is a first-chance exception.
+    EXCEPTION64 _exception;                 ///< Windows exception record.
 };
 
-} // namespace DEBUGGER_PROTOCOL
+} // namespace
 #endif // file guard

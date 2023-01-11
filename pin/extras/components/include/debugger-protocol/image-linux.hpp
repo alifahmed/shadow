@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -19,8 +19,8 @@
 
 #include <vector>
 
-namespace DEBUGGER_PROTOCOL
-{
+namespace DEBUGGER_PROTOCOL {
+
 /*!
  * In the future, new image types may be added.  To retain backward compatibility,
  * clients should ignore types they don't recognize.
@@ -53,7 +53,7 @@ enum IMAGE_TYPE_LINUX
  */
 enum IMAGE_INFO_LINUX_VERSION
 {
-    IMAGE_INFO_LINUX_VERSION_0 ///< This is the only defined version currently.
+    IMAGE_INFO_LINUX_VERSION_0    ///< This is the only defined version currently.
 };
 
 /*!
@@ -61,12 +61,12 @@ enum IMAGE_INFO_LINUX_VERSION
  */
 struct /*<UTILITY>*/ IMAGE_INFO_LINUX
 {
-    IMAGE_INFO_LINUX_VERSION _version; ///< Tells which fields in this structure are valid.
-    IMAGE_TYPE_LINUX _type;            ///< The image type.
-    std::string _name;                 ///< Absolute pathname to the ELF file (UTF-8).
-    ANYADDR _offset;                   ///< Offset from ELF file's link-time address to it's loaded address.
-    ADDRINT _lm;                       ///< Pointer to the image's struct link_map
-    ADDRINT _l_ld;                     ///< Points to the image's PT_DYNAMIC segment
+    IMAGE_INFO_LINUX_VERSION _version;  ///< Tells which fields in this structure are valid.
+    IMAGE_TYPE_LINUX _type;             ///< The image type.
+    std::string _name;                  ///< Absolute pathname to the ELF file (UTF-8).
+    ANYADDR _offset;              ///< Offset from ELF file's link-time address to it's loaded address.
+    ADDRINT _lm;                  ///< Pointer to the image's struct link_map
+    ADDRINT _l_ld;                ///< Points to the image's PT_DYNAMIC segment
 };
 
 /*!
@@ -75,10 +75,9 @@ struct /*<UTILITY>*/ IMAGE_INFO_LINUX
  */
 struct /*<UTILITY>*/ SVR4_IMAGES_LIST_LINUX
 {
-    SVR4_IMAGES_LIST_LINUX() : _main_lm(0) {} ///< Initialization
-    ADDRINT _main_lm;                         ///< Pointer to the main image's struct link_map
-    std::vector< IMAGE_INFO_LINUX > _list;    ///< List of all loaded images
+    ADDRINT _main_lm;             ///< Pointer to the main image's struct link_map
+    std::vector<IMAGE_INFO_LINUX> _list;///< List of all loaded images
 };
 
-} // namespace DEBUGGER_PROTOCOL
+} // namespace
 #endif // file guard

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,11 +16,11 @@
 #include "pin.H"
 #include <iostream>
 #include <fstream>
-using std::cerr;
 using std::cout;
-using std::endl;
-using std::hex;
 using std::ios;
+using std::hex;
+using std::cerr;
+using std::endl;
 using std::string;
 
 /* ===================================================================== */
@@ -44,7 +44,8 @@ std::ofstream TraceFile;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "malloctrace.out", "specify trace file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "malloctrace.out", "specify trace file name");
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
@@ -52,8 +53,9 @@ KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "malloctrace.
 
 INT32 Usage()
 {
-    cerr << "This tool produces a trace of calls to malloc.\n"
-            "\n";
+    cerr <<
+        "This tool produces a trace of calls to malloc.\n"
+        "\n";
 
     cerr << KNOB_BASE::StringKnobSummary();
 
@@ -64,15 +66,21 @@ INT32 Usage()
 
 /* ===================================================================== */
 
-VOID Arg1Before(CHAR* name, ADDRINT size) { TraceFile << name << "(" << size << ")" << endl; }
+VOID Arg1Before(CHAR * name, ADDRINT size)
+{
+    TraceFile << name << "(" << size << ")" << endl;
+}
 
 /* ===================================================================== */
 
-VOID MallocAfter(ADDRINT ret) { TraceFile << "  returns " << ret << endl; }
+VOID MallocAfter(ADDRINT ret)
+{
+    TraceFile << "  returns " << ret << endl;
+}
 
 /* ===================================================================== */
 
-VOID Image(IMG img, VOID* v)
+VOID Image(IMG img, VOID *v)
 {
     RTN mallocRtn = RTN_FindByName(img, MALLOC);
     if (RTN_Valid(mallocRtn))
@@ -83,7 +91,7 @@ VOID Image(IMG img, VOID* v)
         RTN_InsertCall(mallocRtn, IPOINT_AFTER, (AFUNPTR)MallocAfter, IARG_FUNCRET_EXITPOINT_VALUE, IARG_END);
         RTN_Close(mallocRtn);
     }
-
+    
     RTN freeRtn = RTN_FindByName(img, FREE);
     if (RTN_Valid(freeRtn))
     {
@@ -96,20 +104,24 @@ VOID Image(IMG img, VOID* v)
 
 /* ===================================================================== */
 
-VOID Fini(INT32 code, VOID* v) { TraceFile.close(); }
+VOID Fini(INT32 code, VOID *v)
+{
+    TraceFile.close();
+}
 
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
+    
 
     TraceFile.open(KnobOutputFile.Value().c_str());
 
@@ -118,13 +130,13 @@ int main(int argc, char* argv[])
 
     cout << hex;
     cout.setf(ios::showbase);
-
+    
     IMG_AddInstrumentFunction(Image, 0);
     PIN_AddFiniFunction(Fini, 0);
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
 

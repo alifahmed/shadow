@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -24,31 +24,31 @@
 #include <sstream>
 
 #define KILO 1024
-#define MEGA (KILO * KILO)
-#define GIGA (KILO * MEGA)
+#define MEGA (KILO*KILO)
+#define GIGA (KILO*MEGA)
 
-extern std::string StringInt(UINT64 val, UINT32 width = 0, CHAR padding = ' ')
+GLOBALFUN std::string StringInt(UINT64 val, UINT32 width=0, CHAR padding=' ')
 {
     std::ostringstream ostr;
-    ostr.setf(std::ios::fixed, std::ios::floatfield);
+    ostr.setf(std::ios::fixed,std::ios::floatfield);
     ostr.fill(padding);
     ostr << std::setw(width) << val;
     return ostr.str();
 }
 
-extern std::string StringHex(UINT64 val, UINT32 width = 0, CHAR padding = ' ')
+GLOBALFUN std::string StringHex(UINT64 val, UINT32 width=0, CHAR padding=' ')
 {
     std::ostringstream ostr;
-    ostr.setf(std::ios::fixed, std::ios::floatfield);
+    ostr.setf(std::ios::fixed,std::ios::floatfield);
     ostr.fill(padding);
     ostr << std::setw(width) << std::hex << "0x" << val;
     return ostr.str();
 }
 
-extern std::string StringString(std::string val, UINT32 width = 0, CHAR padding = ' ')
+GLOBALFUN std::string StringString(std::string val, UINT32 width=0, CHAR padding=' ')
 {
     std::ostringstream ostr;
-    ostr.setf(std::ios::fixed, std::ios::floatfield);
+    ostr.setf(std::ios::fixed,std::ios::floatfield);
     ostr.fill(padding);
     ostr << std::setw(width) << val;
     return ostr.str();

@@ -56,7 +56,7 @@ ifeq ($(TARGET_OS),linux)
     APP_ROOTS += rt-locks-app stress-client-lock-app
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 # by default LXC does not allow rtprio
 ifeq ($(TARGET_LXC),1) 
@@ -64,10 +64,6 @@ ifeq ($(TARGET_LXC),1)
     APP_ROOTS := $(filter-out rt-locks-app, $(APP_ROOTS))
     TOOL_ROOTS := $(filter-out rt-locks-tool, $(TOOL_ROOTS))
 endif
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
 
 # See mantis 4622
 ifeq ($(TARGET_OS),linux)

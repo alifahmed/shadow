@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,7 +22,7 @@
 #include <string.h>
 #include <signal.h>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     printf("parent:%u-%u\n", getppid(), getpid());
 
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 
     if (execv(argv[1], NULL) == -1)
     {
-        fprintf(stderr, "%d:%s\n", errno, strerror(errno));
+	    fprintf(stderr, "%d:%s\n", errno, strerror(errno));
     }
 
     return 0;

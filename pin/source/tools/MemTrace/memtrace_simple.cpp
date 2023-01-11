@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -43,6 +43,7 @@
 #include "pin.H"
 using std::vector;
 
+
 /*
  *
  *
@@ -56,25 +57,26 @@ using std::vector;
 /*
  * Emit the address trace to the output file
  */
-KNOB< BOOL > KnobProcessBuffer(KNOB_MODE_WRITEONCE, "pintool", "process_buffs", "1", "process the filled buffers");
+KNOB<BOOL>   KnobProcessBuffer(KNOB_MODE_WRITEONCE, "pintool", "process_buffs", "1", "process the filled buffers");
 
 // 256*4096=1048576 - same size buffer in memtrace_simple, membuffer_simple, membuffer_multi
-KNOB< UINT32 > KnobNumBytesInBuffer(KNOB_MODE_WRITEONCE, "pintool", "num_bytes_in_buffer", "1048576",
-                                    "number of bytes in buffer");
+KNOB<UINT32> KnobNumBytesInBuffer(KNOB_MODE_WRITEONCE, "pintool", "num_bytes_in_buffer", "1048576", "number of bytes in buffer");
+
 
 /* Struct of memory reference written to the buffer
  */
 struct MEMREF
 {
-    ADDRINT pc; // pc (ip) of the instruction doing the memory reference
-    ADDRINT ea; // the address of the memory being referenced
+    ADDRINT pc;  // pc (ip) of the instruction doing the memory reference
+    ADDRINT ea;  // the address of the memory being referenced
 };
+
 
 // the Pin TLS slot that an application-thread will use to hold the APP_THREAD_BUFFER_HANDLER
 // object that it owns
 TLS_KEY appThreadRepresentitiveKey;
 
-UINT32 totalBuffersFilled     = 0;
+UINT32 totalBuffersFilled = 0;
 UINT64 totalElementsProcessed = 0;
 
 /* Pin registers that this tool allocates (per-thread) to manage the writing
@@ -93,6 +95,7 @@ REG endOfBufferReg;
  */
 class APP_THREAD_REPRESENTITVE
 {
+
   public:
     APP_THREAD_REPRESENTITVE(THREADID tid);
     ~APP_THREAD_REPRESENTITVE();
@@ -100,30 +103,29 @@ class APP_THREAD_REPRESENTITVE
     /*
      * ProcessBuffer
      */
-    void ProcessBuffer(char* end);
+    void ProcessBuffer(char *end);
 
     /*
      * Pointer to beginning of the buffer
      */
-    char* Begin() { return _buffer; }
+    char * Begin() { return _buffer; }
 
     /*
      * Pointer to end of the buffer
      */
-    char* End() { return _buffer + KnobNumBytesInBuffer.Value(); }
+    char * End() { return _buffer + KnobNumBytesInBuffer.Value(); }
 
-    UINT32 NumBuffersFilled() { return _numBuffersFilled; }
+    UINT32 NumBuffersFilled() {return _numBuffersFilled;}
 
-    UINT32 NumElementsProcessed() { return _numElementsProcessed; }
+    UINT32 NumElementsProcessed() {return _numElementsProcessed;}
 
     /*
      * Analysis routine to record a MEMREF (pc, ea) in the buffer
      */
-    static void PIN_FAST_ANALYSIS_CALL RecordMEMREFInBuffer(CHAR* endOfTraceInBuffer, ADDRINT offsetFromEndOfTrace, ADDRINT pc,
-                                                            ADDRINT ea)
+    static void PIN_FAST_ANALYSIS_CALL RecordMEMREFInBuffer(CHAR * endOfTraceInBuffer, ADDRINT offsetFromEndOfTrace, ADDRINT pc, ADDRINT ea)
     {
-        *reinterpret_cast< ADDRINT* >(endOfTraceInBuffer + offsetFromEndOfTrace)                   = pc;
-        *reinterpret_cast< ADDRINT* >(endOfTraceInBuffer + offsetFromEndOfTrace + sizeof(ADDRINT)) = ea;
+        *reinterpret_cast<ADDRINT*>(endOfTraceInBuffer+offsetFromEndOfTrace) = pc;
+        *reinterpret_cast<ADDRINT*>(endOfTraceInBuffer+offsetFromEndOfTrace+sizeof(ADDRINT)) = ea;
     }
 
     /*
@@ -134,8 +136,7 @@ class APP_THREAD_REPRESENTITVE
      * @param[in]   bufferEnd                      Pointer to end of the buffer
      * @param[in]   totalSizeOccupiedByTraceInBuffer Number of bytes required by this TRACE
      */
-    static ADDRINT PIN_FAST_ANALYSIS_CALL CheckIfNoSpaceForTraceInBuffer(char* endOfPreviousTraceInBuffer, char* bufferEnd,
-                                                                         ADDRINT totalSizeOccupiedByTraceInBuffer)
+    static ADDRINT PIN_FAST_ANALYSIS_CALL CheckIfNoSpaceForTraceInBuffer(char * endOfPreviousTraceInBuffer, char * bufferEnd, ADDRINT totalSizeOccupiedByTraceInBuffer)
     {
         return (endOfPreviousTraceInBuffer + totalSizeOccupiedByTraceInBuffer >= bufferEnd);
     }
@@ -145,37 +146,44 @@ class APP_THREAD_REPRESENTITVE
      * The buffer does not have room for this trace, process the current buffer entries
      * and restart to fill the buffer from it's beginning
      */
-    static char* PIN_FAST_ANALYSIS_CALL BufferFull(char* endOfTraceInBuffer, ADDRINT tid)
+    static char * PIN_FAST_ANALYSIS_CALL BufferFull(char *endOfTraceInBuffer, ADDRINT tid)
     {
-        APP_THREAD_REPRESENTITVE* appThreadRepresentitive =
-            static_cast< APP_THREAD_REPRESENTITVE* >(PIN_GetThreadData(appThreadRepresentitiveKey, tid));
+
+        APP_THREAD_REPRESENTITVE * appThreadRepresentitive
+            = static_cast<APP_THREAD_REPRESENTITVE*>(PIN_GetThreadData(appThreadRepresentitiveKey, tid));
         appThreadRepresentitive->ProcessBuffer(endOfTraceInBuffer);
         endOfTraceInBuffer = appThreadRepresentitive->Begin();
+
 
         return endOfTraceInBuffer;
     }
 
-    /*
+	/*
      * Analysis routine called at beginning of each trace (after the IF-THEN)-
 	 * moves the endOfPreviousTraceInBuffer further down in the buffer to allocate space for all
 	 * the possible MEMREF elements that may be written by this trace
      */
-    static char* PIN_FAST_ANALYSIS_CALL AllocateSpaceForTraceInBuffer(char* endOfPreviousTraceInBuffer,
-                                                                      ADDRINT totalSizeOccupiedByTraceInBuffer)
+    static char * PIN_FAST_ANALYSIS_CALL  AllocateSpaceForTraceInBuffer(char * endOfPreviousTraceInBuffer,
+                                                                        ADDRINT totalSizeOccupiedByTraceInBuffer)
     {
         return (endOfPreviousTraceInBuffer + totalSizeOccupiedByTraceInBuffer);
     }
 
+
   private:
+
     /*
      * Reset curMEMREFElement to the beginning of the buffer
      */
-    void ResetCurMEMREFElement(char** curMEMREFElement);
+    void ResetCurMEMREFElement(char ** curMEMREFElement);
 
-    char* _buffer; // this is the actual buffer
+
+
+
+    char * _buffer;  // this is the actual buffer
     UINT32 _numBuffersFilled;
     UINT32 _numElementsProcessed;
-    THREADID _myTid;
+	THREADID _myTid;
 };
 
 /*
@@ -188,9 +196,12 @@ class APP_THREAD_REPRESENTITVE
 class ANALYSIS_CALL_INFO
 {
   public:
-    ANALYSIS_CALL_INFO(INS ins, UINT32 offsetFromTraceStartInBuffer, UINT32 memop)
-        : _ins(ins), _offsetFromTraceStartInBuffer(offsetFromTraceStartInBuffer), _memop(memop)
-    {}
+      ANALYSIS_CALL_INFO(INS ins, UINT32 offsetFromTraceStartInBuffer, UINT32 memop) :
+      _ins(ins),
+     _offsetFromTraceStartInBuffer(offsetFromTraceStartInBuffer),
+     _memop (memop)
+    {
+    }
 
     void InsertAnalysisCall(INT32 sizeofTraceInBuffer)
     {
@@ -198,9 +209,12 @@ class ANALYSIS_CALL_INFO
            computed by: (the value in endOfTraceInBufferReg)
                         -sizeofTraceInBuffer +  _offsetFromTraceStartInBuffer(of this _ins)
         */
-        INS_InsertCall(_ins, IPOINT_BEFORE, AFUNPTR(APP_THREAD_REPRESENTITVE::RecordMEMREFInBuffer), IARG_FAST_ANALYSIS_CALL,
-                       IARG_REG_VALUE, endOfTraceInBufferReg, IARG_ADDRINT,
-                       ADDRINT(_offsetFromTraceStartInBuffer - sizeofTraceInBuffer), IARG_INST_PTR, IARG_MEMORYOP_EA, _memop,
+        INS_InsertCall(_ins, IPOINT_BEFORE, AFUNPTR(APP_THREAD_REPRESENTITVE::RecordMEMREFInBuffer),
+                       IARG_FAST_ANALYSIS_CALL,
+                       IARG_REG_VALUE, endOfTraceInBufferReg,
+                       IARG_ADDRINT, ADDRINT(_offsetFromTraceStartInBuffer - sizeofTraceInBuffer),
+                       IARG_INST_PTR,
+                       IARG_MEMORYOP_EA, _memop,
                        IARG_END);
     }
 
@@ -209,6 +223,9 @@ class ANALYSIS_CALL_INFO
     INT32 _offsetFromTraceStartInBuffer;
     UINT32 _memop;
 };
+
+
+
 
 /*
  * TRACE_ANALYSIS_CALLS_NEEDED
@@ -219,12 +236,15 @@ class ANALYSIS_CALL_INFO
  */
 class TRACE_ANALYSIS_CALLS_NEEDED
 {
+
   public:
-    TRACE_ANALYSIS_CALLS_NEEDED() : _currentOffsetFromTraceStartInBuffer(0), _numAnalysisCallsNeeded(0) {}
+    TRACE_ANALYSIS_CALLS_NEEDED() : _currentOffsetFromTraceStartInBuffer(0),  _numAnalysisCallsNeeded(0)
+    {}
 
     UINT32 NumAnalysisCallsNeeded() const { return _numAnalysisCallsNeeded; }
 
     UINT32 TotalSizeOccupiedByTraceInBuffer() const { return _currentOffsetFromTraceStartInBuffer; }
+
 
     /*
      * Record a call to store an address in the log
@@ -236,43 +256,51 @@ class TRACE_ANALYSIS_CALLS_NEEDED
      */
     void InsertAnalysisCalls();
 
-  private:
+
+
+    private:
+
     INT32 _currentOffsetFromTraceStartInBuffer;
     INT32 _numAnalysisCallsNeeded;
-    vector< ANALYSIS_CALL_INFO > _analysisCalls;
+    vector<ANALYSIS_CALL_INFO> _analysisCalls;
 };
+
 
 APP_THREAD_REPRESENTITVE::APP_THREAD_REPRESENTITVE(THREADID myTid)
 {
-    _buffer               = new char[KnobNumBytesInBuffer.Value()];
-    _numBuffersFilled     = 0;
+    _buffer = new char[KnobNumBytesInBuffer.Value()];
+    _numBuffersFilled = 0;
     _numElementsProcessed = 0;
-    _myTid                = myTid;
+	_myTid = myTid;
 }
 
-APP_THREAD_REPRESENTITVE::~APP_THREAD_REPRESENTITVE() { delete[] _buffer; }
+APP_THREAD_REPRESENTITVE::~APP_THREAD_REPRESENTITVE()
+{
+    delete [] _buffer;
+}
+
 
 /*
  * Process the buffer
  */
-void APP_THREAD_REPRESENTITVE::ProcessBuffer(char* end)
+void APP_THREAD_REPRESENTITVE::ProcessBuffer(char *end)
 {
-    _numBuffersFilled++;
+	_numBuffersFilled++;
     if (!KnobProcessBuffer)
     {
         return;
     }
-    int i                      = 0;
-    struct MEMREF* memref      = reinterpret_cast< struct MEMREF* >(Begin());
-    struct MEMREF* firstMemref = memref;
+    int i=0;
+    struct MEMREF * memref =reinterpret_cast<struct MEMREF*>(Begin());
+    struct MEMREF * firstMemref =memref;
 
-    while (memref < reinterpret_cast< struct MEMREF* >(end))
+    while(memref < reinterpret_cast<struct MEMREF*>(end))
     {
-        if (memref->pc != 0)
+        if (memref->pc!=0)
         {
-            i++;
-            firstMemref->pc += memref->pc + memref->ea;
-            memref->pc = 0;
+           i++;
+           firstMemref->pc += memref->pc + memref->ea;
+		   memref->pc = 0;
         }
         memref++;
     }
@@ -284,14 +312,20 @@ void APP_THREAD_REPRESENTITVE::ProcessBuffer(char* end)
 /*
  * Reset the cursor to the beginning of the APP_THREAD_REPRESENTITVE
  */
-void APP_THREAD_REPRESENTITVE::ResetCurMEMREFElement(char** curMEMREFElement) { *curMEMREFElement = Begin(); }
+void APP_THREAD_REPRESENTITVE::ResetCurMEMREFElement(char ** curMEMREFElement)
+{
+    *curMEMREFElement = Begin();
+}
+
 
 /*
  * We determined all the required instrumentation, insert the calls
  */
 void TRACE_ANALYSIS_CALLS_NEEDED::InsertAnalysisCalls()
 {
-    for (vector< ANALYSIS_CALL_INFO >::iterator c = _analysisCalls.begin(); c != _analysisCalls.end(); c++)
+    for (vector<ANALYSIS_CALL_INFO>::iterator c = _analysisCalls.begin();
+         c != _analysisCalls.end();
+         c++)
     {
         c->InsertAnalysisCall(TotalSizeOccupiedByTraceInBuffer());
     }
@@ -307,10 +341,11 @@ void TRACE_ANALYSIS_CALLS_NEEDED::RecordAnalysisCallNeeded(INS ins, UINT32 memop
     _numAnalysisCallsNeeded++;
 }
 
-void DetermineBBLAnalysisCalls(BBL bbl, TRACE_ANALYSIS_CALLS_NEEDED* traceAnalysisCallsNeeded)
+
+void DetermineBBLAnalysisCalls(BBL bbl, TRACE_ANALYSIS_CALLS_NEEDED * traceAnalysisCallsNeeded)
 {
     // Log  memory references of the instruction
-    for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
+    for(INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins=INS_Next(ins))
     {
         UINT32 memOperands = INS_MemoryOperandCount(ins);
 
@@ -322,7 +357,7 @@ void DetermineBBLAnalysisCalls(BBL bbl, TRACE_ANALYSIS_CALLS_NEEDED* traceAnalys
     }
 }
 
-void TraceAnalysisCalls(TRACE trace, void*)
+void TraceAnalysisCalls(TRACE trace, void *)
 {
     // Go over all BBLs of the trace and for each BBL determine and record the INSs which need
     // to be instrumented - i.e. the ins requires and analysis call
@@ -345,15 +380,22 @@ void TraceAnalysisCalls(TRACE trace, void*)
     // APP_THREAD_REPRESENTITVE::CheckIfNoSpaceForTraceInBuffer will determine if there are NOT enough available bytes in the buffer.
     // If there are NOT then it returns TRUE and the BufferFull function is called
     TRACE_InsertIfCall(trace, IPOINT_BEFORE, AFUNPTR(APP_THREAD_REPRESENTITVE::CheckIfNoSpaceForTraceInBuffer),
-                       IARG_FAST_ANALYSIS_CALL, IARG_REG_VALUE, endOfTraceInBufferReg, // previous trace
-                       IARG_REG_VALUE, endOfBufferReg, IARG_UINT32, traceAnalysisCallsNeeded.TotalSizeOccupiedByTraceInBuffer(),
+                       IARG_FAST_ANALYSIS_CALL,
+                       IARG_REG_VALUE, endOfTraceInBufferReg, // previous trace
+                       IARG_REG_VALUE, endOfBufferReg,
+                       IARG_UINT32, traceAnalysisCallsNeeded.TotalSizeOccupiedByTraceInBuffer(),
                        IARG_END);
-    TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(APP_THREAD_REPRESENTITVE::BufferFull), IARG_FAST_ANALYSIS_CALL,
-                         IARG_REG_VALUE, endOfTraceInBufferReg, IARG_THREAD_ID, IARG_RETURN_REGS, endOfTraceInBufferReg,
+    TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(APP_THREAD_REPRESENTITVE::BufferFull),
+                         IARG_FAST_ANALYSIS_CALL,
+                         IARG_REG_VALUE, endOfTraceInBufferReg,
+						 IARG_THREAD_ID,
+                         IARG_RETURN_REGS, endOfTraceInBufferReg,
                          IARG_END);
-    TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(APP_THREAD_REPRESENTITVE::AllocateSpaceForTraceInBuffer),
-                     IARG_FAST_ANALYSIS_CALL, IARG_REG_VALUE, endOfTraceInBufferReg, IARG_UINT32,
-                     traceAnalysisCallsNeeded.TotalSizeOccupiedByTraceInBuffer(), IARG_RETURN_REGS, endOfTraceInBufferReg,
+    TRACE_InsertCall(trace, IPOINT_BEFORE,  AFUNPTR(APP_THREAD_REPRESENTITVE::AllocateSpaceForTraceInBuffer),
+                     IARG_FAST_ANALYSIS_CALL,
+                     IARG_REG_VALUE, endOfTraceInBufferReg,
+                     IARG_UINT32, traceAnalysisCallsNeeded.TotalSizeOccupiedByTraceInBuffer(),
+                     IARG_RETURN_REGS, endOfTraceInBufferReg,
                      IARG_END);
 
     // Insert Analysis Calls for each INS on the trace that was recorded as needing one
@@ -361,26 +403,26 @@ void TraceAnalysisCalls(TRACE trace, void*)
     traceAnalysisCallsNeeded.InsertAnalysisCalls();
 }
 
-VOID ThreadStart(THREADID tid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID tid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     // There is a new APP_THREAD_REPRESENTITVE for every thread
-    APP_THREAD_REPRESENTITVE* appThreadRepresentitive = new APP_THREAD_REPRESENTITVE(tid);
+    APP_THREAD_REPRESENTITVE * appThreadRepresentitive = new APP_THREAD_REPRESENTITVE(tid);
 
     // A thread will need to look up its APP_THREAD_REPRESENTITVE, so save pointer in TLS
     PIN_SetThreadData(appThreadRepresentitiveKey, appThreadRepresentitive, tid);
 
     // Initialize endOfTraceInBufferReg to point at beginning of buffer
-    PIN_SetContextReg(ctxt, endOfTraceInBufferReg, reinterpret_cast< ADDRINT >(appThreadRepresentitive->Begin()));
+    PIN_SetContextReg(ctxt, endOfTraceInBufferReg, reinterpret_cast<ADDRINT>(appThreadRepresentitive->Begin()));
 
     // Initialize endOfBufferReg to point at end of buffer
-    PIN_SetContextReg(ctxt, endOfBufferReg, reinterpret_cast< ADDRINT >(appThreadRepresentitive->End()));
+    PIN_SetContextReg(ctxt, endOfBufferReg, reinterpret_cast<ADDRINT>(appThreadRepresentitive->End()));
 }
 
-VOID ThreadFini(THREADID tid, const CONTEXT* ctxt, INT32 code, VOID* v)
+VOID ThreadFini(THREADID tid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
-    APP_THREAD_REPRESENTITVE* appThreadRepresentitive =
-        static_cast< APP_THREAD_REPRESENTITVE* >(PIN_GetThreadData(appThreadRepresentitiveKey, tid));
-    appThreadRepresentitive->ProcessBuffer(reinterpret_cast< char* >(PIN_GetContextReg(ctxt, endOfTraceInBufferReg)));
+    APP_THREAD_REPRESENTITVE * appThreadRepresentitive
+        = static_cast<APP_THREAD_REPRESENTITVE*>(PIN_GetThreadData(appThreadRepresentitiveKey, tid));
+    appThreadRepresentitive->ProcessBuffer (reinterpret_cast<char *>(PIN_GetContextReg (ctxt, endOfTraceInBufferReg)));
     totalBuffersFilled += appThreadRepresentitive->NumBuffersFilled();
     totalElementsProcessed += appThreadRepresentitive->NumElementsProcessed();
 
@@ -389,27 +431,28 @@ VOID ThreadFini(THREADID tid, const CONTEXT* ctxt, INT32 code, VOID* v)
     PIN_SetThreadData(appThreadRepresentitiveKey, 0, tid);
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
-    return;
-    printf("totalBuffersFilled %u  totalElementsProcessed %14.0f\n", (totalBuffersFilled),
-           static_cast< double >(totalElementsProcessed));
+     return;
+     printf ("totalBuffersFilled %u  totalElementsProcessed %14.0f\n", (totalBuffersFilled),
+             static_cast<double>(totalElementsProcessed));
 }
+
 
 INT32 Usage()
 {
-    printf("This tool demonstrates simple pin-tool buffer managing\n");
-    printf("The following command line options are available:\n");
-    printf("-num_bytes_in_buffer <num>   :number of bytes allocated for each buffer,                   default 1048576\n");
-    printf("-process_buffs <0 or 1>      :specify 0 to disable processing of the buffers,              default       1\n");
+    printf( "This tool demonstrates simple pin-tool buffer managing\n");
+    printf ("The following command line options are available:\n");
+    printf ("-num_bytes_in_buffer <num>   :number of bytes allocated for each buffer,                   default 1048576\n");
+    printf ("-process_buffs <0 or 1>      :specify 0 to disable processing of the buffers,              default       1\n");
     return -1;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize PIN library. Print help message if -h(elp) is specified
     // in the command line or the command line is invalid
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -421,9 +464,9 @@ int main(int argc, char* argv[])
     endOfTraceInBufferReg = PIN_ClaimToolRegister();
     endOfBufferReg        = PIN_ClaimToolRegister();
 
-    if (!(REG_valid(endOfTraceInBufferReg) && REG_valid(endOfBufferReg)))
+    if (! (REG_valid(endOfTraceInBufferReg) && REG_valid(endOfBufferReg)) )
     {
-        printf("Cannot allocate a scratch register.\n");
+        printf ("Cannot allocate a scratch register.\n");
         return 1;
     }
 

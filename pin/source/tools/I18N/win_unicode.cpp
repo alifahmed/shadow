@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,20 +12,19 @@
 #include <iostream>
 #include <fstream>
 
-int wmain(int argc, wchar_t* argv[])
+int wmain(int argc, wchar_t * argv[])
 {
     std::ofstream file;
     file.open("win_unicode.out");
     //internationalization in Japanese (encoded in UTF-16)
     wchar_t internationalization[] = {0x56fd, 0x969B, 0x5316, 0x0000};
 
-    if (argc == 1)
+    if(argc == 1)
     {
         file << "not equal" << endl;
-    }
-    else
+    } else 
     {
-        if (_wcsicmp(argv[1], internationalization) == 0)
+        if(_wcsicmp(argv[1], internationalization) == 0)
         {
             file << "equal" << endl;
         }
@@ -37,3 +36,6 @@ int wmain(int argc, wchar_t* argv[])
     file.close();
     return 0;
 }
+
+
+

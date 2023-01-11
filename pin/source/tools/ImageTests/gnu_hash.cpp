@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,17 +11,17 @@
 
 #include "pin.H"
 #include <iostream>
-using std::cerr;
 using std::cout;
-using std::endl;
+using std::cerr;
 using std::string;
+using std::endl;
 
 /* ===================================================================== */
 
 /*!
  * Print out the error message and exit the process.
  */
-VOID AbortProcess(const string& msg, unsigned long code)
+ VOID AbortProcess(const string & msg, unsigned long code)
 {
     cerr << "Test aborted: " << msg << " with code " << code << endl;
     PIN_WriteErrorMessage(msg.c_str(), 1002, PIN_ERR_FATAL, 0);
@@ -29,17 +29,20 @@ VOID AbortProcess(const string& msg, unsigned long code)
 }
 
 UINT appSecCount = 0;
-UINT secCount    = 0;
+UINT secCount = 0;
 
-VOID GetSectionCount(ADDRINT count) { appSecCount = count; }
+VOID GetSectionCount(ADDRINT count)
+{
+    appSecCount = count;
+}
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     if (IMG_IsMainExecutable(img))
     {
         BOOL gnuFound = FALSE;
-        for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
+        for(SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
         {
             if (".gnu.hash" == SEC_Name(sec))
             {
@@ -59,7 +62,9 @@ VOID ImageLoad(IMG img, VOID* v)
         if (RTN_Valid(rtn))
         {
             RTN_Open(rtn);
-            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(GetSectionCount), IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
+            RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(GetSectionCount),
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
             RTN_Close(rtn);
         }
         else
@@ -69,7 +74,7 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     if (appSecCount != secCount)
     {
@@ -79,10 +84,10 @@ VOID Fini(INT32 code, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     IMG_AddInstrumentFunction(ImageLoad, NULL);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -35,28 +35,27 @@
 
 volatile int istimer = 0;
 pthread_t main_th;
-volatile bool stop      = false;
-const char* logFileName = NULL;
-const char* pipeName    = NULL;
-int fdMainThread        = -1;
+volatile bool stop = false;
+const char * logFileName = NULL;
+const char * pipeName = NULL;
+int fdMainThread = -1;
 
-enum ExitType
-{
-    RES_SUCCESS = 0,         // 0
-    RES_OPEN_FILE_ERROR,     // 1
-    RES_MAKE_PIPE_ERROR,     // 2
-    RES_INVALID_ARGS,        // 3
-    RES_OPEN_FD_ERROR,       // 4
-    RES_WRITE_TO_FD_ERROR,   // 5
-    RES_WRONG_SIGNAL_ERROR,  // 6
-    RES_THREADCREATE_FAILED, // 7
-    RES_SIGACTION_FAILED,    // 8
-    RES_ERROR                // 9
+enum ExitType {
+    RES_SUCCESS = 0,          // 0
+    RES_OPEN_FILE_ERROR,      // 1
+    RES_MAKE_PIPE_ERROR,      // 2
+    RES_INVALID_ARGS,         // 3
+    RES_OPEN_FD_ERROR,        // 4
+    RES_WRITE_TO_FD_ERROR,    // 5
+    RES_WRONG_SIGNAL_ERROR,   // 6
+    RES_THREADCREATE_FAILED,  // 7
+    RES_SIGACTION_FAILED,     // 8
+    RES_ERROR                 // 9
 };
 
-void* thread_handler(void* arg)
+void * thread_handler(void *arg)
 {
-    int fdWriteThread = open(pipeName, O_RDWR);
+    int fdWriteThread = open(pipeName, O_RDWR );
     if (fdWriteThread < 0)
     {
         perror("Failed to open fd");
@@ -66,7 +65,7 @@ void* thread_handler(void* arg)
     {
         sleep(10);
         int ret = write(fdWriteThread, MSG, sizeof(MSG));
-        if (ret < 0)
+        if (ret< 0)
         {
             perror("Failed to write to fd");
             close(fdWriteThread);
@@ -78,24 +77,24 @@ void* thread_handler(void* arg)
     return NULL;
 }
 
-void* timer_handler(void* arg)
+void * timer_handler(void *arg)
 {
     struct timespec tm;
     for (unsigned int i = 0; i < 100; i++)
     {
-        tm.tv_sec  = 0;
-        tm.tv_nsec = 250 * 1000 * 1000;
+        tm.tv_sec = 0;
+        tm.tv_nsec = 250*1000*1000;
         nanosleep(&tm, NULL);
         pthread_kill(main_th, SIGALRM);
     }
     return NULL;
 }
 
-void sig_handler(int signo, siginfo_t* info, void* context)
+void sig_handler (int signo, siginfo_t *info, void *context)
 {
     if (signo == SIGALRM)
     {
-        istimer = 1;
+       istimer = 1;
     }
     else
     {
@@ -104,10 +103,9 @@ void sig_handler(int signo, siginfo_t* info, void* context)
     }
 }
 
-void* do_nothing(void*)
+void *do_nothing(void *)
 {
-    while (1)
-        sleep(5);
+    while(1) sleep(5);
     return NULL;
 }
 
@@ -123,21 +121,21 @@ void poll_exit()
     [2] log file name
     [3] pipe name
 */
-int main(int argc, char* argv[])
+int main(int argc, char* argv[] )
 {
-    if (argc != 4)
+    if(argc != 4)
     {
-        fprintf(stderr, "Not enough arguments\n");
+        fprintf(stderr, "Not enough arguments\n" );
         fflush(stderr);
         return RES_INVALID_ARGS;
     }
 
-    int testType = atoi(argv[1]);
-    logFileName  = argv[2];
-    FILE* pFile  = fopen(logFileName, "w");
+    int testType = atoi (argv[1]);
+    logFileName = argv[2];
+    FILE * pFile = fopen (logFileName , "w");
     if (pFile == NULL)
     {
-        perror("Error opening file");
+        perror ("Error opening file");
         return RES_OPEN_FILE_ERROR;
     }
 
@@ -181,7 +179,7 @@ int main(int argc, char* argv[])
                 printf("pthread_create error\n");
                 return RES_THREADCREATE_FAILED;
             }
-            tem.tv_sec  = 60;
+            tem.tv_sec = 60;
             tem.tv_nsec = 0;
             break;
         }
@@ -192,17 +190,16 @@ int main(int argc, char* argv[])
                 printf("pthread_create error\n");
                 return RES_THREADCREATE_FAILED;
             }
-            tem.tv_sec  = 60;
+            tem.tv_sec = 60;
             tem.tv_nsec = 0;
             sigaddset(&ppollSigmask, SIGQUIT);
             int signalsToHandle[] = {SIGINT, SIGTERM, SIGALRM};
-            for (unsigned int i = 0; i < sizeof(signalsToHandle) / sizeof(int); i++)
+            for(unsigned int i = 0; i < sizeof(signalsToHandle)/sizeof(int) ; i++)
             {
-                sigact.sa_flags     = SA_SIGINFO | SA_NODEFER;
+                sigact.sa_flags = SA_SIGINFO | SA_NODEFER;
                 sigact.sa_sigaction = sig_handler;
-                sigemptyset(&sigact.sa_mask);
-                if (sigaction(signalsToHandle[i], &sigact, 0) < 0)
-                {
+                sigemptyset (&sigact.sa_mask);
+                if (sigaction (signalsToHandle[i], &sigact, 0) < 0) {
                     perror("sigaction failed");
                     return RES_SIGACTION_FAILED;
                 }
@@ -216,23 +213,23 @@ int main(int argc, char* argv[])
                 printf("pthread_create error\n");
                 return RES_THREADCREATE_FAILED;
             }
-            tem.tv_sec  = 0;
-            tem.tv_nsec = 250 * 1000 * 1000;
+            tem.tv_sec = 0;
+            tem.tv_nsec = 250*1000*1000;
             break;
         }
         default:
             // do nothing
             break;
-    }
+   }
 
     while (!stop)
     {
         usleep(1000);
-        list.fd     = fdMainThread;
+        list.fd = fdMainThread;
         list.events = (POLLIN | POLLHUP | POLLERR | POLLNVAL);
-        int ret     = ppoll(&list, 1, &tem, ppollSigmaskPtr);
+        int ret = ppoll(&list, 1, &tem, ppollSigmaskPtr);
 
-        if (ret == 0)
+        if(ret == 0)
         {
             fprintf(pFile, "The call timed out and no file descriptors were ready\n");
             stop = true;
@@ -242,12 +239,12 @@ int main(int argc, char* argv[])
             if ((errno == EINTR) && istimer)
             {
                 istimer = 0;
-                fprintf(pFile, "sigalarm interrupted the ppoll system call\n");
+                fprintf(pFile,"sigalarm interrupted the ppoll system call\n");
                 stop = true;
             }
             else
             {
-                fprintf(stderr, "received wrong signal\n");
+                fprintf(stderr,"received wrong signal\n");
                 return RES_WRONG_SIGNAL_ERROR;
             }
         }
@@ -255,11 +252,7 @@ int main(int argc, char* argv[])
         {
             fprintf(pFile, "PPOLL succeeded:%d\n", (int)ret);
             int count = read(fdMainThread, buf, 20);
-            if (count < 0)
-                perror("read");
-            else
-                fprintf(pFile, "ppoll succeeded\n");
-            ;
+            if (count<0) perror("read"); else fprintf(pFile, "ppoll succeeded\n");;
             stop = true;
         }
         else

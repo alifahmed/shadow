@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -28,9 +28,9 @@
  */
 typedef enum
 {
-    OS_HOST_CPU_ARCH_TYPE_INVALID = 0,
-    OS_HOST_CPU_ARCH_TYPE_IA32    = 1,
-    OS_HOST_CPU_ARCH_TYPE_INTEL64 = 2
+    OS_HOST_CPU_ARCH_TYPE_INVALID                          = 0,
+    OS_HOST_CPU_ARCH_TYPE_IA32                             = 1,
+    OS_HOST_CPU_ARCH_TYPE_INTEL64                          = 2
 } OS_HOST_CPU_ARCH_TYPE;
 
 /*! @ingroup OS_APIS_HOST

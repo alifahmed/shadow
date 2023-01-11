@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,6 +12,7 @@
 #ifndef REGVALUE_UTILS_H
 #define REGVALUE_UTILS_H
 
+
 /////////////////////
 // INCLUDES
 /////////////////////
@@ -20,8 +21,9 @@
 #include <ostream>
 #include "pin.H"
 
-using std::ostream;
 using std::string;
+using std::ostream;
+
 
 /////////////////////
 // GLOBAL VARIABLES
@@ -30,6 +32,7 @@ using std::string;
 // Booleans indicating the supported ISA extensions.
 extern const bool hasAvxSupport;
 extern const bool hasAvx512fSupport;
+
 
 /////////////////////
 // FUNCTION DECLARATIONS

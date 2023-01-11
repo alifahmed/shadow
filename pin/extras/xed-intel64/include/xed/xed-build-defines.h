@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -32,7 +32,7 @@ END_LEGAL */
 #    define XED_ENCODER
 #  endif
 #  if !defined(XED_GIT_VERSION)
-#    define XED_GIT_VERSION "13.0.0"
+#    define XED_GIT_VERSION "8.30.0-18-g47be2133"
 #  endif
 #  if !defined(XED_MPX)
 #    define XED_MPX

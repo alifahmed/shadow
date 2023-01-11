@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,6 +21,7 @@
 using std::cerr;
 using std::endl;
 
+
 /* ===================================================================== */
 /* Global Variables */
 /* ===================================================================== */
@@ -32,6 +33,7 @@ static int my_counter = 0;
 /* ===================================================================== */
 /* Replacement Functions */
 /* ===================================================================== */
+
 
 int YieldProbe()
 {
@@ -62,14 +64,14 @@ void MarkerProbe()
 // Called every time a new image is loaded
 // Look for routines that we want to probe
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     RTN yieldRtn = RTN_FindByName(img, "my_yield");
     if (RTN_Valid(yieldRtn))
     {
-        if (RTN_IsSafeForProbedReplacement(yieldRtn))
+        if (  RTN_IsSafeForProbedReplacement( yieldRtn ) )
         {
-            pf_yield = (int (*)())RTN_ReplaceProbed(yieldRtn, AFUNPTR(YieldProbe));
+            pf_yield = (int (*)()) RTN_ReplaceProbed(yieldRtn, AFUNPTR(YieldProbe));
 
             cerr << "Inserted probe for my_yield:" << IMG_Name(img) << endl;
         }
@@ -78,9 +80,9 @@ VOID ImageLoad(IMG img, VOID* v)
     RTN markerRtn = RTN_FindByName(img, "my_marker");
     if (RTN_Valid(markerRtn))
     {
-        if (RTN_IsSafeForProbedReplacement(markerRtn))
+        if (  RTN_IsSafeForProbedReplacement( markerRtn ) )
         {
-            pf_marker = (void (*)())RTN_ReplaceProbed(markerRtn, AFUNPTR(MarkerProbe));
+            pf_marker = (void (*)()) RTN_ReplaceProbed(markerRtn, AFUNPTR(MarkerProbe));
 
             cerr << "Inserted probe for my_marker:" << IMG_Name(img) << endl;
         }
@@ -89,16 +91,16 @@ VOID ImageLoad(IMG img, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

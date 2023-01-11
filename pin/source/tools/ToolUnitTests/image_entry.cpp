@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,33 +21,34 @@ namespace WIND
 #include <windows.h>
 }
 
+using std::string;
 using std::cerr;
 using std::endl;
+using std::ofstream;
 using std::hex;
 using std::ios;
-using std::ofstream;
-using std::string;
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "out_file", "image_entry.out", "specify image entry file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "out_file", "image_entry.out", "specify image entry file name");
 
-KNOB< BOOL > KnobVerbose(KNOB_MODE_WRITEONCE, "pintool", "verbose", "0", "verbosity level - 0 / 1");
+KNOB<BOOL> KnobVerbose(KNOB_MODE_WRITEONCE, "pintool",
+    "verbose", "0", "verbosity level - 0 / 1");
 
-KNOB< BOOL > KnobPseudoFini(KNOB_MODE_WRITEONCE, "pintool", "pseudofini", "0",
-                            "Enable pseudo-Fini functionality in probe mode - 0 / 1");
+KNOB<BOOL> KnobPseudoFini(KNOB_MODE_WRITEONCE, "pintool",
+    "pseudofini", "0", "Enable pseudo-Fini functionality in probe mode - 0 / 1");
 
-KNOB< string > KnobDllName(KNOB_MODE_WRITEONCE, "pintool", "dll_name", "win_tls_dll.dll",
-                           "specify DLL name whose entry point to probe");
+KNOB<string> KnobDllName(KNOB_MODE_WRITEONCE, "pintool",
+    "dll_name", "win_tls_dll.dll", "specify DLL name whose entry point to probe");
 
 /* ===================================================================== */
 
 INT32 Usage()
 {
     cerr << "This pin tool replaces main's executable entry point \
-             and DLL entry point."
-         << endl;
+             and DLL entry point." << endl;
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     cerr.flush();
@@ -59,10 +60,12 @@ INT32 Usage()
 /* ===================================================================== */
 
 //Signature of main executable entry point
-typedef int (*EXE_ENTRY_POINT)();
+typedef int (* EXE_ENTRY_POINT)();
 
 //Signature of dll entry point
-typedef WIND::BOOLEAN(WINAPI* DLL_ENTRY_POINT)(WIND::HINSTANCE hDllHandle, WIND::DWORD nReason, WIND::LPVOID Reserved);
+typedef WIND::BOOLEAN  (WINAPI * DLL_ENTRY_POINT)(WIND::HINSTANCE hDllHandle, 
+                                                  WIND::DWORD     nReason,    
+                                                  WIND::LPVOID    Reserved );
 
 /* ===================================================================== */
 /* Global Variables */
@@ -115,9 +118,15 @@ class PROBE_FINI_OBJECT
     }
 };
 
-VOID Fini(INT32 code, VOID* v) { CoreFini(); }
+VOID Fini(INT32 code, VOID *v)
+{
+    CoreFini();
+}
 
-VOID AppStart(VOID* v) { isAppStarted = 1; }
+VOID AppStart(VOID *v)
+{
+    isAppStarted = 1;
+}
 
 /* ===================================================================== */
 /* Main executable entry point (before - JIT / replacement - PROBE) */
@@ -127,7 +136,7 @@ void BeforeExeEntry()
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
     exeEntryCounter++;
-    if (KnobVerbose)
+    if(KnobVerbose)
     {
         traceFile << "In exe entry point, threadid = " << PIN_GetTid() << endl;
     }
@@ -135,38 +144,44 @@ void BeforeExeEntry()
 }
 
 //Used in PROBE mode
-int MyExeEntry(CONTEXT* context, EXE_ENTRY_POINT orig_exeEntry)
+int MyExeEntry(
+    CONTEXT * context,
+    EXE_ENTRY_POINT orig_exeEntry )
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
     exeEntryCounter++;
-    if (KnobVerbose)
+    if(KnobVerbose)
     {
         traceFile << "In exe entry point, threadid = " << PIN_GetTid() << endl;
     }
     PIN_ReleaseLock(&pinLock);
 
-    return orig_exeEntry();
+    return orig_exeEntry();  
 }
 
 /* ===================================================================== */
 /* DLL entry point replacement */
 /* ===================================================================== */
-WIND::BOOLEAN WINAPI MyDllEntry(CONTEXT* context, DLL_ENTRY_POINT orig_dllEntry, WIND::HINSTANCE hDllHandle, WIND::DWORD nReason,
-                                WIND::LPVOID Reserved)
+WIND::BOOLEAN WINAPI MyDllEntry(
+    CONTEXT * context,
+    DLL_ENTRY_POINT orig_dllEntry,
+    WIND::HINSTANCE hDllHandle, 
+    WIND::DWORD     nReason,    
+    WIND::LPVOID    Reserved )
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
-    if (nReason == DLL_THREAD_ATTACH)
+    if(nReason == DLL_THREAD_ATTACH)
     {
         dllEntryCounterThreadAttach++;
     }
-    else if (nReason == DLL_THREAD_DETACH)
+    else if(nReason == DLL_THREAD_DETACH)
     {
         dllEntryCounterThreadDetach++;
     }
-    if (KnobVerbose)
+    if(KnobVerbose)
     {
-        traceFile << "In DLL entry point,  threadid = " << PIN_GetTid() << ", dll handle = " << hDllHandle
-                  << ", reason  = " << nReason << endl;
+        traceFile << "In DLL entry point,  threadid = " << PIN_GetTid() <<
+                     ", dll handle = " << hDllHandle << ", reason  = " << nReason << endl;
     }
     PIN_ReleaseLock(&pinLock);
 
@@ -179,17 +194,20 @@ WIND::BOOLEAN WINAPI MyDllEntry(CONTEXT* context, DLL_ENTRY_POINT orig_dllEntry,
             // It is called at late exit stage when all threads but current are finished.
             CoreFini();
         }
-    }
-    else
+    } else 
     {
         //FIXME : Use PIN_CallApplicationFunction when it possible
         //        (Fix for mantis 1122/1123)
 #if 1
-        ret = orig_dllEntry(hDllHandle, nReason, Reserved);
+        ret = orig_dllEntry(hDllHandle, nReason, Reserved);  
 #else
-        PIN_CallApplicationFunction(context, PIN_ThreadId(), CALLINGSTD_STDCALL, AFUNPTR(orig_dllEntry), NULL,
-                                    PIN_PARG(WIND::BOOLEAN), &ret, PIN_PARG(WIND::HINSTANCE), hDllHandle, PIN_PARG(WIND::DWORD),
-                                    nReason, PIN_PARG(WIND::LPVOID), Reserved, PIN_PARG_END());
+        PIN_CallApplicationFunction( context, PIN_ThreadId(),
+                                 CALLINGSTD_STDCALL, AFUNPTR(orig_dllEntry), NULL,
+                                 PIN_PARG(WIND::BOOLEAN),   &ret,
+                                 PIN_PARG(WIND::HINSTANCE), hDllHandle, 
+                                 PIN_PARG(WIND::DWORD) ,    nReason,    
+                                 PIN_PARG(WIND::LPVOID),    Reserved,
+                                 PIN_PARG_END() );
 #endif
     }
     ASSERTX(ret);
@@ -201,7 +219,7 @@ WIND::BOOLEAN WINAPI MyDllEntry(CONTEXT* context, DLL_ENTRY_POINT orig_dllEntry,
 /* ===================================================================== */
 VOID ReplaceExeEntryPoint(IMG img)
 {
-    if (!IMG_IsMainExecutable(img))
+    if(!IMG_IsMainExecutable(img))
     {
         return;
     }
@@ -209,21 +227,28 @@ VOID ReplaceExeEntryPoint(IMG img)
     // This is main executable, find it's entry point and replace it
     RTN rtn = RTN_FindByAddress(IMG_EntryAddress(img));
     ASSERTX(RTN_Valid(rtn));
-    if (KnobVerbose)
+    if(KnobVerbose)
     {
-        traceFile << "Replacing Exe entry point, Address = " << RTN_Address(rtn) << ", Name = \"" << RTN_Name(rtn).c_str()
-                  << "\", Size = " << RTN_Size(rtn) << endl;
+        traceFile << "Replacing Exe entry point, Address = " << RTN_Address(rtn)\
+                  << ", Name = \"" << RTN_Name(rtn).c_str() << "\", Size = " << RTN_Size(rtn) << endl;
     }
 
     if (PIN_IsProbeMode())
     {
-        PROTO proto_exeEntry = PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "", PIN_PARG_END());
+        PROTO proto_exeEntry = PROTO_Allocate( 
+                                           PIN_PARG(int), 
+                                           CALLINGSTD_DEFAULT,
+                                           "", 
+                                           PIN_PARG_END() );
         ASSERTX(RTN_IsSafeForProbedReplacement(rtn));
-        RTN_ReplaceSignatureProbed(rtn, AFUNPTR(MyExeEntry), IARG_PROTOTYPE, proto_exeEntry, IARG_CONTEXT, IARG_ORIG_FUNCPTR,
-                                   IARG_END);
+        RTN_ReplaceSignatureProbed(
+                              rtn, AFUNPTR(MyExeEntry),
+                              IARG_PROTOTYPE, proto_exeEntry,
+                              IARG_CONTEXT,
+                              IARG_ORIG_FUNCPTR,
+                              IARG_END);
         PROTO_Free(proto_exeEntry);
-    }
-    else
+    } else
     {
         RTN_Open(rtn);
         RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(BeforeExeEntry), IARG_END);
@@ -234,7 +259,7 @@ VOID ReplaceExeEntryPoint(IMG img)
 /* ===================================================================== */
 /* Replace DLL entry point */
 /* ===================================================================== */
-VOID ReplaceDllEntryPoint(IMG img, const string& dllName, AFUNPTR replacementFunction)
+VOID ReplaceDllEntryPoint(IMG img, const string & dllName, AFUNPTR replacementFunction)
 {
     string imagePath = IMG_Name(img);
     if (!dllName.empty())
@@ -249,34 +274,49 @@ VOID ReplaceDllEntryPoint(IMG img, const string& dllName, AFUNPTR replacementFun
     // This is the dll we are looking for, find it's entry point and replace it
     RTN rtn = RTN_FindByAddress(IMG_EntryAddress(img));
     ASSERTX(RTN_Valid(rtn));
-    if (KnobVerbose)
+    if(KnobVerbose)
     {
-        traceFile << "Replacing " << imagePath << " entry point, Address = " << RTN_Address(rtn) << ", Name = \""
-                  << RTN_Name(rtn).c_str() << "\", Size = " << RTN_Size(rtn) << endl;
+        traceFile << "Replacing " << imagePath << " entry point, Address = " << RTN_Address(rtn)\
+                  << ", Name = \"" << RTN_Name(rtn).c_str() << "\", Size = " << RTN_Size(rtn) << endl;
     }
-    PROTO proto_dllEntry = PROTO_Allocate(PIN_PARG(WIND::BOOLEAN), CALLINGSTD_STDCALL, "", PIN_PARG(WIND::HINSTANCE),
-                                          PIN_PARG(WIND::DWORD), PIN_PARG(WIND::LPVOID), PIN_PARG_END());
+    PROTO proto_dllEntry = PROTO_Allocate( 
+                               PIN_PARG(WIND::BOOLEAN), 
+                               CALLINGSTD_STDCALL,
+                               "",
+                               PIN_PARG(WIND::HINSTANCE),
+                               PIN_PARG(WIND::DWORD),
+                               PIN_PARG(WIND::LPVOID),
+                               PIN_PARG_END() );
     if (PIN_IsProbeMode())
     {
         ASSERTX(RTN_IsSafeForProbedReplacement(rtn));
-        RTN_ReplaceSignatureProbed(rtn, replacementFunction, IARG_PROTOTYPE, proto_dllEntry, IARG_CONTEXT, IARG_ORIG_FUNCPTR,
-                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
-                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 2, IARG_END);
-    }
-    else
+        RTN_ReplaceSignatureProbed(rtn, replacementFunction,
+                                   IARG_PROTOTYPE, proto_dllEntry,
+                                   IARG_CONTEXT,
+                                   IARG_ORIG_FUNCPTR,
+                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+                                   IARG_END);
+    } else 
     {
-        RTN_ReplaceSignature(rtn, replacementFunction, IARG_PROTOTYPE, proto_dllEntry, IARG_CONTEXT, IARG_ORIG_FUNCPTR,
-                             IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_FUNCARG_ENTRYPOINT_VALUE, 1, IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
-                             IARG_END);
+        RTN_ReplaceSignature(rtn, replacementFunction,
+                                   IARG_PROTOTYPE, proto_dllEntry,
+                                   IARG_CONTEXT,
+                                   IARG_ORIG_FUNCPTR,
+                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+                                   IARG_END);
     }
     PROTO_Free(proto_dllEntry);
 }
 
 /* ===================================================================== */
-// Called every time a new image is loaded
+// Called every time a new image is loaded     
 // Look for routines that we want to replace
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     ReplaceExeEntryPoint(img);
     ReplaceDllEntryPoint(img, KnobDllName.Value(), AFUNPTR(MyDllEntry));
@@ -285,11 +325,11 @@ VOID ImageLoad(IMG img, VOID* v)
 /* ===================================================================== */
 // main function. Initialize and start probe/jit
 /* ===================================================================== */
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
-
-    if (PIN_Init(argc, argv))
+    
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -301,10 +341,10 @@ int main(int argc, CHAR* argv[])
     traceFile.setf(ios::showbase);
 
     PIN_InitLock(&pinLock);
-
+    
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
-    if (PIN_IsProbeMode())
+    
+    if (PIN_IsProbeMode()) 
     {
         PIN_AddApplicationStartFunction(AppStart, 0);
 

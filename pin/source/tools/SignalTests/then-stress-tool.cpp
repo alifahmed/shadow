@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,14 +18,16 @@
 #include <cstdlib>
 #include "pin.H"
 
-static VOID OnRoutine(RTN, VOID*);
+
+static VOID OnRoutine(RTN, VOID *);
 static ADDRINT IfTrue();
 static VOID ThenFunction();
-static VOID OnExit(INT32, VOID*);
+static VOID OnExit(INT32, VOID *);
 
 static BOOL GotThen = FALSE;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -37,7 +39,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static VOID OnRoutine(RTN rtn, VOID*)
+static VOID OnRoutine(RTN rtn, VOID *)
 {
 #if defined(TARGET_MAC)
     if (RTN_Name(rtn) == "_DoThenInstrumentation")
@@ -52,7 +54,11 @@ static VOID OnRoutine(RTN rtn, VOID*)
     }
 }
 
-static ADDRINT IfTrue() { return 1; }
+static ADDRINT IfTrue()
+{
+    return 1;
+}
+
 
 static VOID ThenFunction()
 {
@@ -60,11 +66,12 @@ static VOID ThenFunction()
     // "then" analysis routine.
     //
     GotThen = TRUE;
-    for (volatile unsigned long i = 0; i < 100000; i++)
+    for (volatile unsigned long i = 0;  i < 100000;  i++)
         ;
 }
 
-static VOID OnExit(INT32, VOID*)
+
+static VOID OnExit(INT32, VOID *)
 {
     if (!GotThen)
     {

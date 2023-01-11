@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,7 +12,8 @@
 #include <stdio.h>
 #include <pthread.h>
 
-static void* Print(void*);
+
+static void *Print(void *);
 
 int main()
 {
@@ -23,7 +24,7 @@ int main()
     return 0;
 }
 
-static void* Print(void* arg)
+static void *Print(void *arg)
 {
     printf("Hello world\n");
     return 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -10,7 +10,7 @@
  */
 
 //
-// This tool replaces sleep().
+// This tool replaces sleep(). 
 //
 
 #include "pin.H"
@@ -21,9 +21,9 @@ using std::endl;
 using std::string;
 
 #if defined(TARGET_MAC) && defined(TARGET_IA32)
-#define SLEEP_SUFFIX "$UNIX2003"
+# define SLEEP_SUFFIX "$UNIX2003"
 #else
-#define SLEEP_SUFFIX
+# define SLEEP_SUFFIX
 #endif
 
 /* ===================================================================== */
@@ -36,25 +36,28 @@ static void (*pf_sleep)(int);
 /* Replacement Functions */
 /* ===================================================================== */
 
-void SleepProbe(int b)
+
+void SleepProbe( int b )
 {
     cerr << "SleepProbe: calling sleep" << endl;
-
+    
     if (pf_sleep)
     {
-        (pf_sleep)(b);
+        (pf_sleep)( b );
     }
 }
 
+
+
 /* ===================================================================== */
 
-#if defined(TARGET_WINDOWS)
+#if defined (TARGET_WINDOWS)
 
 // Returns TRUE if baseName matches tail of imageName. Comparison is case-insensitive.
 // Parameters:
 //   imageName  image file name in either form with extension
 //   baseName   image base name with extension (e.g. kernel32.dll)
-BOOL MatchedImageName(const string& imageName, const string& baseName)
+BOOL MatchedImageName(const string & imageName, const string & baseName)
 {
     if (imageName.size() >= baseName.size())
     {
@@ -70,9 +73,10 @@ BOOL MatchedImageName(const string& imageName, const string& baseName)
 // Called every time a new image is loaded
 // Look for routines that we want to probe
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-#if defined(TARGET_WINDOWS)
+    
+#if defined (TARGET_WINDOWS)
     RTN sleepRtn = RTN_Invalid();
     // Look for Sleep only in kernel32.dll
     if (MatchedImageName(IMG_Name(img), "kernel32.dll"))
@@ -85,9 +89,10 @@ VOID ImageLoad(IMG img, VOID* v)
 
     if (RTN_Valid(sleepRtn))
     {
-        if (RTN_IsSafeForProbedReplacement(sleepRtn))
+        if (  RTN_IsSafeForProbedReplacement( sleepRtn ) )
         {
-            pf_sleep = (void (*)(int))RTN_ReplaceProbed(sleepRtn, AFUNPTR(SleepProbe));
+            pf_sleep = (void (*)(int)) RTN_ReplaceProbed(sleepRtn,
+                                                     AFUNPTR(SleepProbe));
 
             cerr << "Inserted probe for Sleep:" << IMG_Name(img) << endl;
         }
@@ -96,16 +101,16 @@ VOID ImageLoad(IMG img, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

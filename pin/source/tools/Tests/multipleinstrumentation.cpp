@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,11 +18,11 @@
 #include <stdlib.h>
 #include "pin.H"
 
-FILE* trace;
+FILE * trace;
 
 const INT32 N = 100000;
-const INT32 M = 50000;
-const INT32 K = 1000;
+const INT32 M =  50000;
+const INT32 K =  1000;
 
 static UINT32 syscallCount = 0;
 
@@ -31,40 +31,50 @@ INT32 icount = K;
 ADDRINT CountDown()
 {
     --icount;
-    return (icount == 0);
+    return (icount==0);
 }
+
 
 // The IP of the current instruction will be printed and
 // the icount will be reset to a random number between N and N+M.
-VOID PrintIp(VOID* ip)
+VOID PrintIp(VOID *ip)
 {
     // Prepare for next period
     icount = N + rand() % M; // random number from N to N+M
 }
 
 // Print the return value of the system call
-VOID SysAfter(ADDRINT ip) { syscallCount++; }
+VOID SysAfter(ADDRINT ip)
+{
+    syscallCount++;
+}
 
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     if (INS_IsSyscall(ins) && INS_IsValidForIpointAfter(ins))
     {
-        // CountDown() is called for every instruction executed
-        INS_InsertIfCall(ins, IPOINT_AFTER, (AFUNPTR)CountDown, IARG_END);
-
-        // PrintIp() is called only when the last CountDown() returns a non-zero value.
-        INS_InsertThenCall(ins, IPOINT_AFTER, (AFUNPTR)PrintIp, IARG_INST_PTR, IARG_END);
-        // return value only available after
-        INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(SysAfter), IARG_INST_PTR, IARG_END);
+            // CountDown() is called for every instruction executed
+            INS_InsertIfCall(ins, IPOINT_AFTER, (AFUNPTR)CountDown, IARG_END);
+         
+            // PrintIp() is called only when the last CountDown() returns a non-zero value.
+            INS_InsertThenCall(ins, IPOINT_AFTER, (AFUNPTR)PrintIp, IARG_INST_PTR, IARG_END);
+                // return value only available after
+            INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(SysAfter),
+                       IARG_INST_PTR,
+                       IARG_END);
     }
+    
 }
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v) { ASSERTX(syscallCount > 0); }
+VOID Fini(INT32 code, VOID *v)
+{
+    ASSERTX(syscallCount > 0);
+}
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     PIN_Init(argc, argv);
@@ -74,9 +84,9 @@ int main(int argc, char* argv[])
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

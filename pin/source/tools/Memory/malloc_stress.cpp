@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,17 +13,19 @@
 #include <iostream>
 #include <fstream>
 #include "pin.H"
-using std::cerr;
 using std::cout;
-using std::endl;
 using std::flush;
+using std::cerr;
 using std::string;
+using std::endl;
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "", "specify trace file name");
-KNOB< UINT32 > KnobNumThreads(KNOB_MODE_WRITEONCE, "pintool", "n", "8", "Numbr Of Threads");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "", "specify trace file name");
+KNOB<UINT32> KnobNumThreads(KNOB_MODE_WRITEONCE, "pintool",
+    "n", "8", "Numbr Of Threads");
 
 /* ===================================================================== */
 /* Global Variables */
@@ -33,16 +35,16 @@ std::ostream* TraceFile = 0;
 PIN_LOCK pinLock;
 struct Allocation
 {
-    CHAR* Addr;
+    CHAR * Addr;
     UINT32 Size;
     PIN_THREAD_UID ThreadUid;
-    BOOL ThreadStarted;
+    BOOL   ThreadStarted;
     Allocation() : Addr(0), Size(0), ThreadUid(INVALID_PIN_THREAD_UID), ThreadStarted(FALSE) {}
 };
-std::vector< Allocation > allocations;
+std::vector<Allocation> allocations;
 
 /* ===================================================================== */
-static void AbortProcess(const string& msg)
+static void AbortProcess(const string & msg)
 {
     THREADID myTid = PIN_ThreadId();
 
@@ -54,8 +56,11 @@ static void AbortProcess(const string& msg)
 
 static VOID SetNextSize(UINT32& currSize)
 {
-    static const UINT32 SIZES_LENGTH  = 6;
-    static UINT32 sizes[SIZES_LENGTH] = {100, 4000, 30, 20, 6000, 24000};
+    static const UINT32 SIZES_LENGTH = 6;
+    static UINT32 sizes[SIZES_LENGTH] =
+    {
+        100, 4000, 30, 20, 6000, 24000
+    };
     for (UINT32 i = 0; i < SIZES_LENGTH; ++i)
     {
         if (currSize == sizes[i])
@@ -99,7 +104,7 @@ static VOID AllocateAndCheck(ADDRINT id)
     }
 }
 
-VOID ThreadFunc(VOID* arg)
+VOID ThreadFunc(VOID * arg)
 {
     allocations.at((ADDRINT)arg).ThreadStarted = TRUE;
 
@@ -110,7 +115,10 @@ VOID ThreadFunc(VOID* arg)
     }
 }
 
-VOID CheckFreeOfZero() { free(0); }
+VOID CheckFreeOfZero()
+{
+    free(0);
+}
 
 VOID SpawnThreads()
 {
@@ -129,7 +137,7 @@ VOID SpawnThreads()
     }
 }
 /* ===================================================================== */
-static VOID PrepareForFini(VOID* v)
+static VOID PrepareForFini(VOID *v)
 {
     for (UINT32 i = 0; i < KnobNumThreads.Value(); ++i)
     {
@@ -141,7 +149,7 @@ static VOID PrepareForFini(VOID* v)
 
         INT32 threadExitCode;
         INT32 MaxTimeToWait = 100000;
-        BOOL waitStatus     = PIN_WaitForThreadTermination(allocations.at(i).ThreadUid, MaxTimeToWait, &threadExitCode);
+        BOOL waitStatus = PIN_WaitForThreadTermination(allocations.at(i).ThreadUid, MaxTimeToWait, &threadExitCode);
         if (!waitStatus)
         {
             AbortProcess("PIN_WaitForThreadTermination failed");
@@ -153,6 +161,7 @@ static VOID PrepareForFini(VOID* v)
     }
     *TraceFile << "All threads joined" << endl;
 }
+
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
@@ -169,7 +178,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitLock(&pinLock);
     PIN_InitSymbols();
@@ -190,7 +199,7 @@ int main(int argc, char* argv[])
     *TraceFile << "All Threads Created" << endl;
 
     PIN_StartProgram();
-
+	
     return 0;
 }
 

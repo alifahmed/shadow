@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,22 +19,23 @@
 using std::cerr;
 using std::endl;
 
+
 // Pin calls this function every time a new img is loaded
 // It can instrument the image, but this example merely
 // counts the number of static instructions in the image
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     UINT32 count = 0;
-
+    
     for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
-    {
+    { 
         for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
         {
             // Prepare for processing of RTN, an  RTN is not broken up into BBLs,
-            // it is merely a sequence of INSs
+            // it is merely a sequence of INSs 
             RTN_Open(rtn);
-
+            
             for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
             {
                 count++;
@@ -63,7 +64,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // prepare for image instrumentation mode
     PIN_InitSymbols();
@@ -76,6 +77,6 @@ int main(int argc, char* argv[])
 
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,19 +22,19 @@
 #include <stdio.h>
 #include "tool_macros.h"
 
+
 /* ===================================================================== */
 /* Global Variables */
 /* ===================================================================== */
 
-struct ANNOTATION
-{
+struct ANNOTATION {
     ADDRINT addr;
     ADDRINT value;
     ANNOTATION() : addr(0), value(0) {}
 };
 
 // Function to write to the output stream
-void (*writeFun)(char*) = 0;
+void (*writeFun)(char *) = 0;
 
 /* ===================================================================== */
 
@@ -44,6 +44,7 @@ INT32 Usage()
     fprintf(stderr, "%s\n", KNOB_BASE::StringKnobSummary().c_str());
     return -1;
 }
+
 
 void Notification(ADDRINT val)
 {
@@ -59,21 +60,22 @@ void Notification(ADDRINT val)
     writeFun(buff);
 }
 
+
 /* ===================================================================== */
 // Called every time a new image is loaded
 // Look for routines that we want to probe
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    const ANNOTATION* ann = 0;
-    USIZE num             = 0;
+    const ANNOTATION *ann = 0;
+    USIZE num = 0;
 
     printf("Processing %s\n", IMG_Name(img).c_str());
-
+    
     for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
     {
         if (SEC_Name(sec) == "MyAnnot")
         {
-            ann = reinterpret_cast< const ANNOTATION* >(SEC_Data(sec));
+            ann = reinterpret_cast<const ANNOTATION*>(SEC_Data(sec));
             num = SEC_Size(sec) / sizeof(ANNOTATION);
         }
     }
@@ -84,7 +86,7 @@ VOID ImageLoad(IMG img, VOID* v)
         for (UINT32 i = 0; i < num; i++)
         {
             ADDRINT addr = ann[i].addr + IMG_LoadOffset(img);
-            ADDRINT val  = ann[i].value;
+            ADDRINT val = ann[i].value;
             printf("\t%p %p\t", Addrint2VoidStar(addr), Addrint2VoidStar(val));
             if (PIN_IsSafeForProbedInsertion(addr))
             {
@@ -101,7 +103,7 @@ VOID ImageLoad(IMG img, VOID* v)
         RTN writeRtn = RTN_FindByName(img, C_MANGLE("write_line"));
         if (RTN_Valid(writeRtn))
         {
-            writeFun = (void (*)(char*))RTN_Funptr(writeRtn);
+            writeFun = (void (*)(char *))RTN_Funptr(writeRtn);
         }
     }
 
@@ -110,19 +112,19 @@ VOID ImageLoad(IMG img, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

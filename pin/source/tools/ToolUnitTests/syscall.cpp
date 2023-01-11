@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,7 +23,7 @@ ADDRINT unmatched_syscall_ip = 0;
 
 THREADID myThread = INVALID_THREADID;
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     if (myThread == INVALID_THREADID)
     {
@@ -35,7 +35,8 @@ VOID BeforeSyscall(ADDRINT ip)
 {
     if (unmatched_syscall_ip != 0)
     {
-        printf("AfterSyscall() is not executed after the syscall at %lx\n", (unsigned long)unmatched_syscall_ip);
+        printf("AfterSyscall() is not executed after the syscall at %lx\n",
+               (unsigned long)unmatched_syscall_ip);
         fflush(stdout);
         exit(1);
     }
@@ -43,9 +44,12 @@ VOID BeforeSyscall(ADDRINT ip)
     unmatched_syscall_ip = ip;
 }
 
-VOID AfterSyscall(ADDRINT ip) { unmatched_syscall_ip = 0; }
+VOID AfterSyscall(ADDRINT ip)
+{
+    unmatched_syscall_ip = 0;
+}
 
-VOID SyscallEntry(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
+VOID SyscallEntry(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
 {
     if (threadIndex == myThread)
     {
@@ -53,7 +57,7 @@ VOID SyscallEntry(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOI
     }
 }
 
-VOID SyscallExit(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
+VOID SyscallExit(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
 {
     if (threadIndex == myThread)
     {
@@ -61,20 +65,20 @@ VOID SyscallExit(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID
     }
 }
 
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     // For O/S's (macOS*) that don't support PIN_AddSyscallEntryFunction(),
     // instrument the system call instruction.
 
     if (INS_IsSyscall(ins) && INS_IsValidForIpointAfter(ins))
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)BeforeSyscall, IARG_INST_PTR, IARG_END);
-        INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)AfterSyscall, IARG_INST_PTR, IARG_END);
+       INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)BeforeSyscall, IARG_INST_PTR, IARG_END);
+       INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)AfterSyscall, IARG_INST_PTR, IARG_END);
     }
 }
 
-static VOID OnContextChange(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, const CONTEXT* ctxtFrom, CONTEXT* ctxtTo,
-                            INT32 info, VOID* v)
+static VOID OnContextChange(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, const CONTEXT *ctxtFrom,
+                            CONTEXT *ctxtTo, INT32 info, VOID *v)
 {
     // We may jump to UPC/signal while in system call (i.e. before it is return)
     // The code of this UPC may in its turn call another system call which will
@@ -82,7 +86,8 @@ static VOID OnContextChange(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, 
     unmatched_syscall_ip = 0;
 }
 
-int main(INT32 argc, CHAR** argv)
+
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
 

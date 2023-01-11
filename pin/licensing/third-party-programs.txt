@@ -37,20 +37,20 @@ List of Third Party Programs included in Pin:
   see full text in LICENSE-llvm, but has been modified by Intel. The modifications are licensed under the
   End User License Agreement for the Intel(R) Software Development Products.
 
-* LLVM compiler-rt is licensed under the Apache License v2.0 with LLVM Exceptions,
-  see full text in LICENSE-Apache_LLVM, but has been modified by Intel. The modifications are licensed under the
+* LLVM compiler-rt is licensed under the University of Illinois/NCSA Open Source License (NCSA),
+  see full text in LICENSE-llvm, but has been modified by Intel. The modifications are licensed under the
   End User License Agreement for the Intel(R) Software Development Products.
 
-* LLVM clang is licensed under the Apache License v2.0 with LLVM Exceptions,
-  see full text in LICENSE-Apache_LLVM, but has been modified by Intel. The modifications are licensed under the
+* LLVM clang is licensed under the University of Illinois/NCSA Open Source License (NCSA),
+  see full text in LICENSE-llvm, but has been modified by Intel. The modifications are licensed under the
   End User License Agreement for the Intel(R) Software Development Products.
 
-* LLVM libunwind is licensed under the Apache License v2.0 with LLVM Exceptions,
-  see full text in LICENSE-Apache_LLVM, but has been modified by Intel. The modifications are licensed under the
+* LLVM libunwind is licensed under the University of Illinois/NCSA Open Source License (NCSA),
+  see full text in LICENSE-llvm, but has been modified by Intel. The modifications are licensed under the
   End User License Agreement for the Intel(R) Software Development Products.
 
-* LLVM libcxxabi is licensed under the Apache License v2.0 with LLVM Exceptions,
-  see full text in LICENSE-Apache_LLVM, but has been modified by Intel. The modifications are licensed under the
+* LLVM libcxxabi is licensed under the University of Illinois/NCSA Open Source License (NCSA),
+  see full text in LICENSE-llvm, but has been modified by Intel. The modifications are licensed under the
   End User License Agreement for the Intel(R) Software Development Products.
 
 * All files in, or any subdirectory of, <installdir>/source/tools/ are Sample Source Code as defined and licensed

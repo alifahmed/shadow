@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -18,11 +18,6 @@ END_LEGAL */
 #if !defined(XED_SYNTAX_ENUM_H)
 # define XED_SYNTAX_ENUM_H
 #include "xed-common-hdrs.h"
-#define XED_SYNTAX_INVALID_DEFINED 1
-#define XED_SYNTAX_XED_DEFINED 1
-#define XED_SYNTAX_ATT_DEFINED 1
-#define XED_SYNTAX_INTEL_DEFINED 1
-#define XED_SYNTAX_LAST_DEFINED 1
 typedef enum {
   XED_SYNTAX_INVALID,
   XED_SYNTAX_XED, ///< XED disassembly syntax

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,12 +17,14 @@
 #include <signal.h>
 #include "pin.H"
 
-static const int WAIT_FOR_THREAD1_SECONDS       = 10;
-static const int PIN_DETACH_TIMEOUT_SECONDS     = 60;
-static volatile int counter                     = 0;
+
+static const int WAIT_FOR_THREAD1_SECONDS = 10;
+static const int PIN_DETACH_TIMEOUT_SECONDS = 60;
+static volatile int counter = 0;
 static volatile int reproduceBugOnThisIteration = false;
 static PIN_LOCK waitToMainThreadLock;
 static PIN_LOCK waitToSecondThreadLock;
+
 
 void AlarmRaised(int signum)
 {
@@ -58,12 +60,10 @@ VOID SecondThreadIterationCheckpoint3_Before()
     if (reproduceBugOnThisIteration)
     {
         GetVmLock();
-        printf("Thread 2: Application mutex and VM lock acquired. Waiting %d seconds for the main thread\n",
-               WAIT_FOR_THREAD1_SECONDS);
+        printf("Thread 2: Application mutex and VM lock acquired. Waiting %d seconds for the main thread\n", WAIT_FOR_THREAD1_SECONDS);
         PIN_ReleaseLock(&waitToSecondThreadLock);
         sleep(WAIT_FOR_THREAD1_SECONDS);
-        printf("Thread 2: Finished waiting. Now telling PIN to detach from process - giving it %d seconds to do so\n",
-               PIN_DETACH_TIMEOUT_SECONDS);
+        printf("Thread 2: Finished waiting. Now telling PIN to detach from process - giving it %d seconds to do so\n", PIN_DETACH_TIMEOUT_SECONDS);
 
         signal(SIGALRM, AlarmRaised);
         alarm(PIN_DETACH_TIMEOUT_SECONDS);
@@ -85,7 +85,7 @@ VOID MainThreadIterationCheckpoint_Before()
     }
 }
 
-VOID InstrumentRtnBefore(IMG img, const string& name, VOID (*newFn)())
+VOID InstrumentRtnBefore(IMG img, const string& name, VOID(*newFn)())
 {
     RTN rtn = RTN_FindByName(img, name.c_str());
     ASSERT(RTN_Valid(rtn), "Failed to find RTN " + name);
@@ -94,7 +94,7 @@ VOID InstrumentRtnBefore(IMG img, const string& name, VOID (*newFn)())
     RTN_Close(rtn);
 }
 
-VOID Image(IMG img, VOID* v)
+VOID Image(IMG img, VOID *v)
 {
     if (IMG_IsMainExecutable(img))
     {
@@ -105,11 +105,12 @@ VOID Image(IMG img, VOID* v)
     }
 }
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
 
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     PIN_InitLock(&waitToMainThreadLock);
     PIN_InitLock(&waitToSecondThreadLock);
@@ -118,6 +119,6 @@ int main(int argc, char* argv[])
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

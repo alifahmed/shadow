@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,6 +14,7 @@
 
 #include <string>
 #include "pin.H"
+
 
 /*! @defgroup DEBUGGER_SHELL
  * Pin tools that run with the "-appdebug" switch can use this class to implement
@@ -44,15 +45,18 @@
  */
 namespace DEBUGGER_SHELL
 {
+
+
 struct STARTUP_ARGUMENTS;
 class ICUSTOM_INSTRUMENTOR;
+
 
 /*! @ingroup DEBUGGER_SHELL
  * The public interface to the debugger shell.
  */
 class ISHELL
 {
-  public:
+public:
     /*!
      * This method must be called once, typically from the tool's main() function.
      * It enables the Pin instrumentation which implements the debugger extensions.
@@ -62,7 +66,7 @@ class ISHELL
      * @return  TRUE on success.  If there is an error, a diagnostic is printed
      *           and this method returns FALSE.
      */
-    virtual BOOL Enable(const STARTUP_ARGUMENTS& args) = 0;
+    virtual BOOL Enable(const STARTUP_ARGUMENTS &args) = 0;
 
     /*!
      * Tools that use the debugger shell may still implement their own extended debugger
@@ -80,7 +84,8 @@ class ISHELL
      * @return  The ID for this custom category.  If a tool already added a category
      *           named \a name, that previous category ID is returned.
      */
-    virtual unsigned AddExtendedHelpCategory(const std::string& name, const std::string& description, BOOL* alreadyExists) = 0;
+    virtual unsigned AddExtendedHelpCategory(const std::string &name,
+        const std::string &description, BOOL *alreadyExists) = 0;
 
     /*!
      * Adds a help message for an extended command that is implemented by the layered tool.
@@ -93,7 +98,8 @@ class ISHELL
      *  @param[in] cmd          The name of a tool's extended command.
      *  @param[in] description  Describes what the command does.
      */
-    virtual void AddExtendedHelpMessage(unsigned category, const std::string& cmd, const std::string& description) = 0;
+    virtual void AddExtendedHelpMessage(unsigned category, const std::string &cmd,
+        const std::string &description) = 0;
 
     /*!
      * Tools that override the default instrumentation with ICUSTOM_INSTRUMENTOR
@@ -105,7 +111,7 @@ class ISHELL
      */
     virtual REG GetSkipOneRegister() = 0;
 
-    virtual inline ~ISHELL() = 0; ///< Destroys the debugger shell object.
+    virtual inline ~ISHELL() = 0;  ///< Destroys the debugger shell object.
 };
 
 ISHELL::~ISHELL() {}
@@ -116,16 +122,21 @@ ISHELL::~ISHELL() {}
  * @return  A new debugger shell object on success.  If there is an error, a diagnostic
  *           is printed and this method returns NULL.
  */
-ISHELL* CreateShell();
+ISHELL *CreateShell();
+
 
 /*! @ingroup DEBUGGER_SHELL
  * Arguments that customize the debugger shell.
  */
 struct STARTUP_ARGUMENTS
 {
-    STARTUP_ARGUMENTS()
-        : _callOrderBefore(CALL_ORDER_DEFAULT), _callOrderAfter(CALL_ORDER_DEFAULT), _enableIcountBreakpoints(FALSE),
-          _countPrefetchAsMemOp(FALSE), _countZeroRepAsMemOp(FALSE), _customInstrumentor(0)
+    STARTUP_ARGUMENTS() :
+        _callOrderBefore(CALL_ORDER_DEFAULT),
+        _callOrderAfter(CALL_ORDER_DEFAULT),
+        _enableIcountBreakpoints(FALSE),
+        _countPrefetchAsMemOp(FALSE),
+        _countZeroRepAsMemOp(FALSE),
+        _customInstrumentor(0)
     {}
 
     /*!
@@ -139,28 +150,30 @@ struct STARTUP_ARGUMENTS
     // When enabled, the debugger-shell always inserts instrumentation that counts
     // the number of instructions executed by each thread.
     //
-    BOOL _enableIcountBreakpoints; ///< Enable instruction-counting breakpoints.
-    BOOL _countPrefetchAsMemOp;    ///< Count prefetch instructions as memory operations.
-    BOOL _countZeroRepAsMemOp;     ///< Count zero-repetition REP instructions as one memory operation.
+    BOOL _enableIcountBreakpoints;  ///< Enable instruction-counting breakpoints.
+    BOOL _countPrefetchAsMemOp;     ///< Count prefetch instructions as memory operations.
+    BOOL _countZeroRepAsMemOp;      ///< Count zero-repetition REP instructions as one memory operation.
 
     /*!
      * Allows client to override some instrumentation.
      */
-    ICUSTOM_INSTRUMENTOR* _customInstrumentor;
+    ICUSTOM_INSTRUMENTOR *_customInstrumentor;
 };
+
 
 /*! @ingroup DEBUGGER_SHELL
  * Predefined categories of help commands.
  */
 enum HELP_CATEGORY
 {
-    HELP_CATEGORY_GENERAL,     ///< General commands.
-    HELP_CATEGORY_BREAKPOINTS, ///< Breakpoint commands.
-    HELP_CATEGORY_TRACEPOINTS, ///< Tracepoint commands.
-    HELP_CATEGORY_REGISTERS,   ///< Register names.
-    HELP_CATEGORY_END          ///< Marks the last predefined help category.  Custom category
-                               ///<  numbers start here.
+    HELP_CATEGORY_GENERAL,      ///< General commands.
+    HELP_CATEGORY_BREAKPOINTS,  ///< Breakpoint commands.
+    HELP_CATEGORY_TRACEPOINTS,  ///< Tracepoint commands.
+    HELP_CATEGORY_REGISTERS,    ///< Register names.
+    HELP_CATEGORY_END           ///< Marks the last predefined help category.  Custom category
+                                ///<  numbers start here.
 };
+
 
 /*! @ingroup DEBUGGER_SHELL
  * Some tools may need to define their own analysis routine that stops at a debugger
@@ -173,7 +186,7 @@ enum HELP_CATEGORY
  */
 class ICUSTOM_INSTRUMENTOR
 {
-  public:
+public:
     /*!
      * The debugger shell calls this method to insert a "then" instrumentation call
      * to an analysis routine that stops at a debugger breakpoint _before_ an instruction.
@@ -214,7 +227,7 @@ class ICUSTOM_INSTRUMENTOR
      *                       If the debugger shell removes instrumentation, it will
      *                       also deallocate this string.
      */
-    virtual VOID InsertBreakpointBefore(INS ins, BBL bbl, CALL_ORDER order, const std::string& message) = 0;
+    virtual VOID InsertBreakpointBefore(INS ins, BBL bbl, CALL_ORDER order, const std::string &message) = 0;
 
     /*!
      * The debugger shell calls this method to insert a "then" instrumentation call
@@ -253,12 +266,13 @@ class ICUSTOM_INSTRUMENTOR
      *                       If the debugger shell removes instrumentation, it will
      *                       also deallocate this string.
      */
-    virtual VOID InsertBreakpointAfter(INS ins, BBL bbl, IPOINT ipoint, CALL_ORDER order, const std::string& message) = 0;
+    virtual VOID InsertBreakpointAfter(INS ins, BBL bbl, IPOINT ipoint, CALL_ORDER order,
+        const std::string &message) = 0;
 
-    virtual inline ~ICUSTOM_INSTRUMENTOR() = 0; ///< Destroys the custom instrumentor object.
+    virtual inline ~ICUSTOM_INSTRUMENTOR() = 0;    ///< Destroys the custom instrumentor object.
 };
 
 ICUSTOM_INSTRUMENTOR::~ICUSTOM_INSTRUMENTOR() {}
 
-} // namespace DEBUGGER_SHELL
+} // namespace
 #endif // file guard

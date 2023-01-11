@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,10 +11,10 @@
 
 #include <iostream>
 #include "pin.H"
-using std::cerr;
-using std::cout;
-using std::endl;
 using std::hex;
+using std::cerr;
+using std::endl;
+using std::cout;
 
 /*
  * This tool tests correctness of the IARG_MEMORYOP_PTR value in instructions
@@ -29,7 +29,10 @@ REG rewriteReg[2];
 /*
  * @return two's complement of the specified value
  */
-static ADDRINT NegValue(ADDRINT val) { return 0 - val; }
+static ADDRINT NegValue(ADDRINT val)
+{
+    return 0 - val;
+}
 
 /*
  * Verify correctness of the IARG_MEMORYOP_PTR calculation
@@ -47,35 +50,45 @@ static VOID CheckMemPtr(ADDRINT ea, ADDRINT ptr)
 }
 
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     UINT32 memOps = INS_MemoryOperandCount(ins);
-    if (memOps > 2)
-    {
-        memOps = 2;
-    } // maximum two rewritten operands
+    if (memOps > 2) { memOps = 2; } // maximum two rewritten operands 
 
-    for (UINT32 i = 0; i < memOps; i++)
+    for (UINT32 i = 0 ; i < memOps; i++)
     {
         // Set rewriteReg[i] = -IARG_MEMORYOP_EA(i)
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)NegValue, IARG_CALL_ORDER, CALL_ORDER_DEFAULT, IARG_MEMORYOP_EA, (ADDRINT)i,
-                       IARG_RETURN_REGS, rewriteReg[i], IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)NegValue,
+                IARG_CALL_ORDER, CALL_ORDER_DEFAULT,
+                IARG_MEMORYOP_EA, (ADDRINT)i,
+                IARG_RETURN_REGS, rewriteReg[i],
+                IARG_END);
 
         // Check to see that IARG_MEMORYOP_PTR(i) == -IARG_MEMORYOP_EA(i)
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckMemPtr, IARG_CALL_ORDER, CALL_ORDER_DEFAULT + 1, IARG_MEMORYOP_EA,
-                       (ADDRINT)i, IARG_MEMORYOP_PTR, (ADDRINT)i, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckMemPtr,
+                IARG_CALL_ORDER, CALL_ORDER_DEFAULT + 1,
+                IARG_MEMORYOP_EA, (ADDRINT)i,
+                IARG_MEMORYOP_PTR, (ADDRINT)i,
+                IARG_END);
 
         // Revert the rewriteReg[i] value back to IARG_MEMORYOP_EA(i)
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)NegValue, IARG_CALL_ORDER, CALL_ORDER_DEFAULT + 2, IARG_REG_VALUE,
-                       rewriteReg[i], IARG_RETURN_REGS, rewriteReg[i], IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)NegValue,
+                IARG_CALL_ORDER, CALL_ORDER_DEFAULT + 2,
+                IARG_REG_VALUE, rewriteReg[i],
+                IARG_RETURN_REGS, rewriteReg[i],
+                IARG_END);
 
         // Rewrite i-th memory operand (with no EA change)
         INS_RewriteMemoryOperand(ins, i, rewriteReg[i]);
     }
 }
 
+
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v) { cout << "Done!" << endl; }
+VOID Fini(INT32 code, VOID *v)
+{
+    cout << "Done!" << endl;
+}
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
@@ -91,7 +104,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();

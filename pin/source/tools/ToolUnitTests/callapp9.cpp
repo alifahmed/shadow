@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -9,7 +9,7 @@
  * warranties, other than those that are expressly stated in the License.
  */
 
-// The tool callapp9.cpp and application inner.c showed a bug with the way REG_INST_G0
+// The tool callapp9.cpp and application inner.c showed a bug with the way REG_INST_G0 
 // is handled.  That register should have the value "1" when executing code
 // from PIN_CallApplicationFunction() and the value "0" when executing other
 // code. However, after execution returns from the replaced function, REG_INST_G0
@@ -26,14 +26,16 @@
 // i=2
 // At Inner G0=0
 
+
 #include <stdio.h>
 #include "pin.H"
 
-KNOB< BOOL > KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool", "const_context", "0", "use IARG_CONST_CONTEXT");
+KNOB<BOOL> KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool",
+                                   "const_context", "0", "use IARG_CONST_CONTEXT");
 
 static REG scratchReg;
 
-int REPLACE_Replaced(CONTEXT* context, THREADID tid, AFUNPTR func)
+int REPLACE_Replaced(CONTEXT *context, THREADID tid, AFUNPTR func)
 {
     int ret;
 
@@ -52,12 +54,14 @@ int REPLACE_Replaced(CONTEXT* context, THREADID tid, AFUNPTR func)
     }
 
     PIN_SetContextReg(ctxt, scratchReg, 1);
-    fprintf(stderr, "REPLACE_Replaced: REG_INST_G0=0x%lx\n", (unsigned long)PIN_GetContextReg(ctxt, scratchReg));
+    fprintf(stderr, "REPLACE_Replaced: REG_INST_G0=0x%lx\n",  (unsigned long)PIN_GetContextReg(ctxt, scratchReg));
     fflush(stderr);
 
-    PIN_CallApplicationFunction(ctxt, tid, CALLINGSTD_DEFAULT, func, NULL, PIN_PARG(int), &ret, PIN_PARG_END());
-
-    fprintf(stderr, "REPLACE_Replaced: REG_INST_G0=0x%lx\n", (unsigned long)PIN_GetContextReg(ctxt, scratchReg));
+    PIN_CallApplicationFunction(ctxt, tid, CALLINGSTD_DEFAULT, func, NULL,
+        PIN_PARG(int), &ret,
+        PIN_PARG_END());
+    
+    fprintf(stderr, "REPLACE_Replaced: REG_INST_G0=0x%lx\n",  (unsigned long)PIN_GetContextReg(ctxt, scratchReg));
     fprintf(stderr, "Returning from replaced Replaced()\n");
     fflush(stderr);
 
@@ -70,15 +74,18 @@ void AtInner(ADDRINT g0)
     fflush(stderr);
 }
 
-VOID Image(IMG img, void* v)
+VOID Image(IMG img, void *v)
 {
     RTN rtn = RTN_FindByName(img, "Replaced");
     if (RTN_Valid(rtn))
     {
         PROTO proto = PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "Replaced", PIN_PARG_END());
-        RTN_ReplaceSignature(rtn, AFUNPTR(REPLACE_Replaced), IARG_PROTOTYPE, proto,
-                             (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_THREAD_ID, IARG_ORIG_FUNCPTR,
-                             IARG_END);
+        RTN_ReplaceSignature(rtn, AFUNPTR(REPLACE_Replaced),
+            IARG_PROTOTYPE, proto,
+            (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+            IARG_THREAD_ID,
+            IARG_ORIG_FUNCPTR,
+            IARG_END);
         PROTO_Free(proto);
     }
 
@@ -91,9 +98,12 @@ VOID Image(IMG img, void* v)
     }
 }
 
-VOID OnThread(THREADID threadIndex, CONTEXT* ctxt, INT32 flags, VOID* v) { PIN_SetContextReg(ctxt, scratchReg, 0); }
+VOID OnThread(THREADID threadIndex, CONTEXT *ctxt, INT32 flags, VOID *v)
+{
+    PIN_SetContextReg(ctxt, scratchReg, 0);
+}
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -101,7 +111,7 @@ int main(int argc, char** argv)
     scratchReg = PIN_ClaimToolRegister();
     if (!REG_valid(scratchReg))
     {
-        fprintf(stderr, "Cannot allocate a scratch register.\n");
+        fprintf (stderr, "Cannot allocate a scratch register.\n");
         return 1;
     }
 

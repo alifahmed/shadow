@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -29,9 +29,9 @@
  */
 typedef enum
 {
-    OS_PIPE_CREATE_FLAGS_NONE                   = 0,        // No flags
-    OS_PIPE_CREATE_FLAGS_READ_SIDE_INHERITABLE  = (1 << 0), // Child processes inherits the pipe's read side
-    OS_PIPE_CREATE_FLAGS_WRITE_SIDE_INHERITABLE = (1 << 1)  // Child processes inherits the pipe's write side
+    OS_PIPE_CREATE_FLAGS_NONE                           = 0,       // No flags
+    OS_PIPE_CREATE_FLAGS_READ_SIDE_INHERITABLE          = (1<<0),  // Child processes inherits the pipe's read side
+    OS_PIPE_CREATE_FLAGS_WRITE_SIDE_INHERITABLE         = (1<<1)   // Child processes inherits the pipe's write side
 } OS_PIPE_CREATE_FLAGS;
 
 /*! @ingroup OS_APIS_IPC

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,22 +24,26 @@
 #include <elf.h>
 #endif
 #include "tool_macros.h"
+using std::ofstream;
+using std::string;
+using std::ios;
+using std::hex;
 using std::cerr;
 using std::dec;
 using std::endl;
-using std::hex;
-using std::ios;
-using std::ofstream;
-using std::string;
+
+
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "probe_tool.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "probe_tool.out", "specify file name");
 
 #ifdef TARGET_LINUX
-KNOB< BOOL > KnobJustQueryAuxv(KNOB_MODE_WRITEONCE, "pintool", "just_auxv", "0", "just test availability of auxv values");
+KNOB<BOOL> KnobJustQueryAuxv(KNOB_MODE_WRITEONCE, "pintool",
+    "just_auxv", "0", "just test availability of auxv values");
 #endif
 
 ofstream TraceFile;
@@ -47,8 +51,9 @@ ofstream TraceFile;
 
 INT32 Usage()
 {
-    cerr << "This pin tool tests MT attach in probe mode.\n"
-            "\n";
+    cerr <<
+        "This pin tool tests MT attach in probe mode.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
@@ -56,15 +61,15 @@ INT32 Usage()
 
 PIN_LOCK pinLock;
 
-UINT32 threadCounter    = 0;
-BOOL isAppStartReceived = FALSE;
+UINT32 threadCounter=0;
+BOOL   isAppStartReceived = FALSE;
 
 volatile BOOL probeBegan = FALSE; // True if probing has started
 
 #ifdef TARGET_LINUX
 void QueryAuxv(const char* name, ADDRINT value)
 {
-    bool found   = false;
+    bool found = false;
     ADDRINT vdso = PIN_GetAuxVectorValue(value, &found);
     if (found)
     {
@@ -77,7 +82,7 @@ void QueryAuxv(const char* name, ADDRINT value)
 }
 #endif
 
-VOID AppStart(VOID* v)
+VOID AppStart(VOID *v)
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
     TraceFile << "Application Start Callback is called from thread " << dec << PIN_GetTid() << endl;
@@ -85,11 +90,11 @@ VOID AppStart(VOID* v)
     PIN_ReleaseLock(&pinLock);
 }
 
-VOID AttachedThreadStart(VOID* sigmask, VOID* v)
+VOID AttachedThreadStart(VOID *sigmask, VOID *v)
 {
     ASSERT(!probeBegan, "Probe began before all thread attach callbacks were called");
     PIN_GetLock(&pinLock, PIN_GetTid());
-    TraceFile << "Thread counter is updated to " << dec << (threadCounter + 1) << endl;
+    TraceFile << "Thread counter is updated to " << dec <<  (threadCounter+1) << endl;
     ++threadCounter;
     PIN_ReleaseLock(&pinLock);
 }
@@ -98,8 +103,8 @@ int PinReady(unsigned int numOfThreads)
 {
     probeBegan = TRUE;
     PIN_GetLock(&pinLock, PIN_GetTid());
-    // Check that we don't have any extra thread
-    assert(threadCounter <= numOfThreads);
+	// Check that we don't have any extra thread
+	assert(threadCounter <= numOfThreads);
     if ((threadCounter == numOfThreads) && isAppStartReceived)
     {
         TraceFile.close();
@@ -110,23 +115,24 @@ int PinReady(unsigned int numOfThreads)
     return 0;
 }
 
-VOID ImageLoad(IMG img, void* v)
+VOID ImageLoad(IMG img, void *v)
 {
     ASSERT(!probeBegan, "Probe began before all image load callbacks were called");
-    RTN rtn = RTN_FindByName(img, C_MANGLE("ThreadsReady"));
-    if (RTN_Valid(rtn))
-    {
-        RTN_ReplaceProbed(rtn, AFUNPTR(PinReady));
-    }
+	RTN rtn = RTN_FindByName(img, C_MANGLE("ThreadsReady"));
+	if (RTN_Valid(rtn))
+	{
+		RTN_ReplaceProbed(rtn, AFUNPTR(PinReady));
+	}
 }
+
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -134,9 +140,9 @@ int main(int argc, CHAR* argv[])
 #if defined(TARGET_LINUX) && defined(TARGET_IA32)
     int gs_reg_value = 0;
     asm("mov $0, %%eax\n"
-        "mov %%gs, %%eax\n"
-        "mov %%eax, %0\n"
-        : "=r"(gs_reg_value));
+            "mov %%gs, %%eax\n"
+            "mov %%eax, %0\n"
+            : "=r" (gs_reg_value));
     ASSERTX(0 != gs_reg_value);
 #endif
 
@@ -145,8 +151,7 @@ int main(int argc, CHAR* argv[])
     TraceFile.setf(ios::showbase);
 
 #ifdef TARGET_LINUX
-    if (KnobJustQueryAuxv)
-    {
+    if (KnobJustQueryAuxv) {
         QueryAuxv("AT_ENTRY", AT_ENTRY);
         QueryAuxv("UNDEFINED_ENTRY", 0xFFFFFFF);
         TraceFile.close();

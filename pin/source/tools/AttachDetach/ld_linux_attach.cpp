@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,11 +16,14 @@ using std::endl;
 
 /* ===================================================================== */
 
-BOOL MyPinAttached() { return TRUE; }
+BOOL MyPinAttached()
+{
+    return TRUE;
+}
 
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     RTN rtn = RTN_FindByName(img, "PinAttached");
     if (RTN_Valid(rtn))
@@ -40,10 +43,10 @@ VOID ImageLoad(IMG img, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     IMG_AddInstrumentFunction(ImageLoad, NULL);
 

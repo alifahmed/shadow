@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,8 +20,11 @@
 #include <assert.h>
 #include <sys/mman.h>
 
+
 static sigjmp_buf JumpBuffer;
 static unsigned int TestNumber = 0;
+
+
 
 extern int GetFlags_asm();
 // from faultcheck_flags_ia32_asm.s
@@ -29,33 +32,34 @@ extern int SetAppFlagsAndSegv_asm();
 extern int ClearAppFlagsAndSegv_asm();
 int DoTest(unsigned int tnum)
 {
+
     switch (tnum)
     {
         case 0:
-            printf("AllFlagsSet\n");
-            SetAppFlagsAndSegv_asm();
-            return (1);
+        printf ("AllFlagsSet\n");
+        SetAppFlagsAndSegv_asm();
+        return (1);
 
         case 1:
-            printf("AllFlagsClear\n");
-            ClearAppFlagsAndSegv_asm();
-            return (1);
+        printf ("AllFlagsClear\n");
+        ClearAppFlagsAndSegv_asm();
+        return (1);
 
         default:
-            return (0);
+        return (0);
     }
 }
 
-void PrintEflagsAtSignal(int sig, const siginfo_t* info, void* vctxt)
+void PrintEflagsAtSignal(int sig, const siginfo_t *info, void *vctxt)
 {
-    ucontext_t* ctxt = vctxt;
+    ucontext_t *ctxt = vctxt;
     // note that the resume flag is turned on when exception occurs,
     // but if pin needs to retrieve the flags from memory then the
     // resume flag will not be there - so we test only the lower 16 bits
 #if defined(TARGET_MAC)
-    unsigned long flags = (unsigned long)ctxt->uc_mcontext->__ss.__eflags & 0xffff;
+    unsigned long flags = (unsigned long)ctxt->uc_mcontext->__ss.__eflags&0xffff;
 #else
-    unsigned long flags = (unsigned long)ctxt->uc_mcontext.gregs[REG_EFL] & 0xffff;
+    unsigned long flags = (unsigned long)ctxt->uc_mcontext.gregs[REG_EFL]&0xffff;
 #endif
     printf("  Signal %d, eflags=0x%lx\n", sig, flags);
 }
@@ -99,5 +103,7 @@ int main()
         TestNumber++;
     }
 
+
     return 0;
 }
+

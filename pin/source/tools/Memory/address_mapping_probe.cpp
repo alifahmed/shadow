@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,18 +14,21 @@
 #include <vector>
 #include <assert.h>
 #include "pin.H"
-using std::string;
 using std::vector;
+using std::string;
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "address_mapping_probe.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,    "pintool",
+    "o", "address_mapping_probe.out", "specify output file name");
 
-KNOB< BOOL > KnobGenerateOOM(KNOB_MODE_WRITEONCE, "pintool", "m", "0", "generate an out of memory condition");
+KNOB<BOOL> KnobGenerateOOM(KNOB_MODE_WRITEONCE,    "pintool",
+    "m", "0", "generate an out of memory condition");
 
-KNOB< ADDRESS_RANGE > KnobMemoryBoundary(KNOB_MODE_WRITEONCE, "pintool", "b", "0:0", "The memory boundary to check");
+KNOB<ADDRESS_RANGE> KnobMemoryBoundary(KNOB_MODE_WRITEONCE,    "pintool",
+    "b", "0:0", "The memory boundary to check");
 
 //Before PIN initialized, it is using a small pre-allocated memory pool for all dynamic
 //memory allocation. This pre-allocated pool is outside the specified region for memory
@@ -56,7 +59,7 @@ static const int BSS_ALLOCATOR_SIZE = 0xc0000;
 /* ===================================================================== */
 
 //Output file
-FILE* out;
+FILE * out;
 
 void* AllocateAndCheckAddressRange(size_t sz, int retries = 0)
 {
@@ -104,17 +107,17 @@ VOID OutOfMemory(size_t sz, VOID* arg)
 
 VOID TestMemory()
 {
-    vector< void* > smallMallocs;
+    vector<void*> smallMallocs;
 #ifndef TARGET_WINDOWS
     //Skip memory allocated by the BSS allocator
-    void* initialPtr = AllocateAndCheckAddressRange(MALLOC_POOL_SIZE, BSS_ALLOCATOR_SIZE / MALLOC_POOL_SIZE);
+    void* initialPtr = AllocateAndCheckAddressRange(MALLOC_POOL_SIZE, BSS_ALLOCATOR_SIZE/MALLOC_POOL_SIZE);
     free(initialPtr);
 #endif
-    // Allocation for big memory region: This malloc should allocate memory directly from the OS
+// Allocation for big memory region: This malloc should allocate memory directly from the OS
     void* bigMalloc = AllocateAndCheckAddressRange(0x100000); //This malloc should allocate memory directly from the OS
     for (int i = 4; i < 0x10000; i *= 2)
     {
-        // Allocation for small memory region: This malloc should allocate memory from a memory pool
+// Allocation for small memory region: This malloc should allocate memory from a memory pool
         void* smallOne = AllocateAndCheckAddressRange(i);
         smallMallocs.push_back(smallOne);
     }
@@ -123,12 +126,12 @@ VOID TestMemory()
         void* p = AllocateAndCheckAddressRange(0x10000);
         if (!KnobGenerateOOM.Value())
         {
-            //In order to generate an out of memory - just don't free the allocated pointers
+        	//In order to generate an out of memory - just don't free the allocated pointers
             free(p);
         }
     }
     free(bigMalloc);
-    for (vector< void* >::iterator it = smallMallocs.begin(); it != smallMallocs.end(); it++)
+    for (vector<void*>::iterator it = smallMallocs.begin(); it != smallMallocs.end(); it++)
     {
         free(*it);
     }
@@ -136,7 +139,7 @@ VOID TestMemory()
     fclose(out);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

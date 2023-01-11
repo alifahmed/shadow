@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,9 +19,10 @@
 
 BOOL IsFirstIns = TRUE;
 
-static void InstrumentIns(INS, VOID*);
+static void InstrumentIns(INS, VOID *);
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
@@ -31,19 +32,10 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static void InstrumentIns(INS ins, VOID*)
+static void InstrumentIns(INS ins, VOID *)
 {
     if (IsFirstIns)
     {
-#if defined(TARGET_MAC)
-        if (PIN_GetDebugStatus() != DEBUG_STATUS_CONNECTED)
-        {
-            // On macOS in launch mode, a debugger connection is established after the application has already started running
-            // in the earliest point it is safe to do so. So, Jitting of the application start before we reach that point.
-            // Therefore we return here until the the debugger connection session has started.
-            return;
-        }
-#endif
         IsFirstIns = FALSE;
 
         // The debugger isn't connected until after PIN_StartProgram().  Therfore, we

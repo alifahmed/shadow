@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,19 +12,32 @@
 #include <iostream>
 #include "pin.H"
 
-VOID DoASSERT() { ASSERTX(FALSE); }
 
-VOID Bar() { DoASSERT(); }
+VOID DoASSERT()
+{
+    ASSERTX(FALSE);
+}
 
-VOID Foo() { Bar(); }
+VOID Bar()
+{
+    DoASSERT();
+}
 
-VOID Instruction(INS ins, void* v) { Foo(); }
+VOID Foo()
+{
+    Bar();
+}
+
+VOID Instruction(INS ins, void *v)
+{
+    Foo();
+}
 
 /* ================================================================== */
 /*
  Initialize and begin program execution under the control of Pin
 */
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
 

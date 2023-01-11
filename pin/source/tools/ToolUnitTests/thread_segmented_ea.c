@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,8 +19,7 @@
 #if defined(__cplusplus)
 extern "C"
 #endif
-    void
-    TestSegmentedEA();
+void TestSegmentedEA ();
 
 int a[100000];
 int n = 10;
@@ -28,10 +27,10 @@ int n = 10;
 #ifdef TARGET_WINDOWS
 extern __declspec(dllexport) __declspec(noinline)
 #endif
-    void* longfun(void* arg)
+void * longfun(void * arg)
 {
-    int i, j;
-
+    int i,j;
+    
     for (j = 0; j < 1000; j++)
     {
         for (i = 0; i < n; i++)
@@ -39,31 +38,31 @@ extern __declspec(dllexport) __declspec(noinline)
             a[i] = 1;
         }
     }
-    TestSegmentedEA();
+    TestSegmentedEA ();
     return 0;
 }
 
 #ifdef TARGET_WINDOWS
 extern __declspec(dllexport) __declspec(noinline)
 #endif
-    void* shortfun(void* arg)
+void * shortfun(void * arg)
 {
     a[1] = 1;
-    TestSegmentedEA();
+    TestSegmentedEA ();
     return 0;
 }
 
 THREAD_HANDLE threads[MAXTHREADS];
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int numthreads = 0;
     int i;
-
-    TestSegmentedEA();
+    
+    TestSegmentedEA ();
     numthreads = 30;
     assert(numthreads < MAXTHREADS);
-
+    
     for (i = 0; i < numthreads; i++)
     {
         printf("Creating thread %d\n", i);
@@ -80,12 +79,13 @@ int main(int argc, char* argv[])
         if (!success)
         {
             fprintf(stdout, "JoinOneThread failed\n");
-            fflush(stdout);
+            fflush (stdout);
         }
     }
-
+    
+    
     printf("All threads joined\n");
-    fflush(stdout);
+    fflush (stdout);
 
     return 0;
 }

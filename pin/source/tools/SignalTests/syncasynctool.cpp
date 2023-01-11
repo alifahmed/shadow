@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,13 +18,15 @@
 #include "pin.H"
 using std::cerr;
 
-static void InstrumentImage(IMG, VOID*);
+
+static void InstrumentImage(IMG, VOID *);
 static void AtSegv();
-static void AtApplicationEnd(INT32, VOID*);
+static void AtApplicationEnd(INT32, VOID *);
 
 static int ExecuteCount = 0;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
@@ -35,7 +37,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static void InstrumentImage(IMG img, VOID* dummy)
+
+static void InstrumentImage(IMG img, VOID *dummy)
 {
 #if defined(TARGET_MAC)
     RTN rtn = RTN_FindByName(img, "_MakeSegv");
@@ -46,10 +49,12 @@ static void InstrumentImage(IMG img, VOID* dummy)
     {
         RTN_Open(rtn);
         INS first = RTN_InsHead(rtn);
-        if (INS_Valid(first)) INS_InsertCall(first, IPOINT_BEFORE, (AFUNPTR)AtSegv, IARG_END);
+        if (INS_Valid(first))
+            INS_InsertCall(first, IPOINT_BEFORE, (AFUNPTR)AtSegv, IARG_END);
         RTN_Close(rtn);
     }
 }
+
 
 static void AtSegv()
 {
@@ -61,13 +66,14 @@ static void AtSegv()
     // application's VTALRM signal get delivered.
     //
     unsigned long val = 123456789;
-    for (unsigned long i = 1; i < 100000000; i++)
+    for (unsigned long i = 1;  i < 100000000;  i++)
         val = val / i + i;
 
-    volatile unsigned long useResult __attribute__((unused)) = val;
+    volatile unsigned long useResult __attribute__ ((unused)) = val;
 }
 
-static void AtApplicationEnd(INT32 code, VOID* dummy)
+
+static void AtApplicationEnd(INT32 code, VOID *dummy)
 {
     if (ExecuteCount != 1)
     {

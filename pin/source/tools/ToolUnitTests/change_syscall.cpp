@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,27 +22,30 @@
 BOOL IsSigaction(ADDRINT sysnum)
 {
 #ifdef SYS_sigaction
-    if (sysnum == SYS_sigaction) return TRUE;
+    if (sysnum == SYS_sigaction)
+        return TRUE;
 #endif
 #ifdef SYS_rt_sigaction
-    if (sysnum == SYS_rt_sigaction) return TRUE;
+    if (sysnum == SYS_rt_sigaction)
+        return TRUE;
 #endif
     return FALSE;
 }
 
-VOID OnSyscallEntry(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
+
+VOID OnSyscallEntry(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
 {
     ADDRINT sysnum = PIN_GetSyscallNumber(ctxt, std);
-    ADDRINT arg0   = PIN_GetSyscallArgument(ctxt, std, 0);
+    ADDRINT arg0 = PIN_GetSyscallArgument(ctxt, std, 0);
 
 #if defined(TARGET_MAC)
-#if defined(TARGET_IA32E)
+# if defined(TARGET_IA32E)
     // Extract the syscall number without the UNIX mask
     sysnum = sysnum & (~(0xFF << 24));
-#else
+# else
     // Extract the syscall number without the int80 mask
     sysnum = sysnum & 0xFFFF;
-#endif
+# endif
 #endif
 
     char* filetoopen = NULL;
@@ -51,14 +54,14 @@ VOID OnSyscallEntry(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, V
     {
         // open() is implemented using openat() in newer Bionic versions. The file is held in the second argument.
         ADDRINT arg1 = (PIN_GetSyscallArgument(ctxt, std, 1));
-        filetoopen   = reinterpret_cast< char* >(arg1);
+        filetoopen = reinterpret_cast<char *>(arg1);
     }
 #endif
     if (sysnum == SYS_open)
     {
-        filetoopen = reinterpret_cast< char* >(arg0);
+        filetoopen = reinterpret_cast<char *>(arg0);
     }
-    if (filetoopen != NULL && strncmp(filetoopen, "does-not-exist1", sizeof("does-not-exist1") - 1) == 0)
+    if (filetoopen != NULL && strncmp(filetoopen, "does-not-exist1", sizeof("does-not-exist1")-1) == 0)
     {
         PIN_SetSyscallNumber(ctxt, std, SYS_getpid);
     }
@@ -68,14 +71,15 @@ VOID OnSyscallEntry(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, V
         PIN_SetSyscallNumber(ctxt, std, SYS_getpid);
     }
 
-    if (filetoopen && strncmp(filetoopen, "does-not-exist2", sizeof("does-not-exist2") - 1) == 0)
+    if (filetoopen && strncmp(filetoopen, "does-not-exist2", sizeof("does-not-exist2")-1) == 0)
     {
         PIN_SetSyscallNumber(ctxt, std, SYS_exit);
         PIN_SetSyscallArgument(ctxt, std, 0, 0);
     }
 }
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

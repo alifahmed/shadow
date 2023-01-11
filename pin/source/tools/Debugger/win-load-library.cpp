@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,7 +14,8 @@
 
 typedef void (*FOOPTR)();
 
-int main(int argc, char** argv)
+
+int main(int argc, char **argv)
 {
     if (argc != 2)
     {
@@ -29,7 +30,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    FOOPTR foo = reinterpret_cast< FOOPTR >(GetProcAddress(mod, "Foo"));
+    FOOPTR foo = reinterpret_cast<FOOPTR>(GetProcAddress(mod, "Foo"));
     if (!foo)
     {
         std::cerr << "Unable to find function Foo\n";

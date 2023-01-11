@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,21 +25,21 @@ using std::flush;
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if (PIN_Init(argc,argv))
     {
         return 1;
     }
 
-    const char* toolName = PIN_ToolFullPath();
+    const char * toolName = PIN_ToolFullPath();
     cerr << toolName << flush;
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
 

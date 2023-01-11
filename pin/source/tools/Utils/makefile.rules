@@ -17,18 +17,9 @@
 # This defines all the applications that will be run during the tests.
 APP_ROOTS := cp-pin hello avx_check avx2_check tsx_check avx512f_check thread_app
 
-
 # This defines any additional object files that need to be compiled.
 OBJECT_ROOTS := regvalue_utils supports_avx threadlib avx_check_$(TARGET) supports_avx2 tsx_check_$(TARGET) supports_avx512f \
                 runnable thread_pool sys_memory
-
-ifeq ($(TARGET),intel64)
-    ifneq ($(TARGET_OS),windows)
-        APP_ROOTS += amx_check
-        OBJECT_ROOTS += supports_amx
-    endif
-endif
-
 
 # This defines any static libraries (archives), that need to be built.
 LIB_ROOTS := regvallib
@@ -45,18 +36,15 @@ ifeq ($(TARGET_OS),windows)
     OBJECT_ROOTS += set_xmm_scratches_asm
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
 ifeq ($(TARGET_OS),linux)
-    DWARF4_SUPPORTED := $(shell $(TOOLS_ROOT)/Utils/testToolVersion $(CXXPATH) lt 4.5)
+    DWARF4_SUPPORTED := $(shell $(TOOLS_ROOT)/Utils/testGccVersion $(CXXPATH) 4.5)
     ifeq ($(DWARF4_SUPPORTED),1)
         APP_ROOTS := $(filter-out hello_dwarf4, $(APP_ROOTS))
     endif
 endif
 
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
 
 ##############################################################
 #
@@ -95,9 +83,6 @@ $(OBJDIR)tsx_check$(EXE_SUFFIX): tsx_check.c $(OBJDIR)tsx_check_$(TARGET)$(OBJ_S
 	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS)
 
 $(OBJDIR)avx512f_check$(EXE_SUFFIX): avx512f_check.c $(OBJDIR)supports_avx512f$(OBJ_SUFFIX)
-	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS)
-
-$(OBJDIR)amx_check$(EXE_SUFFIX): amx_check.c $(OBJDIR)supports_amx$(OBJ_SUFFIX)
 	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS)
 
 $(OBJDIR)attachLauncher$(EXE_SUFFIX): attachLauncher_$(OS_TYPE).cpp

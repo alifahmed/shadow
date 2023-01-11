@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,15 +22,15 @@
  * C_MANGLE(name) - Mangle a C function name to its corresponding assembler function name
  */
 #ifdef TARGET_MAC
-#define C_MANGLE(name) "_" name
-#define SHARED_LIB(name) name ".dylib"
+# define C_MANGLE(name) "_" name
+# define SHARED_LIB(name) name ".dylib"
 #else
-#define C_MANGLE(name) name
-#if defined(TARGET_LINUX)
-#define SHARED_LIB(name) name ".so"
-#elif defined(TARGET_WINDOWS)
-#define SHARED_LIB(name) name ".dll"
-#endif
+# define C_MANGLE(name) name
+# if defined(TARGET_LINUX)
+#  define SHARED_LIB(name) name ".so"
+# elif defined(TARGET_WINDOWS)
+#  define SHARED_LIB(name) name ".dll"
+# endif
 #endif
 
 // macOS adds '_' prefix to function names (as well as to calls to functions).
@@ -45,3 +45,4 @@
 #endif
 
 #endif // __TOOL_MACROS_H__
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,29 +18,27 @@
 
 #include <string.h>
 #include "pin.H"
-using std::dec;
-using std::endl;
 using std::hex;
 using std::ofstream;
+using std::dec;
 using std::string;
+using std::endl;
 
-KNOB< BOOL > KnobTrace(KNOB_MODE_WRITEONCE, "pintool", "t", "0", "trace rewrites");
-KNOB< BOOL > KnobOne(KNOB_MODE_WRITEONCE, "pintool", "1", "0", "Don't rewrite the first memory operand");
-KNOB< BOOL > KnobTwo(KNOB_MODE_WRITEONCE, "pintool", "2", "0", "Don't rewrite the second memory operand");
-KNOB< string > KnobOutput(KNOB_MODE_WRITEONCE, "pintool", "o", "rewritememop1.out", "Name for log file");
+KNOB<BOOL>   KnobTrace(KNOB_MODE_WRITEONCE, "pintool", "t", "0", "trace rewrites");
+KNOB<BOOL>   KnobOne(KNOB_MODE_WRITEONCE, "pintool", "1", "0", "Don't rewrite the first memory operand");
+KNOB<BOOL>   KnobTwo(KNOB_MODE_WRITEONCE, "pintool", "2", "0", "Don't rewrite the second memory operand");
+KNOB<string> KnobOutput(KNOB_MODE_WRITEONCE,"pintool", "o", "rewritememop1.out", "Name for log file");
 
-KNOB< BOOL > KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool", "const_context", "0", "use IARG_CONST_CONTEXT");
+KNOB<BOOL> KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool",
+                                   "const_context", "0", "use IARG_CONST_CONTEXT");
 
 static ofstream out;
-static UINT64 rewritten   = 0;
+static UINT64 rewritten = 0;
 static UINT64 afterBranch = 0;
 static BOOL rewriteOp[32];
 
 #define STRINGIZE(v) #v
-#define REGENTRY(n)           \
-    {                         \
-        REG_##n, STRINGIZE(n) \
-    }
+#define REGENTRY(n) { REG_##n, STRINGIZE(n) }
 
 /* ===================================================================== */
 /* Tracing code. It prints each instruction, and, after it, the register state
@@ -50,9 +48,9 @@ static BOOL rewriteOp[32];
 /* Information for each thread. */
 class threadState
 {
-  public:
-    UINT32 iCount;
-    CONTEXT context;
+public:
+    UINT32    iCount;
+    CONTEXT   context;
 };
 
 static threadState threadStates[32];
@@ -61,13 +59,13 @@ static threadState threadStates[32];
 /* We simply allocate space for the dis-assembled instruction strings and
  * let them leak.
  */
-static char const* formatInstruction(INS ins)
+static char const * formatInstruction(INS ins)
 {
-    ADDRINT ip       = INS_Address(ins);
+    ADDRINT ip = INS_Address(ins);
     string formatted = hexstr(ip) + " " + INS_Disassemble(ins);
-    char* res        = new char[formatted.length() + 1];
+    char * res = new char [formatted.length()+1];
 
-    strcpy(res, formatted.c_str());
+    strcpy (res, formatted.c_str());
 
     return res;
 }
@@ -76,45 +74,69 @@ static char const* formatInstruction(INS ins)
 // and prints the pre-formatted dis-assembled instruction
 static VOID printInstruction(THREADID thread, ADDRINT disas)
 {
-    threadState* s = &threadStates[thread];
-    UINT32 seqNo   = ++s->iCount;
+    threadState * s = &threadStates[thread];
+    UINT32 seqNo = ++s->iCount;
 
-    out << dec << seqNo << ":" << ((const char*)Addrint2VoidStar(disas)) << endl;
+    out << dec << seqNo << ":" << ((const char *)Addrint2VoidStar(disas)) << endl;
 }
+
 
 // Table of registers to check and display
 static const struct
 {
     REG regnum;
-    const char* name;
+    const char * name;
 } checkedRegisters[] =
 #if defined(TARGET_IA32E)
-    {REGENTRY(RFLAGS), REGENTRY(RAX), REGENTRY(RBX), REGENTRY(RCX), REGENTRY(RDX), REGENTRY(RBP),
-     REGENTRY(RSP),    REGENTRY(RDI), REGENTRY(RSI), REGENTRY(R8),  REGENTRY(R9),  REGENTRY(R10),
-     REGENTRY(R11),    REGENTRY(R12), REGENTRY(R13), REGENTRY(R14), REGENTRY(R15)};
+{
+    REGENTRY(RFLAGS),
+    REGENTRY(RAX),
+    REGENTRY(RBX),
+    REGENTRY(RCX),
+    REGENTRY(RDX),
+    REGENTRY(RBP),
+    REGENTRY(RSP),
+    REGENTRY(RDI),
+    REGENTRY(RSI),
+    REGENTRY(R8),
+    REGENTRY(R9),
+    REGENTRY(R10),
+    REGENTRY(R11),
+    REGENTRY(R12),
+    REGENTRY(R13),
+    REGENTRY(R14),
+    REGENTRY(R15)
+};
 #elif defined(TARGET_IA32)
-    {
-        REGENTRY(EFLAGS), REGENTRY(EAX), REGENTRY(EBX), REGENTRY(ECX), REGENTRY(EDX),
-        REGENTRY(EBP),    REGENTRY(ESP), REGENTRY(EDI), REGENTRY(ESI),
+{
+    REGENTRY(EFLAGS),
+    REGENTRY(EAX),
+    REGENTRY(EBX),
+    REGENTRY(ECX),
+    REGENTRY(EDX),
+    REGENTRY(EBP),
+    REGENTRY(ESP),
+    REGENTRY(EDI),
+    REGENTRY(ESI),
 };
 #else
-#error Unknown processor
+# error Unknown processor
 #endif
 
-static VOID printRegisterDiffs(THREADID tid, CONTEXT* ctx)
+static VOID printRegisterDiffs(THREADID tid, CONTEXT *ctx)
 {
-    threadState* s    = &threadStates[tid];
-    UINT32 seqNo      = s->iCount;
-    CONTEXT* savedCtx = &s->context;
+    threadState * s = &threadStates[tid];
+    UINT32 seqNo    = s->iCount;
+    CONTEXT * savedCtx = &s->context;
 
     // Save the context if this was the first instruction
     if (seqNo == 0)
         PIN_SaveContext(ctx, savedCtx);
     else
     {
-        for (UINT32 i = 0; i < sizeof(checkedRegisters) / sizeof(checkedRegisters[0]); i++)
+        for (UINT32 i=0; i<sizeof(checkedRegisters)/sizeof(checkedRegisters[0]); i++)
         {
-            REG r            = checkedRegisters[i].regnum;
+            REG r = checkedRegisters[i].regnum;
             ADDRINT newValue = PIN_GetContextReg(ctx, r);
 
             if (PIN_GetContextReg(savedCtx, r) != newValue)
@@ -128,16 +150,19 @@ static VOID printRegisterDiffs(THREADID tid, CONTEXT* ctx)
 
 static UINT32 opcodesRewritten[XED_ICLASS_LAST];
 
-static void printHex(ADDRINT p) { out << std::setw(2 * (sizeof(p) + 1)) << std::hex << p << std::dec; }
+static void printHex (ADDRINT p)
+{
+    out << std::setw(2*(sizeof(p)+1)) << std::hex << p << std::dec ;
+}
 
 static ADDRINT ProcessAddress(UINT32 operand, ADDRINT val, ADDRINT ip)
 {
     if (KnobTrace)
     {
         out << "  ";
-        printHex(ip);
+        printHex (ip);
         out << ": [" << operand << "] ";
-        printHex(val);
+        printHex (val);
         out << endl;
     }
     rewritten++;
@@ -149,7 +174,7 @@ static void BranchTaken(ADDRINT ip)
     if (KnobTrace)
     {
         out << "  ";
-        printHex(ip);
+        printHex (ip);
         out << ": on branch taken" << endl;
     }
     afterBranch++;
@@ -196,10 +221,17 @@ static VOID RewriteIns(INS ins)
 
     if (KnobTrace)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(printRegisterDiffs), IARG_THREAD_ID,
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_END);
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(printInstruction), IARG_THREAD_ID, IARG_ADDRINT, formatInstruction(ins),
+        INS_InsertCall(ins, IPOINT_BEFORE,
+                       AFUNPTR(printRegisterDiffs),
+                       IARG_THREAD_ID,
+                       (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
                        IARG_END);
+        INS_InsertCall(ins,IPOINT_BEFORE,
+                       AFUNPTR(printInstruction),
+                       IARG_THREAD_ID,
+                       IARG_ADDRINT, formatInstruction(ins),
+                       IARG_END);
+
     }
 
     if (memops && doTranslate(ins))
@@ -208,26 +240,34 @@ static VOID RewriteIns(INS ins)
 
         opcodesRewritten[op]++;
 
-        for (int i = 0; i < memops; i++)
+        for (int i=0; i<memops; i++)
         {
             // Only rewrite the operands we were asked to.
             if (rewriteOp[i])
             {
-                INS_RewriteMemoryOperand(ins, i, REG(REG_INST_G0 + i));
+                INS_RewriteMemoryOperand(ins, i, REG(REG_INST_G0+i));
 
-                INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(ProcessAddress), IARG_UINT32, i, IARG_MEMORYOP_EA, i, IARG_INST_PTR,
-                               IARG_RETURN_REGS, REG_INST_G0 + i, IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE,
+                               AFUNPTR(ProcessAddress),
+                               IARG_UINT32, i,
+                               IARG_MEMORYOP_EA, i,
+                               IARG_INST_PTR,
+                               IARG_RETURN_REGS, REG_INST_G0+i,
+                               IARG_END);
             }
         }
 
         if (INS_IsValidForIpointTakenBranch(ins))
         { // Check that IPOINT_TAKEN_BRANCH instrumentation is called.
-            INS_InsertCall(ins, IPOINT_TAKEN_BRANCH, AFUNPTR(BranchTaken), IARG_INST_PTR, IARG_END);
+            INS_InsertCall(ins, IPOINT_TAKEN_BRANCH,
+                           AFUNPTR (BranchTaken),
+                           IARG_INST_PTR,
+                           IARG_END);
         }
     }
 }
 
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
     for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
     {
@@ -238,33 +278,33 @@ VOID Trace(TRACE trace, VOID* v)
     }
 }
 
-void AtEnd(INT32 code, VOID* arg)
+void AtEnd(INT32 code, VOID *arg)
 {
     out << "Target exited with code : " << code << endl << endl;
     out << "Dynamically rewrote " << rewritten << " memory operands" << endl;
     out << "Branch taken " << afterBranch << endl;
 
     out << "Statically rewritten opcodes" << endl;
-    for (UINT32 i = 0; i < XED_ICLASS_LAST; i++)
+    for (UINT32 i=0; i<XED_ICLASS_LAST; i++)
     {
         if (opcodesRewritten[i])
         {
-            out << std::setw(12) << std::left << xed_iclass_enum_t2str(xed_iclass_enum_t(i)) << std::right << " " << std::setw(9)
-                << opcodesRewritten[i] << endl;
+            out << std::setw(12) << std::left << xed_iclass_enum_t2str(xed_iclass_enum_t(i)) << std::right <<
+                " " << std::setw(9) << opcodesRewritten[i] << endl;
         }
     }
     out.close();
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
 
     out.open(KnobOutput.Value().c_str());
 
-    rewriteOp[0] = !KnobOne;
-    rewriteOp[1] = !KnobTwo;
+    rewriteOp[0] = ! KnobOne;
+    rewriteOp[1] = ! KnobTwo;
 
     TRACE_AddInstrumentFunction(Trace, 0);
     PIN_AddFiniFunction(AtEnd, 0);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,27 +20,28 @@
 #include <stdlib.h>
 #include <vector>
 #include "pin.H"
-using std::endl;
-using std::hex;
-using std::setw;
-using std::string;
 using std::vector;
+using std::hex;
+using std::endl;
+using std::string;
+using std::setw;
 
-typedef struct
+typedef struct 
 {
     ADDRINT start;
     ADDRINT end;
-} RTN_INTERNAL_RANGE;
+}RTN_INTERNAL_RANGE;
 
-vector< RTN_INTERNAL_RANGE > rtnInternalRangeList;
+vector< RTN_INTERNAL_RANGE> rtnInternalRangeList;
 
 // Pin calls this function every time a new img is loaded
 
-VOID ImageLoad(IMG img, VOID* v)
+
+VOID ImageLoad(IMG img, VOID *v)
 {
-    std::cout << "Img: " << IMG_Name(img) << endl;
+    std::cout << "Img: " << IMG_Name(img) << endl; 
     for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
-    {
+    { 
         for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
         {
             std::cout << "  Rtn: " << setw(8) << hex << RTN_Address(rtn) << " " << RTN_Name(rtn) << endl;
@@ -50,13 +51,13 @@ VOID ImageLoad(IMG img, VOID* v)
 
             if (path != "")
             {
-                std::cout << "File " << path << " Line " << line << endl;
+                std::cout << "File " << path << " Line " << line << endl; 
             }
 
             // Prepare for processing of RTN, an  RTN is not broken up into BBLs,
-            // it is merely a sequence of INSs
+            // it is merely a sequence of INSs 
             RTN_Open(rtn);
-
+            
             if (!INS_Valid(RTN_InsHead(rtn)))
             {
                 RTN_Close(rtn);
@@ -64,8 +65,9 @@ VOID ImageLoad(IMG img, VOID* v)
             }
             RTN_INTERNAL_RANGE rtnInternalRange;
             rtnInternalRange.start = INS_Address(RTN_InsHead(rtn));
-            rtnInternalRange.end   = INS_Address(RTN_InsHead(rtn)) + INS_Size(RTN_InsHead(rtn));
-            INS lastIns            = INS_Invalid();
+            rtnInternalRange.end 
+              = INS_Address(RTN_InsHead(rtn)) + INS_Size(RTN_InsHead(rtn));
+            INS lastIns = INS_Invalid();
             for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
             {
                 std::cout << "    " << setw(8) << hex << INS_Address(ins) << " " << INS_Disassemble(ins) << endl;
@@ -73,27 +75,24 @@ VOID ImageLoad(IMG img, VOID* v)
                 {
                     if ((INS_Address(lastIns) + INS_Size(lastIns)) == INS_Address(ins))
                     {
-                        rtnInternalRange.end = INS_Address(ins) + INS_Size(ins);
+                        rtnInternalRange.end = INS_Address(ins)+INS_Size(ins);
                     }
                     else
-                    {
-                        std::cout << "  rtnInternalRangeList.push_back " << setw(8) << hex << rtnInternalRange.start << " "
-                                  << setw(8) << hex << rtnInternalRange.end << endl;
+                    { 
+                        std::cout << "  rtnInternalRangeList.push_back " << setw(8) << hex << rtnInternalRange.start << " " << setw(8) << hex << rtnInternalRange.end << endl;
                         rtnInternalRangeList.push_back(rtnInternalRange);
                         // make sure this ins has not already appeared in this RTN
-                        for (vector< RTN_INTERNAL_RANGE >::iterator ri = rtnInternalRangeList.begin();
-                             ri != rtnInternalRangeList.end(); ri++)
+                        for (vector<RTN_INTERNAL_RANGE>::iterator ri = rtnInternalRangeList.begin(); ri != rtnInternalRangeList.end(); ri++)
                         {
-                            if ((INS_Address(ins) >= ri->start) && (INS_Address(ins) < ri->end))
+                            if ((INS_Address(ins) >= ri->start) && (INS_Address(ins)<ri->end))
                             {
                                 std::cout << "***Error - above instruction already appeared in this RTN\n";
-                                std::cout << "  in rtnInternalRangeList " << setw(8) << hex << ri->start << " " << setw(8) << hex
-                                          << ri->end << endl;
-                                exit(1);
+                                std::cout << "  in rtnInternalRangeList " << setw(8) << hex << ri->start << " " << setw(8) << hex << ri->end << endl;
+                                exit (1);
                             }
                         }
                         rtnInternalRange.start = INS_Address(ins);
-                        rtnInternalRange.end   = INS_Address(ins) + INS_Size(ins);
+                        rtnInternalRange.end = INS_Address(ins) + INS_Size(ins);
                     }
                 }
                 lastIns = ins;
@@ -104,13 +103,16 @@ VOID ImageLoad(IMG img, VOID* v)
             rtnInternalRangeList.clear();
         }
     }
+    
 }
+
+
 
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // prepare for image instrumentation mode
     PIN_InitSymbols();
@@ -123,6 +125,6 @@ int main(int argc, char* argv[])
 
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

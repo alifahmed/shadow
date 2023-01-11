@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,11 +20,12 @@
 #include <fstream>
 #include <set>
 #include "pin.H"
-using std::endl;
 using std::string;
+using std::endl;
 
 using std::ofstream;
 using std::set;
+
 
 /**************************************************
  * Global variables                               *
@@ -40,20 +41,21 @@ static TLS_KEY tidKey;
 // and one for the thread fini callbacks.
 // When the test is done, we sort and compare them and expect them to be identical. This verifies access
 // to the correct TLS during the thread fini callbacks.
-KNOB< string > KnobThreadsStartsFile(KNOB_MODE_WRITEONCE, "pintool", "startsfile", "threadStarts.out",
-                                     "specify file name for thread start callbacks output");
-KNOB< string > KnobThreadsFinisFile(KNOB_MODE_WRITEONCE, "pintool", "finisfile", "threadFinis.out",
-                                    "specify file name for thread fini callbacks output");
+KNOB<string> KnobThreadsStartsFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "startsfile", "threadStarts.out", "specify file name for thread start callbacks output");
+KNOB<string> KnobThreadsFinisFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "finisfile", "threadFinis.out", "specify file name for thread fini callbacks output");
 
 // Knob for specifying the scenario to be tested.
-KNOB< int > KnobScenario(KNOB_MODE_WRITEONCE, "pintool", "scenario", "0", "specify the current scenario to be checked (1-6)");
+KNOB<int> KnobScenario(KNOB_MODE_WRITEONCE, "pintool",
+    "scenario", "0", "specify the current scenario to be checked (1-6)");
 
 // Output file streams
 ofstream startsOut;
 ofstream finisOut;
 
 THREADID myThread = INVALID_THREADID;
-set< THREADID > appThreads;
+set<THREADID> appThreads;
 
 // Scenario
 int scenario = 0;
@@ -70,96 +72,87 @@ volatile int numOfActiveThreads = 0;
 // and checked in the makefile.
 volatile int totalNumOfThreads = 0;
 
+
 /**************************************************
  * Utility functions                              *
  **************************************************/
 // Retrieve a tid stored in the TLS.
-static OS_THREAD_ID* GetTLSData(THREADID threadIndex)
-{
-    return static_cast< OS_THREAD_ID* >(PIN_GetThreadData(tidKey, threadIndex));
+static OS_THREAD_ID* GetTLSData(THREADID threadIndex) {
+    return static_cast<OS_THREAD_ID*>(PIN_GetThreadData(tidKey, threadIndex));
 }
+
 
 /**************************************************
  * Analysis routines                              *
  **************************************************/
-static VOID ThreadStart(THREADID threadIndex, CONTEXT* c, INT32 flags, VOID* v)
-{
-    if (myThread == INVALID_THREADID)
-    {
+static VOID ThreadStart(THREADID threadIndex, CONTEXT* c, INT32 flags, VOID *v) {
+    if (myThread == INVALID_THREADID) {
         myThread = threadIndex;
     }
     ++numOfActiveThreads;
     ++totalNumOfThreads;
     OS_THREAD_ID* tidData = new OS_THREAD_ID(PIN_GetTid());
     PIN_SetThreadData(tidKey, tidData, threadIndex);
-    if (myThread == threadIndex)
-    {
+    if (myThread == threadIndex) {
         startsOut << *tidData << endl;
     }
     fprintf(stderr, "TOOL: <%d> thread start, active: %d\n", *tidData, numOfActiveThreads);
     fflush(stderr);
 }
 
-static VOID ThreadFini(THREADID threadIndex, CONTEXT const* c, INT32 code, VOID* v)
-{
+static VOID ThreadFini(THREADID threadIndex, CONTEXT const * c, INT32 code, VOID *v) {
     --numOfActiveThreads;
     OS_THREAD_ID* tidData = GetTLSData(threadIndex);
-    if (myThread == threadIndex || appThreads.find(threadIndex) != appThreads.end())
-    {
+    if (myThread == threadIndex || appThreads.find(threadIndex) != appThreads.end()) {
         finisOut << *tidData << endl;
     }
     fprintf(stderr, "TOOL: <%d> thread fini, fini: %d\n", *tidData, numOfActiveThreads);
     fflush(stderr);
-    switch (scenario)
-    {
-        case 2:
-            if (threadIndex != 0) break; // in scenario 2, call PIN_ExitApplication for the main thread only.
-        case 1:
-            fprintf(stderr, "TOOL: <%d> calling PIN_ExitApplication from thread fini for thread %d\n", *tidData, threadIndex);
-            fflush(stderr);
-            PIN_ExitApplication(0);
-        case 5:
-            if (threadIndex != 0) break; // in scenario 5, call PIN_ExitProcess for the main thread only.
-        case 4:
-            fprintf(stderr, "TOOL: <%d> calling PIN_ExitProcess from thread fini for thread %d\n", *tidData, threadIndex);
-            fflush(stderr);
-            PIN_ExitProcess(0);
-        default:
-            break;
+    switch (scenario) {
+    case 2:
+        if (threadIndex != 0) break; // in scenario 2, call PIN_ExitApplication for the main thread only.
+    case 1:
+        fprintf(stderr, "TOOL: <%d> calling PIN_ExitApplication from thread fini for thread %d\n",
+                *tidData, threadIndex);
+        fflush(stderr);
+        PIN_ExitApplication(0);
+    case 5:
+        if (threadIndex != 0) break; // in scenario 5, call PIN_ExitProcess for the main thread only.
+    case 4:
+        fprintf(stderr, "TOOL: <%d> calling PIN_ExitProcess from thread fini for thread %d\n",
+                *tidData, threadIndex);
+        fflush(stderr);
+        PIN_ExitProcess(0);
+    default: break;
     }
 }
 
-static VOID Fini(INT32 code, VOID* v)
-{
+static VOID Fini(INT32 code, VOID* v) {
     OS_THREAD_ID tid = PIN_GetTid();
     fprintf(stderr, "TOOL: <%d> fini function %d %d\n", tid, numOfActiveThreads, totalNumOfThreads);
     fflush(stderr);
-    switch (scenario)
-    {
-        case 3:
-            fprintf(stderr, "TOOL: <%d> calling PIN_ExitApplication from application fini\n", tid);
-            fflush(stderr);
-            PIN_ExitApplication(0);
-        case 6:
-            fprintf(stderr, "TOOL: <%d> calling PIN_ExitProcess from application fini\n", tid);
-            fflush(stderr);
-            PIN_ExitProcess(0);
-        default:
-            break;
+    switch (scenario) {
+    case 3:
+        fprintf(stderr, "TOOL: <%d> calling PIN_ExitApplication from application fini\n", tid);
+        fflush(stderr);
+        PIN_ExitApplication(0);
+    case 6:
+        fprintf(stderr, "TOOL: <%d> calling PIN_ExitProcess from application fini\n", tid);
+        fflush(stderr);
+        PIN_ExitProcess(0);
+    default:
+        break;
     }
 }
 
-static VOID AppThreadStart(THREADID threadIndex)
-{
+static VOID AppThreadStart(THREADID threadIndex){
     OS_THREAD_ID* tidData = GetTLSData(threadIndex);
     startsOut << *tidData << endl;
     appThreads.insert(threadIndex);
 }
 
-static VOID InstrumentRtn(RTN rtn, VOID*)
-{
-    if (PIN_UndecorateSymbolName(RTN_Name(rtn), UNDECORATION_NAME_ONLY) == "DoNewThread")
-    {
+static VOID InstrumentRtn(RTN rtn, VOID *) {
+    if (PIN_UndecorateSymbolName(RTN_Name(rtn), UNDECORATION_NAME_ONLY) == "DoNewThread") {
         RTN_Open(rtn);
         RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(AppThreadStart), IARG_THREAD_ID, IARG_END);
         RTN_Close(rtn);
@@ -169,8 +162,8 @@ static VOID InstrumentRtn(RTN rtn, VOID*)
 /**************************************************
  * Main function                                  *
  **************************************************/
-int main(INT32 argc, CHAR** argv)
-{
+int main(INT32 argc, CHAR **argv) {
+
     // Initialize Pin and TLS
     PIN_InitSymbols();
     PIN_Init(argc, argv);
@@ -181,8 +174,7 @@ int main(INT32 argc, CHAR** argv)
     finisOut.open(KnobThreadsFinisFile.Value().c_str());
 
     // Verify scenario
-    if (KnobScenario.Value() < 1 || KnobScenario > 6)
-    {
+    if (KnobScenario.Value() < 1 || KnobScenario > 6) {
         fprintf(stderr, "TOOL ERROR: Invalid scenario specified\n%s\n", KnobScenario.StringKnobSummary().c_str());
         return 1;
     }

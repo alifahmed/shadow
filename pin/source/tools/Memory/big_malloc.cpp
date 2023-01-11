@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,8 +25,7 @@ using std::cerr;
 using std::endl;
 
 #if defined(TARGET_WINDOWS)
-namespace WIND
-{
+namespace WIND {
 #include <Windows.h>
 }
 #endif
@@ -45,20 +44,21 @@ static bool EnoughAvailableMemory(size_t size)
     // The ullAvailPageFile field holds the maximum amount of memory the current process can commit.
     return (memStatus.ullAvailPageFile >= size);
 #endif
-
-    // We expect all non-Windows test machines to have enough memory for the allocation.
+    
+// We expect all non-Windows test machines to have enough memory for the allocation.
     return true;
 }
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
     // Allocate a large chunk of memory (needs to be larger than 4 GB).
-    size_t size = 1; // 1 B
-    size <<= 3;      // 8 B
-    size += 1;       // 9 B
-    size <<= 29;     // 4608 MB
+    size_t size = 1;    // 1 B
+    size <<= 3;         // 8 B
+    size += 1;          // 9 B
+    size <<= 29;        // 4608 MB
 
     // Verify that there is enough available memory for this allocation.
     if (!EnoughAvailableMemory(size))
@@ -82,12 +82,12 @@ int main(int argc, char* argv[])
 
     // Make sure we can access all elements of the array. If there was a problem with the allocation,
     // we will get a segmentation fault.
-    size_t blocks = size / sizeof(int);
+    size_t blocks = size/sizeof(int);
     for (size_t i = 0; i < blocks; ++i)
     {
-        bigPtr[i] = 1;
+    	bigPtr[i] = 1;
     }
-
+    
     PIN_StartProgram(); // never returns
 
     return 0;

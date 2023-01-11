@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -45,8 +45,8 @@
  *   @b O/S:   Windows, Linux & macOS*\n
  *   @b CPU:   All\n
  */
-OS_RETURN_CODE OS_CreateThread(VOID (*ThreadMainFunction)(VOID*), VOID* ThreadParam, VOID* stackBottom, ADDRINT stackSize,
-                               NATIVE_TID* td);
+OS_RETURN_CODE OS_CreateThread(VOID (*ThreadMainFunction)(VOID*), VOID *ThreadParam,
+                                     VOID* stackBottom, ADDRINT stackSize, NATIVE_TID* td);
 
 /*! @ingroup OS_APIS_THREAD
  * Causes a running thread to exit.

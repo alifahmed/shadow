@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,45 +19,51 @@
 #include <stdarg.h>
 #include <signal.h>
 
+
 static void HandleUSR1(int);
 static void HandleUSR2(int);
 static int CheckMask(int, ...);
 
+
 main()
 {
-    struct sigaction sigact;
+	struct sigaction sigact;
 
-    sigact.sa_handler = HandleUSR1;
-    sigemptyset(&sigact.sa_mask);
-    sigact.sa_flags = 0;
-    if (sigaction(SIGUSR1, &sigact, 0) == -1)
-    {
-        fprintf(stderr, "Unable handle signal USR1\n");
-        return 1;
-    }
-    sigact.sa_handler = HandleUSR2;
-    if (sigaction(SIGUSR2, &sigact, 0) == -1)
-    {
-        fprintf(stderr, "Unable handle signal USR2\n");
-        return 1;
-    }
+	sigact.sa_handler = HandleUSR1;
+	sigemptyset(&sigact.sa_mask);
+	sigact.sa_flags = 0;
+	if (sigaction(SIGUSR1, &sigact, 0) == -1) {
+		fprintf(stderr, "Unable handle signal USR1\n");
+		return 1;
+	}
+	sigact.sa_handler = HandleUSR2;
+	if (sigaction(SIGUSR2, &sigact, 0) == -1) {
+		fprintf(stderr, "Unable handle signal USR2\n");
+		return 1;
+	}
 
     raise(SIGUSR1);
 
-    if (!CheckMask(0)) return 1;
+    if (!CheckMask(0))
+        return 1;
     return 0;
 }
 
+
 static void HandleUSR1(int sig)
 {
-    if (!CheckMask(SIGUSR1, 0)) exit(1);
+    if (!CheckMask(SIGUSR1, 0))
+        exit(1);
     raise(SIGUSR2);
 }
 
+
 static void HandleUSR2(int sig)
 {
-    if (!CheckMask(SIGUSR1, SIGUSR2, 0)) exit(1);
+    if (!CheckMask(SIGUSR1, SIGUSR2, 0))
+        exit(1);
 }
+
 
 static int CheckMask(int sig, ...)
 {
@@ -80,7 +86,7 @@ static int CheckMask(int sig, ...)
     }
 
     ret = 1;
-    for (sig = 1; sig < 32; sig++)
+    for (sig = 1;  sig < 32;  sig++)
     {
         if (!sigismember(&curMask, sig) && sigismember(&checkMask, sig))
         {

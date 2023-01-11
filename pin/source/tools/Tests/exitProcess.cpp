@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,16 +16,16 @@
 #include <signal.h>
 #include "pin_tests_util.H"
 
-VOID gotSignal(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, const CONTEXT* from, CONTEXT* to, INT32 info, VOID* v)
+VOID gotSignal(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, const CONTEXT *from,
+               CONTEXT *to, INT32 info, VOID *v)
 {
-    if (info == SIGUSR1)
-    {
+    if (info == SIGUSR1) {
         // the app is in an infinite loop at its exit
         PIN_ExitProcess(0);
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
 
@@ -33,6 +33,6 @@ int main(INT32 argc, CHAR** argv)
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

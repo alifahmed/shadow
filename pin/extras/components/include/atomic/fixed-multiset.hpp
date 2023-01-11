@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -20,8 +20,10 @@
 #include "atomic/fixed-multimap.hpp"
 #include "atomic/nullstats.hpp"
 
-namespace ATOMIC
-{
+
+namespace ATOMIC {
+
+
 /*! @brief  Unordered set of data with pre-allocated elements.
  *
  * A set container that is thread safe and safe to use from signal handlers.
@@ -53,8 +55,8 @@ namespace ATOMIC
  *  }
  *                                                                                          \endcode
  */
-template< typename KEY, KEY InvalidKey1, KEY InvalidKey2, unsigned int Capacity, typename STATS = NULLSTATS >
-class /*<UTILITY>*/ FIXED_MULTISET
+template<typename KEY, KEY InvalidKey1, KEY InvalidKey2, unsigned int Capacity, typename STATS=NULLSTATS>
+ class /*<UTILITY>*/ FIXED_MULTISET
 {
   public:
     /*!
@@ -62,26 +64,26 @@ class /*<UTILITY>*/ FIXED_MULTISET
      *
      *  @param[in] stats    The new statistics collection object.
      */
-    FIXED_MULTISET(STATS* stats = 0) : _map(stats) {}
+    FIXED_MULTISET(STATS *stats=0) : _map(stats) {}
 
     /*!
      * Set the statistics collection object.  This method is NOT atomic.
      *
      *  @param[in] stats    The new statistics collection object.
      */
-    void SetStatsNonAtomic(STATS* stats) { _map.SetStatsNonAtomic(stats); }
+    void SetStatsNonAtomic(STATS *stats)                  { _map.SetStatsNonAtomic(stats); }
 
     /*!
      * Remove all elements from the set.  This method is NOT atomic.
      */
-    void ClearNonAtomic() { _map.ClearNonAtomic(); }
+    void ClearNonAtomic()                                 { _map.ClearNonAtomic(); }
 
     /*!
      * Add a new element to the set, even if the element already exists in the set.
      *
      *  @param[in] key      The element to add.
      */
-    void Add(KEY key) { _map.Add(key, EMPTY()); }
+    void Add(KEY key)                                     { _map.Add(key, EMPTY()); }
 
     /*!
      * Try to find an element in the set.
@@ -95,7 +97,7 @@ class /*<UTILITY>*/ FIXED_MULTISET
      *
      * @return  TRUE if the element exists.
      */
-    bool Find(KEY key) { return (_map.Find(key) != 0); }
+    bool Find(KEY key)                                    { return (_map.Find(key) != 0); }
 
     /*!
      * Attempt to find an element in the set for which a predicate returns TRUE.
@@ -110,7 +112,7 @@ class /*<UTILITY>*/ FIXED_MULTISET
      *
      * @return  TRUE if the element exists.
      */
-    template< typename PRED > bool FindIf(PRED pred) { return (_map.FindIf(pred) != 0); }
+    template<typename PRED> bool FindIf(PRED pred)        { return (_map.FindIf(pred) != 0); }
 
     /*!
      * Attempt to remove an element from the set.
@@ -122,7 +124,7 @@ class /*<UTILITY>*/ FIXED_MULTISET
      *
      *  @param[in] key  The key to search for.
      */
-    void Remove(KEY key) { _map.Remove(key); }
+    void Remove(KEY key)                                  { _map.Remove(key); }
 
     /*!
      * Remove all the elements from the set for which a predicate function returns
@@ -136,14 +138,12 @@ class /*<UTILITY>*/ FIXED_MULTISET
      *  @param[in] pred     An STL-like predicate functor.  A key is passed as the predicate's
      *                       only argument.  If it returns TRUE, that element is removed.
      */
-    template< typename PRED > void RemoveIf(PRED pred) { _map.RemoveIf(pred); }
+    template<typename PRED> void RemoveIf(PRED pred)      { _map.RemoveIf(pred); }
 
   private:
-    struct EMPTY
-    {
-    };
-    FIXED_MULTIMAP< KEY, EMPTY, InvalidKey1, InvalidKey2, Capacity, STATS > _map;
+    struct EMPTY {};
+    FIXED_MULTIMAP<KEY, EMPTY, InvalidKey1, InvalidKey2, Capacity, STATS> _map;
 };
 
-} // namespace ATOMIC
+} // namespace
 #endif // file guard

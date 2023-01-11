@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,23 +18,26 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <tool_macros.h>
-using std::endl;
 using std::ofstream;
 using std::string;
+using std::endl;
+
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "tls_check_tool.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "tls_check_tool.out", "specify file name");
 
 /* ===================================================================== */
 
 ofstream TraceFile;
 
-unsigned long* updateWhenReadyPtr = 0;
 
-VOID DetachPinFromMTApplication(unsigned long* updateWhenReady)
+unsigned long *updateWhenReadyPtr = 0;
+
+VOID DetachPinFromMTApplication(unsigned long *updateWhenReady)
 {
     updateWhenReadyPtr = updateWhenReady;
     TraceFile << "Sending detach request" << endl;
@@ -48,7 +51,7 @@ VOID DetachPinFromMTApplication(unsigned long* updateWhenReady)
     }
 }
 
-VOID DetachCompleted(VOID* v)
+VOID DetachCompleted(VOID *v)
 {
     TraceFile << "Detach completed" << endl;
     *updateWhenReadyPtr = 1;
@@ -60,23 +63,23 @@ int PinAttached()
     return 1;
 }
 
-VOID ImageLoad(IMG img, void* v)
+VOID ImageLoad(IMG img, void *v)
 {
-    RTN rtn = RTN_FindByName(img, C_MANGLE("TellPinToDetach"));
-    if (RTN_Valid(rtn))
-    {
-        TraceFile << "Replacing TellPinToDetach" << endl;
-        if (PIN_IsProbeMode())
+	RTN rtn = RTN_FindByName(img, C_MANGLE("TellPinToDetach"));
+	if (RTN_Valid(rtn))
+	{
+	    TraceFile << "Replacing TellPinToDetach" << endl;
+	    if (PIN_IsProbeMode())
         {
             ASSERTX(RTN_IsSafeForProbedReplacement(rtn));
             RTN_ReplaceProbed(rtn, AFUNPTR(DetachPinFromMTApplication));
         }
-        else
-        {
-            RTN_Replace(rtn, AFUNPTR(DetachPinFromMTApplication));
-        }
-    }
-
+	    else
+	    {
+	        RTN_Replace(rtn, AFUNPTR(DetachPinFromMTApplication));
+	    }
+	}
+	
     rtn = RTN_FindByName(img, C_MANGLE("PinAttached"));
     if (RTN_Valid(rtn))
     {
@@ -91,14 +94,15 @@ VOID ImageLoad(IMG img, void* v)
             RTN_Replace(rtn, AFUNPTR(PinAttached));
         }
     }
-}
+
+}	
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     TraceFile.open(KnobOutputFile.Value().c_str());
 

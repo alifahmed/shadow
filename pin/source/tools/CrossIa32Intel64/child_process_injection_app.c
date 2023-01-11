@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     if (argc != 2)
     {
@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
     pid_t pid = fork();
     if (pid == 0)
     {
-        char* childArgvArray[2];
+        char *childArgvArray[2];
         childArgvArray[0] = argv[1];
         childArgvArray[1] = NULL;
         execv(childArgvArray[0], childArgvArray);
@@ -40,11 +40,11 @@ int main(int argc, char* argv[])
     {
         int status;
         waitpid(pid, &status, 0);
-        if (status != 0)
-            fprintf(stdout, "%s%d\n", "Parent report: Child process failed. Status of the child process is ",
-                    WEXITSTATUS(status));
+        if (status !=0)
+           fprintf(stdout, "%s%d\n", "Parent report: Child process failed. Status of the child process is "
+           , WEXITSTATUS(status));
         else
-            fprintf(stdout, "%s\n", "Parent report: Child process exited successfully");
+           fprintf(stdout, "%s\n", "Parent report: Child process exited successfully");
     }
     return 0;
 }

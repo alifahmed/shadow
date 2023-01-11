@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,20 +26,24 @@
 #include <string.h>
 #include <sys/utsname.h>
 
+
 #define NTHREADS 4
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 unsigned int numOfThreadsReadyForDetach = 0;
-unsigned long pinDetached               = 0;
+unsigned long pinDetached = 0;
 
-extern "C" void TellPinToDetach(unsigned long* updateWhenReady) { return; }
+extern "C" void TellPinToDetach(unsigned long *updateWhenReady)
+{
+    return;
+}
 
 // Get TLS value
 void* ReadTLSBase()
 {
     void* tlsBase;
-#if defined(TARGET_IA32)
+#if defined (TARGET_IA32)
     asm("mov %%gs:0, %%eax\n"
         "mov %%eax, %0"
         : "=r"(tlsBase)
@@ -57,12 +61,12 @@ void* ReadTLSBase()
 /*
  * Compare TLS_BASE values before and after detach.
  */
-void* thread_func(void* arg)
+void * thread_func (void *arg)
 {
-    unsigned long thread_no = (unsigned long)arg + 1;
+    unsigned long thread_no = (unsigned long)arg+1;
 
     void* tlsBase = 0;
-    tlsBase       = ReadTLSBase();
+    tlsBase = ReadTLSBase();
     pthread_mutex_lock(&mutex);
     numOfThreadsReadyForDetach++;
     pthread_mutex_unlock(&mutex);
@@ -73,11 +77,11 @@ void* thread_func(void* arg)
     }
 
     void* tlsBaseAfterDetach = 0;
-    tlsBaseAfterDetach       = ReadTLSBase();
+    tlsBaseAfterDetach = ReadTLSBase();
     if (tlsBase != tlsBaseAfterDetach)
     {
-        fprintf(stderr, "ERROR in thread %lu: GTLSBASE before detach %p; after detach %p\n", thread_no, tlsBase,
-                tlsBaseAfterDetach);
+        fprintf(stderr, "ERROR in thread %lu: GTLSBASE before detach %p; after detach %p\n",
+                thread_no, tlsBase, tlsBaseAfterDetach);
         return (void*)1;
     }
     else
@@ -87,16 +91,16 @@ void* thread_func(void* arg)
     return 0;
 }
 
-int main(int argc, char* argv[])
+int main (int argc, char *argv[])
 {
     pthread_t h[NTHREADS];
 
     void* tlsBase = 0;
-    tlsBase       = ReadTLSBase();
+    tlsBase = ReadTLSBase();
     fprintf(stderr, "tls base in main thread: %p\n", tlsBase);
     for (unsigned long i = 0; i < NTHREADS; i++)
     {
-        pthread_create(&h[i], 0, thread_func, (void*)i);
+        pthread_create (&h[i], 0, thread_func, (void *)i);
     }
 
     /*
@@ -106,10 +110,10 @@ int main(int argc, char* argv[])
 
     TellPinToDetach(&pinDetached);
 
-    void* result[NTHREADS];
+    void * result[NTHREADS];
     for (unsigned long i = 0; i < NTHREADS; i++)
     {
-        pthread_join(h[i], &(result[i]));
+        pthread_join (h[i], &(result[i]));
     }
     for (unsigned long i = 0; i < NTHREADS; i++)
     {
@@ -120,12 +124,14 @@ int main(int argc, char* argv[])
         }
     }
     void* tlsBaseAfterDetach = 0;
-    tlsBaseAfterDetach       = ReadTLSBase();
+    tlsBaseAfterDetach = ReadTLSBase();
     if (tlsBase != tlsBaseAfterDetach)
     {
-        fprintf(stderr, "ERROR in the main thread: TLS_BASE before detach %p; after detach %p\n", tlsBase, tlsBaseAfterDetach);
+        fprintf(stderr, "ERROR in the main thread: TLS_BASE before detach %p; after detach %p\n",
+                tlsBase, tlsBaseAfterDetach);
         return -1;
     }
     fprintf(stderr, "TEST PASSED\n");
     return 0;
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -19,8 +19,10 @@
 
 #include <assert.h>
 
-namespace UTIL
-{
+
+namespace UTIL {
+
+
 /*!
  * A simple smart pointer, inspired by boost::scoped_ptr.  Pointers managed by
  * SCOPED_PTR cannot be shared, and there is no reference counting overhead.  A
@@ -28,22 +30,22 @@ namespace UTIL
  * these pointers can't be shared, SCOPED_PTR disallows assignment from one
  * SCOPED_PTR to another.
  */
-template< typename T > class /*<UTILITY>*/ SCOPED_PTR
+template<typename T> class /*<UTILITY>*/ SCOPED_PTR
 {
-  public:
+public:
     /*!
      * Create a smart pointer wrapper for \a p.
      *
      *  @param[in] p     A pointer from "new", or NULL.
      */
-    explicit SCOPED_PTR(T* p = 0) : _ptr(p) {}
+    explicit SCOPED_PTR(T *p = 0) : _ptr(p) {}
 
     /*!
      * The destructor automatically calls delete on the pointer.
      */
     ~SCOPED_PTR()
     {
-        delete _ptr; // Note, delete of NULL is defined to do nothing.
+        delete _ptr;    // Note, delete of NULL is defined to do nothing.
     }
 
     /*!
@@ -51,7 +53,7 @@ template< typename T > class /*<UTILITY>*/ SCOPED_PTR
      *
      *  @param[in] p    A pointer from "new", or NULL.
      */
-    void Reset(T* p = 0)
+    void Reset(T *p = 0)
     {
         delete _ptr;
         _ptr = p;
@@ -60,7 +62,7 @@ template< typename T > class /*<UTILITY>*/ SCOPED_PTR
     /*!
      * @return A reference to the underlying pointer, which must not be NULL.
      */
-    T& operator*() const
+    T & operator*() const
     {
         assert(_ptr != 0);
         return *_ptr;
@@ -69,7 +71,7 @@ template< typename T > class /*<UTILITY>*/ SCOPED_PTR
     /*!
      * @return The underlying pointer, which must not be NULL.
      */
-    T* operator->() const
+    T * operator->() const
     {
         assert(_ptr != 0);
         return _ptr;
@@ -78,18 +80,21 @@ template< typename T > class /*<UTILITY>*/ SCOPED_PTR
     /*!
      * @return The underlying pointer.
      */
-    T* Get() const { return _ptr; }
+    T * Get() const
+    {
+        return _ptr;
+    }
 
     /*!
      * Exchange the contents of two smart pointers.
      *
      *  @param[in] other    The other pointer that is exchanged.
      */
-    void Swap(SCOPED_PTR& other)
+    void Swap(SCOPED_PTR &other)
     {
-        T* t       = other._ptr;
+        T *t = other._ptr;
         other._ptr = _ptr;
-        _ptr       = t;
+        _ptr = t;
     }
 
     /*!
@@ -97,19 +102,25 @@ template< typename T > class /*<UTILITY>*/ SCOPED_PTR
      *
      * @return  TRUE if the underlying pointer is not NULL.
      */
-    operator bool() const { return (_ptr != 0); }
+    operator bool () const
+    {
+        return (_ptr != 0);
+    }
 
     /*!
      * @return  TRUE if the underlying pointer is NULL.
      */
-    bool operator!() const { return (_ptr == 0); }
+    bool operator! () const
+    {
+        return (_ptr == 0);
+    }
 
-  private:
-    T* _ptr;
+private:
+    T *_ptr;
 
-    SCOPED_PTR(SCOPED_PTR const&);
-    SCOPED_PTR& operator=(SCOPED_PTR const&);
+    SCOPED_PTR(SCOPED_PTR const &);
+    SCOPED_PTR & operator=(SCOPED_PTR const &);
 };
 
-} // namespace UTIL
+} // namespace
 #endif // file guard

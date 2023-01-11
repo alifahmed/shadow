@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,11 +26,11 @@
 #include <sys/wait.h>
 #include "zombie_utils.h"
 #include <string.h>
-#define MAX_COMMAND_LINE_SIZE 15 // the size for the array of arguments to execv (this value is arbitrary)
+#define MAX_COMMAND_LINE_SIZE 15    // the size for the array of arguments to execv (this value is arbitrary)
 
 EXPORT_SYM bool AfterAttach1();
 
-const char* imageToLoad;
+const char *imageToLoad;
 
 pid_t zombieThreadPid;
 
@@ -43,11 +43,11 @@ bool AfterAttach1()
 }
 
 // This function is invoked when the secondary thread starts to execute.
-void* SecondaryThreadMain(void* v)
+void* SecondaryThreadMain(void* v) 
 {
-    void* handle = dlopen(imageToLoad, RTLD_LAZY);
+    void *handle = dlopen(imageToLoad, RTLD_LAZY); 
 
-    if (!handle)
+    if(!handle)
     {
         fprintf(stderr, " Failed to load: %s because: %s\n", imageToLoad, dlerror());
         fflush(stderr);
@@ -69,20 +69,19 @@ void* SecondaryThreadMain(void* v)
 
 int main(int argc, char** argv)
 {
-    if (argc < 6)
+    if(argc < 6)
     {
-        fprintf(stderr, "Not enough arguments\n");
+       fprintf(stderr, "Not enough arguments\n" );
+       fflush(stderr);
+       exit(RES_INVALID_ARGS);
+    }
+    if (argc > MAX_COMMAND_LINE_SIZE - 4){      // added: -pid attachPid -probe -o NULL
+        fprintf(stderr, "Too many arguments\n" );
         fflush(stderr);
         exit(RES_INVALID_ARGS);
     }
-    if (argc > MAX_COMMAND_LINE_SIZE - 4)
-    { // added: -pid attachPid -probe -o NULL
-        fprintf(stderr, "Too many arguments\n");
-        fflush(stderr);
-        exit(RES_INVALID_ARGS);
-    }
-    imageToLoad = argv[argc - 2]; // argv[argc-2] is imageName
-    parentPid   = getpid();
+    imageToLoad = argv[argc-2];     // argv[argc-2] is imageName
+    parentPid = getpid();
     pid_t child = fork();
     if (child < 0)
     {
@@ -94,7 +93,7 @@ int main(int argc, char** argv)
     {
         // Pin sets an analysis function here to notify the application
         // when Pin attaches to it in the first attach session.
-        while (!AfterAttach1())
+        while(!AfterAttach1())
         {
             sleep(1);
         }
@@ -104,16 +103,15 @@ int main(int argc, char** argv)
         pthread_t tid;
         pthread_create(&tid, NULL, SecondaryThreadMain, NULL);
         fprintf(stderr, "APP: tid of zombie: %d\n", (int)tid);
-
-        while (1)
-            ;
+        
+        while(1);
     }
-
+    
     if (child == 0)
     {
-        // Inside child
-        pid_t second_child_pid = fork();
-
+        // Inside child 
+        pid_t second_child_pid = fork ();
+        
         if (second_child_pid < 0)
         {
             perror("Fork failed while creating application process");
@@ -130,27 +128,26 @@ int main(int argc, char** argv)
         {
             // Inside child 2
             char attachPid[MAX_SIZE];
-            snprintf(attachPid, MAX_SIZE, "%d", parentPid);
+            snprintf(attachPid, MAX_SIZE , "%d", parentPid);
 
-            char* args[MAX_COMMAND_LINE_SIZE] = {NULL}; // arguments for execv command
-            int args_count                    = 0;
-            int argv_count                    = 1;   // to start from argv[1]...
-            args[args_count++] = argv[argv_count++]; // by convention, first arg is the filename of the executed file (pin)
+            char* args[MAX_COMMAND_LINE_SIZE] = {NULL};  // arguments for execv command
+            int args_count = 0;
+            int argv_count = 1;                          // to start from argv[1]...
+            args[args_count++] = argv[argv_count++];     // by convention, first arg is the filename of the executed file (pin)
             args[args_count++] = (char*)"-probe";
             args[args_count++] = (char*)"-pid";
             args[args_count++] = attachPid;
-            while (strcmp(argv[argv_count], "-t") != 0)
-            { // additional Pin flags (optional)
+            while (strcmp(argv[argv_count], "-t") != 0){   // additional Pin flags (optional)
                 args[args_count++] = argv[argv_count++];
             }
-            args[args_count++] = argv[argv_count++]; // "-t"
-            args[args_count++] = argv[argv_count++]; // tool
-            argv_count++;                            // skip the imageName, not needed for the execv command
+            args[args_count++] = argv[argv_count++];     // "-t"
+            args[args_count++] = argv[argv_count++];     // tool
+            argv_count++;                                // skip the imageName, not needed for the execv command
             args[args_count++] = (char*)"-o";
-            args[args_count++] = argv[argv_count++]; // output file
-            args[args_count++] = NULL;               // end
+            args[args_count++] = argv[argv_count++];     // output file
+            args[args_count++] = NULL;                   // end
             // Pin attaches to the application.
-            execv(argv[1], (char* const*)args); // never returns
+            execv(argv[1], (char * const *)args);        // never returns
             perror("execv failed while trying to attach Pin to the application\n");
             exit(RES_EXEC_FAILED);
         }
@@ -158,3 +155,4 @@ int main(int argc, char** argv)
 
     return RES_SUCCESS;
 }
+

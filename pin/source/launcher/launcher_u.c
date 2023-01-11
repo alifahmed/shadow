@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -34,9 +34,9 @@ static char** build_user_argv(int* argc)
      argv = (char**) malloc(sizeof(char*) * (*argc));
 
      argv[0] = "-t";
-     argv[1] = appendPath("path_to_tool", "/", "toolname32");
+     argv[1] = append3("path_to_tool", "/", "toolname32");
      argv[2] = "-t64";
-     argv[3] = appendPath("path_to_tool", "/", "toolname64");
+     argv[3] = append3("path_to_tool", "/", "toolname64");
      */
 
     return argv;
@@ -105,15 +105,19 @@ int main(int orig_argc, char** orig_argv)
     char* base_path;
     char* driver_name;
 
-    if (orig_argv == NULL || orig_argv[0] == NULL) abort();
+    if (orig_argv == NULL || orig_argv[0] == NULL)
+        abort();
     driver_name = find_driver_name(orig_argv[0]);
-    if (driver_name == NULL) abort();
+    if (driver_name == NULL)
+        abort();
     base_path = find_base_path(driver_name);
-    if (base_path == NULL) abort();
+    if (base_path == NULL)
+        abort();
     update_environment_common(base_path);
 
-    user_argv  = build_user_argv(&user_argc);
-    child_argv = build_child_argv(base_path, orig_argc, orig_argv, user_argc, user_argv);
+    user_argv = build_user_argv(&user_argc);
+    child_argv = build_child_argv(base_path, orig_argc, orig_argv, user_argc,
+            user_argv);
     if (driver_name) free(driver_name);
     if (base_path) free(base_path);
     path_to_cmd = child_argv[0];

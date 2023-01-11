@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,13 +11,13 @@
 
 #include <stdio.h>
 
-extern __declspec(dllexport) int main(int argc, char** argv)
+extern __declspec(dllexport) int main(int argc, char ** argv)
 {
     char stringOne[] = "IAMHEREE";
     char stringTwo[] = "IWASHERE";
 #define length 9
 
-    printf("Starting...\n");
+    printf ("Starting...\n");
     __asm {
         fnop                                      
 	cld
@@ -62,9 +62,9 @@ extern __declspec(dllexport) int main(int argc, char** argv)
 	mov	ebx,0		; first argument: result from main
 l2:
 	mov	ebx,eax
-        fnop
+        fnop                                      
     }
-
-    printf("Ending...\n");
+    
+    printf ("Ending...\n");
     return 0;
 }

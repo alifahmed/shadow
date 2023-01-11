@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -152,14 +152,14 @@ OS_RETURN_CODE OS_FindStdFiles(NATIVE_FD* files);
  *   @b O/S:   Windows, Linux & macOS*\n
  *   @b CPU:   All\n
  */
-OS_RETURN_CODE OS_CreateProcess(const CHAR* args, NATIVE_FD* stdFiles, NATIVE_FD* closeFiles, char** environ,
-                                OS_PROCESS_WAITABLE_PROCESS* process);
+OS_RETURN_CODE OS_CreateProcess(const CHAR* args, NATIVE_FD* stdFiles, NATIVE_FD* closeFiles,
+                                char **environ, OS_PROCESS_WAITABLE_PROCESS* process);
 
 /*! @ingroup OS_APIS_PROCESS
  * Type definition of a pointer to an OS_CreateProcess function.
  */
-typedef OS_RETURN_CODE (*OS_FnPtrCreateProcess)(const CHAR* args, NATIVE_FD* stdFiles, NATIVE_FD* closeFiles, char** environ,
-                                                OS_PROCESS_WAITABLE_PROCESS* process);
+typedef OS_RETURN_CODE (*OS_FnPtrCreateProcess)(const CHAR* args, NATIVE_FD* stdFiles, NATIVE_FD* closeFiles,
+                                                char **environ, OS_PROCESS_WAITABLE_PROCESS* process);
 
 /*! @ingroup OS_APIS_PROCESS
  * Wait for process termination.
@@ -209,6 +209,7 @@ void OS_NotifyFork();
  *   - @b CPU:   All
  */
 UINT32 OS_GetForksCount();
+
 
 #endif // TARGET_WINDOWS
 

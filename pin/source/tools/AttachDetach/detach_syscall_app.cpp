@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,16 +13,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-volatile int iteration_main   = 0;
+volatile int iteration_main = 0;
 volatile int iteration_second = 0;
-volatile bool shouldExit      = false;
+volatile bool shouldExit = false;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Prevent inlining of these functions
-#define EMPTY_FUNC(name)    \
-    extern "C" void name(); \
-    __asm__(".globl " #name "\n .type " #name ", @function\n " #name ":\n ret\n");
+#define EMPTY_FUNC(name) \
+	extern "C" void name(); \
+	__asm__(".globl " #name "\n .type " #name ", @function\n " \
+	        #name ":\n ret\n");
 
 EMPTY_FUNC(SecondThreadIterationCheckpoint1)
 EMPTY_FUNC(SecondThreadIterationCheckpoint2)
@@ -31,7 +32,7 @@ EMPTY_FUNC(MainThreadIterationCheckpoint)
 
 void* SecondThread(void* arg)
 {
-    for (iteration_second = 0; iteration_second < 100;)
+    for (iteration_second = 0; iteration_second < 100; )
     {
         SecondThreadIterationCheckpoint1();
         pthread_mutex_unlock(&mutex);
@@ -52,6 +53,7 @@ void* SecondThread(void* arg)
     shouldExit = true;
     return NULL;
 }
+
 
 int main()
 {

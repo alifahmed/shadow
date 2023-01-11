@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,10 +20,11 @@
 #include <cassert>
 #include <fstream>
 #include "pin.H"
-using std::endl;
 using std::string;
+using std::endl;
 
 using std::ofstream;
+
 
 /**************************************************
  * Global variables                               *
@@ -37,10 +38,10 @@ static TLS_KEY tidKey;
 
 // Knobs for defining the output filenames. We need one for the thread start callbacks
 // and one for the thread fini callbacks.
-KNOB< string > KnobThreadsStartsFile(KNOB_MODE_WRITEONCE, "pintool", "startsfile", "threadStarts.out",
-                                     "specify file name for thread start callbacks output");
-KNOB< string > KnobThreadsFinisFile(KNOB_MODE_WRITEONCE, "pintool", "finisfile", "threadFinis.out",
-                                    "specify file name for thread fini callbacks output");
+KNOB<string> KnobThreadsStartsFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "startsfile", "threadStarts.out", "specify file name for thread start callbacks output");
+KNOB<string> KnobThreadsFinisFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "finisfile", "threadFinis.out", "specify file name for thread fini callbacks output");
 
 // Output file streams
 ofstream startsOut;
@@ -58,20 +59,20 @@ volatile int numOfActiveThreads = 0;
 // and checked in the makefile.
 volatile int totalNumOfThreads = 0;
 
+
 /**************************************************
  * Utility functions                              *
  **************************************************/
 // Retrieve a tid stored in the TLS.
-static OS_THREAD_ID* GetTLSData(THREADID threadIndex)
-{
-    return static_cast< OS_THREAD_ID* >(PIN_GetThreadData(tidKey, threadIndex));
+static OS_THREAD_ID* GetTLSData(THREADID threadIndex) {
+    return static_cast<OS_THREAD_ID*>(PIN_GetThreadData(tidKey, threadIndex));
 }
+
 
 /**************************************************
  * Analysis routines                              *
  **************************************************/
-static VOID ThreadStart(THREADID threadIndex, CONTEXT* c, INT32 flags, VOID* v)
-{
+static VOID ThreadStart(THREADID threadIndex, CONTEXT* c, INT32 flags, VOID *v) {
     ++numOfActiveThreads;
     ++totalNumOfThreads;
     OS_THREAD_ID* tidData = new OS_THREAD_ID(PIN_GetTid());
@@ -79,8 +80,7 @@ static VOID ThreadStart(THREADID threadIndex, CONTEXT* c, INT32 flags, VOID* v)
     startsOut << *tidData << endl;
     fprintf(stderr, "TOOL: <%d> thread start, active: %d\n", *tidData, numOfActiveThreads);
     fflush(stderr);
-    if (threadIndex != 0)
-    {
+    if (threadIndex != 0) {
         PIN_LockClient(); // take the client lock recursively
         fprintf(stderr, "TOOL: <%d> is now calling PIN_ExitApplication with the client lock held.\n", *tidData);
         fflush(stderr);
@@ -88,8 +88,7 @@ static VOID ThreadStart(THREADID threadIndex, CONTEXT* c, INT32 flags, VOID* v)
     }
 }
 
-static VOID ThreadFini(THREADID threadIndex, CONTEXT const* c, INT32 code, VOID* v)
-{
+static VOID ThreadFini(THREADID threadIndex, CONTEXT const * c, INT32 code, VOID *v) {
     --numOfActiveThreads;
     OS_THREAD_ID* tidData = GetTLSData(threadIndex);
     finisOut << *tidData << endl;
@@ -97,18 +96,18 @@ static VOID ThreadFini(THREADID threadIndex, CONTEXT const* c, INT32 code, VOID*
     fflush(stderr);
 }
 
-static VOID Fini(INT32 code, VOID* v)
-{
+static VOID Fini(INT32 code, VOID* v) {
     OS_THREAD_ID tid = PIN_GetTid();
     fprintf(stderr, "TOOL: <%d> fini function %d %d\n", tid, numOfActiveThreads, totalNumOfThreads);
     fflush(stderr);
 }
 
+
 /**************************************************
  * Main function                                  *
  **************************************************/
-int main(INT32 argc, CHAR** argv)
-{
+int main(INT32 argc, CHAR **argv) {
+
     // Initialize Pin and TLS
     PIN_InitSymbols();
     PIN_Init(argc, argv);

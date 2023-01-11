@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,18 +18,20 @@
 #include <unistd.h>
 
 #ifdef TARGET_BSD
-#ifndef SIGRTMAX
-#define SIGRTMAX 128
-#endif
+ #ifndef SIGRTMAX 
+  #define SIGRTMAX 128
+ #endif
 #endif
 
 #ifdef TARGET_MAC
-#ifndef SIGRTMAX
-#define SIGRTMAX 32
-#endif
+ #ifndef SIGRTMAX 
+  #define SIGRTMAX 32
+ #endif
 #endif
 
+
 static void Handle(int sig);
+
 
 int main()
 {
@@ -38,7 +40,7 @@ int main()
 
     struct sigaction act;
     act.sa_handler = Handle;
-    act.sa_flags   = 0;
+    act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
     int ret = sigaction(64, &act, 0);
     std::cout << "sigaction(64) returns: " << ret << "\n";
@@ -53,4 +55,7 @@ int main()
     return 0;
 }
 
-static void Handle(int sig) { std::cout << "Got signal " << sig << "\n"; }
+static void Handle(int sig)
+{
+    std::cout << "Got signal " << sig << "\n";
+}

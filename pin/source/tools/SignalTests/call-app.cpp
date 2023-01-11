@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,11 +23,12 @@ static void Handle(int);
 typedef void (*FUN)();
 volatile FUN pFoo = PIN_TEST_FOO;
 
+
 int main()
 {
     struct sigaction act;
     act.sa_handler = Handle;
-    act.sa_flags   = 0;
+    act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
     if (sigaction(SIGUSR1, &act, 0) != 0)
     {
@@ -43,6 +44,7 @@ int main()
     return 0;
 }
 
+
 void PIN_TEST_FOO()
 {
     // The Pin tool places an instrumentation point here, which calls PIN_TEST_BAR().
@@ -50,7 +52,12 @@ void PIN_TEST_FOO()
     printf("Calling Foo\n");
 }
 
-void PIN_TEST_BAR() { printf("Calling Bar\n"); }
+
+void PIN_TEST_BAR()
+{
+    printf("Calling Bar\n");
+}
+
 
 static void Handle(int sig)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,17 +11,19 @@
 
 #include "pin.H"
 #include <iostream>
+using std::flush;
 using std::cout;
 using std::endl;
-using std::flush;
 
-BOOL FollowChild(CHILD_PROCESS cProcess, VOID* userData)
+BOOL FollowChild(CHILD_PROCESS childProcess, VOID * userData)
 {
     cout << "At follow child callback" << endl << flush;
     return TRUE;
 }
 
-int main(INT32 argc, CHAR** argv)
+
+
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
 
@@ -29,8 +31,9 @@ int main(INT32 argc, CHAR** argv)
 
     PIN_AddFollowChildProcessFunction(FollowChild, 0);
 
+ 
     // Never returns
-    if (PIN_IsProbeMode())
+    if ( PIN_IsProbeMode() )
     {
         PIN_StartProgramProbed();
     }

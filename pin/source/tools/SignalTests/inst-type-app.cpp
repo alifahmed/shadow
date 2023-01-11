@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,10 +19,11 @@
 #include <signal.h>
 #include <sys/time.h>
 
+
 static const unsigned SIGCOUNT = 100;
 
 typedef void (*FN)();
-volatile unsigned SigCount       = 0;
+volatile unsigned SigCount = 0;
 volatile unsigned long LoopCount = 0;
 
 static void Handle(int);
@@ -40,11 +41,12 @@ extern "C" void DoIfBridgeThenNoBridge();
 extern "C" void DoIfBridgeThenBridge();
 extern "C" void DoAll();
 
+
 int main()
 {
     struct sigaction sigact;
     sigact.sa_handler = Handle;
-    sigact.sa_flags   = 0;
+    sigact.sa_flags = 0;
     sigemptyset(&sigact.sa_mask);
     if (sigaction(SIGALRM, &sigact, 0) == -1)
     {
@@ -53,29 +55,29 @@ int main()
     }
 
     struct itimerval itval;
-    itval.it_interval.tv_sec  = 0;
+    itval.it_interval.tv_sec = 0;
     itval.it_interval.tv_usec = 100000;
-    itval.it_value.tv_sec     = 0;
-    itval.it_value.tv_usec    = 100000;
+    itval.it_value.tv_sec = 0;
+    itval.it_value.tv_usec = 100000;
     if (setitimer(ITIMER_REAL, &itval, 0) == -1)
     {
         fprintf(stderr, "Unable to set up timer\n");
         return 1;
     }
 
-    volatile FN doInline                 = DoInline;
-    volatile FN doNoBridge               = DoNoBridge;
-    volatile FN doBridge                 = DoBridge;
-    volatile FN doIfInlineThenInline     = DoIfInlineThenInline;
-    volatile FN doIfInlineThenNoBridge   = DoIfInlineThenNoBridge;
-    volatile FN doIfInlineThenBridge     = DoIfInlineThenBridge;
-    volatile FN doIfNoBridgeThenInline   = DoIfNoBridgeThenInline;
+    volatile FN doInline = DoInline;
+    volatile FN doNoBridge = DoNoBridge;
+    volatile FN doBridge = DoBridge;
+    volatile FN doIfInlineThenInline = DoIfInlineThenInline;
+    volatile FN doIfInlineThenNoBridge = DoIfInlineThenNoBridge;
+    volatile FN doIfInlineThenBridge = DoIfInlineThenBridge;
+    volatile FN doIfNoBridgeThenInline = DoIfNoBridgeThenInline;
     volatile FN doIfNoBridgeThenNoBridge = DoIfNoBridgeThenNoBridge;
-    volatile FN doIfNoBridgeThenBridge   = DoIfNoBridgeThenBridge;
-    volatile FN doIfBridgeThenInline     = DoIfBridgeThenInline;
-    volatile FN doIfBridgeThenNoBridge   = DoIfBridgeThenNoBridge;
-    volatile FN doIfBridgeThenBridge     = DoIfBridgeThenBridge;
-    volatile FN doAll                    = DoAll;
+    volatile FN doIfNoBridgeThenBridge = DoIfNoBridgeThenBridge;
+    volatile FN doIfBridgeThenInline = DoIfBridgeThenInline;
+    volatile FN doIfBridgeThenNoBridge = DoIfBridgeThenNoBridge;
+    volatile FN doIfBridgeThenBridge = DoIfBridgeThenBridge;
+    volatile FN doAll = DoAll;
 
     while (SigCount < SIGCOUNT)
     {
@@ -95,7 +97,7 @@ int main()
         LoopCount++;
     }
 
-    itval.it_value.tv_sec  = 0;
+    itval.it_value.tv_sec = 0;
     itval.it_value.tv_usec = 0;
     if (setitimer(ITIMER_REAL, &itval, 0) == -1)
     {
@@ -106,6 +108,7 @@ int main()
     return 0;
 }
 
+
 static void Handle(int sig)
 {
     SigCount++;
@@ -113,28 +116,54 @@ static void Handle(int sig)
     fflush(stdout);
 }
 
-void DoInline() {}
+void DoInline()
+{
+}
 
-void DoNoBridge() {}
+void DoNoBridge()
+{
+}
 
-void DoBridge() {}
+void DoBridge()
+{
+}
 
-void DoIfInlineThenInline() {}
+void DoIfInlineThenInline()
+{
+}
 
-void DoIfInlineThenNoBridge() {}
+void DoIfInlineThenNoBridge()
+{
+}
 
-void DoIfInlineThenBridge() {}
+void DoIfInlineThenBridge()
+{
+}
 
-void DoIfNoBridgeThenInline() {}
+void DoIfNoBridgeThenInline()
+{
+}
 
-void DoIfNoBridgeThenNoBridge() {}
+void DoIfNoBridgeThenNoBridge()
+{
+}
 
-void DoIfNoBridgeThenBridge() {}
+void DoIfNoBridgeThenBridge()
+{
+}
 
-void DoIfBridgeThenInline() {}
+void DoIfBridgeThenInline()
+{
+}
 
-void DoIfBridgeThenNoBridge() {}
+void DoIfBridgeThenNoBridge()
+{
+}
 
-void DoIfBridgeThenBridge() {}
+void DoIfBridgeThenBridge()
+{
+}
 
-void DoAll() {}
+void DoAll()
+{
+}

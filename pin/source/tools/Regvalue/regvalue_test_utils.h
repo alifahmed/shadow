@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,6 +11,7 @@
 
 #ifndef REGVALUE_TEST_UTILS_H
 #define REGVALUE_TEST_UTILS_H
+
 
 /////////////////////
 // INCLUDES
@@ -25,13 +26,14 @@ using std::vector;
 /////////////////////
 
 // A knob for specifying whether x87 fpstate registers should be tested.
-extern KNOB< bool > KnobTestSt;
+extern KNOB<bool> KnobTestSt;
 
 // A knob for specifying whether partial registers should be tested.
-extern KNOB< bool > KnobTestPartial;
+extern KNOB<bool> KnobTestPartial;
 
 // A knob for specifying whether the SIMD registers should be tested.
-extern KNOB< bool > KnobTestSIMD;
+extern KNOB<bool> KnobTestSIMD;
+
 
 /////////////////////
 // FUNCTION DECLARATIONS
@@ -40,7 +42,7 @@ extern KNOB< bool > KnobTestSIMD;
 ///// Register Operations
 
 // Get a vector with all the tested registers.
-const vector< REG >& GetTestRegs();
+const vector<REG>& GetTestRegs();
 
 // Get a REGSET with all the tested registers.
 const REGSET& GetTestRegset();

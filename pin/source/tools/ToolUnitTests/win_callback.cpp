@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,15 +20,15 @@
 #include <iostream>
 
 using std::cout;
-using std::endl;
 using std::hex;
+using std::endl;
 
 /*!
  * RTN replacement routine.
  */
-static VOID MySyscallInCallback(CONTEXT* ctxt, AFUNPTR pf)
+static VOID MySyscallInCallback(CONTEXT * ctxt, AFUNPTR pf)
 {
-    cout << "[win_callback] Calling SyscallInCallback() at " << hex << (VOID*)pf << endl;
+    cout << "[win_callback] Calling SyscallInCallback() at " << hex << (VOID *)pf << endl;
 
     PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT, pf, NULL, PIN_PARG_END());
 
@@ -38,7 +38,7 @@ static VOID MySyscallInCallback(CONTEXT* ctxt, AFUNPTR pf)
 /*!
  * RTN instrumentation routine.
  */
-static VOID InstrumentRoutine(RTN rtn, VOID*)
+static VOID InstrumentRoutine(RTN rtn, VOID *)
 {
     if (RTN_Name(rtn) == "SyscallInCallback")
     {
@@ -46,7 +46,12 @@ static VOID InstrumentRoutine(RTN rtn, VOID*)
 
         PROTO proto = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT, "SyscallInCallback", PIN_PARG_END());
 
-        RTN_ReplaceSignature(rtn, AFUNPTR(MySyscallInCallback), IARG_PROTOTYPE, proto, IARG_CONTEXT, IARG_ORIG_FUNCPTR, IARG_END);
+        RTN_ReplaceSignature(
+            rtn, AFUNPTR(MySyscallInCallback),
+            IARG_PROTOTYPE, proto,
+            IARG_CONTEXT,
+            IARG_ORIG_FUNCPTR,
+            IARG_END);
 
         PROTO_Free(proto);
     }
@@ -55,8 +60,12 @@ static VOID InstrumentRoutine(RTN rtn, VOID*)
 /*
  * CONTEXT_CHANGE notification
  */
-static void OnInterrupt(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, const CONTEXT* ctxtFrom, CONTEXT* ctxtTo, INT32 info,
-                        VOID* v)
+static void OnInterrupt(THREADID threadIndex, 
+                       CONTEXT_CHANGE_REASON reason, 
+                       const CONTEXT *ctxtFrom,
+                       CONTEXT *ctxtTo,
+                       INT32 info, 
+                       VOID *v)
 {
     if (reason == CONTEXT_CHANGE_REASON_CALLBACK)
     {
@@ -67,7 +76,7 @@ static void OnInterrupt(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, cons
 /*!
  * The main procedure of the tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);

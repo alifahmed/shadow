@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,15 +19,17 @@
 // in libc and libpthread point to the same actual location (in a TLS),
 // but this assumption is fragile and may change at some time int he future.
 
+
 #include "pin.H"
 #include <iostream>
 #include <stdlib.h>
 #include <errno.h>
 #include "tool_macros.h"
-using std::cerr;
-using std::cout;
-using std::endl;
 using std::hex;
+using std::cerr;
+using std::endl;
+using std::cout;
+
 
 #if defined(TARGET_MAC)
 #define ERRNO_SYMBOL ("___error")
@@ -37,53 +39,62 @@ using std::hex;
 
 AFUNPTR pf_errno_location = 0;
 
+
 /* ===================================================================== */
-VOID ToolCheckError(CONTEXT* ctxt)
+VOID ToolCheckError(  CONTEXT * ctxt )
 {
     unsigned long err_loc;
 
-    if (*pf_errno_location != 0)
+    if ( *pf_errno_location != 0 )
     {
         cerr << "Tool: calling __errno_location()" << endl;
 
-        PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT, pf_errno_location, NULL, PIN_PARG(unsigned long),
-                                    &err_loc, PIN_PARG_END());
+        PIN_CallApplicationFunction( ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT,
+                                     pf_errno_location, NULL, PIN_PARG(unsigned long), &err_loc,
+                                     PIN_PARG_END() );
 
-        int err_value = *(reinterpret_cast< unsigned long* >(err_loc));
+        int err_value = *( reinterpret_cast< unsigned long *>(err_loc));
 
         cerr << "Tool: errno=" << err_value << endl;
     }
     else
         cerr << "Tool: __errno_location not found." << endl;
+
 }
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
+
     RTN errno_location_rtn = RTN_FindByName(img, ERRNO_SYMBOL);
     if (RTN_Valid(errno_location_rtn))
     {
-        pf_errno_location = reinterpret_cast< AFUNPTR >(RTN_Address(errno_location_rtn));
+        pf_errno_location = reinterpret_cast<AFUNPTR>(RTN_Address(errno_location_rtn));
         cerr << "Tool: Found __errno_location() at " << hex << (ADDRINT)pf_errno_location << "." << endl;
     }
 
-    if (IMG_IsMainExecutable(img))
+    if ( IMG_IsMainExecutable( img ))
     {
-        PROTO proto = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT, "CheckError", PIN_PARG_END());
+        PROTO proto = PROTO_Allocate( PIN_PARG(void), CALLINGSTD_DEFAULT,
+                                      "CheckError", PIN_PARG_END() );
 
         RTN rtn = RTN_FindByName(img, C_MANGLE("CheckError"));
         if (RTN_Valid(rtn))
         {
             cout << "Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
 
-            RTN_ReplaceSignature(rtn, AFUNPTR(ToolCheckError), IARG_PROTOTYPE, proto, IARG_CONTEXT, IARG_END);
+            RTN_ReplaceSignature(rtn, AFUNPTR(ToolCheckError),
+                                 IARG_PROTOTYPE, proto,
+                                 IARG_CONTEXT,
+                                 IARG_END);
+
         }
-        PROTO_Free(proto);
+        PROTO_Free( proto );
     }
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR* argv[])
+int main(INT32 argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
@@ -99,3 +110,5 @@ int main(INT32 argc, CHAR* argv[])
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
+
+

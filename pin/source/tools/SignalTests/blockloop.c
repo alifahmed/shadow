@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -29,9 +29,8 @@ int main()
     printf("Signals are blocked\n");
     fflush(stdout);
 
-    alarm(60); /* kills the process if the test hangs for some reason*/
+    alarm(60);  /* kills the process if the test hangs for some reason*/
 
-    for (;;)
-        ;
+    for (;;);
     return 0;
 }

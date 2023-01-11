@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,9 +17,10 @@
 #include <cassert>
 #include "pin.H"
 
+
 void VerifyEnvVarNotSet(const char* varName)
 {
-    char* envVar = getenv(varName);
+    char *envVar = getenv(varName);
     if (NULL != envVar)
     {
         printf("check_env_tool ERROR: %s should not be a part of Pin environment.\n", varName);
@@ -28,8 +29,10 @@ void VerifyEnvVarNotSet(const char* varName)
     }
 }
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
+
     PIN_Init(argc, argv);
 
     VerifyEnvVarNotSet("LD_ASSUME_KERNEL");

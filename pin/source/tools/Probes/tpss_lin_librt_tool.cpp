@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,12 +21,12 @@
 #include "pin.H"
 #include <iostream>
 #include <fstream>
-using std::cerr;
-using std::endl;
-using std::hex;
-using std::ios;
-using std::ofstream;
 using std::string;
+using std::ios;
+using std::hex;
+using std::cerr;
+using std::ofstream;
+using std::endl;
 
 ofstream OutFile;
 
@@ -44,22 +44,22 @@ extern AFUNPTR fptrmq_timedsend;
 /* ===================================================================== */
 /* Replacement functions implemented in the other part of the tool       */
 /* ===================================================================== */
-extern "C"
-{
-    void myclock_nanosleep();
-    void mymq_close();
-    void mymq_open();
-    void mymq_receive();
-    void mymq_timedreceive();
-    void mymq_send();
-    void mymq_timedsend();
+extern "C" {
+void myclock_nanosleep();
+void mymq_close();
+void mymq_open();
+void mymq_receive();
+void mymq_timedreceive();
+void mymq_send();
+void mymq_timedsend();
 }
 
 /* ===================================================================== */
 /* Commandline Switches                                                  */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "tpss_lin_librt.txt", "specify tool log file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "tpss_lin_librt.txt", "specify tool log file name");
 
 /* ===================================================================== */
 /* Utility functions                                                     */
@@ -94,19 +94,20 @@ extern "C" void printFunctionCalled(const char* funcName)
 /* ===================================================================== */
 
 // Image load callback - inserts the probes.
-void ImgLoad(IMG img, void* v)
+void ImgLoad(IMG img, void *v)
 {
     // Called every time a new image is loaded
 
-    if ((IMG_Name(img).find("librt.so") != string::npos) || (IMG_Name(img).find("LIBRT.SO") != string::npos) ||
-        (IMG_Name(img).find("LIBRT.so") != string::npos))
+    if ( (IMG_Name(img).find("librt.so") != string::npos) ||
+         (IMG_Name(img).find("LIBRT.SO") != string::npos) ||
+         (IMG_Name(img).find("LIBRT.so") != string::npos) )
     {
         RTN rtnclock_nanosleep = RTN_FindByName(img, "clock_nanosleep");
         if (RTN_Valid(rtnclock_nanosleep) && RTN_IsSafeForProbedReplacement(rtnclock_nanosleep))
         {
             OutFile << CurrentTime() << "Inserting probe for clock_nanosleep at " << RTN_Address(rtnclock_nanosleep) << endl;
             OutFile.flush();
-            AFUNPTR fptr        = (RTN_ReplaceProbed(rtnclock_nanosleep, AFUNPTR(myclock_nanosleep)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnclock_nanosleep, AFUNPTR(myclock_nanosleep)));
             fptrclock_nanosleep = fptr;
         }
 
@@ -125,7 +126,7 @@ void ImgLoad(IMG img, void* v)
             OutFile << CurrentTime() << "Inserting probe for mq_open at " << RTN_Address(rtnmq_open) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnmq_open, AFUNPTR(mymq_open)));
-            fptrmq_open  = fptr;
+            fptrmq_open = fptr;
         }
 
         RTN rtnmq_receive = RTN_FindByName(img, "mq_receive");
@@ -133,7 +134,7 @@ void ImgLoad(IMG img, void* v)
         {
             OutFile << CurrentTime() << "Inserting probe for mq_receive at " << RTN_Address(rtnmq_receive) << endl;
             OutFile.flush();
-            AFUNPTR fptr   = (RTN_ReplaceProbed(rtnmq_receive, AFUNPTR(mymq_receive)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnmq_receive, AFUNPTR(mymq_receive)));
             fptrmq_receive = fptr;
         }
 
@@ -142,7 +143,7 @@ void ImgLoad(IMG img, void* v)
         {
             OutFile << CurrentTime() << "Inserting probe for mq_timedreceive at " << RTN_Address(rtnmq_timedreceive) << endl;
             OutFile.flush();
-            AFUNPTR fptr        = (RTN_ReplaceProbed(rtnmq_timedreceive, AFUNPTR(mymq_timedreceive)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnmq_timedreceive, AFUNPTR(mymq_timedreceive)));
             fptrmq_timedreceive = fptr;
         }
 
@@ -152,7 +153,7 @@ void ImgLoad(IMG img, void* v)
             OutFile << CurrentTime() << "Inserting probe for mq_send at " << RTN_Address(rtnmq_send) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnmq_send, AFUNPTR(mymq_send)));
-            fptrmq_send  = fptr;
+            fptrmq_send = fptr;
         }
 
         RTN rtnmq_timedsend = RTN_FindByName(img, "mq_timedsend");
@@ -160,7 +161,7 @@ void ImgLoad(IMG img, void* v)
         {
             OutFile << CurrentTime() << "Inserting probe for mq_timedsend at " << RTN_Address(rtnmq_timedsend) << endl;
             OutFile.flush();
-            AFUNPTR fptr     = (RTN_ReplaceProbed(rtnmq_timedsend, AFUNPTR(mymq_timedsend)));
+            AFUNPTR fptr = (RTN_ReplaceProbed(rtnmq_timedsend, AFUNPTR(mymq_timedsend)));
             fptrmq_timedsend = fptr;
         }
     }
@@ -171,11 +172,11 @@ void ImgLoad(IMG img, void* v)
 /* Main function                                                         */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialize Pin
     PIN_InitSymbols();
-    if (PIN_Init(argc, argv))
+    if (PIN_Init(argc,argv))
     {
         return Usage();
     }
@@ -188,6 +189,7 @@ int main(int argc, char* argv[])
 
     // Register the instrumentation callback
     IMG_AddInstrumentFunction(ImgLoad, 0);
+
 
     // Start the application
     PIN_StartProgramProbed(); // never returns

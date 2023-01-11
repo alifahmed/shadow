@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,11 +17,14 @@ static char greeting[] = "Hello";
 
 #pragma code_seg("asection")
 
-void report() { printf("%s, world\n", greeting); }
+void report()
+{
+    printf("%s, world\n", greeting);
+}
 
 #pragma code_seg(".text")
 
-int main()
+int main ()
 {
     report();
     return 0;

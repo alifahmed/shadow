@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,21 +16,29 @@ using std::endl;
 
 UINT64 icount = 0;
 
-VOID docount() { icount++; }
+VOID docount() { 
+    icount++; 
+}
+    
+VOID Instruction(INS ins, VOID *v)
+{
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);
+}
 
-VOID Instruction(INS ins, VOID* v) { INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END); }
+VOID Fini(INT32 code, VOID *v)
+{
+    std::cerr << "Count: " << icount << endl;
+}
 
-VOID Fini(INT32 code, VOID* v) { std::cerr << "Count: " << icount << endl; }
-
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
     INS_AddInstrumentFunction(Instruction, 0);
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

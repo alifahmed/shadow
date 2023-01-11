@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,7 +14,7 @@
 * tool (including pin.log), and doesn't let the application to close them.
 */
 #ifdef NDEBUG
-#undef NDEBUG
+# undef NDEBUG
 #endif
 #include <assert.h>
 #include <dirent.h>
@@ -41,8 +41,8 @@ void closeAllFiles()
         {
             continue;
         }
-        char* endptr;
-        errno             = 0;
+        char *endptr;
+        errno = 0;
         const long int fd = strtol(ent->d_name, &endptr, 10);
         if (*endptr || fd < 0 || errno)
         {
@@ -75,3 +75,4 @@ int main()
     }
     return 0;
 }
+

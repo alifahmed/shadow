@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,9 +17,15 @@
 using std::cerr;
 using std::endl;
 
-extern "C" __declspec(noinline, dllexport) int PinIsAttached() { return 0; }
+extern "C" __declspec(noinline, dllexport) int PinIsAttached()
+{
+    return 0;
+}
 
-extern "C" __declspec(noinline, dllexport) int PinIsDetached() { return 1; }
+extern "C" __declspec(noinline, dllexport) int PinIsDetached()
+{
+    return 1;
+}
 
 extern "C" __declspec(noinline, dllexport) void FirstProbeInvoked()
 {
@@ -35,18 +41,13 @@ extern "C" __declspec(noinline, dllexport) void SecondProbeInvoked()
 
 int main()
 {
-    while (!PinIsAttached())
-        SwitchToThread();
+    while (!PinIsAttached()) SwitchToThread();
     FirstProbeInvoked();
-    while (!PinIsDetached())
-        SwitchToThread();
-    while (!PinIsAttached())
-        SwitchToThread();
+    while (!PinIsDetached()) SwitchToThread();
+    while (!PinIsAttached()) SwitchToThread();
     SecondProbeInvoked();
-    while (!PinIsDetached())
-        SwitchToThread();
-    while (!PinIsAttached())
-        SwitchToThread();
+    while (!PinIsDetached()) SwitchToThread();
+    while (!PinIsAttached()) SwitchToThread();
 
     cerr << "Test passed!" << endl;
 

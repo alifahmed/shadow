@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,7 +12,7 @@
 #ifndef TIME_WARP_H
 #define TIME_WARP_H
 
-namespace INSTLIB
+namespace INSTLIB 
 {
 /*! @defgroup TIME_WARPER
   It is often desirable to use instrumentation to change behavior of program
@@ -21,6 +21,7 @@ namespace INSTLIB
   such as instructions reading the cycle counters and system calls reading
   time of the day.
 */
+
 
 /*! @defgroup TIME_WARPER_RDTSC
   @ingroup TIME_WARPER
@@ -32,22 +33,27 @@ namespace INSTLIB
 class TIME_WARP_RDTSC
 {
   public:
-    TIME_WARP_RDTSC() : _enableKnob(KNOB_MODE_WRITEONCE, "pintool", "rdtsc_warp", "0", "Modify the behavior of RDTSC")
+    TIME_WARP_RDTSC():_enableKnob(KNOB_MODE_WRITEONCE, "pintool", "rdtsc_warp", "0", 
+                                  "Modify the behavior of RDTSC")
     {
         _edx_eax = 1ULL;
-        _eax     = 0;
-        _edx     = 0;
+        _eax= 0;
+        _edx= 0;
     }
 
-    bool IsActive() { return (_enableKnob); }
+    bool IsActive()
+    {
+        return (_enableKnob);
+    }
 
     /*! @ingroup TIME_WARPER_RDTSC
       Activate the controller if the -length knob is provided
       @return 1 if controller can start an interval, otherwise 0
     */
-    INT32 CheckKnobs(VOID* val)
+    INT32 CheckKnobs(VOID * val)
     {
-        if (_enableKnob == 0) return 0;
+        if (_enableKnob==0)
+            return 0;
 #if defined(TARGET_IA32) || defined(TARGET_IA32E)
         // Register Instruction to be called to instrument instructions
         TRACE_AddInstrumentFunction(ProcessRDTSC, this);
@@ -56,30 +62,30 @@ class TIME_WARP_RDTSC
     }
 
   private:
-    KNOB< BOOL > _enableKnob;
+    KNOB<BOOL>  _enableKnob;
     UINT64 _edx_eax;
     UINT32 _eax;
     UINT32 _edx;
 
-    static UINT32 SwizzleEdx(TIME_WARP_RDTSC* rd)
+    static UINT32 SwizzleEdx(TIME_WARP_RDTSC *rd)
     {
         rd->_edx = (rd->_edx_eax & 0xffffffff00000000ULL) >> 32;
         // cerr << "SwizzleEdx() returning 0x"<< hex << edx << endl;
         return rd->_edx;
     }
 
-    static UINT32 SwizzleEax(TIME_WARP_RDTSC* rd)
+    static UINT32 SwizzleEax(TIME_WARP_RDTSC *rd)
     {
         rd->_eax = rd->_edx_eax & 0x00000000ffffffffULL;
-        rd->_edx_eax += 100;
+        rd->_edx_eax+=100;
         // cerr << "SwizzleEax() edx_eax= 0x"<< hex << edx_eax << endl;
         // cerr << "SwizzleEax() returning 0x"<< hex << eax << endl;
         return rd->_eax;
     }
     static VOID PrintEaxEdx(ADDRINT reax, ADDRINT redx)
     {
-        cerr << "PrintEaxEdx():reg eax = 0x" << hex << reax << endl;
-        cerr << "PrintEaxEdx():reg edx = 0x" << hex << redx << endl;
+        cerr << "PrintEaxEdx():reg eax = 0x"<< hex << reax << endl;
+        cerr << "PrintEaxEdx():reg edx = 0x"<< hex << redx << endl;
     }
 
 #if defined(TARGET_IA32) || defined(TARGET_IA32E)
@@ -87,16 +93,19 @@ class TIME_WARP_RDTSC
     // Goal: Make rdtsc repeatable  across runs
     // NOTE: We are using TRACE instrumentation because it has higher
     // precedence than INS instrumentation.
-    static VOID ProcessRDTSC(TRACE trace, VOID* v)
+    static VOID ProcessRDTSC(TRACE trace, VOID *v)
     {
+        
         for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
         {
             for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
             {
-                if (INS_IsRDTSC(ins))
+                if(INS_IsRDTSC(ins))
                 {
-                    INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)SwizzleEdx, IARG_PTR, v, IARG_RETURN_REGS, REG_GDX, IARG_END);
-                    INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)SwizzleEax, IARG_PTR, v, IARG_RETURN_REGS, REG_GAX, IARG_END);
+                    INS_InsertCall(ins, IPOINT_AFTER,
+                                   (AFUNPTR)SwizzleEdx,IARG_PTR, v, IARG_RETURN_REGS, REG_GDX, IARG_END);
+                    INS_InsertCall(ins, IPOINT_AFTER,
+                                   (AFUNPTR)SwizzleEax,IARG_PTR, v, IARG_RETURN_REGS, REG_GAX, IARG_END);
                 }
             }
         }
@@ -114,19 +123,19 @@ class TIME_WARP
     /*! @ingroup TIME_WARPER_MULTI
       Activate all the component controllers
     */
-    INT32 CheckKnobs(VOID* val)
+    INT32 CheckKnobs(VOID * val)
     {
-        _val        = val;
+        _val = val;
         INT32 start = 0;
-        start       = start + _rdtsc.CheckKnobs(this);
+        start = start + _rdtsc.CheckKnobs(this);
         return start;
     }
     bool RDTSC_modified() { return _rdtsc.IsActive(); };
 
   private:
-    VOID* _val;
+    VOID * _val;
 
     TIME_WARP_RDTSC _rdtsc;
 };
-} // namespace INSTLIB
+}
 #endif

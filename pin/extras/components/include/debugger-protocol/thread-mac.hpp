@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -17,8 +17,9 @@
 #ifndef DEBUGGER_PROTOCOL_THREAD_MAC_HPP
 #define DEBUGGER_PROTOCOL_THREAD_MAC_HPP
 
-namespace DEBUGGER_PROTOCOL
-{
+namespace DEBUGGER_PROTOCOL {
+
+
 /*!
  * In the future, new fields may be added to the end of the THREAD_INFO_MAC
  * structure.  If this happens, clients can use the \e _version field to retain
@@ -34,18 +35,19 @@ namespace DEBUGGER_PROTOCOL
  */
 enum THREAD_INFO_MAC_VERSION
 {
-    THREAD_INFO_MAC_VERSION_0 ///< This is the only defined version currently.
+    THREAD_INFO_MAC_VERSION_0     ///< This is the only defined version currently.
 };
+
 
 /*!
  * Information about a thread running on a Linux target.
  */
 struct /*<POD>*/ THREAD_INFO_MAC
 {
-    THREAD_INFO_MAC_VERSION _version; ///< Defines which fields in this structure are valid.
+    THREAD_INFO_MAC_VERSION _version;     ///< Defines which fields in this structure are valid.
 
     /* There are no fields defined for this version. */
 };
 
-} // namespace DEBUGGER_PROTOCOL
+} // namespace
 #endif // file guard

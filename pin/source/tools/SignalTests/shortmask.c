@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
+
 int main()
 {
     char mask1[8];
@@ -35,7 +36,7 @@ int main()
 #ifdef SYS_sigprocmask
     syscall(SYS_sigprocmask, SIG_SETMASK, 0, mask1);
 #endif
-    if (memcmp(mask1 + 4, mask2 + 4, sizeof(mask1) - 4) != 0)
+    if (memcmp(mask1+4, mask2+4, sizeof(mask1)-4) != 0)
     {
         printf("SYS_sigprocmask wrote beyond end of signal mask\n");
         return 1;
@@ -46,7 +47,7 @@ int main()
 #ifdef SYS_sigprocmask
     syscall(SYS_sigprocmask, SIG_SETMASK, 0, mask1);
 #endif
-    if (memcmp(mask1 + 4, mask2 + 4, sizeof(mask1) - 4) != 0)
+    if (memcmp(mask1+4, mask2+4, sizeof(mask1)-4) != 0)
     {
         printf("SYS_sigprocmask wrote beyond end of signal mask\n");
         return 1;

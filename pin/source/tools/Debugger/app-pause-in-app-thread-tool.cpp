@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -35,7 +35,7 @@ static TLS_KEY tls_key = INVALID_TLS_KEY;
 
 tdata* get_tls(THREADID threadid)
 {
-    tdata* data = static_cast< tdata* >(PIN_GetThreadData(tls_key, threadid));
+    tdata * data = static_cast<tdata*>(PIN_GetThreadData(tls_key, threadid));
     if (!data)
     {
         cerr << "specified key is invalid or the given thread is not yet registered in the pin thread database" << endl;
@@ -63,9 +63,10 @@ VOID doPause(THREADID threadid)
             UINT32 nThreads = PIN_GetStoppedThreadCount();
             for (UINT32 i = 0; i < nThreads; i++)
             {
-                THREADID tid        = PIN_GetStoppedThreadId(i);
-                const CONTEXT* ctxt = PIN_GetStoppedThreadContext(tid);
-                printf("  Thread %u, IP = %llx\n", tid, (long long unsigned int)PIN_GetContextReg(ctxt, REG_INST_PTR));
+                THREADID tid = PIN_GetStoppedThreadId(i);
+                const CONTEXT * ctxt = PIN_GetStoppedThreadContext(tid);
+                printf("  Thread %u, IP = %llx\n", tid,
+                       (long long unsigned int)PIN_GetContextReg(ctxt, REG_INST_PTR));
             }
             PIN_ResumeApplicationThreads(threadid);
             printf("Threads resumed by application thread %u\n", threadid);
@@ -84,14 +85,20 @@ VOID doPause(THREADID threadid)
     return;
 }
 
-VOID insCallback(INS ins, void* v) { INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(doPause), IARG_THREAD_ID, IARG_END); }
+VOID insCallback(INS ins, void *v)
+{
+    INS_InsertCall(ins, IPOINT_BEFORE,
+        AFUNPTR(doPause),
+        IARG_THREAD_ID,
+        IARG_END);
+}
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     tdata* data = new tdata;
     // Thread ID 0 reserved for main thread.
     // This thread will not call PIN_StopApplicationThreads()
-    data->icount    = 0;
+    data->icount = 0;
     data->stopPoint = PAUSE_INTERVAL * threadid;
     if (PIN_SetThreadData(tls_key, data, threadid) == FALSE)
     {
@@ -100,15 +107,15 @@ VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
     }
 }
 
-VOID ThreadFini(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID* v)
+VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
     tdata* data = get_tls(threadid);
     delete data;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
 
     tls_key = PIN_CreateThreadDataKey(NULL);
     if (tls_key == INVALID_TLS_KEY)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,9 +13,9 @@
 
 #include <stdio.h>
 
-#if defined(TARGET_WINDOWS)
+#if defined (TARGET_WINDOWS)
 #include <windows.h>
-#define EXPORT_SYM __declspec(dllexport)
+#define EXPORT_SYM __declspec( dllexport ) 
 #else
 #include <errno.h>
 #define EXPORT_SYM extern
@@ -23,14 +23,14 @@
 
 EXPORT_SYM void CheckError();
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    FILE* f = fopen("non-existent-file", "r");
+   FILE *f = fopen("non-existent-file", "r");
 
-    if (!f)
-    {
-        CheckError();
-        fprintf(stdout, "App: cannot open non-existent file\n");
-        return 0;
-    }
+   if ( !f )
+   {
+       CheckError();
+       fprintf(stdout, "App: cannot open non-existent file\n");
+       return 0; 
+   }
 }

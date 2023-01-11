@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,17 +19,17 @@
 #include <iostream>
 #include <string>
 
-using std::cerr;
+using std::string;
 using std::cout;
 using std::endl;
-using std::string;
+using std::cerr;
 
 //Wait for a process completion
 //Verify it returned the expected exit code
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
-    char* childArgvArray[5];
+    char *childArgvArray[5];
     childArgvArray[0] = argv[1];
     childArgvArray[1] = argv[2];
     childArgvArray[2] = argv[3];
@@ -41,23 +41,22 @@ int main(int argc, char* argv[])
     {
         // child process
         execv(childArgvArray[0], childArgvArray);
-        cout << "Execve failed " << argv[1] << " " << argv[2] << " " << argv[3] << endl;
+        cout << "Execve failed "<< argv[1] << " " << argv[2] << " " << argv[3] << endl;
         return 1;
     }
     else
     {
         int status;
         pid_t ret;
-        while (0 == (ret = waitpid(pid, &status, WNOHANG)) || (ret < 0 && errno == EINTR))
-            ;
+        while (0 == (ret = waitpid(pid, &status, WNOHANG)) || (ret < 0 && errno == EINTR));
         if (ret < 0)
         {
             cout << "waitpid() failed with errno " << errno << endl;
             return 2;
         }
-        else if (status != 0)
+        else if (status !=0)
         {
-            cout << "Parent report: Child process failed. Status of the child process is " << WEXITSTATUS(status) << endl;
+            cout << "Parent report: Child process failed. Status of the child process is "<< WEXITSTATUS(status) << endl;
             return 3;
         }
         else
@@ -68,7 +67,7 @@ int main(int argc, char* argv[])
     {
         // child process
         execv(childArgvArray[0], childArgvArray);
-        cout << "Execve failed " << argv[1] << " " << argv[2] << " " << argv[3] << endl;
+        cout << "Execve failed "<< argv[1] << " " << argv[2] << " " << argv[3] << endl;
         return 4;
     }
     else
@@ -79,17 +78,15 @@ int main(int argc, char* argv[])
         {
             siginfo.si_pid = 0;
         }
-        while ((0 == (ret = waitid(P_PID, pid, &siginfo, WEXITED | WNOHANG)) && siginfo.si_pid == 0) ||
-               (ret < 0 && errno == EINTR));
+        while ((0 == (ret = waitid(P_PID, pid, &siginfo, WEXITED | WNOHANG)) && siginfo.si_pid == 0) || (ret < 0 && errno == EINTR));
         if (ret < 0)
         {
             cout << "waitid() failed with errno " << errno << endl;
             return 5;
         }
-        else if (siginfo.si_status != 0)
+        else if (siginfo.si_status !=0)
         {
-            cout << "Parent report: Child process failed. Status of the child process is " << WEXITSTATUS(siginfo.si_status)
-                 << endl;
+            cout << "Parent report: Child process failed. Status of the child process is "<< WEXITSTATUS(siginfo.si_status) << endl;
             return 6;
         }
         else
@@ -97,3 +94,4 @@ int main(int argc, char* argv[])
     }
     return 0;
 }
+

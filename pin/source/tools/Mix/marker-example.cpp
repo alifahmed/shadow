@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,20 +12,28 @@
 #include <iostream>
 using std::cout;
 using std::endl;
-extern "C"
+extern "C" {
+void marker_start_counting()
 {
-    void marker_start_counting() {}
-    void marker_stop_counting() {}
+}
+void marker_stop_counting()
+{
+}
 
-    void marker_emit_stats() {}
+void marker_emit_stats()
+{
+}
 
-    void marker_zero_stats() {}
+void marker_zero_stats()
+{
+}
 
 } // end of extern "C"
 
 int main(int argc, char** argv)
 {
-    for (int i = 0; i < 3; i++)
+
+    for (int i=0;i<3;i++)
     {
         marker_zero_stats();
         marker_start_counting();

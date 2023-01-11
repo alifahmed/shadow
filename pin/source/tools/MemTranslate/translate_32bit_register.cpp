@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,7 +18,9 @@ using std::cerr;
 using std::endl;
 
 static int* replacement_ptr = NULL;
-static KNOB< bool > KnobVerbose(KNOB_MODE_WRITEONCE, "pintool", "verbose", "0", "Verbose output");
+static KNOB<bool> KnobVerbose(KNOB_MODE_WRITEONCE, "pintool",
+    "verbose", "0", "Verbose output");
+
 
 static int* replaceMemoryReadFunc(int* readAddr, void* pc)
 {
@@ -26,7 +28,8 @@ static int* replaceMemoryReadFunc(int* readAddr, void* pc)
     {
         cerr << pc << ") replaceMemoryReadFunc called with " << (void*)readAddr << endl;
     }
-    if (*readAddr != 0xbadc0de) return readAddr;
+    if (*readAddr != 0xbadc0de)
+        return readAddr;
     if (KnobVerbose)
     {
         cerr << pc << ") replacing " << (void*)readAddr << " to " << (void*)replacement_ptr << endl;
@@ -35,22 +38,31 @@ static int* replaceMemoryReadFunc(int* readAddr, void* pc)
 }
 
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     UINT32 memOperands = INS_MemoryOperandCount(ins);
-    if (INS_IsMov(ins) && 1 == memOperands && INS_MemoryOperandIsRead(ins, 0) &&
-        REG_Width(INS_MemoryBaseReg(ins)) == REGWIDTH_32 && INS_MemoryIndexReg(ins) == REG_INVALID() &&
-        INS_MemoryDisplacement(ins) == 0)
+    if (INS_IsMov(ins)
+            && 1 == memOperands
+            && INS_MemoryOperandIsRead(ins, 0)
+            && REG_Width(INS_MemoryBaseReg(ins)) == REGWIDTH_32
+            && INS_MemoryIndexReg(ins) == REG_INVALID()
+            && INS_MemoryDisplacement(ins) == 0)
     {
         if (KnobVerbose)
         {
             cerr << "found " << INS_Disassemble(ins) << endl;
         }
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)replaceMemoryReadFunc, IARG_MEMORYOP_EA, 0, IARG_REG_VALUE, REG_INST_PTR,
-                       IARG_RETURN_REGS, REG_INST_G0, IARG_END);
+        INS_InsertCall(ins,
+                IPOINT_BEFORE,
+                (AFUNPTR)replaceMemoryReadFunc,
+                IARG_MEMORYOP_EA, 0,
+                IARG_REG_VALUE, REG_INST_PTR,
+                IARG_RETURN_REGS, REG_INST_G0,
+                IARG_END);
         INS_RewriteMemoryOperand(ins, 0, REG_INST_G0);
     }
-}
+ }
+
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
@@ -63,6 +75,7 @@ INT32 Usage()
     return -1;
 }
 
+
 /*
  * Allocate an address that falls outside the lower 32 bit address space
  * This ensures that we get an address cannot be accessed by memory operand
@@ -71,7 +84,7 @@ INT32 Usage()
 void* allocateMemoryAbove32bitAddressSpace()
 {
     void* startAddr = (void*)0x100000000;
-    size_t memSize  = getpagesize();
+    size_t memSize = getpagesize();
     for (void* curAddr = startAddr; curAddr >= startAddr; curAddr = (void*)((ADDRINT)curAddr + memSize))
     {
         void* mem = mmap(curAddr, memSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -91,7 +104,7 @@ void* allocateMemoryAbove32bitAddressSpace()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();
@@ -99,7 +112,7 @@ int main(int argc, char* argv[])
     replacement_ptr = (int*)allocateMemoryAbove32bitAddressSpace();
     if (NULL == replacement_ptr)
     {
-        cerr << "Failed to allocate memory above the 32 bit address space" << endl;
+        cerr <<  "Failed to allocate memory above the 32 bit address space" << endl;
         exit(2);
     }
     if (KnobVerbose)

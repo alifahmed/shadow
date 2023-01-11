@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,62 +20,71 @@
 #include <errno.h>
 
 using std::cerr;
-using std::cout;
 using std::endl;
+using std::cout;
 namespace WINDOWS
 {
-#include <windows.h>
+    #include <windows.h>
 }
 
 AFUNPTR pfnGetLastError = 0;
 
+
 /* ===================================================================== */
-VOID ToolCheckError(CONTEXT* ctxt)
+VOID ToolCheckError(  CONTEXT * ctxt )
 {
     unsigned long err_code;
-
-    if (pfnGetLastError != 0)
+    
+    if ( pfnGetLastError != 0 )
     {
         cerr << "Tool: calling GetLastError()" << endl;
-
-        PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT, pfnGetLastError, NULL, PIN_PARG(unsigned long),
-                                    &err_code, PIN_PARG_END());
+        
+        PIN_CallApplicationFunction( ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT,
+                                     pfnGetLastError, NULL, PIN_PARG(unsigned long), &err_code,
+                                     PIN_PARG_END() );
 
         cerr << "Tool: error code=" << err_code << endl;
     }
     else
         cerr << "Tool: GetLastError() not found." << endl;
+    
 }
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    if (IMG_IsMainExecutable(img))
+    if ( IMG_IsMainExecutable( img ))
     {
-        PROTO proto = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT, "CheckError", PIN_PARG_END());
-
+        PROTO proto = PROTO_Allocate( PIN_PARG(void), CALLINGSTD_DEFAULT,
+                                      "CheckError", PIN_PARG_END() );
+        
         RTN rtn = RTN_FindByName(img, "CheckError");
         if (RTN_Valid(rtn))
         {
             cout << "Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
-
-            RTN_ReplaceSignature(rtn, AFUNPTR(ToolCheckError), IARG_PROTOTYPE, proto, IARG_CONTEXT, IARG_END);
-        }
-        PROTO_Free(proto);
+            
+            RTN_ReplaceSignature(rtn, AFUNPTR(ToolCheckError),
+                                 IARG_PROTOTYPE, proto,
+                                 IARG_CONTEXT,
+                                 IARG_END);
+            
+        }    
+        PROTO_Free( proto );
     }
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR* argv[])
+int main(INT32 argc, CHAR *argv[])
 {
-    pfnGetLastError = (AFUNPTR)WINDOWS::GetProcAddress(WINDOWS::GetModuleHandle("kernel32.dll"), "GetLastError");
+    pfnGetLastError = (AFUNPTR)WINDOWS::GetProcAddress(
+                               WINDOWS::GetModuleHandle("kernel32.dll"), "GetLastError");
 
     PIN_InitSymbols();
 
     PIN_Init(argc, argv);
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgram();
 
     return 0;
@@ -84,3 +93,5 @@ int main(INT32 argc, CHAR* argv[])
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
+
+

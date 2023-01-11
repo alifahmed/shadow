@@ -18,7 +18,7 @@
 # defining the test name twice (once in TOOL_ROOTS and again in TEST_ROOTS).
 # Tests defined here should not be defined in TOOL_ROOTS and TEST_ROOTS.
 TEST_TOOL_ROOTS := bufferaddr two_buffers allocate mlog_buffer buffer-then buffer-predicate buffererror buffer-lengths \
-                   buffer_invalid_reg buffer_arg
+                   buffer_invalid_reg
 
 # This defines the tests to be run that were not already defined in TEST_TOOL_ROOTS.
 TEST_ROOTS :=
@@ -36,22 +36,16 @@ TOOL_ROOTS :=
 SA_TOOL_ROOTS :=
 
 # This defines all the applications that will be run during the tests.
-APP_ROOTS := buffer_arg_app
+APP_ROOTS :=
 
 # This defines any additional object files that need to be compiled.
-OBJECT_ROOTS := buffer_arg_app buffer_arg
+OBJECT_ROOTS :=
 
 # This defines any additional dlls (shared objects), other than the pintools, that need to be compiled.
 DLL_ROOTS :=
 
 # This defines any static libraries (archives), that need to be built.
 LIB_ROOTS :=
-
-###### Handle exceptions here (OS/arch related) ######
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
 
 ###### Define the sanity subset ######
 
@@ -123,25 +117,23 @@ buffererror.test: $(OBJDIR)buffererror$(PINTOOL_SUFFIX) $(TESTAPP)
 
 buffer_invalid_reg.test: $(OBJDIR)buffer_invalid_reg$(PINTOOL_SUFFIX) $(TESTAPP)
 	$(RM) -f $(OBJDIR)buffer_invalid_reg.makefile.copy $(OBJDIR)buffer_invalid_reg.err
-	! ( $(PIN) -logfile $(OBJDIR)$(@:.test=.pin.log) -error_file $(OBJDIR)buffer_invalid_reg.err -t $(OBJDIR)buffer_invalid_reg$(PINTOOL_SUFFIX) -r pin_ebx \
+	! ( $(PIN) -error_file $(OBJDIR)buffer_invalid_reg.err -t $(OBJDIR)buffer_invalid_reg$(PINTOOL_SUFFIX) -r pin_ebx \
 	  -- $(TESTAPP) makefile $(OBJDIR)buffer_invalid_reg.makefile.copy )
 	$(QGREP) "Invalid REG for IARG_REG_.* pin_ebx" $(OBJDIR)buffer_invalid_reg.err
 	$(RM) $(OBJDIR)buffer_invalid_reg.err
 	! ( $(PIN) -error_file $(OBJDIR)buffer_invalid_reg.err -t $(OBJDIR)buffer_invalid_reg$(PINTOOL_SUFFIX) -r xmm0 \
 	  -- $(TESTAPP) makefile $(OBJDIR)buffer_invalid_reg.makefile.copy )
 	$(QGREP) "Invalid REG for IARG_REG_.* xmm0" $(OBJDIR)buffer_invalid_reg.err
-	$(PIN) -logfile $(OBJDIR)$(@:.test=.pin.log) -t $(OBJDIR)buffer_invalid_reg$(PINTOOL_SUFFIX) -r cs \
+	$(PIN) -t $(OBJDIR)buffer_invalid_reg$(PINTOOL_SUFFIX) -r cs \
 	  -- $(TESTAPP) makefile $(OBJDIR)buffer_invalid_reg.makefile.copy
-	$(RM) -f $(OBJDIR)buffer_invalid_reg.makefile.copy $(OBJDIR)buffer_invalid_reg.err $(OBJDIR)$(@:.test=.pin.log)
+	$(RM) -f $(OBJDIR)buffer_invalid_reg.makefile.copy $(OBJDIR)buffer_invalid_reg.err pin.log
 
-buffer_arg.test: $(OBJDIR)buffer_arg$(PINTOOL_SUFFIX) $(OBJDIR)buffer_arg_app$(EXE_SUFFIX)
-	$(PIN) -t $(OBJDIR)buffer_arg$(PINTOOL_SUFFIX) -- $(OBJDIR)buffer_arg_app$(EXE_SUFFIX)
+
 ##############################################################
 #
 # Build rules
 #
 ##############################################################
+
 # This section contains the build rules for all binaries that have special build rules.
 # See makefile.default.rules for the default build rules.
-$(OBJDIR)buffer_arg_app$(EXE_SUFFIX): buffer_arg_app.c $(OBJDIR)buffer_arg_app_asm$(OBJ_SUFFIX)
-	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(EXPORT)SimpleCmovTest $(APP_LIBS)

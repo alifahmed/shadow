@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,18 +16,20 @@
  */
 #include "pin.H"
 #include <fstream>
-using std::dec;
-using std::endl;
 using std::ofstream;
+using std::dec;
 using std::string;
+using std::endl;
 
-static KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "callbacks_order.out", "specify file name");
 
-static ofstream* out;
+static KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+                                   "o", "callbacks_order.out", "specify file name");
+
+static ofstream * out;
 
 THREADID myThread = INVALID_THREADID;
 
-static VOID ThreadStart(THREADID threadIndex, CONTEXT* ctxt, INT32 flags, VOID* v)
+static VOID ThreadStart(THREADID threadIndex, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     if (INVALID_THREADID == myThread)
     {
@@ -39,7 +41,7 @@ static VOID ThreadStart(THREADID threadIndex, CONTEXT* ctxt, INT32 flags, VOID* 
     }
 }
 
-static VOID ThreadFini(THREADID tid, CONTEXT const* c, INT32 code, VOID* v)
+static VOID ThreadFini(THREADID tid, CONTEXT const * c, INT32 code, VOID *v)
 {
     if (tid == myThread)
     {
@@ -47,16 +49,19 @@ static VOID ThreadFini(THREADID tid, CONTEXT const* c, INT32 code, VOID* v)
     }
 }
 
-static VOID FiniB(INT32 code, VOID* v) { *out << dec << "FiniB " << ADDRINT(v) << endl; }
+static VOID FiniB(INT32 code, VOID *v)
+{
+    *out << dec << "FiniB " << ADDRINT(v) << endl;
+}
 
-static VOID FiniA(INT32 code, VOID* v)
+static VOID FiniA(INT32 code, VOID *v)
 {
     *out << dec << "FiniA " << ADDRINT(v) << endl;
     out->close();
     delete out;
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
 
@@ -73,16 +78,16 @@ int main(INT32 argc, CHAR** argv)
     PIN_CALLBACK cbThreadStart1 = PIN_AddThreadStartFunction(ThreadStart, (VOID*)1);
     PIN_CALLBACK cbThreadStart2 = PIN_AddThreadStartFunction(ThreadStart, (VOID*)2);
 
-    CALLBACK_SetExecutionOrder(cbThreadFini0, (CALL_ORDER)(CALL_ORDER_DEFAULT + 0));
-    CALLBACK_SetExecutionOrder(cbThreadFini4, (CALL_ORDER)(CALL_ORDER_DEFAULT + 4));
-    CALLBACK_SetExecutionOrder(cbThreadFini3, (CALL_ORDER)(CALL_ORDER_DEFAULT + 3));
+    CALLBACK_SetExecutionOrder(cbThreadFini0, (CALL_ORDER)(CALL_ORDER_DEFAULT+0));
+    CALLBACK_SetExecutionOrder(cbThreadFini4, (CALL_ORDER)(CALL_ORDER_DEFAULT+4));
+    CALLBACK_SetExecutionOrder(cbThreadFini3, (CALL_ORDER)(CALL_ORDER_DEFAULT+3));
 
-    CALLBACK_SetExecutionOrder(cbThreadStart2, (CALL_ORDER)(CALL_ORDER_DEFAULT + 2));
-    CALLBACK_SetExecutionOrder(cbThreadStart0, (CALL_ORDER)(CALL_ORDER_DEFAULT + 0));
-    CALLBACK_SetExecutionOrder(cbThreadStart1, (CALL_ORDER)(CALL_ORDER_DEFAULT + 1));
+    CALLBACK_SetExecutionOrder(cbThreadStart2,(CALL_ORDER)( CALL_ORDER_DEFAULT+2));
+    CALLBACK_SetExecutionOrder(cbThreadStart0, (CALL_ORDER)(CALL_ORDER_DEFAULT+0));
+    CALLBACK_SetExecutionOrder(cbThreadStart1,(CALL_ORDER) (CALL_ORDER_DEFAULT+1));
 
-    CALLBACK_SetExecutionOrder(cbAppFiniA, (CALL_ORDER)(CALL_ORDER_DEFAULT + 10));
-    CALLBACK_SetExecutionOrder(cbAppFiniB, (CALL_ORDER)(CALL_ORDER_DEFAULT + 1));
+    CALLBACK_SetExecutionOrder(cbAppFiniA,(CALL_ORDER) (CALL_ORDER_DEFAULT+10));
+    CALLBACK_SetExecutionOrder(cbAppFiniB, (CALL_ORDER)(CALL_ORDER_DEFAULT+1));
 
     // Never returns
     PIN_StartProgram();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,17 +19,20 @@
  * This tool does a similar task as memtrace.cpp, but it uses the buffering api.
  */
 
+
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
 #include <cstddef>
 #include <unistd.h>
 #include "pin.H"
-using std::cerr;
-using std::endl;
 using std::hex;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
+
+
 
 /*
  * Knobs for tool
@@ -38,12 +41,14 @@ using std::string;
 /*
  * Name of the output file
  */
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "membuffer.out", "output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "membuffer.out", "output file");
 
 /*
  * Emit the address trace to the output file
  */
-KNOB< BOOL > KnobEmitTrace(KNOB_MODE_WRITEONCE, "pintool", "emit", "0", "emit a trace in the output file");
+KNOB<BOOL> KnobEmitTrace(KNOB_MODE_WRITEONCE, "pintool", "emit", "0", "emit a trace in the output file");
+
+
 
 /* Struct for holding memory references.
  */
@@ -59,6 +64,7 @@ TLS_KEY mlog_key;
 
 #define NUM_BUF_PAGES 1024
 
+
 /*
  * MLOG - thread specific data that is not handled by the buffering API.
  */
@@ -68,11 +74,13 @@ class MLOG
     MLOG(THREADID tid);
     ~MLOG();
 
-    VOID DumpBufferToFile(struct MEMREF* reference, UINT64 numElements, THREADID tid);
+    VOID DumpBufferToFile( struct MEMREF * reference, UINT64 numElements, THREADID tid );
+
 
   private:
     ofstream _ofile;
 };
+
 
 MLOG::MLOG(THREADID tid)
 {
@@ -82,7 +90,7 @@ MLOG::MLOG(THREADID tid)
 
         _ofile.open(filename.c_str());
 
-        if (!_ofile)
+        if ( ! _ofile )
         {
             cerr << "Error: could not open output file." << endl;
             exit(1);
@@ -92,6 +100,7 @@ MLOG::MLOG(THREADID tid)
     }
 }
 
+
 MLOG::~MLOG()
 {
     if (KnobEmitTrace)
@@ -100,13 +109,16 @@ MLOG::~MLOG()
     }
 }
 
-VOID MLOG::DumpBufferToFile(struct MEMREF* reference, UINT64 numElements, THREADID tid)
+
+VOID MLOG::DumpBufferToFile( struct MEMREF * reference, UINT64 numElements, THREADID tid )
 {
-    for (UINT64 i = 0; i < numElements; i++, reference++)
+    for(UINT64 i=0; i<numElements; i++, reference++)
     {
-        if (reference->ea != 0) _ofile << reference->pc << "   " << reference->ea << endl;
+        if (reference->ea != 0)
+            _ofile << reference->pc << "   " << reference->ea << endl;
     }
 }
+
 
 /*!
  *  Print out help message.
@@ -118,37 +130,45 @@ INT32 Usage()
     return -1;
 }
 
+
 /*
  * Insert code to write data to a thread-specific buffer for instructions
  * that access memory.
  */
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
     // Insert a call to record the effective address.
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
+    for(BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl=BBL_Next(bbl))
     {
-        for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
+        for(INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins=INS_Next(ins))
         {
-            if (INS_IsMemoryRead(ins) && INS_IsStandardMemop(ins))
+            if(INS_IsMemoryRead(ins) && INS_IsStandardMemop(ins))
             {
-                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId, IARG_INST_PTR, offsetof(struct MEMREF, pc), IARG_MEMORYREAD_EA,
-                                     offsetof(struct MEMREF, ea), IARG_END);
+                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId,
+                                     IARG_INST_PTR, offsetof(struct MEMREF, pc),
+                                     IARG_MEMORYREAD_EA, offsetof(struct MEMREF, ea),
+                                     IARG_END);
             }
 
             if (INS_HasMemoryRead2(ins) && INS_IsStandardMemop(ins))
             {
-                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId, IARG_INST_PTR, offsetof(struct MEMREF, pc), IARG_MEMORYREAD2_EA,
-                                     offsetof(struct MEMREF, ea), IARG_END);
+                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId,
+                                     IARG_INST_PTR, offsetof(struct MEMREF, pc),
+                                     IARG_MEMORYREAD2_EA, offsetof(struct MEMREF, ea),
+                                     IARG_END);
             }
 
-            if (INS_IsMemoryWrite(ins) && INS_IsStandardMemop(ins))
+            if(INS_IsMemoryWrite(ins) && INS_IsStandardMemop(ins))
             {
-                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId, IARG_INST_PTR, offsetof(struct MEMREF, pc), IARG_MEMORYWRITE_EA,
-                                     offsetof(struct MEMREF, ea), IARG_END);
+                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId,
+                                     IARG_INST_PTR, offsetof(struct MEMREF, pc),
+                                     IARG_MEMORYWRITE_EA, offsetof(struct MEMREF, ea),
+                                     IARG_END);
             }
         }
     }
 }
+
 
 /**************************************************************************
  *
@@ -167,36 +187,43 @@ VOID Trace(TRACE trace, VOID* v)
  * @param[in] v			callback value
  * @return  A pointer to the buffer to resume filling.
  */
-VOID* BufferFull(BUFFER_ID id, THREADID tid, const CONTEXT* ctxt, VOID* buf, UINT64 numElements, VOID* v)
+VOID * BufferFull(BUFFER_ID id, THREADID tid, const CONTEXT *ctxt, VOID *buf,
+                  UINT64 numElements, VOID *v)
 {
-    if (!KnobEmitTrace) return buf;
+    if ( ! KnobEmitTrace )
+        return buf;
 
-    struct MEMREF* reference = (struct MEMREF*)buf;
+    struct MEMREF * reference=(struct MEMREF*)buf;
 
-    MLOG* mlog = static_cast< MLOG* >(PIN_GetThreadData(mlog_key, tid));
+    MLOG * mlog = static_cast<MLOG*>( PIN_GetThreadData( mlog_key, tid ) );
 
-    mlog->DumpBufferToFile(reference, numElements, tid);
+    mlog->DumpBufferToFile( reference, numElements, tid );
 
     return buf;
 }
 
-VOID ThreadStart(THREADID tid, CONTEXT* ctxt, INT32 flags, VOID* v)
+
+
+VOID ThreadStart(THREADID tid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     // There is a new MLOG for every thread.  Opens the output file.
-    MLOG* mlog = new MLOG(tid);
+    MLOG * mlog = new MLOG(tid);
 
     // A thread will need to look up its MLOG, so save pointer in TLS
     PIN_SetThreadData(mlog_key, mlog, tid);
+
 }
 
-VOID ThreadFini(THREADID tid, const CONTEXT* ctxt, INT32 code, VOID* v)
+
+VOID ThreadFini(THREADID tid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
-    MLOG* mlog = static_cast< MLOG* >(PIN_GetThreadData(mlog_key, tid));
+    MLOG * mlog = static_cast<MLOG*>(PIN_GetThreadData(mlog_key, tid));
 
     delete mlog;
 
     PIN_SetThreadData(mlog_key, 0, tid);
 }
+
 
 /*!
  * The main procedure of the tool.
@@ -205,19 +232,20 @@ VOID ThreadFini(THREADID tid, const CONTEXT* ctxt, INT32 code, VOID* v)
  * @param[in]   argv            array of command line arguments,
  *                              including pin -t <toolname> -- ...
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialize PIN library. Print help message if -h(elp) is specified
     // in the command line or the command line is invalid
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
 
     // Initialize the memory reference buffer
-    bufId = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES, BufferFull, 0);
+    bufId = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES,
+                                  BufferFull, 0);
 
-    if (bufId == BUFFER_ID_INVALID)
+    if(bufId == BUFFER_ID_INVALID)
     {
         cerr << "Error: could not allocate initial buffer" << endl;
         return 1;
@@ -238,3 +266,5 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+
+

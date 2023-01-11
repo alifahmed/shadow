@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,17 +19,17 @@
 #include <iostream>
 #include <string>
 
-extern char** environ;
+extern char **environ;
 
-using std::cerr;
+using std::string;
 using std::cout;
 using std::endl;
-using std::string;
+using std::cerr;
 
 //Wait for a process completion
 //Verify it returned the expected exit code
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     posix_spawnattr_t attr;
     posix_spawn_file_actions_t file_actions;
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 
     posix_spawn_file_actions_init(&file_actions);
     posix_spawnattr_init(&attr);
-    int err = posix_spawn(&pid, argv[1], &file_actions, &attr, argv + 1, environ);
+    int err = posix_spawn(&pid, argv[1], &file_actions, &attr, argv+1, environ);
     if (err != 0)
     {
         // child process
@@ -47,8 +47,8 @@ int main(int argc, char* argv[])
     {
         int status;
         waitpid(pid, &status, 0);
-        if (status != 0)
-            cout << "Parent report: Child process failed. Status of the child process is " << WEXITSTATUS(status) << endl;
+        if (status !=0)
+            cout << "Parent report: Child process failed. Status of the child process is "<< WEXITSTATUS(status) << endl;
         else
             cout << "Parent report: Child process exited successfully" << endl;
     }

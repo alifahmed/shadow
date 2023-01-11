@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,16 +17,17 @@
 #include <iostream>
 #include <cstring>
 
-const unsigned MXCSR_INITIAL = 0x1f80; // All exceptions masked
-const unsigned MXCSR_NEW     = 0x1d80; // Enable divide-by-zero exceptions
+const unsigned MXCSR_INITIAL = 0x1f80;  // All exceptions masked
+const unsigned MXCSR_NEW = 0x1d80;      // Enable divide-by-zero exceptions
 
 volatile bool TestThreadReady = false;
-volatile bool MxcsrChanged    = false;
+volatile bool MxcsrChanged = false;
 
 extern "C" void SetMxcsr(unsigned);
 extern "C" unsigned GetMxcsr();
 
 static DWORD WINAPI TestThread(LPVOID);
+
 
 int main()
 {
@@ -69,7 +70,7 @@ int main()
     }
 
     ctxt.ContextFlags = CONTEXT_FLOATING_POINT;
-    ctxt.MxCsr        = MXCSR_NEW;
+    ctxt.MxCsr = MXCSR_NEW;
     if (SetThreadContext(thd, &ctxt) == 0)
     {
         std::cerr << "Error from SetThreadContext()" << std::endl;
@@ -89,6 +90,7 @@ int main()
     return ret;
 }
 
+
 static DWORD WINAPI TestThread(LPVOID)
 {
     SetMxcsr(MXCSR_INITIAL);
@@ -100,8 +102,7 @@ static DWORD WINAPI TestThread(LPVOID)
     // of emulating it).  The test would still be valid in that case, but it's a better test
     // if it exercises the emulation support in Pin.
     //
-    while (!MxcsrChanged)
-        ;
+    while (!MxcsrChanged);
 
     unsigned mxcsr = GetMxcsr();
     if (mxcsr != MXCSR_NEW)

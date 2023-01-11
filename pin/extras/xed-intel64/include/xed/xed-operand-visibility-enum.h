@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -18,11 +18,6 @@ END_LEGAL */
 #if !defined(XED_OPERAND_VISIBILITY_ENUM_H)
 # define XED_OPERAND_VISIBILITY_ENUM_H
 #include "xed-common-hdrs.h"
-#define XED_OPVIS_INVALID_DEFINED 1
-#define XED_OPVIS_EXPLICIT_DEFINED 1
-#define XED_OPVIS_IMPLICIT_DEFINED 1
-#define XED_OPVIS_SUPPRESSED_DEFINED 1
-#define XED_OPVIS_LAST_DEFINED 1
 typedef enum {
   XED_OPVIS_INVALID,
   XED_OPVIS_EXPLICIT, ///< Shows up in operand encoding

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -27,20 +27,23 @@
 #include <string.h>
 #include <vector>
 #include "pin.H"
-using std::ifstream;
 using std::istringstream;
 using std::pair;
-using std::string;
 using std::vector;
+using std::string;
+using std::ifstream;
 
-FILE* fp = 0;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "split_image.out", "specify output file name");
+FILE *fp = 0;
 
-KNOB< bool > KnobVerbose(KNOB_MODE_WRITEONCE, "pintool", "verbose", "0", "verbose output");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "split_image.out", "specify output file name");
 
-vector< pair< string, ADDRESS_RANGE > > allImages;
-vector< pair< string, ADDRESS_RANGE > > allRegions;
+KNOB<bool> KnobVerbose(KNOB_MODE_WRITEONCE, "pintool",
+    "verbose", "0", "verbose output");
+
+vector<pair<string, ADDRESS_RANGE> > allImages;
+vector<pair<string, ADDRESS_RANGE> > allRegions;
 
 /*
  * The application that this tool is instrumenting as part of the test is linked so there
@@ -61,9 +64,9 @@ void* locate_app_image_hole(void* address_in_app)
             size_t pos = range.find("-");
             if (pos != string::npos)
             {
-                void *start, *end;
+                void* start, *end;
                 start = (void*)strtoll(range.substr(0, pos).c_str(), NULL, 16);
-                end   = (void*)strtoll(range.substr(pos + 1).c_str(), NULL, 16);
+                end = (void*)strtoll(range.substr(pos + 1).c_str(), NULL, 16);
                 if ((start <= address_in_app && end > address_in_app) || app_end == start)
                     app_end = end;
                 else if (app_end != NULL)
@@ -87,7 +90,7 @@ void mmap_replacement(void** start, ADDRINT flags, ADDRINT fd)
     }
     if (NULL == *start && fd >= 0 && !(flags & MAP_ANON))
     {
-        static const char* toFind  = "/libsplit_image_linux_lib.so";
+        static const char* toFind = "/libsplit_image_linux_lib.so";
         static const int toFindLen = strlen(toFind);
         char buf[4096];
         sprintf(buf, "/proc/self/fd/%d", (int)fd);
@@ -109,24 +112,25 @@ void mmap_replacement(void** start, ADDRINT flags, ADDRINT fd)
  * If it does: trigger an assertion.
  * If it doesn't: Add the region to the known regions
  */
-void checkRegion(string type, vector< pair< string, ADDRESS_RANGE > >& all, string newName, ADDRESS_RANGE newRange)
+void checkRegion(string type, vector<pair<string, ADDRESS_RANGE> >& all, string newName, ADDRESS_RANGE newRange)
 {
-    for (vector< pair< string, ADDRESS_RANGE > >::iterator it = all.begin(); it != all.end(); it++)
+    for (vector<pair<string, ADDRESS_RANGE> >::iterator it = all.begin(); it != all.end(); it++)
     {
         ADDRESS_RANGE& other = it->second;
-        if ((other._low >= newRange._low && other._low <= newRange._high) ||
-            (other._high >= newRange._low && other._high <= newRange._high) ||
-            (newRange._low >= other._low && newRange._low <= other._high) ||
-            (newRange._high >= other._low && newRange._high <= other._high))
+        if ((other._low >= newRange._low && other._low <= newRange._high)
+            || (other._high >= newRange._low && other._high <= newRange._high)
+            || (newRange._low >= other._low && newRange._low <= other._high)
+            || (newRange._high >= other._low && newRange._high <= other._high))
         {
-            ASSERT(false, "Found two intersecting " + type + ":\n" + newName + " at [" + newRange.String() + "],\nand " +
-                              it->first + " at [" + other.String() + "]");
+            ASSERT(false, "Found two intersecting "+ type + ":\n"
+                    + newName + " at [" + newRange.String() + "],\nand "
+                    + it->first + " at [" + other.String() + "]");
         }
     }
-    all.push_back(pair< string, ADDRESS_RANGE >(newName, newRange));
+    all.push_back(pair<string, ADDRESS_RANGE>(newName, newRange));
 }
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad (IMG img, VOID *v)
 {
     if (IMG_Name(img).find("ld-linux") != string::npos)
     {
@@ -134,8 +138,11 @@ VOID ImageLoad(IMG img, VOID* v)
         if (RTN_Valid(rtn))
         {
             RTN_Open(rtn);
-            RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)mmap_replacement, IARG_FUNCARG_ENTRYPOINT_REFERENCE, 0,
-                           IARG_FUNCARG_ENTRYPOINT_VALUE, 3, IARG_FUNCARG_ENTRYPOINT_VALUE, 4, IARG_END);
+            RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)mmap_replacement,
+                    IARG_FUNCARG_ENTRYPOINT_REFERENCE, 0,
+                    IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
+                    IARG_FUNCARG_ENTRYPOINT_VALUE, 4,
+                    IARG_END);
             RTN_Close(rtn);
         }
     }
@@ -145,18 +152,17 @@ VOID ImageLoad(IMG img, VOID* v)
     checkRegion("images", allImages, IMG_Name(img), ADDRESS_RANGE(IMG_LowAddress(img), IMG_HighAddress(img)));
     if (IMG_NumRegions(img) == 1)
     {
-        fprintf(fp, "%s, %p-%p\n", IMG_Name(img).c_str(), Addrint2VoidStar(IMG_LowAddress(img)),
-                Addrint2VoidStar(IMG_HighAddress(img)));
+        fprintf(fp, "%s, %p-%p\n", IMG_Name(img).c_str(), Addrint2VoidStar(IMG_LowAddress(img)), Addrint2VoidStar(IMG_HighAddress(img)));
     }
     else
     {
-        ADDRINT imgLow  = IMG_LowAddress(img);
+        ADDRINT imgLow = IMG_LowAddress(img);
         ADDRINT imgHigh = IMG_HighAddress(img);
         bool foundHigh = false, foundLow = false;
-        for (UINT32 i = 0; i < IMG_NumRegions(img); i++)
+        for(UINT32 i = 0; i < IMG_NumRegions(img); i++)
         {
             ADDRINT high = IMG_RegionHighAddress(img, i);
-            ADDRINT low  = IMG_RegionLowAddress(img, i);
+            ADDRINT low = IMG_RegionLowAddress(img, i);
             if (low <= imgLow && high >= imgLow) foundLow = true;
             if (low <= imgHigh && high >= imgHigh) foundHigh = true;
             // check that there are no intersecting regions
@@ -172,9 +178,12 @@ VOID ImageLoad(IMG img, VOID* v)
 }
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v) { fclose(fp); }
+VOID Fini(INT32 code, VOID *v)
+{
+    fclose(fp);
+}
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
@@ -193,6 +202,8 @@ int main(int argc, char* argv[])
 
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
+
+

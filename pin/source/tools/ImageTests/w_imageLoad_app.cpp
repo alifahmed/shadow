@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,26 +16,26 @@
 #include <string>
 #include <iostream>
 
-#define EXPORT_SYM extern "C" __declspec(dllexport)
+#define EXPORT_SYM extern "C" __declspec( dllexport )
 
 EXPORT_SYM int AfterAttach();
 
-const char* FIRST_DLL_NAME = "my_dll.dll";
+const char * FIRST_DLL_NAME = "my_dll.dll";
 
-const char* SECOND_DLL_NAME = "my_dll_1.dll";
+const char * SECOND_DLL_NAME = "my_dll_1.dll";
 
-enum ExitType
-{
-    RES_SUCCESS = 0, //0
-    RES_LOAD_FAILED, //1
+enum ExitType {
+    RES_SUCCESS = 0,  //0
+    RES_LOAD_FAILED,  //1
 };
+
 
 /**************************************************/
 
 void WindowsOpen(const char* filename)
 {
     HMODULE hdll = LoadLibrary(filename);
-    if (hdll == NULL)
+    if(hdll == NULL)
     {
         fflush(stderr);
         exit(RES_LOAD_FAILED);
@@ -49,12 +49,13 @@ int AfterAttach()
     return 0;
 }
 
+
 int main()
 {
     WindowsOpen(FIRST_DLL_NAME);
-    while (!AfterAttach())
+    while(!AfterAttach())
     {
-        Sleep(1 * 1000);
+        Sleep(1*1000);
     }
     WindowsOpen(SECOND_DLL_NAME);
     return RES_SUCCESS;

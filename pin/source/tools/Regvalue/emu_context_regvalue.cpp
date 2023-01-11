@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,15 +17,18 @@ using std::flush;
 
 using std::ofstream;
 
+
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
 
 // A knob for defining the output file name
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "emu_context_regvalue.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "emu_context_regvalue.out", "specify output file name");
 
 // ofstream object for handling the output
 ofstream OutFile;
+
 
 /////////////////////
 // UTILITY FUNCTIONS
@@ -33,9 +36,9 @@ ofstream OutFile;
 
 bool CheckAllModifiedValues(ostream& ost)
 {
-    bool success       = true;
-    vector< REG > regs = GetTestRegs();
-    int numOfRegs      = regs.size();
+    bool success = true;
+    vector<REG> regs = GetTestRegs();
+    int numOfRegs = regs.size();
     for (int r = 0; r < numOfRegs; ++r)
     {
         REG reg = regs[r];
@@ -43,6 +46,7 @@ bool CheckAllModifiedValues(ostream& ost)
     }
     return success;
 }
+
 
 /////////////////////
 // CALLBACKS
@@ -86,13 +90,17 @@ static VOID OnSyscall(THREADID tid, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v
     OutFile << endl << "Done" << endl;
 }
 
-static VOID Fini(INT32 code, VOID* v) { OutFile.close(); }
+static VOID Fini(INT32 code, VOID *v)
+{
+    OutFile.close();
+}
+
 
 /////////////////////
 // MAIN FUNCTION
 /////////////////////
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize Pin
     PIN_Init(argc, argv);

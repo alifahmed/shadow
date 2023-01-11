@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -27,7 +27,7 @@
 #define THREADS_COUNT 10
 
 __thread int tid_local[16] = {0};
-int barrier                = THREADS_COUNT;
+int barrier = THREADS_COUNT;
 pthread_mutex_t barrier_mutex;
 pthread_cond_t barrier_threshold_cv;
 
@@ -40,9 +40,13 @@ void Fail(const char* format, ...)
     exit(1);
 }
 
-void AddToThreadLocalVar(int i) { tid_local[5] += i; }
+void AddToThreadLocalVar(int i)
+{
+    tid_local[5] += i;
+}
 
-void* thread_main(void* ptr)
+
+void *thread_main(void *ptr)
 {
     AddToThreadLocalVar(*(int*)ptr);
     AddToThreadLocalVar(*(int*)ptr);
@@ -60,16 +64,16 @@ void* thread_main(void* ptr)
 int main()
 {
     pthread_t threads[THREADS_COUNT] = {0};
-    int results[THREADS_COUNT]       = {0};
-    int res                          = -1;
-    int i                            = 0;
+    int results[THREADS_COUNT] = {0};
+    int res = -1;
+    int i = 0;
 
     res = pthread_mutex_init(&barrier_mutex, NULL);
     if (0 != res)
     {
         Fail("Failed to initialize mutex (error %d)\n", res);
     }
-    res = pthread_cond_init(&barrier_threshold_cv, NULL);
+    res = pthread_cond_init (&barrier_threshold_cv, NULL);
     if (0 != res)
     {
         Fail("Failed to initialize condition variable (error %d)\n", res);
@@ -77,7 +81,7 @@ int main()
     for (i = 0; i < THREADS_COUNT; i++)
     {
         results[i] = i;
-        res        = pthread_create(&threads[i], NULL, thread_main, (void*)&results[i]);
+        res = pthread_create( &threads[i], NULL, thread_main, (void*)&results[i]);
         if (0 != res)
         {
             Fail("Failed to create thread number %d (error %d)\n", i, res);

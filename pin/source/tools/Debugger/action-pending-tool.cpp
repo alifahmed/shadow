@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,22 +13,23 @@
  * This test only runs with the application "action-pending-app.cpp".  It helps
  * test the PIN_IsActionPending() API.
  */
-
+ 
 #include <iostream>
 #include <cstdlib>
 #include <sched.h>
 #include "pin.H"
 
-static void InstrumentRtn(RTN, VOID*);
-static void OnExit(INT32, VOID*);
-static void DoWait(CONTEXT*, THREADID);
+static void InstrumentRtn(RTN, VOID *);
+static void OnExit(INT32, VOID *);
+static void DoWait(CONTEXT *, THREADID);
 static void DoSignal();
 
-static volatile int Signal  = 0;
-static BOOL FoundToolWait   = FALSE;
+static volatile int Signal = 0;
+static BOOL FoundToolWait = FALSE;
 static BOOL FoundToolSignal = FALSE;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -39,7 +40,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static void InstrumentRtn(RTN rtn, VOID*)
+
+static void InstrumentRtn(RTN rtn, VOID *)
 {
     if (RTN_Name(rtn) == "ToolWait")
     {
@@ -57,7 +59,7 @@ static void InstrumentRtn(RTN rtn, VOID*)
     }
 }
 
-static void OnExit(INT32, VOID*)
+static void OnExit(INT32, VOID *)
 {
     if (!FoundToolWait || !FoundToolSignal)
     {
@@ -66,12 +68,13 @@ static void OnExit(INT32, VOID*)
     }
 }
 
-static void DoWait(CONTEXT* ctxt, THREADID tid)
+static void DoWait(CONTEXT *ctxt, THREADID tid)
 {
     std::cout << "Tool is waiting" << std::endl;
     while (Signal == 0)
     {
-        if (PIN_IsActionPending(tid)) PIN_ExecuteAt(ctxt);
+        if (PIN_IsActionPending(tid))
+            PIN_ExecuteAt(ctxt);
         sched_yield();
     }
     std::cout << "Tool done waiting" << std::endl;

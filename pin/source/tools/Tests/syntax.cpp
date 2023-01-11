@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,11 +19,13 @@
 using std::cout;
 using std::endl;
 
+
 BOOL test = true;
 
-VOID Inst(INS ins, VOID* v)
+VOID Inst(INS ins, VOID * v)
 {
-    if (!test) return;
+    if (!test)
+        return;
     test = false;
 
     cout << "DEFAULT: " << INS_Disassemble(ins) << endl;
@@ -35,14 +37,14 @@ VOID Inst(INS ins, VOID* v)
     cout << "XED: " << INS_Disassemble(ins) << endl;
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
-
+    
     INS_AddInstrumentFunction(Inst, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

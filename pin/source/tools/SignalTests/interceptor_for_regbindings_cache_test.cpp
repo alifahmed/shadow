@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,18 +14,18 @@
 #include <iostream>
 #include "pin.H"
 #include "num_segvs.h"
-using std::cout;
 using std::dec;
-using std::endl;
 using std::hex;
+using std::cout;
+using std::endl;
 
 int numSignalsReceived = 0;
-BOOL SigFunc(THREADID tid, INT32 sig, CONTEXT* ctxt, BOOL hasHandler, const EXCEPTION_INFO* pExceptInfo, void* dummy)
+BOOL SigFunc(THREADID tid, INT32 sig, CONTEXT *ctxt, BOOL hasHandler, const EXCEPTION_INFO *pExceptInfo, void *dummy)
 {
     ADDRINT address = PIN_GetContextReg(ctxt, REG_INST_PTR);
     cout << "Thread " << tid << ": Tool got signal " << sig << " at PC " << hex << address << dec << "\n";
     numSignalsReceived++;
-    if (numSignalsReceived == (NUM_SEGVS / 2))
+    if (numSignalsReceived == (NUM_SEGVS/2))
     {
         // Invalidate this instruction in code cache so it will be reinstrumented
         cout << "invalidating after " << numSignalsReceived << endl;
@@ -35,7 +35,7 @@ BOOL SigFunc(THREADID tid, INT32 sig, CONTEXT* ctxt, BOOL hasHandler, const EXCE
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

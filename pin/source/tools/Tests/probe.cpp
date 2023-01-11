@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,7 +14,8 @@
 #include <stdlib.h>
 #include "pin.H"
 
-#if defined(TARGET_MAC)
+
+#if defined (TARGET_MAC)
 // macOS*
 #define LIBC "libSystem.B.dylib"
 #else
@@ -22,25 +23,28 @@
 #define LIBC "libc.so"
 #endif
 
-FILE* trace;
+FILE * trace;
 
 BOOL DoneLoad(IMG img)
 {
-    if (IMG_Type(img) == IMG_TYPE_STATIC) return true;
+    if (IMG_Type(img) == IMG_TYPE_STATIC)
+        return true;
 
     // Give up after libc.so is loaded
-    if (strstr(IMG_Name(img).c_str(), LIBC)) return true;
+    if (strstr(IMG_Name(img).c_str(), LIBC))
+        return true;
 
     return false;
 }
 
 INT32 readcount = 0;
 
-VOID Mem(ADDRINT a, ADDRINT s) {}
+VOID Mem(ADDRINT a, ADDRINT s)
+{}
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID * v)
 {
-    fprintf(trace, "Loading %s\n", IMG_Name(img).c_str());
+    fprintf(trace,"Loading %s\n", IMG_Name(img).c_str());
     fflush(trace);
 
     // Scan the instructions to test image parsing code
@@ -58,19 +62,19 @@ VOID ImageLoad(IMG img, VOID* v)
 
             for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
             {
-                if (INS_HasMemoryRead2(ins))
+                if( INS_HasMemoryRead2(ins) )
                 {
                     INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(Mem), IARG_MEMORYREAD2_EA, IARG_MEMORYREAD_SIZE, IARG_END);
                 }
 
-                if (INS_IsMemoryRead(ins))
+                if( INS_IsMemoryRead(ins) )
                 {
                     //fprintf(trace, "RSize %d %s\n",INS_MemoryReadSize(ins), INS_Disassemble(ins).c_str());
 
                     INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(Mem), IARG_MEMORYREAD_EA, IARG_MEMORYREAD_SIZE, IARG_END);
                 }
 
-                if (INS_IsMemoryWrite(ins))
+                if( INS_IsMemoryWrite(ins) )
                 {
                     //fprintf(trace, "WSize %d %x %s\n",INS_MemoryWriteSize(ins), INS_Address(ins), INS_Disassemble(ins).c_str());
 
@@ -82,15 +86,16 @@ VOID ImageLoad(IMG img, VOID* v)
         }
     }
 
+
     if (DoneLoad(img))
     {
-        fprintf(trace, "Finished\n");
+        fprintf(trace,"Finished\n");
         fclose(trace);
         exit(0);
     }
 }
 
-void Trace(TRACE trace, void* v)
+void Trace(TRACE trace, void * v)
 {
     static bool first = true;
 
@@ -102,7 +107,7 @@ void Trace(TRACE trace, void* v)
     first = false;
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     // On macOS*, ImageLoad() works only after we call PIN_InitSymbols().
     // This is not necessary on Linux, but doing it doesn't hurt.
@@ -110,10 +115,11 @@ int main(INT32 argc, CHAR** argv)
 
     trace = fopen("probe.out", "w");
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc, argv) )
     {
         PIN_ERROR("bad commandline\n");
     }
+
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,8 +19,8 @@
 #include <stddef.h>
 #include <cstdlib>
 using std::cerr;
-using std::endl;
 using std::string;
+using std::endl;
 
 BUFFER_ID bufId;
 TLS_KEY buf_key;
@@ -31,7 +31,7 @@ REG reg_to_check;
 /*
  * Register to test
  */
-KNOB< string > KnobRegister(KNOB_MODE_WRITEONCE, "pintool", "r", "xmm0", "register to test its retrieve");
+KNOB<string> KnobRegister(KNOB_MODE_WRITEONCE, "pintool", "r", "xmm0", "register to test its retrieve");
 
 /*!
  *  Print out help message.
@@ -43,15 +43,15 @@ INT32 Usage()
     return -1;
 }
 
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
-    {
-        for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
-        {
+    for(BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl=BBL_Next(bbl)){
+        for(INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins=INS_Next(ins)){
             // This is an error test!!!
             // It is expected that 'reg_to_check' cannot be retrieved using IARG_REG_VALUE
-            INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId, IARG_REG_VALUE, reg_to_check, 0, IARG_END);
+            INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId,
+                    IARG_REG_VALUE, reg_to_check, 0,
+                    IARG_END);
         }
     }
 }
@@ -67,9 +67,13 @@ VOID Trace(TRACE trace, VOID* v)
  * @param[in] v			callback value
  * @return  A pointer to the buffer to resume filling.
  */
-VOID* BufferFull(BUFFER_ID bid, THREADID tid, const CONTEXT* ctxt, VOID* buf, UINT64 numElements, VOID* v) { return buf; }
+VOID * BufferFull(BUFFER_ID bid, THREADID tid, const CONTEXT *ctxt, VOID *buf,
+                  UINT64 numElements, VOID *v)
+{
+    return buf;
+}
 
-void ThreadStart(THREADID tid, CONTEXT* context, int flags, void* v)
+void ThreadStart(THREADID tid, CONTEXT * context, int flags, void * v)
 {
     // We check that we got the right thing in the buffer full callback
     PIN_SetThreadData(buf_key, PIN_GetBufferPointer(context, bufId), tid);
@@ -78,7 +82,7 @@ void ThreadStart(THREADID tid, CONTEXT* context, int flags, void* v)
 REG FindRegToTest()
 {
     string reg_string = KnobRegister;
-    for (int i = (int)(REG_FIRST); i < (int)(REG_LAST); ++i)
+    for (int i = (int) (REG_FIRST); i < (int) (REG_LAST); ++i)
     {
         REG reg = (REG)(i);
         if (REG_StringShort(reg) == reg_string)
@@ -97,22 +101,23 @@ REG FindRegToTest()
  * @param[in]   argv            array of command line arguments, 
  *                              including pin -t <toolname> -- ...
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialize PIN library. Print help message if -h(elp) is specified
-    // in the command line or the command line is invalid
-    if (PIN_Init(argc, argv))
+    // in the command line or the command line is invalid 
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
-
+    
     reg_to_check = FindRegToTest();
 
     // Initialize the memory reference buffer
     // Use 64 bytes record, just in case
-    bufId = PIN_DefineTraceBuffer(64, NUM_BUF_PAGES, BufferFull, 0);
+    bufId = PIN_DefineTraceBuffer(64, NUM_BUF_PAGES,
+                                  BufferFull, 0);
 
-    if (bufId == BUFFER_ID_INVALID)
+    if(bufId == BUFFER_ID_INVALID)
     {
         cerr << "Error allocating initial buffer" << endl;
         return 1;
@@ -120,12 +125,14 @@ int main(int argc, char* argv[])
 
     // add an instrumentation function
     TRACE_AddInstrumentFunction(Trace, 0);
-
+    
     buf_key = PIN_CreateThreadDataKey(0);
     PIN_AddThreadStartFunction(ThreadStart, 0);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
+
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -32,17 +32,19 @@
 #include <string.h>
 #include "../Utils/threadlib.h"
 
+
 #define NTHREADS 2
+
 
 volatile unsigned int unblockedUsr1Tid = 0;
 volatile unsigned int unblockedUsr2Tid = 0;
 volatile unsigned int unblockedALRMTid = 0;
-pthread_mutex_t mutex                  = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t sigHandlerMutex        = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t sigHandlerMutex = PTHREAD_MUTEX_INITIALIZER;
 
 unsigned long pinDetached = 0;
 
-extern "C" void TellPinToDetach(unsigned long* updateWhenReady)
+extern "C" void TellPinToDetach(unsigned long *updateWhenReady)
 {
     // Tool does this
     //*updateWhenReady=1;
@@ -55,7 +57,7 @@ static bool usr1Tested = false;
 static bool usr2Tested = false;
 static bool aLRMTested = false;
 
-void signal_handler(int signum, siginfo_t* siginfo, void* _uctxt)
+void signal_handler(int signum, siginfo_t *siginfo, void *_uctxt)
 {
     pthread_mutex_lock(&sigHandlerMutex);
 
@@ -72,7 +74,8 @@ void signal_handler(int signum, siginfo_t* siginfo, void* _uctxt)
         }
         else
         {
-            fprintf(stderr, "The signal mask is incorrect, SIGUSR1 is caught by %ld, expected %d\n", GetTid(), unblockedUsr1Tid);
+            fprintf(stderr, "The signal mask is incorrect, SIGUSR1 is caught by %ld, expected %d\n",
+             GetTid(), unblockedUsr1Tid);
             exit(-1);
         }
     }
@@ -85,7 +88,8 @@ void signal_handler(int signum, siginfo_t* siginfo, void* _uctxt)
         }
         else
         {
-            fprintf(stderr, "The signal mask is incorrect, SIGUSR2 is caught by %ld, expected %d\n", GetTid(), unblockedUsr2Tid);
+            fprintf(stderr, "The signal mask is incorrect, SIGUSR2 is caught by %ld, expected %d\n",
+             GetTid(), unblockedUsr2Tid);
             exit(-1);
         }
     }
@@ -98,12 +102,13 @@ void signal_handler(int signum, siginfo_t* siginfo, void* _uctxt)
 
         if (unblockedALRMTid == GetTid())
         {
-            aLRMTested = true;
+           aLRMTested = true;
         }
         else
         {
-            fprintf(stderr, "The signal mask is incorrect, SIGALRM is caught by %ld, expected %d\n", GetTid(), unblockedALRMTid);
-            exit(-1);
+           fprintf(stderr, "The signal mask is incorrect, SIGALRM is caught by %ld, expected %d\n",
+                   GetTid(), unblockedALRMTid);
+           exit(-1);
         }
     }
     if (usr1Tested && usr2Tested && aLRMTested)
@@ -113,15 +118,16 @@ void signal_handler(int signum, siginfo_t* siginfo, void* _uctxt)
     pthread_mutex_unlock(&sigHandlerMutex);
 }
 
+
 /*
  *
  */
-void* thread_func(void* arg)
+void * thread_func (void *arg)
 {
-    unsigned long thread_no = (unsigned long)arg + 1;
+    unsigned long thread_no = (unsigned long)arg+1;
     sigset_t sigMask;
     sigset_t sigMaskAfterDeatch;
-    bool* signalTested = NULL;
+    bool *signalTested = NULL;
     int ret;
 
     // retrieve signal mask
@@ -137,7 +143,7 @@ void* thread_func(void* arg)
     if (thread_no == 1)
     {
         unblockedUsr1Tid = GetTid();
-        signalTested     = &usr1Tested;
+        signalTested = &usr1Tested;
 
         // Unblocking SIGUSR1
         sigemptyset(&sigMask);
@@ -158,7 +164,7 @@ void* thread_func(void* arg)
     if (thread_no == 2)
     {
         unblockedUsr2Tid = GetTid();
-        signalTested     = &usr2Tested;
+        signalTested = &usr2Tested;
 
         // Unblocking SIGUSR2
         sigemptyset(&sigMask);
@@ -191,19 +197,20 @@ void* thread_func(void* arg)
 
     if (sigMask != sigMaskAfterDeatch)
     {
-        printf("ERROR: On Secondary thread, signal mask before detach: %x, Signal mask after detach: %x\n", sigMask,
-               sigMaskAfterDeatch);
+        printf("ERROR: On Secondary thread, signal mask before detach: %x, Signal mask after detach: %x\n", sigMask, sigMaskAfterDeatch);
         exit(1);
     }
 
+
     // endless loop until signal will be received
-    while (*signalTested == false)
+    while(*signalTested == false)
     {
         sleep(1);
     }
 
     return 0;
 }
+
 
 int main()
 {
@@ -212,7 +219,7 @@ int main()
     int ret;
 
     bzero(&act, sizeof(act));
-    act.sa_flags     = SA_SIGINFO;
+    act.sa_flags = SA_SIGINFO;
     act.sa_sigaction = signal_handler;
     sigaction(SIGUSR1, &act, NULL);
     sigaction(SIGUSR2, &act, NULL);
@@ -236,13 +243,14 @@ int main()
     ret = sigismember(&sigMaskOld, SIGUSR2);
     assert(1 == ret);
 
+
     pthread_t h[NTHREADS];
 
     void* tlsBase = 0;
     for (unsigned long i = 0; i < NTHREADS; i++)
     {
         pthread_mutex_lock(&mutex);
-        pthread_create(&h[i], 0, thread_func, (void*)i);
+        pthread_create (&h[i], 0, thread_func, (void *)i);
     }
     pthread_mutex_lock(&mutex);
     pthread_mutex_unlock(&mutex);
@@ -287,10 +295,10 @@ int main()
     // They will exit only when the above signals will handled,
     // this verifies that the signal handlers where changed to the ones of the application after the detach.
 
-    void* result[NTHREADS];
+    void * result[NTHREADS];
     for (unsigned long i = 0; i < NTHREADS; i++)
     {
-        pthread_join(h[i], &(result[i]));
+        pthread_join (h[i], &(result[i]));
     }
     for (unsigned long i = 0; i < NTHREADS; i++)
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -281,19 +281,15 @@ int	 vprintf(const char * __restrict, __va_list)
 int dprintf(int, const char * __restrict, ...) __printflike(2, 3);
 int vdprintf(int, const char * __restrict, __va_list) __printflike(2, 0);
 
-
-
 #ifndef __AUDIT__
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 201112L
 char* gets(char*) __warnattr("gets is very unsafe; consider using fgets");
 #endif
 int sprintf(char* __restrict, const char* __restrict, ...)
-    __printflike(2, 3) __warnattr("sprintf is often misused; please use snprintf or sprintf_s");
-int sprintf_s(char* __restrict, size_t, const char* __restrict, ...);
+    __printflike(2, 3) __warnattr("sprintf is often misused; please use snprintf");
 char* tmpnam(char*) __warnattr("tmpnam possibly used unsafely; consider using mkstemp");
 int vsprintf(char* __restrict, const char* __restrict, __va_list)
-    __printflike(2, 0) __warnattr("vsprintf is often misused; please use vsnprintf or vsprintf_s");
-int vsprintf_s(char* __restrict, size_t, const char* __restrict, va_list);
+    __printflike(2, 0) __warnattr("vsprintf is often misused; please use vsnprintf");
 #if __XPG_VISIBLE
 char* tempnam(const char*, const char*)
     __warnattr("tempnam possibly used unsafely; consider using mkstemp");

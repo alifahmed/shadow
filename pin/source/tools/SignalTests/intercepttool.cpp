@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,20 +18,23 @@
 using std::cerr;
 using std::endl;
 
-static BOOL HandleSig(THREADID, INT32, CONTEXT*, BOOL hndlr, const EXCEPTION_INFO*, VOID*);
-static BOOL ParseCmdLine(int, char**);
+static BOOL HandleSig(THREADID, INT32, CONTEXT *, BOOL hndlr, const EXCEPTION_INFO *, VOID *);
+static BOOL ParseCmdLine(int, char **);
 static void Usage();
+
 
 // These parameters are set from the tool's command line
 
-int Signal     = SIGINT; // Signal to intercept
-unsigned Count = 1;      // Tool exits after intercepting signal this many times
-BOOL PassToApp = FALSE;  // Whether intercepted signals should be passed to application handler
+int Signal = SIGINT;    // Signal to intercept
+unsigned Count = 1;     // Tool exits after intercepting signal this many times
+BOOL PassToApp = FALSE; // Whether intercepted signals should be passed to application handler
 
-int main(int argc, char** argv)
+
+int main(int argc, char **argv)
 {
     PIN_Init(argc, argv);
-    if (!ParseCmdLine(argc, argv)) return 1;
+    if (!ParseCmdLine(argc, argv))
+        return 1;
 
     PIN_InterceptSignal(Signal, HandleSig, 0);
     PIN_UnblockSignal(Signal, TRUE);
@@ -40,25 +43,29 @@ int main(int argc, char** argv)
     return 0;
 }
 
-static BOOL HandleSig(THREADID tid, INT32 sig, CONTEXT* ctxt, BOOL hndlr, const EXCEPTION_INFO* exception, VOID* v)
+
+static BOOL HandleSig(THREADID tid, INT32 sig, CONTEXT *ctxt, BOOL hndlr,
+    const EXCEPTION_INFO *exception, VOID *v)
 {
     std::cerr << "Thread : " << tid << " Intercepting signal " << sig << std::endl;
     if (exception)
         std::cerr << "Signal is an exception" << std::endl;
     else
         std::cerr << "Signal is not an exception" << std::endl;
-    if (--Count == 0) exit(0);
+    if (--Count == 0)
+        exit(0);
     return PassToApp;
 }
 
-static BOOL ParseCmdLine(int argc, char** argv)
+
+static BOOL ParseCmdLine(int argc, char **argv)
 {
     // Skip over the Pin arguments.
     //
     int i;
-    for (i = 0; i < argc; i++)
+    for (i = 0;  i < argc;  i++)
     {
-        if (strcmp(argv[i], "-t") == 0 && (i + 2 < argc))
+        if (strcmp(argv[i], "-t") == 0 && (i+2 < argc))
         {
             i += 2;
             break;
@@ -66,7 +73,7 @@ static BOOL ParseCmdLine(int argc, char** argv)
     }
 
     bool done = false;
-    for (; i < argc && !done; i++)
+    for (; i < argc && !done;  i++)
     {
         if (argv[i][0] != '-')
         {
@@ -76,66 +83,67 @@ static BOOL ParseCmdLine(int argc, char** argv)
 
         switch (argv[i][1])
         {
-            case 's':
+          case 's':
+          {
+            if (i+1 >= argc)
             {
-                if (i + 1 >= argc)
-                {
-                    Usage();
-                    return FALSE;
-                }
-                Signal = strtol(argv[i + 1], 0, 10);
-                if (Signal < 1 || Signal > 64)
-                {
-                    cerr << "Invalid signal number: " << argv[i + i] << endl;
-                    Usage();
-                    return FALSE;
-                }
-                i++;
-                break;
-            }
-
-            case 'c':
-            {
-                if (i + 1 >= argc)
-                {
-                    Usage();
-                    return FALSE;
-                }
-                unsigned long count = strtoul(argv[i + 1], 0, 10);
-                if (count == 0 || count > UINT_MAX)
-                {
-                    cerr << "Invalid count, must be greater than zero: " << argv[i + 1] << endl;
-                    Usage();
-                    return FALSE;
-                }
-                Count = static_cast< unsigned >(count);
-                i++;
-                break;
-            }
-
-            case 'p':
-            {
-                PassToApp = TRUE;
-                break;
-            }
-
-            case '-':
-            {
-                done = TRUE;
-                break;
-            }
-
-            default:
-            {
-                cerr << "Invalid argument: " << argv[i] << endl;
                 Usage();
                 return FALSE;
             }
+            Signal = strtol(argv[i+1], 0, 10);
+            if (Signal < 1 || Signal > 64)
+            {
+                cerr << "Invalid signal number: " << argv[i+i] << endl;
+                Usage();
+                return FALSE;
+            }
+            i++;
+            break;
+          }
+
+          case 'c':
+          {
+            if (i+1 >= argc)
+            {
+                Usage();
+                return FALSE;
+            }
+            unsigned long count = strtoul(argv[i+1], 0, 10);
+            if (count == 0 || count > UINT_MAX)
+            {
+                cerr << "Invalid count, must be greater than zero: " << argv[i+1] << endl;
+                Usage();
+                return FALSE;
+            }
+            Count = static_cast<unsigned>(count);
+            i++;
+            break;
+          }
+
+          case 'p':
+          {
+            PassToApp = TRUE;
+            break;
+          }
+
+          case '-':
+          {
+            done = TRUE;
+            break;
+          }
+
+          default:
+          {
+            cerr << "Invalid argument: " << argv[i] << endl;
+            Usage();
+            return FALSE;
+          }
         }
     }
 
     return TRUE;
 }
+
 
 static void Usage()
 {

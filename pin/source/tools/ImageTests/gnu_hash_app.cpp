@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -28,9 +28,9 @@ int GetSectionCount(string command)
     string result, file, word;
     FILE* output(popen(command.c_str(), "r"));
     char buffer[256];
-    std::vector< string > vec;
+    std::vector<string> vec;
 
-    while (fgets(buffer, sizeof(buffer), output) != NULL)
+    while(fgets(buffer, sizeof(buffer), output) != NULL)
     {
         file = buffer;
         result += file.substr(0, file.size() - 1);

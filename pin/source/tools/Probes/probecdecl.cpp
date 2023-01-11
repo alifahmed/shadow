@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,6 +13,8 @@
   Tests inserting a probe when the replacement function has the cdecl calling standard
 */
 
+
+
 #include "pin.H"
 #include <stdio.h>
 
@@ -20,23 +22,28 @@
 /* Global Variables */
 /* ===================================================================== */
 
-FILE* fp;
+FILE *fp;
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
+
+
 /* ===================================================================== */
 
+
+
 //--------------------------------------------------------------------------------------------------
-typedef void*(__cdecl* mallocType)(size_t size);
+typedef void* (__cdecl *mallocType)(size_t size );
 void* MallocProbe(mallocType mallocWithoutReplacement, size_t size, CONTEXT* pPinContext, ADDRINT returnIp)
 {
-    fprintf(fp, "Probe\n");
-    fflush(fp);
-    void* ptr = mallocWithoutReplacement(size);
+    fprintf (fp, "Probe\n");
+	fflush (fp);
+    void * ptr = mallocWithoutReplacement(size);
     return ptr;
 }
+
 
 /* ===================================================================== */
 // Called every time a new image is loaded
@@ -44,44 +51,53 @@ void* MallocProbe(mallocType mallocWithoutReplacement, size_t size, CONTEXT* pPi
 
 static bool s_init = false;
 static PROTO s_protoAlloc;
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    if (!s_init)
+    if( !s_init )
     {
-        s_protoAlloc = PROTO_Allocate(PIN_PARG(void*), CALLINGSTD_CDECL, "malloc", PIN_PARG(size_t), PIN_PARG_END());
-        s_init       = true;
+        s_protoAlloc = PROTO_Allocate( PIN_PARG(void *), CALLINGSTD_CDECL,
+                             "malloc", PIN_PARG(size_t), PIN_PARG_END() );
+        s_init = true;
     }
 
     RTN stdAllocRtn = RTN_FindByName(img, "malloc");
     if (RTN_Valid(stdAllocRtn) && RTN_IsSafeForProbedReplacement(stdAllocRtn))
-    {
-        RTN_ReplaceSignatureProbed(stdAllocRtn, AFUNPTR(MallocProbe), IARG_PROTOTYPE, s_protoAlloc, IARG_ORIG_FUNCPTR,
-                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_CONTEXT, IARG_RETURN_IP, IARG_END);
+    {  
+        RTN_ReplaceSignatureProbed(stdAllocRtn, AFUNPTR(MallocProbe),
+                                    IARG_PROTOTYPE, s_protoAlloc,
+                                     IARG_ORIG_FUNCPTR,
+                                     IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                                     IARG_CONTEXT,
+                                     IARG_RETURN_IP,
+                                     IARG_END);
     }
     else if (RTN_Valid(stdAllocRtn))
     { // This is workaround for mantis 4588. When mantis is handled this code need to be addressed.
-        fprintf(fp, "Replacement not safe\n");
-        fflush(fp);
+        fprintf (fp, "Replacement not safe\n");
+        fflush (fp);
     }
+
+    
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
+    
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
-        exit(0);
+        exit (0);
     }
 
-    fp = fopen("probecdecl.outfile", "w");
+    fp = fopen ("probecdecl.outfile", "w");
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

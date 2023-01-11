@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,7 +17,8 @@
 #include <fstream>
 #include "pin.H"
 
-KNOB< std::string > KnobOut(KNOB_MODE_WRITEONCE, "pintool", "o", "stop-resume-when-suspended.out", "Output file");
+KNOB<std::string> KnobOut(KNOB_MODE_WRITEONCE, "pintool", "o",
+    "stop-resume-when-suspended.out", "Output file");
 
 static std::ofstream Out;
 static PIN_LOCK pinLock;
@@ -31,7 +32,8 @@ static VOID SuspendResume(THREADID tid)
 
     // On Windows we might be called from APC created threads that we
     // don't expect. Be sure to filter them
-    if (tid != mainThread) return;
+    if (tid != mainThread)
+        return;
 
     if (PIN_StopApplicationThreads(tid))
     {
@@ -40,16 +42,18 @@ static VOID SuspendResume(THREADID tid)
     }
 }
 
-static VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+static VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     PIN_GetLock(&pinLock, threadid);
 
     // Record the first thread that started and call it the main thread
-    if (INVALID_THREADID == mainThread) mainThread = threadid;
+    if (INVALID_THREADID == mainThread)
+        mainThread = threadid;
     PIN_ReleaseLock(&pinLock);
 }
 
-static void OnExit(INT32, VOID*)
+
+static void OnExit(INT32, VOID *)
 {
     Out << "OnExit" << std::endl;
     Out.close();
@@ -71,7 +75,7 @@ static VOID Image(IMG img, VOID* v)
     }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

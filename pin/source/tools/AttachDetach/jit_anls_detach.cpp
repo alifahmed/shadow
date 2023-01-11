@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,38 +16,40 @@
 #include "pin.H"
 #include <iostream>
 #include <fstream>
-using std::cerr;
-using std::endl;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
+
 
 UINT64 icount = 0;
 
-UINT32 icountMax       = 10000;
+UINT32 icountMax = 10000;
 volatile bool detached = false; // True if detach callback was called
 
 ofstream outfile;
 
-KNOB< string > KnobOutFile(KNOB_MODE_WRITEONCE, "pintool", "o", "jit_anls_detach.out",
-                           "Specify file name for the tool's output.");
+KNOB<string> KnobOutFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "o", "jit_anls_detach.out", "Specify file name for the tool's output.");
 
-VOID docount()
-{
+
+VOID docount() 
+{ 
     ASSERT(!detached, "Analysis function was called after detach ended");
-    if (++icount == icountMax)
-    {
-        outfile << "Send detach request form analysis routine after " << icount << " instructions." << endl;
-        PIN_Detach();
-    }
+    if (++icount ==  icountMax)
+	{
+		outfile << "Send detach request form analysis routine after " << icount << " instructions." << endl;
+		PIN_Detach();
+	}
 }
-
-VOID Instruction(INS ins, VOID* v)
+    
+VOID Instruction(INS ins, VOID *v)
 {
     ASSERT(!detached, "Instrumentation function was called after detach ended");
     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);
 }
 
-VOID Detach(VOID* v)
+VOID Detach(VOID *v)
 {
     if (detached) // sanity check
     {
@@ -60,13 +62,14 @@ VOID Detach(VOID* v)
     outfile.close();
 }
 
-VOID Fini(INT32 code, VOID* v)
+
+VOID Fini(INT32 code, VOID *v)
 {
     cerr << "Count: " << icount << endl;
     ASSERT(0, "Error, Fini called although we detached");
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
@@ -77,12 +80,13 @@ int main(int argc, char* argv[])
         PIN_ExitProcess(10);
     }
 
+
     INS_AddInstrumentFunction(Instruction, 0);
     PIN_AddFiniFunction(Fini, 0);
     PIN_AddDetachFunction(Detach, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

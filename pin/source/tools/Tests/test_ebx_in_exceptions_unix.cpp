@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -28,94 +28,102 @@
 #include <iomanip>
 #include <fstream>
 #include <cstdlib>
-using std::fflush;
-using std::fprintf;
 using std::string;
+using std::fprintf;
+using std::fflush;
 
-extern "C" unsigned int GetInstructionLenAndDisasm(unsigned char* ip, string* str);
+extern "C" unsigned int GetInstructionLenAndDisasm (unsigned char *ip, string *str);
 extern "C" int TestAccessViolations();
 extern "C" void InitXed();
 int numExceptions = 0;
 
-void PrintSignalContext(int sig, const siginfo_t* info, void* vctxt)
+void PrintSignalContext(int sig, const siginfo_t *info, void *vctxt)
 {
-    ucontext_t* ctxt = (ucontext_t*)vctxt;
+    ucontext_t *ctxt = (ucontext_t *)vctxt;
     unsigned long rip;
     long int trapno;
 
 #if defined(TARGET_LINUX) && defined(TARGET_IA32E)
-    rip    = (unsigned long)ctxt->uc_mcontext.gregs[REG_RIP];
+    rip = (unsigned long)ctxt->uc_mcontext.gregs[REG_RIP];
     trapno = (long int)ctxt->uc_mcontext.gregs[REG_TRAPNO];
 #elif defined(TARGET_LINUX) && defined(TARGET_IA32)
-    rip    = (unsigned long)ctxt->uc_mcontext.gregs[REG_EIP];
+    rip = (unsigned long)ctxt->uc_mcontext.gregs[REG_EIP];
     trapno = (long int)ctxt->uc_mcontext.gregs[REG_TRAPNO];
 #elif defined(TARGET_MAC) && defined(TARGET_IA32E)
-    rip    = (unsigned long)ctxt->uc_mcontext->ss.rip;
+    rip = (unsigned long)ctxt->uc_mcontext->ss.rip;
     trapno = (long int)ctxt->uc_mcontext->es.trapno;
 #elif defined(TARGET_MAC) && defined(TARGET_IA32)
-    rip    = (unsigned long)ctxt->uc_mcontext->ss.eip;
+    rip = (unsigned long)ctxt->uc_mcontext->ss.eip;
     trapno = (long int)ctxt->uc_mcontext->es.trapno;
 #endif
 
-    fprintf(stderr, "  PrintSignal: sig %d, pc=0x%lx, si_errno=%d, trap_no=%ld", sig, rip, (int)info->si_errno, trapno);
+    fprintf(stderr, "  PrintSignal: sig %d, pc=0x%lx, si_errno=%d, trap_no=%ld",
+        sig,
+        rip,
+        (int)info->si_errno,
+        trapno);
 
     fprintf(stderr, "\n");
 }
 
-static void Handle(int sig, siginfo_t* info, void* v)
+static void Handle(int sig, siginfo_t *info, void *v)
 {
-    fprintf(stderr, "Handle\n");
-    fflush(stderr);
+    fprintf (stderr, "Handle\n");
+    fflush (stderr);
 
-    ucontext_t* ctxt = (ucontext_t*)v;
+    ucontext_t *ctxt = (ucontext_t *)v;
 
     PrintSignalContext(sig, info, v);
     numExceptions++;
 
-    unsigned int* ipToContinueAt = (unsigned int*)
+    unsigned int * ipToContinueAt = (unsigned int *)
 #if defined(TARGET_LINUX) && defined(TARGET_IA32)
-                                       ctxt->uc_mcontext.gregs[REG_EIP];
+        ctxt->uc_mcontext.gregs[REG_EIP];
 #elif defined(TARGET_LINUX) && defined(TARGET_IA32E)
-                                       ctxt->uc_mcontext.gregs[REG_RIP];
+        ctxt->uc_mcontext.gregs[REG_RIP];
 #elif defined(TARGET_MAC) && defined(TARGET_IA32)
-                                       ctxt->uc_mcontext->ss.eip;
+        ctxt->uc_mcontext->ss.eip;
 #elif defined(TARGET_MAC) && defined(TARGET_IA32E)
-                                       ctxt->uc_mcontext->ss.rip;
+        ctxt->uc_mcontext->ss.rip;
 #else
 #error "Undefined code"
 #endif
     string str;
-    unsigned int instructionLen = GetInstructionLenAndDisasm((unsigned char*)ipToContinueAt, &str);
+    unsigned int instructionLen = GetInstructionLenAndDisasm((unsigned char *)ipToContinueAt, &str);
     if (0 == instructionLen)
     {
-        fprintf(stderr, "***Error 0 length instruction at ip %p\n", ipToContinueAt);
-        exit(1);
+        fprintf (stderr, "***Error 0 length instruction at ip %p\n", ipToContinueAt);
+        exit (1);
     }
-    fprintf(stderr, "segv at: %s\n", str.c_str());
-    ipToContinueAt = (unsigned int*)((unsigned char*)ipToContinueAt + instructionLen);
-    fprintf(stderr, " setting resume ip to %p\n", ipToContinueAt);
-    instructionLen = GetInstructionLenAndDisasm((unsigned char*)ipToContinueAt, &str);
+    fprintf (stderr,"segv at: %s\n", str.c_str());
+    ipToContinueAt
+        = (unsigned int *)((unsigned char *)ipToContinueAt + instructionLen);
+    fprintf (stderr, " setting resume ip to %p\n", ipToContinueAt);
+    instructionLen = GetInstructionLenAndDisasm((unsigned char *)ipToContinueAt, &str);
     if (0 == instructionLen)
     {
-        fprintf(stderr, "***Error 0 length instruction at ip %p\n", ipToContinueAt);
-        exit(1);
+        fprintf (stderr, "***Error 0 length instruction at ip %p\n", ipToContinueAt);
+        exit (1);
     }
-    fprintf(stderr, "  resume instruction is %s\n", str.c_str());
+    fprintf (stderr,"  resume instruction is %s\n", str.c_str());
 #if defined(TARGET_LINUX) && defined(TARGET_IA32)
-    ctxt->uc_mcontext.gregs[REG_EIP] =
+        ctxt->uc_mcontext.gregs[REG_EIP] =
 #elif defined(TARGET_LINUX) && defined(TARGET_IA32E)
-    ctxt->uc_mcontext.gregs[REG_RIP] =
+        ctxt->uc_mcontext.gregs[REG_RIP] =
 #elif defined(TARGET_MAC) && defined(TARGET_IA32)
-    ctxt->uc_mcontext->ss.eip =
+        ctxt->uc_mcontext->ss.eip =
 #elif defined(TARGET_MAC) && defined(TARGET_IA32E)
-    ctxt->uc_mcontext->ss.rip =
+        ctxt->uc_mcontext->ss.rip =
 #else
 #error "Undefined code"
 #endif
-        (unsigned long)(ipToContinueAt);
+                (unsigned long)(ipToContinueAt);
+
 }
 
-int main(int argc, char** argv)
+
+
+int main(int argc, char **argv)
 {
     struct sigaction sigact;
 
@@ -134,12 +142,18 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    fprintf(stderr, "calling TestAccessViolations\n");
+    fprintf (stderr, "calling TestAccessViolations\n");
     int retVal = TestAccessViolations();
 
-    if (!retVal || numExceptions != 3)
+    if (!retVal || numExceptions!=3)
     {
-        fprintf(stderr, "***Error\n");
-        exit(1);
+        fprintf (stderr, "***Error\n");
+        exit (1);
     }
+
 }
+
+
+
+
+

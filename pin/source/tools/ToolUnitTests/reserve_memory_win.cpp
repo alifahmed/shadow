@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -49,9 +49,9 @@ ERROR: RESERVE MEMORY: Illegal range  0x040010000:0x040000000
 #include <assert.h>
 #include <windows.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    FILE* f         = fopen(argv[1], "r");
+    FILE *f = fopen(argv[1], "r");
     int access_flag = atoi(argv[2]);
     if (!f)
     {
@@ -62,19 +62,18 @@ int main(int argc, char* argv[])
     uintptr_t low = 0, high = 0, size = 0;
     int tid;
     char desc[64];
-    char* ptr = (char*)NULL;
+    char * ptr = (char *)NULL;
 
     SYSTEM_INFO si;
     GetSystemInfo(&si);
-    int page_size    = si.dwPageSize;
+    int page_size = si.dwPageSize;
     bool knobSuccess = false;
-    bool noFree      = true;
+    bool noFree = true;
     while (!feof(f))
     {
         fscanf(f, "%Ix %Ix %s %d", &low, &high, desc, &tid);
 
-        if (high < low)
-        {
+        if (high<low) {
             continue;
         }
 
@@ -84,25 +83,24 @@ int main(int argc, char* argv[])
             VirtualQuery((void*)(i), reg, sizeof(MEMORY_BASIC_INFORMATION));
             ptr = (char*)(i);
             if (access_flag == 1 && reg->Protect == PAGE_EXECUTE_READWRITE)
-            { //Protection should be PAGE_EXECUTE_READWRITE if the region was allocated through reserve_mem.
-                *ptr        = 0;
+            {    //Protection should be PAGE_EXECUTE_READWRITE if the region was allocated through reserve_mem.
+                *ptr = 0;
                 knobSuccess = true;
             }
             if (access_flag = 1 && reg->State == MEM_FREE)
-            { //there is a free page within the range
+            {   //there is a free page within the range
                 noFree = false;
             }
+
         }
     }
 
     fclose(f);
 
-    if (knobSuccess == false && access_flag == 1)
-    {
+    if (knobSuccess == false && access_flag == 1) {
         return 1;
     }
-    if (noFree == false && access_flag == 1)
-    {
+    if (noFree == false && access_flag == 1) {
         return 3;
     }
 

@@ -1,4 +1,4 @@
-; Copyright 2002-2020 Intel Corporation.
+; Copyright 2002-2019 Intel Corporation.
 ; 
 ; This software is provided to you as Sample Source Code as defined in the accompanying
 ; End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -42,8 +42,8 @@ SupportsAvx2 PROC
     mov ecx, 0          
     mov     rax, 7
     cpuid
-    and ebx, 020h
-    cmp ebx, 020h
+    and ebx, 010h
+    cmp ebx, 010h 
     jne $lNOT_SUPPORTED  
     mov rax, 1
     jmp $lDONE3

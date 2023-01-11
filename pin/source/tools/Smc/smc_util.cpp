@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -27,25 +27,25 @@
  Usage: 
 
  CODE_SECTION("mycode") 
- extern void MyFunc ()
+ GLOBALFUN void MyFunc ()
  {
     ......
  }
  SECTION_END
 
 */
-#if defined(TARGET_WINDOWS) && defined(_MSC_VER)
-#define CODE_SECTION(name) __pragma(code_seg(name))
-#define SECTION_END __pragma(code_seg())
+#if defined (TARGET_WINDOWS) && defined(_MSC_VER)
+#define CODE_SECTION(name)          __pragma(code_seg(name))
+#define SECTION_END                 __pragma(code_seg())
 #elif defined(TARGET_MAC) && defined(__GNUC__)
-#define CODE_SECTION(name) __attribute__((section("__TEXT, " name)))
-#define SECTION_END
+#define CODE_SECTION(name)          __attribute__ ((section ("__TEXT, " name))) 
+#define SECTION_END 
 #elif defined(TARGET_LINUX) && defined(__GNUC__)
-#define CODE_SECTION(name) __attribute__((section(name)))
-#define SECTION_END
+#define CODE_SECTION(name)          __attribute__ ((section (name))) 
+#define SECTION_END 
 #elif defined(TARGET_BSD) && defined(__GNUC__)
-#define CODE_SECTION(name) __attribute__((section(name)))
-#define SECTION_END
+#define CODE_SECTION(name)          __attribute__ ((section (name))) 
+#define SECTION_END 
 #endif
 
 /*!
@@ -63,23 +63,23 @@ static void Abort(string msg)
  * code section along with the immediately following fooEnd() function.
  */
 CODE_SECTION("foo_code")
-static void foo(char* str)
+static void foo(char * str)
 {
     *str++ = 'f';
     *str++ = 'o';
     *str++ = 'o';
-    *str   = 0;
+    *str = 0;
 }
 SECTION_END
 
 CODE_SECTION("foo_code")
-static void fooEnd(char* str) {}
+static void fooEnd(char * str) {}
 SECTION_END
 
-static size_t fooSize()
+static size_t fooSize() 
 {
-    const char* start = CastPtr< char >(foo);
-    const char* end   = CastPtr< char >(fooEnd);
+    const char * start = CastPtr<char>(foo);
+    const char * end = CastPtr<char>(fooEnd);
 
     if ((end <= start) || ((size_t)(end - start) > PI_FUNC::MAX_SIZE))
     {
@@ -88,7 +88,8 @@ static size_t fooSize()
     return end - start;
 }
 
-FOO_FUNC::FOO_FUNC() : FOO_BAR_FUNC(foo, fooSize()) {}
+FOO_FUNC::FOO_FUNC() : FOO_BAR_FUNC(foo, fooSize()) {} 
+
 
 /*!
  * Position-independent routine. Copies "bar" string into the specified buffer
@@ -96,23 +97,23 @@ FOO_FUNC::FOO_FUNC() : FOO_BAR_FUNC(foo, fooSize()) {}
  * code section along with the immediately following barEnd() function.
  */
 CODE_SECTION("bar_code")
-static void bar(char* str)
+static void bar(char * str)
 {
     *str++ = 'b';
     *str++ = 'a';
     *str++ = 'r';
-    *str   = 0;
+    *str = 0;
 }
 SECTION_END
 
 CODE_SECTION("bar_code")
-static void barEnd(char* str) {}
+static void barEnd(char * str) {}
 SECTION_END
 
-static size_t barSize()
+static size_t barSize() 
 {
-    const char* start = CastPtr< char >(bar);
-    const char* end   = CastPtr< char >(barEnd);
+    const char * start = CastPtr<char>(bar);
+    const char * end = CastPtr<char>(barEnd);
 
     if ((end <= start) || ((size_t)(end - start) > PI_FUNC::MAX_SIZE))
     {
@@ -121,7 +122,7 @@ static size_t barSize()
     return end - start;
 }
 
-BAR_FUNC::BAR_FUNC() : FOO_BAR_FUNC(bar, barSize()) {}
+BAR_FUNC::BAR_FUNC() : FOO_BAR_FUNC(bar, barSize()) {} 
 
 /* ===================================================================== */
 /* eof */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,16 +26,18 @@
 #define NAME(S) S
 #endif
 
-BOOL SignalHandler(THREADID, INT32, CONTEXT*, BOOL, const EXCEPTION_INFO*, void*);
-VOID Image(IMG, VOID*);
-VOID Trace(TRACE, VOID*);
+BOOL SignalHandler(THREADID, INT32, CONTEXT *, BOOL, const EXCEPTION_INFO *, void *);
+VOID Image(IMG, VOID *);
+VOID Trace(TRACE, VOID *);
 VOID CheckPC(ADDRINT);
 
-BOOL EnableInstrumentation = FALSE;
-ADDRINT AddrNotTraced      = 0;
-ADDRINT AddrIsTraced       = 0;
 
-int main(int argc, char* argv[])
+BOOL EnableInstrumentation = FALSE;
+ADDRINT AddrNotTraced = 0;
+ADDRINT AddrIsTraced = 0;
+
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -49,7 +51,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-BOOL SignalHandler(THREADID, INT32, CONTEXT*, BOOL, const EXCEPTION_INFO*, void*)
+
+BOOL SignalHandler(THREADID, INT32, CONTEXT *, BOOL, const EXCEPTION_INFO *, void *)
 {
     // If we receive the signal, enable instrumentation.  We call
     // PIN_RemoveInstrumentation() to remove any existing instrumentation
@@ -63,25 +66,33 @@ BOOL SignalHandler(THREADID, INT32, CONTEXT*, BOOL, const EXCEPTION_INFO*, void*
     return FALSE;
 }
 
-VOID Image(IMG img, VOID*)
+
+VOID Image(IMG img, VOID *)
 {
     RTN rtn = RTN_FindByName(img, NAME("NotTraced"));
-    if (RTN_Valid(rtn)) AddrNotTraced = RTN_Address(rtn);
+    if (RTN_Valid(rtn))
+        AddrNotTraced = RTN_Address(rtn);
 
     rtn = RTN_FindByName(img, NAME("IsTraced"));
-    if (RTN_Valid(rtn)) AddrIsTraced = RTN_Address(rtn);
+    if (RTN_Valid(rtn))
+        AddrIsTraced = RTN_Address(rtn);
 }
 
-VOID Trace(TRACE trace, VOID*)
-{
-    if (!EnableInstrumentation) return;
 
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
+VOID Trace(TRACE trace, VOID *)
+{
+    if (!EnableInstrumentation)
+        return;
+
+    for (BBL bbl = TRACE_BblHead(trace);  BBL_Valid(bbl);  bbl = BBL_Next(bbl))
         BBL_InsertCall(bbl, IPOINT_BEFORE, AFUNPTR(CheckPC), IARG_INST_PTR, IARG_END);
 }
 
+
 VOID CheckPC(ADDRINT pc)
 {
-    if (pc == AddrNotTraced) std::cout << "Traced NotTraced()" << std::endl;
-    if (pc == AddrIsTraced) std::cout << "Traced IsTraced()" << std::endl;
+    if (pc == AddrNotTraced)
+        std::cout << "Traced NotTraced()" << std::endl;
+    if (pc == AddrIsTraced)
+        std::cout << "Traced IsTraced()" << std::endl;
 }

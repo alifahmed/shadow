@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,11 +16,12 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef typeof(malloc)* MallocType;
-typedef typeof(free)* FreeType;
+typedef typeof(malloc) * MallocType;
+typedef typeof(free) * FreeType;
 
 MallocType mallocFun;
-FreeType freeFun;
+FreeType   freeFun;
+
 
 #ifndef STATIC_LINK
 
@@ -31,6 +32,7 @@ FreeType freeFun;
 #define max64BitHexLen 18
 #define max64BitHexNoPrefixLen 16
 
+
 /*
  * A simple conversion function from a 32-bit unsigned integer to a string with no dynamic allocation of memory.
  * The function stores the string in the supplied buffer which is expected to be at least max32BitDecLen bytes
@@ -40,10 +42,22 @@ FreeType freeFun;
  */
 unsigned int SimpleDecStr(unsigned int num, char* buf)
 {
-    static const char conversionMap[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
-    char temp[max32BitDecLen]           = {0};
-    unsigned int src                    = 0;
-    unsigned int dst                    = 0;
+    static const char conversionMap[10] =
+    {
+        '0',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9'
+    };
+    char temp[max32BitDecLen] = { 0 };
+    unsigned int src = 0;
+    unsigned int dst = 0;
 
     if (0 == num)
     {
@@ -54,7 +68,7 @@ unsigned int SimpleDecStr(unsigned int num, char* buf)
     while (0 != num)
     {
         assert(src < max32BitDecLen);
-        temp[src] = conversionMap[num % 10];
+        temp[src] = conversionMap[num%10];
         num /= 10;
         ++src;
     }
@@ -69,6 +83,7 @@ unsigned int SimpleDecStr(unsigned int num, char* buf)
     return dst;
 }
 
+
 /*
  * A simple conversion function from an unsigned integer (of pointer size) to a hexadecimal string representation
  * with no dynamic allocation of memory. The function stores the string in the supplied buffer which is expected
@@ -78,12 +93,30 @@ unsigned int SimpleDecStr(unsigned int num, char* buf)
  */
 unsigned int SimpleHexStr(uintptr_t num, char* buf)
 {
-    static const char conversionMap[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-    char temp[max64BitHexNoPrefixLen]   = {0};
-    unsigned int src                    = 0;
-    unsigned int dst                    = 2;
-    buf[0]                              = '0';
-    buf[1]                              = 'x';
+    static const char conversionMap[16] =
+    {
+        '0',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+        'a',
+        'b',
+        'c',
+        'd',
+        'e',
+        'f'
+    };
+    char temp[max64BitHexNoPrefixLen] = { 0 };
+    unsigned int src = 0;
+    unsigned int dst = 2;
+    buf[0] = '0';
+    buf[1] = 'x';
 
     if (0 == num)
     {
@@ -94,7 +127,7 @@ unsigned int SimpleHexStr(uintptr_t num, char* buf)
     while (0 != num)
     {
         assert(src < max64BitHexNoPrefixLen);
-        temp[src] = conversionMap[num % 16];
+        temp[src] = conversionMap[num%16];
         num >>= 4; /* num /= 16 */
         ++src;
     }
@@ -110,22 +143,23 @@ unsigned int SimpleHexStr(uintptr_t num, char* buf)
 }
 #endif // not STATIC_LINK
 
-void* mallocWrapper(int size)
+
+void * mallocWrapper(int size)
 {
-    void* res = (*mallocFun)(size);
+    void * res = (*mallocFun)(size);
 
 #ifdef STATIC_LINK
-    fprintf(stderr, "malloc(%d) = %p\n", size, res);
+    fprintf(stderr,"malloc(%d) = %p\n", size, res);
 #else
-    static const char* startStr             = "malloc(";
-    static const char* middleStr            = ") = ";
-    static const char* endStr               = "\n";
+    static const char* startStr = "malloc(";
+    static const char* middleStr = ") = ";
+    static const char* endStr = "\n";
     static const unsigned int stringTermLen = 1; /* '\0' */
 
-    const unsigned int startLen  = strlen(startStr);
+    const unsigned int startLen = strlen(startStr);
     const unsigned int middleLen = strlen(middleStr);
-    const unsigned int endLen    = strlen(endStr);
-    const unsigned int msgSize   = startLen + middleLen + endLen + max32BitDecLen + max64BitHexLen + stringTermLen;
+    const unsigned int endLen = strlen(endStr);
+    const unsigned int msgSize = startLen + middleLen + endLen + max32BitDecLen + max64BitHexLen + stringTermLen;
 
     char msg[msgSize];
     unsigned int i = 0;
@@ -140,22 +174,22 @@ void* mallocWrapper(int size)
     strncpy(&(msg[i]), endStr, endLen);
     i += endLen;
     msg[i++] = '\0';
-
+    
     write(STDERR_FILENO, msg, i);
 #endif // not STATIC_LINK
     return res;
 }
 
-void freeWrapper(void* p)
+void freeWrapper(void *p)
 {
 #ifndef STATIC_LINK
-    static const char* startStr             = "free(";
-    static const char* endStr               = ")\n";
+    static const char* startStr = "free(";
+    static const char* endStr = ")\n";
     static const unsigned int stringTermLen = 1; /* '\0' */
 
     const unsigned int startLen = strlen(startStr);
-    const unsigned int endLen   = strlen(endStr);
-    const unsigned int msgSize  = startLen + endLen + max64BitHexLen + stringTermLen;
+    const unsigned int endLen = strlen(endStr);
+    const unsigned int msgSize = startLen + endLen + max64BitHexLen + stringTermLen;
 
     char msg[msgSize];
     unsigned int i = 0;
@@ -170,9 +204,9 @@ void freeWrapper(void* p)
 #endif // not STATIC_LINK
 
     (*freeFun)(p);
-
+    
 #ifdef STATIC_LINK
-    fprintf(stderr, "free(%p)\n", p);
+    fprintf(stderr,"free(%p)\n",p);
 #else
     write(STDERR_FILENO, msg, i);
 #endif // STATIC_LINK
@@ -181,5 +215,5 @@ void freeWrapper(void* p)
 void SetOriginalFptr(MallocType m, FreeType f)
 {
     mallocFun = m;
-    freeFun   = f;
+    freeFun = f;
 }

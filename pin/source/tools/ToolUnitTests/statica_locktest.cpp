@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,15 +19,18 @@
 
 #include <iostream>
 #include "pin.H"
-using std::endl;
 using std::string;
+using std::endl;
 
-KNOB< string > KnobInputFile(KNOB_MODE_WRITEONCE, "pintool", "i", "<imagename>", "specify an image to read");
+KNOB<string> KnobInputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "i", "<imagename>", "specify an image to read");
 
-int main(INT32 argc, CHAR** argv)
+
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
-    if (PIN_Init(argc, argv)) return 1;
+    if (PIN_Init(argc,argv))
+        return 1;
 
     IMG img = IMG_Open(KnobInputFile);
 

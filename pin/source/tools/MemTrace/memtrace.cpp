@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -41,11 +41,11 @@
 #include <set>
 #include <unistd.h>
 #include "pin.H"
-using std::endl;
-using std::hex;
 using std::ofstream;
-using std::string;
 using std::vector;
+using std::hex;
+using std::string;
+using std::endl;
 
 #define MEMTRACE_DEBUG 0
 
@@ -66,12 +66,12 @@ REG scratch_reg1;
 /*
  * Name of the output file
  */
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "memtrace.out", "output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "memtrace.out", "output file");
 
 /*
  * Emit the address trace to the output file
  */
-KNOB< BOOL > KnobEmitTrace(KNOB_MODE_WRITEONCE, "pintool", "emit", "0", "emit a trace in the output file");
+KNOB<BOOL> KnobEmitTrace(KNOB_MODE_WRITEONCE, "pintool", "emit", "0", "emit a trace in the output file");
 
 /*
  *
@@ -100,7 +100,7 @@ class REF
 
     REF(ADDRINT ip, BOOL read)
     {
-        _ip   = ip;
+        _ip = ip;
         _read = read;
     }
 
@@ -112,6 +112,7 @@ class REF
 
     // is it a memory read
     BOOL _read;
+
 };
 
 /*
@@ -127,16 +128,15 @@ class CALL
   public:
     CALL(INS ins, AFUNPTR afunptr, UINT32 offset, IARG_TYPE itype)
     {
-        _ins     = ins;
+        _ins = ins;
         _afunptr = afunptr;
-        _offset  = offset;
-        _itype   = itype;
+        _offset = offset;
+        _itype = itype;
     }
 
     void Insert(INT32 frameSize)
     {
-        INS_InsertCall(_ins, IPOINT_BEFORE, _afunptr, IARG_FAST_ANALYSIS_CALL, IARG_REG_VALUE, scratch_reg0, IARG_ADDRINT,
-                       ADDRINT(_offset - frameSize), _itype, IARG_END);
+        INS_InsertCall(_ins, IPOINT_BEFORE, _afunptr, IARG_FAST_ANALYSIS_CALL, IARG_REG_VALUE, scratch_reg0, IARG_ADDRINT, ADDRINT(_offset - frameSize), _itype, IARG_END);
     }
 
   private:
@@ -145,6 +145,7 @@ class CALL
     INT32 _offset;
     IARG_TYPE _itype;
 };
+
 
 /*
  * These are the types of commands used to interpret the entries in the
@@ -202,9 +203,9 @@ class SCRATCH_TRACE_HEADER
 
   private:
     INT32 _frameOffset;
-    vector< TCMD_TYPE > _cmds;
-    vector< REF > _refs;
-    vector< CALL > _calls;
+    vector<TCMD_TYPE> _cmds;
+    vector<REF> _refs;
+    vector<CALL> _calls;
 };
 
 /*
@@ -215,26 +216,18 @@ class SCRATCH_TRACE_HEADER
 class TRACE_HEADER
 {
   public:
-    TRACE_HEADER(SCRATCH_TRACE_HEADER* header);
-    void Expand(char* traceBuffer, char* log);
+    TRACE_HEADER(SCRATCH_TRACE_HEADER * header);
+    void Expand(char * traceBuffer, char * log);
     int LogBytes() const { return _logBytes; }
     int NumCmds() const { return _numCmds; }
-    TCMD_TYPE CmdType(int i) const
-    {
-        assert(i < NumCmds());
-        return _cmds[i];
-    }
-    REF const* Ref(int i) const
-    {
-        assert(i < NumCmds());
-        return _refs + i;
-    }
+    TCMD_TYPE CmdType(int i) const { assert(i < NumCmds()); return _cmds[i]; }
+    REF const * Ref(int i) const { assert(i < NumCmds()); return _refs + i; }
 
   private:
     int _logBytes;
     int _numCmds;
-    TCMD_TYPE* _cmds;
-    REF* _refs;
+    TCMD_TYPE * _cmds;
+    REF * _refs;
 };
 
 /*
@@ -252,7 +245,7 @@ class MLOG
     enum
     {
         BUFFER_SIZE = 1000000,
-        EMPTY_SLOT  = 0
+        EMPTY_SLOT = 0
     };
 
   public:
@@ -262,24 +255,23 @@ class MLOG
     /*
      * Record an address immediate in log
      */
-    static void PIN_FAST_ANALYSIS_CALL RecordImmediate(CHAR* logCursor, ADDRINT offset, ADDRINT value)
+    static void PIN_FAST_ANALYSIS_CALL RecordImmediate(CHAR * logCursor, ADDRINT offset, ADDRINT value)
     {
 #if MEMTRACE_DEBUG > 10
-        fprintf(stderr, "LogImmediate %p logCursor %p offset %p\n", logCursor + offset, logCursor, offset);
+        fprintf(stderr,"LogImmediate %p logCursor %p offset %p\n", logCursor+offset, logCursor, offset);
 #endif
 
-        *reinterpret_cast< ADDRINT* >(logCursor + offset) = value;
+        *reinterpret_cast<ADDRINT*>(logCursor+offset) = value;
     }
 
-    static ADDRINT PIN_FAST_ANALYSIS_CALL TraceAllocIf(char* logCursor, char* logEnd, ADDRINT size);
-    static char* PIN_FAST_ANALYSIS_CALL TraceAllocThen(char* logCursor, ADDRINT size, THREADID tid);
-    static char* PIN_FAST_ANALYSIS_CALL RecordTraceBegin(char* logCursor, TRACE_HEADER* theader, ADDRINT size);
+    static ADDRINT PIN_FAST_ANALYSIS_CALL  TraceAllocIf(char * logCursor, char * logEnd, ADDRINT size);
+    static char * PIN_FAST_ANALYSIS_CALL  TraceAllocThen(char * logCursor, ADDRINT size, THREADID tid);
+    static char * PIN_FAST_ANALYSIS_CALL  RecordTraceBegin(char * logCursor, TRACE_HEADER * theader, ADDRINT size);
 
     /*
      * Add a trace header to the log and return next logCursor
      */
-    static char* PIN_FAST_ANALYSIS_CALL BeginTrace(char* logCursor, char* logEnd, TRACE_HEADER* theader, UINT32 size,
-                                                   THREADID tid);
+    static char * PIN_FAST_ANALYSIS_CALL  BeginTrace(char * logCursor, char * logEnd, TRACE_HEADER * theader, UINT32 size, THREADID tid);
 
     /*
      * Expand the log into an address trace
@@ -289,12 +281,12 @@ class MLOG
     /*
      * Pointer to beginning of log data
      */
-    char* Begin() { return _data; }
+    char * Begin() { return _data; }
 
     /*
      * Pointer to end of log data
      */
-    char* End() { return _data + BUFFER_SIZE; }
+    char * End() { return _data + BUFFER_SIZE; }
 
   private:
     ofstream ofile;
@@ -302,37 +294,49 @@ class MLOG
     /*
      * Reset log cursor to the beginning of the buffer
      */
-    void ResetLogCursor(char** logCursor);
+    void ResetLogCursor(char ** logCursor);
 
     /*
      * Return true if position in log is empty
      */
-    static BOOL EmptySlot(char* logCursor) { return *reinterpret_cast< ADDRINT* >(logCursor) == EMPTY_SLOT; }
+    static BOOL EmptySlot(char * logCursor)
+    {
+        return *reinterpret_cast<ADDRINT *>(logCursor) == EMPTY_SLOT;
+    }
 
     /*
      * Mark this position in log as empty
      */
-    static void MarkEmptySlot(char* logCursor) { *reinterpret_cast< ADDRINT* >(logCursor) = EMPTY_SLOT; }
-
-    static ADDRINT Immediate(char* logCursor) { return *reinterpret_cast< ADDRINT* >(logCursor); }
-
-    static TRACE_HEADER const* TraceHeader(char* logCursor) { return *reinterpret_cast< TRACE_HEADER const** >(logCursor); }
-
-    static void RecordTraceHeader(char* logCursor, TRACE_HEADER* traceHeader)
+    static void MarkEmptySlot(char * logCursor)
     {
-        *reinterpret_cast< TRACE_HEADER const** >(logCursor) = traceHeader;
+        *reinterpret_cast<ADDRINT *>(logCursor) = EMPTY_SLOT;
+    }
+
+    static ADDRINT Immediate(char * logCursor)
+    {
+        return *reinterpret_cast<ADDRINT*>(logCursor);
+    }
+
+    static TRACE_HEADER const * TraceHeader(char * logCursor)
+    {
+        return *reinterpret_cast<TRACE_HEADER const **>(logCursor);
+    }
+
+    static void RecordTraceHeader(char * logCursor, TRACE_HEADER * traceHeader)
+    {
+        *reinterpret_cast<TRACE_HEADER const **>(logCursor) = traceHeader;
     }
 
     /*
      * Mark all the slots in the log as empty
      */
-    void Reset();
+     void Reset();
 
     int NumLogBytes(TCMD_TYPE ttype);
 
-    void ExpandTrace(TRACE_HEADER const* traceHeader, char* logCursor);
+    void ExpandTrace(TRACE_HEADER const * traceHeader, char * logCursor);
 
-    char* _data;
+    char * _data;
 };
 
 MLOG::MLOG(THREADID tid)
@@ -359,7 +363,7 @@ MLOG::~MLOG()
         ofile.close();
     }
 
-    delete[] _data;
+    delete [] _data;
 }
 
 /*
@@ -377,23 +381,23 @@ void MLOG::Reset()
  * Interpret all the commands and MLOG entries to generate the addresses
  * for a single TRACE
  */
-void MLOG::ExpandTrace(TRACE_HEADER const* traceHeader, char* logCursor)
+void MLOG::ExpandTrace(TRACE_HEADER const * traceHeader, char * logCursor)
 {
     int ref = 0;
     for (int cmd = 0; cmd < traceHeader->NumCmds(); cmd++)
     {
-        switch (traceHeader->CmdType(cmd))
+        switch(traceHeader->CmdType(cmd))
         {
-            case TCMD_IMMEDIATE:
-                if (KnobEmitTrace && (!EmptySlot(logCursor)))
-                {
-                    ofile << traceHeader->Ref(ref)->IP() << " " << Immediate(logCursor) << endl;
-                }
-                ref++;
-                break;
+          case TCMD_IMMEDIATE:
+            if (KnobEmitTrace && (!EmptySlot(logCursor)))
+            {
+                ofile << traceHeader->Ref(ref)->IP() << " " <<  Immediate(logCursor) << endl;
+            }
+            ref++;
+            break;
 
-            default:
-                assert(false);
+          default:
+            assert(false);
         }
 
         // Advance the log cursor
@@ -407,14 +411,15 @@ void MLOG::ExpandTrace(TRACE_HEADER const* traceHeader, char* logCursor)
 void MLOG::Expand()
 {
 #if MEMTRACE_DEBUG > 10
-    fprintf(stderr, "WriteLog\n");
+    fprintf(stderr,"WriteLog\n");
 #endif
 
-    if (!KnobEmitTrace) return;
+    if (!KnobEmitTrace)
+        return;
 
-    TRACE_HEADER const* theader = 0;
+    TRACE_HEADER const * theader = 0;
 
-    for (char* logCursor = Begin(); !EmptySlot(logCursor); logCursor += theader->LogBytes())
+    for (char * logCursor = Begin(); !EmptySlot(logCursor); logCursor += theader->LogBytes())
     {
         // Read the trace header
         theader = TraceHeader(logCursor);
@@ -433,14 +438,18 @@ void MLOG::Expand()
  * @param[in]   logEnd      Pointer to end of MLOG buffer
  * @param[in]   size        Number of bytes required by this TRACE
  */
-ADDRINT MLOG::TraceAllocIf(char* logCursor, char* logEnd, ADDRINT size) { return (logCursor + size >= logEnd); }
+ADDRINT MLOG::TraceAllocIf(char * logCursor, char * logEnd, ADDRINT size)
+{
+    return (logCursor + size >= logEnd);
+}
+
 
 /*
  * The MLOG does not have room for the next TRACE, generate all the addresses and reset
  */
-char* MLOG::TraceAllocThen(char* logCursor, ADDRINT size, THREADID tid)
+char * MLOG::TraceAllocThen(char * logCursor, ADDRINT size, THREADID tid)
 {
-    MLOG* mlog = static_cast< MLOG* >(PIN_GetThreadData(mlog_key, tid));
+    MLOG * mlog = static_cast<MLOG*>(PIN_GetThreadData(mlog_key, tid));
 
     // If adding this trace will exceed the buffer size then flush the log
     assert(logCursor + size >= mlog->End());
@@ -453,7 +462,7 @@ char* MLOG::TraceAllocThen(char* logCursor, ADDRINT size, THREADID tid)
 /*
  * Record the TRACE_HEADER and advance MLOG cursor
  */
-char* MLOG::RecordTraceBegin(char* logCursor, TRACE_HEADER* theader, ADDRINT size)
+char * MLOG::RecordTraceBegin(char * logCursor, TRACE_HEADER * theader, ADDRINT size)
 {
     // Record the trace header in the log
     RecordTraceHeader(logCursor, theader);
@@ -470,10 +479,10 @@ char* MLOG::RecordTraceBegin(char* logCursor, TRACE_HEADER* theader, ADDRINT siz
  * trace header should go.
  *
  */
-char* MLOG::BeginTrace(char* logCursor, char* logEnd, TRACE_HEADER* theader, UINT32 size, THREADID tid)
+char * MLOG::BeginTrace(char * logCursor, char * logEnd, TRACE_HEADER * theader, UINT32 size, THREADID tid)
 {
 #if MEMTRACE_DEBUG > 10
-    fprintf(stderr, "LogTraceBegin %p\n", logCursor);
+    fprintf(stderr,"LogTraceBegin %p\n", logCursor);
 #endif
 
     if (TraceAllocIf(logCursor, logEnd, size))
@@ -491,23 +500,26 @@ char* MLOG::BeginTrace(char* logCursor, char* logEnd, TRACE_HEADER* theader, UIN
  */
 int MLOG::NumLogBytes(TCMD_TYPE ttype)
 {
-    switch (ttype)
+    switch(ttype)
     {
-        case TCMD_IMMEDIATE:
-            return sizeof(ADDRINT);
+      case TCMD_IMMEDIATE:
+        return sizeof(ADDRINT);
 
-        default:
-            assert(false);
-            return 0;
+      default:
+        assert(false);
+        return 0;
     }
 }
 
 /*
  * Reset the cursor to the beginning of the MLOG
  */
-void MLOG::ResetLogCursor(char** logCursor) { *logCursor = Begin(); }
+void MLOG::ResetLogCursor(char ** logCursor)
+{
+    *logCursor = Begin();
+}
 
-TRACE_HEADER::TRACE_HEADER(SCRATCH_TRACE_HEADER* scratch)
+TRACE_HEADER::TRACE_HEADER(SCRATCH_TRACE_HEADER * scratch)
 {
     _logBytes = scratch->_frameOffset;
 
@@ -531,7 +543,7 @@ TRACE_HEADER::TRACE_HEADER(SCRATCH_TRACE_HEADER* scratch)
  */
 void SCRATCH_TRACE_HEADER::InsertCalls()
 {
-    for (vector< CALL >::iterator c = _calls.begin(); c != _calls.end(); c++)
+    for (vector<CALL>::iterator c = _calls.begin(); c != _calls.end(); c++)
     {
         c->Insert(_frameOffset);
     }
@@ -548,11 +560,12 @@ void SCRATCH_TRACE_HEADER::RecordLogImmediate(INS ins, IARG_TYPE itype)
     _frameOffset += sizeof(ADDRINT);
 
 #if MEMTRACE_DEBUG > 5
-    fprintf(stderr, "InsertLogImmediate ip %p\n", INS_Address(ins));
+    fprintf(stderr,"InsertLogImmediate ip %p\n",INS_Address(ins));
 #endif
 }
 
-void InstrumentBBL(BBL bbl, SCRATCH_TRACE_HEADER* theader)
+
+void InstrumentBBL(BBL bbl, SCRATCH_TRACE_HEADER * theader)
 {
     for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
     {
@@ -572,7 +585,7 @@ void InstrumentBBL(BBL bbl, SCRATCH_TRACE_HEADER* theader)
     }
 }
 
-void InstrumentTrace(TRACE trace, void*)
+void InstrumentTrace(TRACE trace, void *)
 {
     // We have to determine how many bytes are needed in the MLOG to record
     // information for this trace, so make a pass to determine what type of
@@ -585,65 +598,85 @@ void InstrumentTrace(TRACE trace, void*)
     }
 
     // No addresses in this trace
-    if (scratchHeader.NumCmds() == 0) return;
+    if (scratchHeader.NumCmds() == 0)
+        return;
 
     // Pack everything into a TRACE_HEADER
-    TRACE_HEADER* theader = new TRACE_HEADER(&scratchHeader);
+    TRACE_HEADER * theader = new TRACE_HEADER(&scratchHeader);
 
     // Now that we know how many MLOG bytes are needed, we can insert instrumentation
     // Insert call to allocate trace entries and write trace header to log
 #define INSERT_IF
 #if defined(INSERT_IF)
     // Instead of using G1 to hold the end, we could use known alignment to detect buffer end
-    TRACE_InsertIfCall(trace, IPOINT_BEFORE, AFUNPTR(MLOG::TraceAllocIf), IARG_FAST_ANALYSIS_CALL, IARG_REG_VALUE, scratch_reg0,
-                       IARG_REG_VALUE, scratch_reg1, IARG_UINT32, theader->LogBytes(), IARG_END);
-    TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(MLOG::TraceAllocThen), IARG_FAST_ANALYSIS_CALL, IARG_REG_VALUE,
-                         scratch_reg0, IARG_UINT32, theader->LogBytes(), IARG_RETURN_REGS, scratch_reg0, IARG_THREAD_ID,
+    TRACE_InsertIfCall(trace, IPOINT_BEFORE, AFUNPTR(MLOG::TraceAllocIf),
+                       IARG_FAST_ANALYSIS_CALL,
+                       IARG_REG_VALUE, scratch_reg0,
+                       IARG_REG_VALUE, scratch_reg1,
+                       IARG_UINT32, theader->LogBytes(),
+                       IARG_END);
+    TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(MLOG::TraceAllocThen),
+                         IARG_FAST_ANALYSIS_CALL,
+                         IARG_REG_VALUE, scratch_reg0,
+                         IARG_UINT32, theader->LogBytes(),
+                         IARG_RETURN_REGS, scratch_reg0,
+                         IARG_THREAD_ID,
                          IARG_END);
-    TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(MLOG::RecordTraceBegin), IARG_FAST_ANALYSIS_CALL, IARG_REG_VALUE, scratch_reg0,
-                     IARG_PTR, theader, IARG_UINT32, theader->LogBytes(), IARG_RETURN_REGS, scratch_reg0, IARG_END);
+    TRACE_InsertCall(trace, IPOINT_BEFORE,  AFUNPTR(MLOG::RecordTraceBegin),
+                     IARG_FAST_ANALYSIS_CALL,
+                     IARG_REG_VALUE, scratch_reg0,
+                     IARG_PTR, theader,
+                     IARG_UINT32, theader->LogBytes(),
+                     IARG_RETURN_REGS, scratch_reg0,
+                     IARG_END);
 #else
-    TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(MLOG::BeginTrace), IARG_FAST_ANALYSIS_CALL, IARG_REG_VALUE, scratch_reg0,
-                     IARG_REG_VALUE, scratch_reg1, IARG_PTR, theader, IARG_UINT32, theader->LogBytes(), IARG_RETURN_REGS,
-                     scratch_reg0, IARG_THREAD_ID, IARG_END);
+    TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(MLOG::BeginTrace),
+                     IARG_FAST_ANALYSIS_CALL,
+                     IARG_REG_VALUE, scratch_reg0,
+                     IARG_REG_VALUE, scratch_reg1,
+                     IARG_PTR, theader,
+                     IARG_UINT32, theader->LogBytes(),
+                     IARG_RETURN_REGS, scratch_reg0,
+                     IARG_THREAD_ID,
+                     IARG_END);
 #endif
 
     // Insert calls for the individual loads and stores
     scratchHeader.InsertCalls();
 }
 
-VOID ThreadStart(THREADID tid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID tid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     // There is a new MLOG for every thread
-    MLOG* mlog = new MLOG(tid);
+    MLOG * mlog = new MLOG(tid);
 
     // A thread will need to look up its MLOG, so save pointer in TLS
     PIN_SetThreadData(mlog_key, mlog, tid);
 
     // Initialize cursor to point at beginning of buffer
-    PIN_SetContextReg(ctxt, scratch_reg0, reinterpret_cast< ADDRINT >(mlog->Begin()));
+    PIN_SetContextReg(ctxt, scratch_reg0, reinterpret_cast<ADDRINT>(mlog->Begin()));
 
-    PIN_SetContextReg(ctxt, scratch_reg1, reinterpret_cast< ADDRINT >(mlog->End()));
+    PIN_SetContextReg(ctxt, scratch_reg1, reinterpret_cast<ADDRINT>(mlog->End()));
 }
 
-VOID ThreadFini(THREADID tid, const CONTEXT* ctxt, INT32 code, VOID* v)
+VOID ThreadFini(THREADID tid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
-    MLOG* mlog = static_cast< MLOG* >(PIN_GetThreadData(mlog_key, tid));
+    MLOG * mlog = static_cast<MLOG*>(PIN_GetThreadData(mlog_key, tid));
 
     delete mlog;
 
     PIN_SetThreadData(mlog_key, 0, tid);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
-    mlog_key     = PIN_CreateThreadDataKey(0);
+    mlog_key = PIN_CreateThreadDataKey(0);
     scratch_reg0 = PIN_ClaimToolRegister();
     scratch_reg1 = PIN_ClaimToolRegister();
 
-    if (!(REG_valid(scratch_reg0) && REG_valid(scratch_reg1)))
+    if (! (REG_valid(scratch_reg0) && REG_valid(scratch_reg1)) )
     {
         std::cerr << "Cannot allocate a scratch register.\n";
         std::cerr << std::flush;

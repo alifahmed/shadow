@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,15 +13,15 @@
 #include <stdio.h>
 #include <string.h>
 
-int main(int argv, char** argc, char** env)
-{
+int main(int argv, char** argc, char** env){
     struct timeval tiv;
-
+   
+    gettimeofday(&tiv, NULL);
+    printf("gettimeofday : %d\n", (int) tiv.tv_sec);
+ 
     gettimeofday(&tiv, NULL);
     printf("gettimeofday : %d\n", (int)tiv.tv_sec);
-
-    gettimeofday(&tiv, NULL);
-    printf("gettimeofday : %d\n", (int)tiv.tv_sec);
+   
 
     gettimeofday(&tiv, NULL);
     printf("gettimeofday : %d\n", (int)tiv.tv_sec);
@@ -30,13 +30,14 @@ int main(int argv, char** argc, char** env)
     char b[50] = {'0'};
 
     printf("a : %s, b : %s\n", a, b);
-    int cmp_result = strcmp(a, b);
-    if (cmp_result > 0)
+    int cmp_result = strcmp(a,b);
+    if (cmp_result >0 )
         printf("a>b\n");
-    else if (cmp_result < 0)
+    else if (cmp_result <0 )
         printf("a<b\n");
     else
         printf("a==b\n");
 
+    
     return 0;
 }

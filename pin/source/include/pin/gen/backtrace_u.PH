@@ -1,42 +1,13 @@
+//Groups: @ingroup\s+(API_REF|KNOBS|IMG_BASIC_API|INS_BASIC_API|INS_INST_API|INS_BASIC_API_GEN_IA32|INS_BASIC_API_IA32|INS_MOD_API_GEN_IA32|SEC_BASIC_API|RTN_BASIC_API|REG_BASIC_API|REG_CPU_GENERIC|REG_CPU_IA32|TRACE_BASIC_API|BBL_BASIC_API|SYM_BASIC_API|MISC_PRINT|MISC_PARSE|KNOB_API|KNOB_BASIC|KNOB_PRINT|LOCK|PIN_CONTROL|TRACE_VERSION_API|BUFFER_API|PROTO_API|PIN_PROCESS_API|PIN_THREAD_API|PIN_SYSCALL_API|WINDOWS_SYSCALL_API_UNDOC|DEBUG_API|ERROR_FILE_BASIC|TYPE_BASE|INSTLIB|ALARM|CHILD_PROCESS_API|UTILS|MISC|CONTEXT_API|PHYSICAL_CONTEXT_API|PIN_CALLBACKS|EXCEPTION_API|APPDEBUG_API|STOPPED_THREAD_API|BUFFER_API|PROTO|INST_ARGS|DEPRECATED_PIN_API|INTERNAL_EXCEPTION_PRIVATE_UNDOCUMENTED|PIN_THREAD_PRIVATE|CHILD_PROCESS_INTERNAL|BBL_BASIC|ROGUE_BASIC_API|MESSAGE_TYPE|MESSAGE_BASIC|ERRFILE|MISC_BASIC|ITC_INST_API|CONTEXT_API_UNDOC|EXCEPTION_API_UNDOC|UNDOCUMENTED_PIN_API|OPIN|TRACE_VERSIONS
+/* PIN API */
 
-#ifdef PIN_G_BACKTRACE_U_PH
-#error duplicate inclusion of backtrace_u
-#else
-#define PIN_G_BACKTRACE_U_PH
-/*! @file
- libbacktrace equivalent implementation
-*/
-/*! @ingroup CONTEXT
- * This function is the equivalent Pin version of unw_getcontext():
- * While unw_getcontext() generates a context for libunwind based on the native context,
- * PIN_GetInitialContextForUnwind() generates a context for libunwind based on Pin CONTEXT.
- *
- * @param[in]       ctxt   Pin context to convert to libunwind's context
- * @param[out]      cursor Points to valid object of type unw_cursor_t which was initialized using unw_init_local().
- * @return   UNW_ESUCCESS in case of success.
- *
- * @par Availability:
- * \b Mode:  All\n
- * \b O/S:   Linux & macOS*\n
- * \b CPU:   IA-32 and Intel(R) 64 architectures\n
- */
-extern int PIN_GetInitialContextForUnwind(const CONTEXT* ctxt, void* cursor);
+/* THIS FILE IS AUTOMAGICALLY GENERATED - DO NOT CHANGE DIRECTLY*/
 
-/*! @ingroup CONTEXT
- * This function is the equivalent Pin version of backtrace():
- * While backtrace() generates a backtrace for the Pin (and Pin tool) call stack,
- * PIN_Backtrace() generates a backtrace for the application that Pin is instrumenting.
- *
- * @param[in]       ctxt   context of the application - the backtrace will be generated based upon it.
- * @param[out]      buffer Points to an array on which the backtrace will be stored.
- * @param[in]       size   specifies the maximum number of addresses that can be stored in buffer.
- * @return   the number of addresses returned in buffer, which is not greater than @b size.
- *
- * @par Availability:
- * \b Mode:  All\n
- * \b O/S:   Linux & macOS*\n
- * \b CPU:   IA-32 and Intel(R) 64 architectures\n
- */
-extern int PIN_Backtrace(const CONTEXT* ctxt, void** buffer, int size);
 
-#endif // PIN_G_BACKTRACE_U_PH
+extern int PIN_GetInitialContextForUnwind(const CONTEXT * ctxt, void* cursor);
+
+                                                                  /* DO NOT EDIT */
+extern int PIN_Backtrace(const CONTEXT * ctxt, void **buffer, int size);
+
+                                                                  /* DO NOT EDIT */
+

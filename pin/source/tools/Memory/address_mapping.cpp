@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,8 +14,8 @@
 #include <vector>
 #include <assert.h>
 #include "pin.H"
-using std::string;
 using std::vector;
+using std::string;
 
 // This PIN tool shall check PIN's memory address confinement.
 //
@@ -25,15 +25,17 @@ using std::vector;
 /* ===================================================================== */
 
 //Output file where to write everything
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "address_mapping.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,    "pintool",
+    "o", "address_mapping.out", "specify output file name");
 
 //If true, this tool will generate an out of memory condition for PIN's allocator
-KNOB< BOOL > KnobGenerateOOM(KNOB_MODE_WRITEONCE, "pintool", "m", "0", "generate an out of memory condition");
+KNOB<BOOL> KnobGenerateOOM(KNOB_MODE_WRITEONCE,    "pintool",
+    "m", "0", "generate an out of memory condition");
 
 //When specified, this tool will check that dynamic memory allocations return
 //addresses within that region
-KNOB< ADDRESS_RANGE > KnobMemoryBoundary(KNOB_MODE_WRITEONCE, "pintool", "b", "0:0",
-                                         "The memory boundary to check for dynamic allocation");
+KNOB<ADDRESS_RANGE> KnobMemoryBoundary(KNOB_MODE_WRITEONCE,    "pintool",
+    "b", "0:0", "The memory boundary to check for dynamic allocation");
 
 //Before PIN initialized, it is using a small pre-allocated memory pool for all dynamic
 //memory allocation. This pre-allocated pool is outside the specified region for memory
@@ -52,11 +54,11 @@ static const int MALLOC_POOL_SIZE = 0x10000;
 static const int MALLOC_POOL_SIZE = 0x1000;
 
 //The total size of PIN's initial allocator, the one that allocates memory before PIN initializes
-#ifdef TARGET_MAC
+# ifdef TARGET_MAC
 static const int BSS_ALLOCATOR_SIZE = 0x1300000;
-#else
+# else
 static const int BSS_ALLOCATOR_SIZE = 0xc0000;
-#endif
+# endif
 #endif //TARGET_WINDOWS
 
 /* ===================================================================== */
@@ -64,7 +66,7 @@ static const int BSS_ALLOCATOR_SIZE = 0xc0000;
 /* ===================================================================== */
 
 //Output file
-FILE* out;
+FILE * out;
 
 void* AllocateAndCheckAddressRange(size_t sz, int retries = 0)
 {
@@ -112,19 +114,19 @@ VOID OutOfMemory(size_t sz, VOID* arg)
 
 //This function will check that memory the is dynamically allocated is allocated in
 //the right addresses
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
-    vector< void* > smallMallocs;
+    vector<void*> smallMallocs;
 #ifndef TARGET_WINDOWS
     //Skip memory allocated by the BSS allocator
-    void* initialPtr = AllocateAndCheckAddressRange(MALLOC_POOL_SIZE, BSS_ALLOCATOR_SIZE / MALLOC_POOL_SIZE);
+    void* initialPtr = AllocateAndCheckAddressRange(MALLOC_POOL_SIZE, BSS_ALLOCATOR_SIZE/MALLOC_POOL_SIZE);
     free(initialPtr);
 #endif
-    // Allocation for big memory region: This malloc should allocate memory directly from the OS
+// Allocation for big memory region: This malloc should allocate memory directly from the OS
     void* bigMalloc = AllocateAndCheckAddressRange(0x100000);
     for (int i = 4; i < 0x10000; i *= 2)
     {
-        // Allocation for small memory region: This malloc should allocate memory from a memory pool
+// Allocation for small memory region: This malloc should allocate memory from a memory pool
         void* smallOne = AllocateAndCheckAddressRange(i);
         smallMallocs.push_back(smallOne);
     }
@@ -133,12 +135,12 @@ VOID Fini(INT32 code, VOID* v)
         void* p = AllocateAndCheckAddressRange(0x10000);
         if (!KnobGenerateOOM.Value())
         {
-            //In order to generate an out of memory - just don't free the allocated pointers
+        	//In order to generate an out of memory - just don't free the allocated pointers
             free(p);
         }
     }
     free(bigMalloc);
-    for (vector< void* >::iterator it = smallMallocs.begin(); it != smallMallocs.end(); it++)
+    for (vector<void*>::iterator it = smallMallocs.begin(); it != smallMallocs.end(); it++)
     {
         free(*it);
     }
@@ -146,7 +148,7 @@ VOID Fini(INT32 code, VOID* v)
     fclose(out);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);

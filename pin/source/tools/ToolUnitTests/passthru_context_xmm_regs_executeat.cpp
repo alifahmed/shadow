@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -29,80 +29,87 @@ extern "C" int SetXmmScratchesFun();
 #define NUM_XMM_REGS 8
 #endif
 
-KNOB< BOOL > KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool", "const_context", "0", "use IARG_CONST_CONTEXT");
+KNOB<BOOL> KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool",
+                                   "const_context", "0", "use IARG_CONST_CONTEXT");
 
-CHAR fpContextSpaceForFpConextFromPin[FPSTATE_SIZE + FPSTATE_ALIGNMENT];
+CHAR fpContextSpaceForFpConextFromPin[FPSTATE_SIZE+FPSTATE_ALIGNMENT];
 
-BOOL beforeRoutineCalled               = FALSE;
+BOOL beforeRoutineCalled = FALSE;
 BOOL instrumentedBeforeReplacedXmmRegs = FALSE;
-BOOL noMoreInstrumentation             = FALSE;
-ADDRINT replacedXmmRegsAddr            = 0;
+BOOL noMoreInstrumentation = FALSE;
+ADDRINT replacedXmmRegsAddr = 0;
 
-VOID BEFORE_ReplacedXmmRegs(CONTEXT* context)
+
+
+
+VOID BEFORE_ReplacedXmmRegs(CONTEXT *context)
 {
-    beforeRoutineCalled   = TRUE;
+    beforeRoutineCalled = TRUE;
     noMoreInstrumentation = TRUE;
-    printf("TOOL in BEFORE_ReplacedXmmRegs\n");
-    fflush(stdout);
+    printf ("TOOL in BEFORE_ReplacedXmmRegs\n");
+    fflush (stdout);
     PIN_RemoveInstrumentation();
-    PIN_ExecuteAt(context);
-
+    PIN_ExecuteAt (context);
+    
     // no return from the application function
     ASSERTX(0);
 }
 
-VOID Instruction(INS ins, void* v)
+VOID Instruction (INS ins, void *v)
 {
-    if (INS_Address(ins) == replacedXmmRegsAddr && !noMoreInstrumentation)
+    if (INS_Address(ins)==replacedXmmRegsAddr && !noMoreInstrumentation)
     {
         instrumentedBeforeReplacedXmmRegs = TRUE;
         INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)BEFORE_ReplacedXmmRegs,
-                       (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT, IARG_END);
+                       (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT, IARG_END);
     }
 }
 
-VOID Image(IMG img, void* v)
+VOID Image(IMG img, void *v)
 {
     RTN rtn = RTN_FindByName(img, "ReplacedXmmRegs");
     if (RTN_Valid(rtn))
     {
         replacedXmmRegsAddr = RTN_Address(rtn);
-        printf("TOOL found ReplacedXmmRegs\n");
-        fflush(stdout);
+        printf ("TOOL found ReplacedXmmRegs\n");
+        fflush (stdout);
     }
     rtn = RTN_FindByName(img, "BeforeReplacedXmmRegs");
     if (RTN_Valid(rtn))
-    {   // insert an analysis call that sets the xmm scratch registers just before the call to
-        // the replaced function
+    {  // insert an analysis call that sets the xmm scratch registers just before the call to
+       // the replaced function
         instrumentedBeforeReplacedXmmRegs = TRUE;
-        printf("TOOL found BeforeReplacedXmmRegs\n");
-        fflush(stdout);
+        printf ("TOOL found BeforeReplacedXmmRegs\n");
+        fflush (stdout);
         RTN_Open(rtn);
         RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)SetXmmScratchesFun, IARG_END);
         RTN_Close(rtn);
     }
 }
 
-static void OnExit(INT32, VOID*)
+
+static void OnExit(INT32, VOID *)
 {
     if (!beforeRoutineCalled)
     {
-        printf("***TOOL Error !replacementRoutineCalled\n");
-        fflush(stdout);
+        printf ("***TOOL Error !replacementRoutineCalled\n");
+        fflush (stdout);
         PIN_ExitProcess(1);
     }
-    if (!instrumentedBeforeReplacedXmmRegs)
+    if(!instrumentedBeforeReplacedXmmRegs)
     {
-        printf("***TOOL Error !instrumentedBeforeReplacedXmmRegs\n");
-        fflush(stdout);
+        printf ("***TOOL Error !instrumentedBeforeReplacedXmmRegs\n");
+        fflush (stdout);
         PIN_ExitProcess(1);
     }
 }
 
-int main(int argc, char** argv)
+
+
+int main(int argc, char **argv)
 {
     // initialize memory area used to set values in ymm regs
-    for (int i = 0; i < 64; i++)
+    for (int i =0; i<64; i++)
     {
         xmmInitVals[i] = 0xdeadbeef;
     }
@@ -113,7 +120,7 @@ int main(int argc, char** argv)
     INS_AddInstrumentFunction(Instruction, 0);
 
     PIN_AddFiniFunction(OnExit, 0);
-
+    
     PIN_StartProgram();
     return 0;
 }

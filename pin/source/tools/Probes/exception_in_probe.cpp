@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,7 +24,7 @@ namespace WND
 #include <windows.h>
 }
 
-typedef VOID(WINAPI* rtl_leave_critical_section_call_t)(__inout WND::LPCRITICAL_SECTION lpCriticalSection);
+typedef VOID (WINAPI * rtl_leave_critical_section_call_t)(__inout WND::LPCRITICAL_SECTION lpCriticalSection);
 
 void (*g_RtlLeaveCriticalSection_ptr)(void);
 
@@ -39,13 +39,13 @@ VOID WINAPI RtlLeaveCriticalSection_ver0(__inout WND::LPCRITICAL_SECTION lpCriti
 {
     if (lpCriticalSection == NULL)
     {
-        int* ptr = reinterpret_cast< int* >(0x0);
+        int* ptr = reinterpret_cast<int*>(0x0);
         __try
         {
             // this will cause an exception
             *ptr = 17;
         }
-        __except (EXCEPTION_EXECUTE_HANDLER)
+        __except(EXCEPTION_EXECUTE_HANDLER)
         {
             printf("Exception in RtlLeaveCriticalSection replacement routine\n");
             fflush(stdout);
@@ -53,11 +53,11 @@ VOID WINAPI RtlLeaveCriticalSection_ver0(__inout WND::LPCRITICAL_SECTION lpCriti
 
         __try
         {
-            volatile int i = GenerateStackOverflow();
+            volatile int i  = GenerateStackOverflow();
         }
-        __except (EXCEPTION_EXECUTE_HANDLER)
+        __except(EXCEPTION_EXECUTE_HANDLER)
         {
-            if (_resetstkoflw())
+            if(_resetstkoflw())
             {
                 printf("Stack-Overflow in RtlLeaveCriticalSection replacement routine\n");
                 fflush(stdout);
@@ -70,8 +70,8 @@ VOID WINAPI RtlLeaveCriticalSection_ver0(__inout WND::LPCRITICAL_SECTION lpCriti
 
 static const char* extract_mod_name_with_ext(const char* full)
 {
-    const char* slash = NULL;
-    char* module_name = NULL;
+    const char *slash = NULL;
+    char *module_name = NULL;
 
     slash = strrchr(full, '\\');
 
@@ -87,9 +87,9 @@ static const char* extract_mod_name_with_ext(const char* full)
     return module_name;
 }
 
-static VOID instrument_module(IMG img, VOID* data)
+static VOID instrument_module(IMG img, VOID *data)
 {
-    const char* module_name = extract_mod_name_with_ext(IMG_Name(img).c_str());
+    const char *module_name = extract_mod_name_with_ext(IMG_Name(img).c_str());
 
     if (strcmp(module_name, "ntdll.dll") == 0)
     {
@@ -100,11 +100,11 @@ static VOID instrument_module(IMG img, VOID* data)
             g_RtlLeaveCriticalSection_ptr = RTN_ReplaceProbed(routine, (AFUNPTR)(RtlLeaveCriticalSection_ver0));
         }
 
-        free((void*)(module_name));
+        free((void *)(module_name));
     }
 }
 
-static VOID on_module_loading(IMG img, VOID* data)
+static VOID on_module_loading(IMG img, VOID *data)
 {
     unsigned long origAttrs = 0;
 
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
 
     if (!PIN_Init(argc, argv))
     {
-        IMG_AddInstrumentFunction(on_module_loading, 0);
+        IMG_AddInstrumentFunction(on_module_loading,  0);
 
         PIN_StartProgramProbed();
     }

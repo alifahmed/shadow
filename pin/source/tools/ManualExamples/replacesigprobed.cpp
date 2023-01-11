@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -10,45 +10,50 @@
  */
 
 //  Replace an original function with a custom function defined in the tool using
-//  probes.  The replacement function has a different signature from that of the
+//  probes.  The replacement function has a different signature from that of the 
 //  original replaced function.
 
 #include "pin.H"
 #include <iostream>
-using std::cerr;
 using std::cout;
+using std::hex;
+using std::cerr;
+using std::flush;
 using std::dec;
 using std::endl;
-using std::flush;
-using std::hex;
 
-typedef VOID* (*FP_MALLOC)(size_t);
+typedef VOID * ( *FP_MALLOC )( size_t );
 
 // This is the replacement routine.
 //
-VOID* NewMalloc(FP_MALLOC orgFuncptr, UINT32 arg0, ADDRINT returnIp)
+VOID * NewMalloc( FP_MALLOC orgFuncptr, UINT32 arg0, ADDRINT returnIp )
 {
     // Normally one would do something more interesting with this data.
     //
-    cout << "NewMalloc (" << hex << ADDRINT(orgFuncptr) << ", " << dec << arg0 << ", " << hex << returnIp << ")" << endl << flush;
+    cout << "NewMalloc ("
+         << hex << ADDRINT ( orgFuncptr ) << ", " 
+         << dec << arg0 << ", " 
+         << hex << returnIp << ")"
+         << endl << flush;
 
     // Call the relocated entry point of the original (replaced) routine.
     //
-    VOID* v = orgFuncptr(arg0);
+    VOID * v = orgFuncptr( arg0 );
 
     return v;
 }
+
 
 // Pin calls this function every time a new img is loaded.
 // It is best to do probe replacement when the image is loaded,
 // because only one thread knows about the image at this time.
 //
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad( IMG img, VOID *v )
 {
     // See if malloc() is present in the image.  If so, replace it.
     //
-    RTN rtn = RTN_FindByName(img, "malloc");
-
+    RTN rtn = RTN_FindByName( img, "malloc" );
+    
     if (RTN_Valid(rtn))
     {
         if (RTN_IsSafeForProbedReplacement(rtn))
@@ -58,13 +63,18 @@ VOID ImageLoad(IMG img, VOID* v)
             // Define a function prototype that describes the application routine
             // that will be replaced.
             //
-            PROTO proto_malloc = PROTO_Allocate(PIN_PARG(void*), CALLINGSTD_DEFAULT, "malloc", PIN_PARG(int), PIN_PARG_END());
+            PROTO proto_malloc = PROTO_Allocate(PIN_PARG(void *), CALLINGSTD_DEFAULT,
+                "malloc", PIN_PARG(int), PIN_PARG_END());
 
             // Replace the application routine with the replacement function.
             // Additional arguments have been added to the replacement routine.
             //
-            RTN_ReplaceSignatureProbed(rtn, AFUNPTR(NewMalloc), IARG_PROTOTYPE, proto_malloc, IARG_ORIG_FUNCPTR,
-                                       IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_RETURN_IP, IARG_END);
+            RTN_ReplaceSignatureProbed(rtn, AFUNPTR(NewMalloc),
+                IARG_PROTOTYPE, proto_malloc,
+                IARG_ORIG_FUNCPTR,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_RETURN_IP,
+                IARG_END);
 
             // Free the function prototype.
             //
@@ -95,23 +105,24 @@ INT32 Usage()
 /* Main: Initialize and start Pin in Probe mode.                         */
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR* argv[])
+int main( INT32 argc, CHAR *argv[] )
 {
     // Initialize symbol processing
     //
     PIN_InitSymbols();
-
+    
     // Initialize pin
     //
     if (PIN_Init(argc, argv)) return Usage();
-
+    
     // Register ImageLoad to be called when an image is loaded
     //
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    IMG_AddInstrumentFunction( ImageLoad, 0 );
+    
     // Start the program in probe mode, never returns
     //
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
+

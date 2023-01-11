@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,12 +22,13 @@
 #include "pin.H"
 #include "tool_macros.h"
 
-using std::endl;
-using std::ofstream;
 using std::string;
+using std::ofstream;
+using std::endl;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "callbacks_before_jit_or_probe_tool.out",
-                              "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "callbacks_before_jit_or_probe_tool.out", "specify output file name");
+
 
 ofstream TraceFile;
 PIN_LOCK pinLock;
@@ -45,31 +46,37 @@ int PinAttached(unsigned int numOfThreads)
     return 1;
 }
 
+
 //====================================================================
 // Instrumentation Routines
 //====================================================================
 
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v) { jitOrProbeBegan = TRUE; }
+VOID Instruction(INS ins, VOID *v)
+{
+    jitOrProbeBegan = TRUE;
+}
 
 // This routine is executed for each image.
-VOID ImageLoad(IMG img, VOID*)
+VOID ImageLoad(IMG img, VOID *)
 {
-    if ((IMG_Name(img).find("kernel.appcore.dll") != string::npos) || (IMG_Name(img).find("msvcrt.dll") != string::npos) ||
-        (IMG_Name(img).find("RPCRT4.dll") != string::npos) || (IMG_Name(img).find("sechost.dll") != string::npos) ||
-        (IMG_Name(img).find("SspiCli.dll") != string::npos))
-    { // Image that may be loaded after attach, ignoring it.
+    if ((IMG_Name(img).find("kernel.appcore.dll") != string::npos)
+        || (IMG_Name(img).find("msvcrt.dll") != string::npos)
+        || (IMG_Name(img).find("RPCRT4.dll") != string::npos)
+        || (IMG_Name(img).find("sechost.dll") != string::npos)
+        || (IMG_Name(img).find("SspiCli.dll") != string::npos))
+    {   // Image that may be loaded after attach, ignoring it.
         return;
     }
     ASSERT(!jitOrProbeBegan, "Jit/Probe began before all image load callbacks were called. Image name: " + IMG_Name(img));
 
-    if (!IMG_IsMainExecutable(img))
+    if ( !IMG_IsMainExecutable(img) )
     {
         return;
     }
 
     RTN rtn = RTN_FindByName(img, C_MANGLE("PinIsAttached"));
-    ASSERTX(RTN_Valid(rtn));
+    ASSERTX (RTN_Valid(rtn));
     TraceFile << "Replacing PinAttached" << endl;
     if (PIN_IsProbeMode())
     {
@@ -83,7 +90,10 @@ VOID ImageLoad(IMG img, VOID*)
 }
 
 // This routine is executed once at the end.
-VOID Fini(INT32 code, VOID* v) { TraceFile.close(); }
+VOID Fini(INT32 code, VOID *v)
+{
+    TraceFile.close();
+}
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
@@ -99,7 +109,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     // Initialize the pin lock
     PIN_InitLock(&pinLock);
@@ -112,8 +122,8 @@ int main(INT32 argc, CHAR** argv)
 
     if (!PIN_IsProbeMode())
     {
-        // Register Instruction to be called to instrument instructions
-        INS_AddInstrumentFunction(Instruction, 0);
+      // Register Instruction to be called to instrument instructions
+      INS_AddInstrumentFunction(Instruction, 0);
     }
 
     // Register ImageLoad to be called when each image is loaded.

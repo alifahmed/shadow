@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,12 +20,13 @@
 #include <sched.h>
 #include <unistd.h>
 
-#define TIMEOUT 3 * 60
+#define TIMEOUT 3*60
 
-static void* Thread(void*);
+static void *Thread(void *);
 static void Terminate(int);
 
 static volatile int Ready = 0;
+
 
 int main()
 {
@@ -43,13 +44,15 @@ int main()
     return 0;
 }
 
+
 volatile unsigned Val;
 volatile unsigned A = 5;
 volatile unsigned B = 4;
 
-static void* Thread(void* dummy)
+static void *Thread(void *dummy)
 {
     struct sigaction act;
+
 
     /*
      * This causes the thread to terminate even if it doesn't receive the cancel
@@ -57,7 +60,7 @@ static void* Thread(void* dummy)
      * fail.
      */
     act.sa_handler = Terminate;
-    act.sa_flags   = 0;
+    act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
     sigaction(SIGALRM, &act, 0);
     alarm(TIMEOUT);
@@ -68,6 +71,7 @@ static void* Thread(void* dummy)
     for (;;)
         Val = A / B;
 }
+
 
 static void Terminate(int sig)
 {

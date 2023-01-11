@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,36 +12,41 @@
 #include <stdio.h>
 
 #ifdef TARGET_MAC
-#define SEGNAME "__DATA,"
+# define SEGNAME "__DATA,"
 #else
-#define SEGNAME
+# define SEGNAME
 #endif
 
-#define __annotation_init()            \
-    asm(".section MyAnnot, \"wa\"\n"); \
-    asm(".text")
+#define __annotation_init() \
+    asm (".section MyAnnot, \"wa\"\n"); \
+    asm (".text")
 
 #ifdef TARGET_IA32
-#define __annotation_mark(LABEL) __asm__ __volatile__("." #LABEL ": .byte 0x0F, 0x1F, 0x44, 0x00, 0x00\n")
+#define __annotation_mark(LABEL) \
+    __asm__ __volatile__ ("." #LABEL ": .byte 0x0F, 0x1F, 0x44, 0x00, 0x00\n")
 
-#define __annotation_add(LABEL, VALUE)        \
-    asm(".pushsection " SEGNAME "MyAnnot\n\t" \
-        ".long ." #LABEL ", " #VALUE "\n\t"   \
-        ".popsection")
+#define __annotation_add(LABEL, VALUE) \
+    asm (".pushsection " SEGNAME "MyAnnot\n\t" \
+    ".long ." #LABEL ", " #VALUE "\n\t" \
+    ".popsection")
 
 #else
-#define __annotation_mark(LABEL) __asm__ __volatile__("." #LABEL ": .byte 0x0F, 0x1F, 0x80, 0x00, 0x00, 0x00, 0x00\n")
+#define __annotation_mark(LABEL) \
+    __asm__ __volatile__ ("." #LABEL ": .byte 0x0F, 0x1F, 0x80, 0x00, 0x00, 0x00, 0x00\n")
 
-#define __annotation_add(LABEL, VALUE)        \
-    asm(".pushsection " SEGNAME "MyAnnot\n\t" \
-        ".quad ." #LABEL ", " #VALUE "\n\t"   \
-        ".popsection")
+#define __annotation_add(LABEL, VALUE) \
+    asm (".pushsection " SEGNAME "MyAnnot\n\t" \
+    ".quad ." #LABEL ", " #VALUE "\n\t" \
+    ".popsection")
 #endif
 
 // Use to function to write to the output file (stdout in this case).
 // The test tool will call this function to make sure that ithe tool's
 // output lines are interleaved with the test function output lines.
-void write_line(char* line) { fprintf(stdout, "%s\n", line); }
+void write_line(char *line)
+{
+    fprintf(stdout, "%s\n", line);
+}
 
 // create the annotation section
 __annotation_init();

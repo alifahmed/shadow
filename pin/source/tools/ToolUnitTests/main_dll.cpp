@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,9 +15,10 @@
  *  usage of PIN API in dynamic_secondary_dll and static_secondary_dll is not allowed
  *  (see README for more inforamtion)
  *
- *  NOTE: New Pin image loader supports dynamic loading of Pin DLLs.
- *        Look at Mantis 3280 for implementation details.
- *        The test also validates the dynamic loading feature.
+ *  NOTE: New Pin image loader does not (yet) support dynamic loading of Pin DLLs.
+ *        Code related to dynamic_secondary_dll was suppressed.
+ *        Look at Mantis 3280 for updates.
+ *        #define DYN_LOAD will enable validation of dynamic loading feature in the test.
  */
 
 #include <iostream>
@@ -31,13 +32,9 @@
 using std::cerr;
 using std::endl;
 using std::hex;
-using std::string;
 
-KNOB< BOOL > KnobEnumerate(KNOB_MODE_WRITEONCE, "pintool", "enumerate", "0", "Enumerate modules loaded by Pin");
-
-KNOB< string > KnobOutputFile1(KNOB_MODE_WRITEONCE, "pintool", "o1", "static_secondary_dll.out", "Output file 1");
-
-KNOB< string > KnobOutputFile2(KNOB_MODE_WRITEONCE, "pintool", "o2", "dynamic_secondary_dll.out", "Output file 2");
+KNOB<BOOL> KnobEnumerate(KNOB_MODE_WRITEONCE, "pintool",
+    "enumerate", "0", "Enumerate modules loaded by Pin");
 
 /* ===================================================================== */
 /* Global Variables and Declerations */
@@ -45,82 +42,93 @@ KNOB< string > KnobOutputFile2(KNOB_MODE_WRITEONCE, "pintool", "o2", "dynamic_se
 
 PIN_LOCK pinLock;
 
-typedef VOID (*BEFORE_BBL)(ADDRINT ip);
-typedef int (*INIT_F)(bool enumerate, const char* out_filename);
-typedef VOID (*FINI_F)();
+typedef VOID (* BEFORE_BBL)(ADDRINT ip);
+typedef int (* INIT_F)(bool enumerate);
+typedef VOID (* FINI_F)();
 
+#if defined(DYN_LOAD)
 // Functions pointers for dynamic_secondary_dll
 BEFORE_BBL pBeforeBBL2;
 INIT_F pInit2;
 FINI_F pFini2;
+#endif
 
 // Dll imports for static_secondary_dll
-extern "C" __declspec(dllimport) VOID BeforeBBL1(ADDRINT ip);
-extern "C" __declspec(dllimport) VOID Init1(const char*);
-extern "C" __declspec(dllimport) VOID Fini1();
+extern "C" __declspec( dllimport ) VOID BeforeBBL1(ADDRINT ip);
+extern "C" __declspec( dllimport ) VOID Init1();
+extern "C" __declspec( dllimport ) VOID Fini1();
 
 /* ===================================================================== */
 
 // This function is called before every basic block
-VOID PIN_FAST_ANALYSIS_CALL BeforeBBL(ADDRINT ip)
+VOID PIN_FAST_ANALYSIS_CALL BeforeBBL(ADDRINT ip) 
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
     BeforeBBL1(ip);
+#if defined(DYN_LOAD)
     pBeforeBBL2(ip);
+#endif
     PIN_ReleaseLock(&pinLock);
 }
 
 /* ===================================================================== */
 
 // Pin calls this function every time a new trace is encountered
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
     // Visit every basic block  in the trace
     for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
     {
         // Insert a call to BeforeBBL before every bbl, passing the ip address.
-        BBL_InsertCall(bbl, IPOINT_BEFORE, (AFUNPTR)BeforeBBL, IARG_FAST_ANALYSIS_CALL, IARG_INST_PTR, IARG_END);
+        BBL_InsertCall(bbl, IPOINT_BEFORE, (AFUNPTR)BeforeBBL, IARG_FAST_ANALYSIS_CALL, 
+                       IARG_INST_PTR, IARG_END);
     }
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
     BeforeBBL1(0);
+#if defined(DYN_LOAD)
     pBeforeBBL2(0);
+#endif
     PIN_ReleaseLock(&pinLock);
 }
 
-VOID ThreadFini(THREADID threadid, const CONTEXT* ctxt, INT32 code, VOID* v)
+VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
 {
     PIN_GetLock(&pinLock, PIN_GetTid());
     BeforeBBL1(0);
+#if defined(DYN_LOAD)
     pBeforeBBL2(0);
+#endif
     PIN_ReleaseLock(&pinLock);
 }
 
 /* ===================================================================== */
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     Fini1();
+#if defined(DYN_LOAD)
     pFini2();
+#endif
 }
 
 // This function gets info of an image loaded by Pin loader.
 // Invoked by dl_iterate_phdr()
-int dl_iterate_callback(struct dl_phdr_info* info, size_t size, VOID* data)
+int dl_iterate_callback(struct dl_phdr_info * info, size_t size, VOID * data)
 {
     cerr << info->dlpi_name << " " << hex << info->dlpi_addr << " " << info->dlpi_phdr->p_memsz << endl;
     // Increment module counter.
-    ++(*reinterpret_cast< int* >(data));
+    ++(*reinterpret_cast<int *>(data));
     return 0;
 }
 
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     PIN_Init(argc, argv);
@@ -134,28 +142,30 @@ int main(int argc, char* argv[])
     PIN_AddFiniFunction(Fini, 0);
 
     // Call Static secondary dll Init1()
-    Init1(KnobOutputFile1.Value().c_str());
+    Init1();
 
     int nModules;
 
+#if defined(DYN_LOAD)
     // Dynamic secondary dll - load library, initialize function pointers
     // and call Init2()
-    VOID* module = dlopen("dynamic_secondary_dll.dll", RTLD_NOW);
+    VOID * module = dlopen("dynamic_secondary_dll.dll", RTLD_NOW);
     if (module == NULL)
     {
         cerr << "Failed to load dynamic_secondary_dll.dll" << endl;
         exit(1);
     }
-    pInit2      = reinterpret_cast< INIT_F >(dlsym(module, "Init2"));
-    pBeforeBBL2 = reinterpret_cast< BEFORE_BBL >(dlsym(module, "BeforeBBL2"));
-    pFini2      = reinterpret_cast< FINI_F >(dlsym(module, "Fini2"));
+    pInit2 = reinterpret_cast<INIT_F>(dlsym(module, "Init2"));
+    pBeforeBBL2 = reinterpret_cast<BEFORE_BBL>(dlsym(module, "BeforeBBL2"));
+    pFini2 = reinterpret_cast<FINI_F>(dlsym(module, "Fini2"));
     if (pInit2 == NULL || pBeforeBBL2 == NULL || pFini2 == NULL)
     {
         cerr << "Failed to find proc addresses in dynamic_secondary_dll.dll" << endl;
         exit(1);
     }
 
-    nModules = pInit2(KnobEnumerate, KnobOutputFile2.Value().c_str());
+    nModules = pInit2(KnobEnumerate);
+#endif
 
     int nModulesMain = 0;
     // Enumerate DLLs currently loaded by Pin loader.

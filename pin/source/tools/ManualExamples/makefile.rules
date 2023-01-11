@@ -68,21 +68,36 @@ endif
 
 # Windows
 ifeq ($(TARGET_OS),windows)
-    TEST_TOOL_ROOTS += w_malloctrace buffer_windows emudiv replacesigprobed dumpargv
+    TEST_TOOL_ROOTS += w_malloctrace buffer_windows emudiv replacesigprobed
     APP_ROOTS += divide_by_zero
 endif
 
-###### Handle exceptions here (OS/arch related) ######
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
+###### Handle exceptions here ######
 
 # TODO: These tests fail - fix and remove the following:
 
 # See Mantis 4311 for nonstatica
 ifeq ($(TARGET_OS),windows)
     TEST_TOOL_ROOTS := $(filter-out nonstatica, $(TEST_TOOL_ROOTS))
+endif
+
+ifeq ($(TARGET_OS),mac)
+    # See mantis 4670
+    MACOS_VERSION_GE_1014 := $(shell $(TOOLS_ROOT)/Utils/testMacOsVersion ge 10.14.0)
+    ifeq ($(MACOS_VERSION_GE_1014), 1)
+        TEST_ROOTS := $(filter-out statica, $(TEST_ROOTS))
+    endif
+endif
+
+# See mantis 4717
+ifeq ($(TARGET_OS),windows)
+    WIN_BUILDBRANCH := $(shell $(PYTHON) $(TOOLS_ROOT)/Utils/printWindowsVersion.py BuildBranch)
+    ifeq ($(WIN_BUILDBRANCH), rs5_release)
+        MACHINE_SUPPORTS_AVX_INSTRUCTIONS := $(shell $(CHECKAVX) | $(GREP) Yes)
+        ifeq ($(MACHINE_SUPPORTS_AVX_INSTRUCTIONS),Yes)
+            TEST_TOOL_ROOTS := $(filter-out emudiv, $(TEST_TOOL_ROOTS))
+        endif
+    endif
 endif
 
 ###### Define the sanity subset ######
@@ -158,11 +173,6 @@ fork_jit_tool.test: $(OBJDIR)fork_jit_tool$(PINTOOL_SUFFIX) $(OBJDIR)fork_app$(E
 follow_child_tool.test: $(OBJDIR)follow_child_tool$(PINTOOL_SUFFIX) $(OBJDIR)follow_child_app1$(EXE_SUFFIX) $(OBJDIR)follow_child_app2$(EXE_SUFFIX)
 	$(PIN) -follow_execv 1 -t $(OBJDIR)follow_child_tool$(PINTOOL_SUFFIX) \
 	  -- $(OBJDIR)follow_child_app1$(EXE_SUFFIX) $(OBJDIR)follow_child_app2$(EXE_SUFFIX)
-
-dumpargv.test: $(OBJDIR)dumpargv$(PINTOOL_SUFFIX) $(THREAD_APP)
-	$(PIN) -error_file '\\isamba\nfs\site\ptl\bistro\log' -t $(OBJDIR)dumpargv$(PINTOOL_SUFFIX) \
-	  -- $(THREAD_APP) > $(OBJDIR)dumpargv.out 2>&1
-	$(RM) $(OBJDIR)dumpargv.out
 
 ##############################################################
 #

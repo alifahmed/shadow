@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -9,21 +9,21 @@
  * warranties, other than those that are expressly stated in the License.
  */
 
-#define _WIN32_WINNT 0x0400
+#define _WIN32_WINNT   0x0400 
 #include <Windows.h>
 #include <iostream>
 #include <stdio.h>
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::flush;
 using std::string;
+using std::cerr;
+using std::endl;
+using std::cout;
+using std::flush;
 static volatile int i = 0;
 
 //Verify that the LFH is available. return true when running under debugger.
 bool VerifyLFHAvailable()
 {
-    if (IsDebuggerPresent())
+    if(IsDebuggerPresent())
     {
         //LFH is not available unser debugger
         return true;
@@ -37,33 +37,33 @@ bool VerifyLFHAvailable()
 
 BOOL WINAPI DllMain(HANDLE hDll, DWORD dwReason, LPVOID lpReserved)
 {
-    switch (dwReason)
+    switch (dwReason) 
     {
-        case DLL_PROCESS_ATTACH:
-        {
-            if (VerifyLFHAvailable())
-            {
-                cout << "Terminating process in DllMain(PROCESS_ATTACH)" << endl << flush;
-            }
-            else
-            {
-                cout << "ERROR: LFH is not available" << endl << flush;
-            }
-            TerminateProcess(GetCurrentProcess(), 0);
-            i = 12;
-            return FALSE;
-            break;
-        }
-        case DLL_THREAD_ATTACH:
-            break;
-        case DLL_THREAD_DETACH:
-            break;
-        case DLL_PROCESS_DETACH:
-            break;
-        default:
-            break;
-    }
-    return TRUE;
+      case DLL_PROCESS_ATTACH:
+      {
+		  if(VerifyLFHAvailable())
+		  {		  
+              cout << "Terminating process in DllMain(PROCESS_ATTACH)" << endl << flush;
+		  }
+		  else
+		  {
+              cout << "ERROR: LFH is not available" << endl << flush;
+		  }
+          TerminateProcess(GetCurrentProcess(), 0);
+          i = 12;
+          return FALSE;
+          break;
+      }  
+      case DLL_THREAD_ATTACH:
+          break;
+      case DLL_THREAD_DETACH: 
+          break;
+      case DLL_PROCESS_DETACH:
+          break;
+      default:
+          break; 
+    } 
+    return TRUE; 
 }
 
-extern "C" __declspec(dllexport) int Something() { return i; }
+extern "C" __declspec(dllexport) int Something() {return i;}

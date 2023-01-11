@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,11 +22,16 @@
 
 int n = 0;
 
-void Spill() {}
+void Spill()
+{
+}
 
-void Ins(INS ins, VOID*) { INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(Spill), IARG_END); }
+void Ins(INS ins, VOID *)
+{
+    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(Spill), IARG_END);
+}
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

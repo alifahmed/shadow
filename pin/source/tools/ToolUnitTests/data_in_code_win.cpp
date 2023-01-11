@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -27,7 +27,7 @@ WINDOWS::PIMAGE_DATA_DIRECTORY GetExportDirectory(ADDRINT base)
     {
         return 0;
     }
-    WINDOWS::PIMAGE_DOS_HEADER pDos = reinterpret_cast< WINDOWS::PIMAGE_DOS_HEADER >(base);
+    WINDOWS::PIMAGE_DOS_HEADER pDos = reinterpret_cast<WINDOWS::PIMAGE_DOS_HEADER>(base);
 
     // Returns FALSE when not DOS MZ header
     if (pDos->e_magic != IMAGE_DOS_SIGNATURE)
@@ -35,8 +35,8 @@ WINDOWS::PIMAGE_DATA_DIRECTORY GetExportDirectory(ADDRINT base)
         return 0;
     }
 
-    const WINDOWS::PIMAGE_NT_HEADERS pHeaders =
-        reinterpret_cast< WINDOWS::PIMAGE_NT_HEADERS >(reinterpret_cast< WINDOWS::ULONG_PTR >(pDos) + pDos->e_lfanew);
+    const WINDOWS::PIMAGE_NT_HEADERS pHeaders = reinterpret_cast<WINDOWS::PIMAGE_NT_HEADERS>
+        (reinterpret_cast<WINDOWS::ULONG_PTR>(pDos) + pDos->e_lfanew);
 
     // check that this is PE/COFF image
     if (pHeaders->Signature != IMAGE_NT_SIGNATURE)
@@ -44,7 +44,8 @@ WINDOWS::PIMAGE_DATA_DIRECTORY GetExportDirectory(ADDRINT base)
         return 0;
     }
 
-    WINDOWS::PIMAGE_DATA_DIRECTORY pExpDirEntry = &pHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+    WINDOWS::PIMAGE_DATA_DIRECTORY pExpDirEntry =
+        &pHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
     if ((pExpDirEntry->VirtualAddress == 0) || (pExpDirEntry->Size == 0))
     {
         return NULL; // No export directory
@@ -53,15 +54,17 @@ WINDOWS::PIMAGE_DATA_DIRECTORY GetExportDirectory(ADDRINT base)
     return pExpDirEntry;
 }
 
+
 // Pin calls this function every time a new img is loaded
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    if (!IMG_IsMainExecutable(img)) return;
+    if (!IMG_IsMainExecutable(img))
+        return;
 
     printf("%s loaded\n", IMG_Name(img).c_str());
     fflush(stdout);
 
-    ADDRINT imageBase                      = IMG_LowAddress(img);
+    ADDRINT imageBase = IMG_LowAddress(img);
     WINDOWS::PIMAGE_DATA_DIRECTORY pExpDir = GetExportDirectory(imageBase);
     if ((pExpDir == 0) || (pExpDir->Size == 0))
     {
@@ -104,11 +107,11 @@ VOID ImageLoad(IMG img, VOID* v)
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize symbol processing
     PIN_InitSymbols();
-
+    
     // Initialize pin
     if (PIN_Init(argc, argv) != 0)
     {

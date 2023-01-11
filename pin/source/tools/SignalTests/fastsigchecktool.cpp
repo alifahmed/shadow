@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -27,17 +27,17 @@ void OutOfLine()
 {
     static volatile int Var = 0;
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0;  i < 10;  i++)
         Var++;
 }
 
-void InstrumentTrace(TRACE trace, VOID*)
+void InstrumentTrace(TRACE trace, VOID *)
 {
     for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
         BBL_InsertCall(bbl, IPOINT_BEFORE, AFUNPTR(OutOfLine), IARG_END);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

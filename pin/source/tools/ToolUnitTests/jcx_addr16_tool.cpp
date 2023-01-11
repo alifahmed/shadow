@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,15 +16,16 @@
 
 #include "pin.H"
 
+
 VOID VerifyNotTaken(BOOL taken)
 {
     if (taken)
     {
-        printf("taken\n");
+        printf ("taken\n");
     }
     else
     {
-        printf("notTaken\n");
+        printf ("notTaken\n");
     }
     fflush(stdout);
 }
@@ -34,19 +35,23 @@ VOID VerifyNotTaken(BOOL taken)
  */
 VOID Instruction(INS ins, VOID* v)
 {
-    if (INS_Opcode(ins) == XED_ICLASS_JRCXZ)
+    if (INS_Opcode(ins)==XED_ICLASS_JRCXZ)
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(VerifyNotTaken), IARG_BRANCH_TAKEN, IARG_END);
+        INS_InsertCall(ins,
+                       IPOINT_BEFORE,
+                       AFUNPTR(VerifyNotTaken),
+                       IARG_BRANCH_TAKEN,
+                       IARG_END);
     }
 }
 
 /*!
  * The main procedure of the tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     INS_AddInstrumentFunction(Instruction, 0);
-    PIN_StartProgram(); // Never returns
+    PIN_StartProgram();    // Never returns
     return 0;
 }

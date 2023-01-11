@@ -1,0 +1,22 @@
+Enabled messages [UnixVersion()] 67  info: Informational messages (enabled by default)
+Logger finished sanity check 
+Logger first configuration phase completed 
+Region selector activated 
+[0] Pinball basename: /home/warsier/Documents/pinplay/pinplay-dcfg-3.11-pin-3.11-97998-g7ecce2dac-gcc-linux/extras/dcfg/pinball/log
+Found VDSO area from Pin AUXV at 0x7ffe45fbf000:0x7ffe45fc1000
+Loading /usr/bin/date(0x55e1fe30c000:0x55e1fe3248cf)
+Loading /lib64/ld-linux-x86-64.so.2(0x7f19ba5e6000:0x7f19ba611ccb)
+[0] Started logging thread OSPid: 425215 OSTid: 425215
+[0] region-start
+[0] + RECEIVED AND PROCESSED START event: ip:0x7f19ba5e7100 time:Thu Jun  9 12:13:03 2022
+Replacing AT_SYSINFO_EHDR
+	 from AT_SYSINFO_EHDR, 0x7ffe45fbf000
+	 to AT_IGNORE,0
+[0] Stopping all threads - processing controller event
+[0] Stopping all threads succeeded
+[0] + STARTING NEW REGION at: ip:0x7f19ba5e7103 time:Thu Jun  9 12:13:03 2022
+[0]  Region# : 0
+[0] Region has 1 existing threads(s)
+[0] Resuming all threads - complied processing controller event
+[0] InitRegion : 0
+Loading /lib/x86_64-linux-gnu/libc.so.6(0x7f19a04cd000:0x7f19a06be65f)

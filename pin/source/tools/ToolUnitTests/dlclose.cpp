@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,21 +26,28 @@ using std::endl;
 
 BOOL inMain = FALSE;
 
-void MainBefore() { inMain = TRUE; }
+void MainBefore()
+{
+    inMain = TRUE;
+}
 
-VOID MainAfter() { inMain = FALSE; }
+VOID MainAfter()
+{
+    inMain = FALSE;
+}
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     if (inMain)
     {
         cout << "Loaded " << IMG_Name(img) << endl;
     }
-
+    
     if (IMG_IsMainExecutable(img))
     {
         RTN mainRtn = RTN_FindByName(img, "_main");
-        if (!RTN_Valid(mainRtn)) mainRtn = RTN_FindByName(img, "main");
+        if (!RTN_Valid(mainRtn))
+            mainRtn = RTN_FindByName(img, "main");
 
         if (!RTN_Valid(mainRtn))
         {
@@ -54,7 +61,7 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-VOID ImageUnload(IMG img, VOID* v)
+VOID ImageUnload(IMG img, VOID *v)
 {
     if (inMain)
     {
@@ -62,11 +69,12 @@ VOID ImageUnload(IMG img, VOID* v)
     }
 }
 
+
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
-
+    
     // Initialize pin
     PIN_Init(argc, argv);
 
@@ -78,6 +86,6 @@ int main(int argc, char* argv[])
 
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

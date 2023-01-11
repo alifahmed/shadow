@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,13 +20,13 @@
 #include <cassert>
 using std::string;
 
-VOID onImageLoad(IMG img, VOID* data)
+VOID onImageLoad(IMG img, VOID *data)
 {
     SYM sym;
 
     if (IMG_IsMainExecutable(img))
     {
-        bool foundStatic  = false;
+        bool foundStatic = false;
         bool foundDynamic = false;
         for (sym = IMG_RegsymHead(img); SYM_Valid(sym); sym = SYM_Next(sym))
         {
@@ -46,16 +46,18 @@ VOID onImageLoad(IMG img, VOID* data)
     }
 }
 
+
 int main(int argc, char** argv)
 {
     PIN_InitSymbols();
-
+    
     if (!PIN_Init(argc, argv))
     {
-        IMG_AddInstrumentFunction(onImageLoad, 0);
+
+        IMG_AddInstrumentFunction(onImageLoad,  0);
 
         PIN_StartProgram();
     }
 
-    return (1);
+    return(1);
 }

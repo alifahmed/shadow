@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,24 +20,25 @@
 #include <iostream>
 
 #ifdef TARGET_BSD
-#ifndef SIGRTMIN
-#define SIGRTMIN 128
-#endif
+ #ifndef SIGRTMIN
+  #define SIGRTMIN 128
+ #endif
 #endif
 
 #ifdef TARGET_MAC
-#ifndef SIGRTMIN
-#define SIGRTMIN 32
-#endif
+ #ifndef SIGRTMIN
+  #define SIGRTMIN 32
+ #endif
 #endif
 
-static BOOL Intercept(THREADID, INT32, CONTEXT*, BOOL, const EXCEPTION_INFO*, VOID*);
+static BOOL Intercept(THREADID, INT32, CONTEXT *, BOOL, const EXCEPTION_INFO *, VOID *);
 
-int main(int argc, char** argv)
+
+int main(int argc, char **argv)
 {
     PIN_Init(argc, argv);
 
-    for (int sig = 1; sig < SIGRTMIN; sig++)
+    for (int sig = 1;  sig < SIGRTMIN;  sig++)
     {
         PIN_InterceptSignal(sig, Intercept, 0);
         PIN_UnblockSignal(sig, TRUE);
@@ -47,7 +48,8 @@ int main(int argc, char** argv)
     return 0;
 }
 
-static BOOL Intercept(THREADID, INT32 sig, CONTEXT*, BOOL, const EXCEPTION_INFO*, VOID*)
+
+static BOOL Intercept(THREADID, INT32 sig, CONTEXT *, BOOL, const EXCEPTION_INFO *, VOID *)
 {
     std::cerr << "Intercepted signal " << sig << std::endl;
     return TRUE;

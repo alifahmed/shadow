@@ -1,5 +1,5 @@
 /*BEGIN_LEGAL 
-Copyright 2002-2020 Intel Corporation.
+Copyright 2002-2019 Intel Corporation.
 
 This software and the related documents are Intel copyrighted materials, and your
 use of them is governed by the express license under which they were provided to
@@ -82,9 +82,6 @@ typedef struct {
 
     /// internal, do not use
     xed_bool_t implicit;
-    
-    /// internal, do not use
-    xed_bool_t truncate_eip_eosz16;
 
 } xed_print_info_t;
 

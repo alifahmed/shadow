@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -17,8 +17,9 @@
 #ifndef DEBUGGER_PROTOCOL_THREAD_WINDOWS_HPP
 #define DEBUGGER_PROTOCOL_THREAD_WINDOWS_HPP
 
-namespace DEBUGGER_PROTOCOL
-{
+namespace DEBUGGER_PROTOCOL {
+
+
 /*!
  * In the future, new fields may be added to the end of the THREAD_INFO_WINDOWS
  * structure.  If this happens, clients can use the \e _version field to retain
@@ -34,16 +35,17 @@ namespace DEBUGGER_PROTOCOL
  */
 enum THREAD_INFO_WINDOWS_VERSION
 {
-    THREAD_INFO_WINDOWS_VERSION_0 ///< This is the only defined version currently.
+    THREAD_INFO_WINDOWS_VERSION_0   ///< This is the only defined version currently.
 };
+
 
 /*!
  * Information about a thread running on a Windows target.
  */
 struct /*<POD>*/ THREAD_INFO_WINDOWS
 {
-    THREAD_INFO_WINDOWS_VERSION _version; ///< Tells which fields in this structure are valid.
-    ANYADDR _teb;                         ///< Address of the thread environment block.
+    THREAD_INFO_WINDOWS_VERSION _version;   ///< Tells which fields in this structure are valid.
+    ANYADDR _teb;                     ///< Address of the thread environment block.
 
     /*!
      * If non-zero, the thread is suspended by one or more other threads in the target
@@ -53,5 +55,5 @@ struct /*<POD>*/ THREAD_INFO_WINDOWS
     UINT64 _suspensionCount;
 };
 
-} // namespace DEBUGGER_PROTOCOL
+} // namespace
 #endif // file guard

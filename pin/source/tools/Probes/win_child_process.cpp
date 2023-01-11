@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,35 +13,35 @@
 #include <windows.h>
 #include <stdio.h>
 #include <iostream>
+using std::string;
 using std::cout;
 using std::endl;
-using std::string;
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
-    CHAR* expectedArgv[3] = {{"win_child_process.exe"}, {"param1 param2"}, {"param3"}};
+    CHAR * expectedArgv[3] = {{"win_child_process.exe"}, {"param1 param2"}, {"param3"}};
     string currentArgv;
-
+    
     //Take into account that a path might be added to the executable name
-    currentArgv             = argv[0];
+    currentArgv = argv[0];
     string::size_type index = currentArgv.find(expectedArgv[0]);
-    if (index == string::npos)
+    if(index == string::npos)
     {
         //Got unexpected parameter
         cout << "Got unexpected parameter: " << argv[0] << endl;
         return (-1);
     }
     //All the rest should have exact match
-    for (int i = 1; i < argc; i++)
+    for(int i = 1; i < argc; i++)
     {
         currentArgv = argv[i];
-        if (currentArgv.compare(expectedArgv[i]) != 0)
+        if(currentArgv.compare(expectedArgv[i]) != 0)
         {
             //Got unexpected parameter
             cout << "Got unexpected parameter: " << argv[i] << endl;
             return (-1);
         }
     }
-    cout << "win_child_process - the correct run!" << endl;
+	cout << "win_child_process - the correct run!" << endl;  
     return 0;
 }

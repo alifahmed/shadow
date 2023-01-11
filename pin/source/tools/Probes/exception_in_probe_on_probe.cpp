@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,26 +23,26 @@ namespace WND
 #endif
 #include "tool_macros.h"
 
-typedef int (*foo_t)();
+typedef int (* foo_t)();
 
 static AFUNPTR foo_ptr1;
 static AFUNPTR foo_ptr2;
 
 static int foo_rep1()
 {
-    printf("foo rep1 called\n");
+	printf("foo rep1 called\n");
 
-    return ((foo_t)foo_ptr1)();
+	return ((foo_t)foo_ptr1)();
 }
 
 static int foo_rep2()
 {
-    printf("foo rep2 called\n");
+	printf("foo rep2 called\n");
 
-    return ((foo_t)foo_ptr2)();
+	return ((foo_t)foo_ptr2)();
 }
 
-static VOID on_module_loading(IMG img, VOID* data)
+static VOID on_module_loading(IMG img, VOID *data)
 {
     if (IMG_IsMainExecutable(img))
     {
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
     if (!PIN_Init(argc, argv))
     {
-        IMG_AddInstrumentFunction(on_module_loading, 0);
+        IMG_AddInstrumentFunction(on_module_loading,  0);        
 
         PIN_StartProgramProbed();
     }

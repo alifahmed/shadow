@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,8 +21,8 @@
 #include <fstream>
 #include <string.h>
 using std::cerr;
-using std::endl;
 using std::string;
+using std::endl;
 
 /* ===================================================================== */
 /* Global Variables */
@@ -32,9 +32,11 @@ using std::string;
 /* Commandline Switches */
 /* ===================================================================== */
 
-static std::ofstream out;
+LOCALVAR std::ofstream out;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "thenpredicated.out", "Output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,         "pintool",
+    "o", "thenpredicated.out", "Output file");
+
 
 /* ===================================================================== */
 
@@ -48,28 +50,34 @@ INT32 Usage()
 }
 
 /* ===================================================================== */
-static ADDRINT returnArg(ADDRINT arg) { return arg; }
+static ADDRINT returnArg(ADDRINT arg)
+{
+    return arg;
+}
 
 // Not thread safe, but that's not the point of this test.
 static UINT32 predicatedTrueCount = 0;
 
-static VOID countInst() { predicatedTrueCount++; }
+static VOID countInst()
+{
+    predicatedTrueCount++;
+}
 
 /* ===================================================================== */
 
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     // Find predicated instructions only.
     if (INS_IsPredicated(ins))
     {
-        INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)returnArg, IARG_ADDRINT, 1, IARG_END);
-        INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)countInst, IARG_END);
+        INS_InsertIfCall (ins, IPOINT_BEFORE, (AFUNPTR)returnArg, IARG_ADDRINT, 1, IARG_END);
+        INS_InsertThenPredicatedCall (ins, IPOINT_BEFORE, (AFUNPTR)countInst, IARG_END);
     }
 }
 
 /* ===================================================================== */
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     out << "Predicated true instructions " << predicatedTrueCount << endl;
     out.close();
@@ -77,15 +85,15 @@ VOID Fini(INT32 code, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
-
-    string filename = KnobOutputFile.Value();
-
+    
+    string filename =  KnobOutputFile.Value();
+    
     // Do this before we activate controllers
     out.open(filename.c_str());
 
@@ -94,7 +102,7 @@ int main(int argc, char* argv[])
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
 

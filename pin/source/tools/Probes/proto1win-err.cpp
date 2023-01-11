@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,58 +21,73 @@
 
 namespace WIND
 {
-#include <windows.h>
+    #include <windows.h>
 }
 
-using std::cout;
-using std::dec;
-using std::endl;
-using std::flush;
-using std::hex;
 using std::string;
-typedef VOID* (*FUNCPTR_MALLOC)(size_t);
+using std::endl;
+using std::cout;
+using std::hex;
+using std::dec;
+using std::flush;
+typedef VOID * (*FUNCPTR_MALLOC)(size_t);
+
 
 /* ===================================================================== */
-VOID* Probe_Malloc_IA32(FUNCPTR_MALLOC orgFuncptr, size_t arg0, ADDRINT returnIp, ADDRINT esp, ADDRINT ebp)
+VOID * Probe_Malloc_IA32( FUNCPTR_MALLOC orgFuncptr, size_t arg0,
+                    ADDRINT returnIp,
+                    ADDRINT esp, ADDRINT ebp )
 {
-    cout << "Probe_Malloc_IA32 (" << hex << (ADDRINT)orgFuncptr << ", " << hex << arg0 << ", " << hex << returnIp << "," << hex
-         << esp << ", " << hex << ebp << ")" << endl
-         << flush;
+    cout << "Probe_Malloc_IA32 (" << hex << (ADDRINT) orgFuncptr << ", " 
+         << hex << arg0 << ", "		
+         << hex << returnIp << ","
+         << hex << esp << ", "
+         << hex << ebp << ")" 
+         << endl << flush;
 
     ASSERTX(esp <= 0xffffffff);
 
-    VOID* v = orgFuncptr(arg0);
+    VOID * v = orgFuncptr(arg0);
     return v;
 }
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    const char* name = "malloc";
-
+    const char * name = "malloc";
+ 
     RTN rtn = RTN_FindByName(img, name);
     if (RTN_Valid(rtn) && RTN_IsSafeForProbedReplacement(rtn))
     {
-        PROTO proto_funcptr = PROTO_Allocate(PIN_PARG(WIND::LPVOID), CALLINGSTD_DEFAULT, name, PIN_PARG(size_t), PIN_PARG_END());
+        PROTO proto_funcptr = PROTO_Allocate(PIN_PARG(WIND::LPVOID),
+                                             CALLINGSTD_DEFAULT,  name,
+                                             PIN_PARG(size_t),
+                                             PIN_PARG_END() );
 
         cout << "Replacing " << name << " in " << IMG_Name(img) << endl;
 
-        RTN_ReplaceSignatureProbed(rtn, AFUNPTR(Probe_Malloc_IA32), IARG_PROTOTYPE, proto_funcptr, IARG_ORIG_FUNCPTR,
-                                   IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_RETURN_IP, IARG_REG_VALUE, REG_ESP, IARG_REG_VALUE,
-                                   REG_EBP, IARG_END);
+        RTN_ReplaceSignatureProbed(
+            rtn, AFUNPTR(Probe_Malloc_IA32),
+            IARG_PROTOTYPE, proto_funcptr,
+            IARG_ORIG_FUNCPTR,
+            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+            IARG_RETURN_IP,
+            IARG_REG_VALUE, REG_ESP,
+            IARG_REG_VALUE, REG_EBP,
+            IARG_END);
 
-        PROTO_Free(proto_funcptr);
+        PROTO_Free( proto_funcptr);
     }
 }
 /* ===================================================================== */
-int main(INT32 argc, CHAR* argv[])
+int main(INT32 argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
     PIN_Init(argc, argv);
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgramProbed();
 
     return 0;

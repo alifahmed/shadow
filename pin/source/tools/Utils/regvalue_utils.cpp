@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,9 +17,10 @@
 
 using std::endl;
 using std::flush;
-using std::hex;
 using std::string;
 using std::stringstream;
+using std::hex;
+
 
 /////////////////////
 // EXTERNAL FUNCTIONS
@@ -28,20 +29,22 @@ using std::stringstream;
 extern "C" bool ProcessorSupportsAvx();
 extern "C" bool SupportsAvx512f();
 
+
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
 
 // Boolean indicating whether the system supports AVX instructions and registers.
-const bool hasAvxSupport     = ProcessorSupportsAvx();
+const bool hasAvxSupport = ProcessorSupportsAvx();
 const bool hasAvx512fSupport = SupportsAvx512f();
+
 
 /////////////////////
 // INTERNAL FUNCTIONS IMPLEMENTATION
 /////////////////////
 
-template< typename SIZETYPE >
-static bool CompareSizedWord(const unsigned char* value, const unsigned char* expected, unsigned int element,
+template<typename SIZETYPE>
+static bool CompareSizedWord(const unsigned char * value, const unsigned char * expected, unsigned int element,
                              unsigned int totalSize, ostream& ost)
 {
     if (*((SIZETYPE*)(&value[element << 3])) != *((SIZETYPE*)(&expected[element << 3])))
@@ -52,6 +55,7 @@ static bool CompareSizedWord(const unsigned char* value, const unsigned char* ex
     }
     return true;
 }
+
 
 /////////////////////
 // API FUNCTIONS IMPLEMENTATION
@@ -68,7 +72,7 @@ string Val2Str(const void* value, unsigned int size)
         --size;
         sstr << (unsigned int)cval[size];
     }
-    return string("0x") + sstr.str();
+    return string("0x")+sstr.str();
 }
 
 bool CompareValues(const void* value, const void* expected, unsigned int size, ostream& ost)

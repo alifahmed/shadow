@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -9,7 +9,7 @@
  * warranties, other than those that are expressly stated in the License.
  */
 
-/*
+ /*
  * This tool verifies that in case of linking an image with a position independent executable,
  * the address of the first instruction executed within the image (which returned by IMG_EntryAddress API)
  * is absolute and correct.
@@ -31,15 +31,17 @@
 #define ENTRY_RTN_NAME "unnamedImageEntryPoint"
 #endif
 
-using std::endl;
 using std::ofstream;
 using std::string;
+using std::endl;
+
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "pic_image.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "pic_image.out", "specify file name");
 
 ofstream TraceFile;
 
@@ -52,6 +54,7 @@ ofstream TraceFile;
  */
 INT32 Usage()
 {
+
     std::cerr << "This tool retrieves the first instruction of loaded image" << endl
               << "by using IMG_EntryAddress API. Address is absolute, regardless of image type (e.g. PIE)" << endl;
 
@@ -64,9 +67,10 @@ INT32 Usage()
 // Analysis routines
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* arg)
+VOID ImageLoad(IMG img, VOID *arg)
 {
-    if (!IMG_IsMainExecutable(img)) return;
+    if (!IMG_IsMainExecutable(img))
+                    return;
 
     ADDRINT entry = IMG_EntryAddress(img);
     TraceFile << "Application Entry Address is at : " << std::hex << entry << std::endl;
@@ -77,7 +81,7 @@ VOID ImageLoad(IMG img, VOID* arg)
 
     TraceFile << ENTRY_RTN_NAME << " Address and Application Entry Address supposed to be identical!" << std::endl;
 
-    assert(entry == start_address);
+    assert( entry == start_address);
     return;
 }
 
@@ -88,11 +92,11 @@ VOID ImageLoad(IMG img, VOID* arg)
  * @param[in]   argv            array of command line arguments,
  *                              including pin -t <toolname> -- ...
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialize PIN library. Print help message if -h(elp) is specified
     // in the command line or the command line is invalid
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }

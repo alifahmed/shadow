@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -35,10 +35,10 @@ SupportsAvx2:
     cmpq $6, %rax      # check OS has enabled both XMM and YMM state support
     jne NotSupported
     mov $7, %rax
-    mov $0, %rcx       // Check for AVX2 support on CPU
+    mov $0, %rcx       # specify 0 for XFEATURE_ENABLED_MASK register
     cpuid
-    andq $0x20, %rbx   // bit 5 avx2
-    cmpq $0x20, %rbx   // bit 5 avx2 
+    andq $0x10, %rbx
+    cmpq $0x10, %rbx    
     jne NotSupported  # no AVX2
     mov $1, %rax
 done:

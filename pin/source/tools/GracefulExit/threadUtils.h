@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,9 +21,9 @@
 #if defined(TARGET_WINDOWS)
 #include <Windows.h>
 typedef DWORD TidType;
-#define EXPORT_SYM __declspec(dllexport)
+#define EXPORT_SYM __declspec( dllexport )
 
-#elif defined(TARGET_LINUX)
+#elif defined (TARGET_LINUX)
 #include <pthread.h>
 typedef pthread_t TidType;
 #define EXPORT_SYM
@@ -32,52 +32,53 @@ typedef pthread_t TidType;
 
 #include <string>
 
+
 using std::string;
 
-const unsigned int TIMEOUT = 600; //10 minutes
+const unsigned int TIMEOUT=600; //10 minutes
 
 /**************************************************
  * Results                                        *
  **************************************************/
-enum Results
-{
-    RES_SUCCESS = 0,       // 0
-    RES_INIT_FAILED,       // 1
-    RES_CREATE_FAILED,     // 2
-    RES_LOCK_FAILED,       // 3
-    RES_UNLOCK_FAILED,     // 4
-    RES_CANCEL_FAILED,     // 5
-    RES_JOIN_FAILED,       // 6
-    RES_INVALID_ARGS,      // 7
-    RES_UNKNOWN_OPTION,    // 8
-    RES_EXIT_TIMEOUT,      // 9
-    RES_CLONE_LOOP_FAILED, // 10
-    RES_UNEXPECTED_EXIT,   // 11
-    RES_FORK_FAILED,       // 12
-    RES_EXECV_FAILED,      // 13
-    RES_EXIT_FAILED        // 14
+enum Results {
+    RES_SUCCESS = 0,        // 0
+    RES_INIT_FAILED,        // 1
+    RES_CREATE_FAILED,      // 2
+    RES_LOCK_FAILED,        // 3
+    RES_UNLOCK_FAILED,      // 4
+    RES_CANCEL_FAILED,      // 5
+    RES_JOIN_FAILED,        // 6
+    RES_INVALID_ARGS,       // 7
+    RES_UNKNOWN_OPTION,     // 8
+    RES_EXIT_TIMEOUT,       // 9
+    RES_CLONE_LOOP_FAILED,  // 10
+    RES_UNEXPECTED_EXIT,    // 11
+    RES_FORK_FAILED,        // 12
+    RES_EXECV_FAILED,       // 13
+    RES_EXIT_FAILED         // 14
 };
+
 
 /**************************************************
  * Error strings                                  *
  **************************************************/
-const string errorStrings[] = {
-    "success",                                                   // 0
-    "lock init failed",                                          // 1
-    "thread creation failed",                                    // 2
-    "lock failed",                                               // 3
-    "unlock failed",                                             // 4
-    "thread cancel failed",                                      // 5
-    "thread join failed",                                        // 6
-    "invalid number of args received",                           // 7
-    "unknown arg received",                                      // 8
-    "the WAIT thread's timeout was reached",                     // 9
-    "thread creation failed in clone loop",                      // 10
-    "thread creation loop was terminated for an unknown reason", // 11
-    "fork failed",                                               // 12
-    "execv failed",                                              // 13
-    "the tool failed to terminate the application"               // 14
-};
+const string errorStrings[] = { "success",                                                      // 0
+                                "lock init failed",                                             // 1
+                                "thread creation failed",                                       // 2
+                                "lock failed",                                                  // 3
+                                "unlock failed",                                                // 4
+                                "thread cancel failed",                                         // 5
+                                "thread join failed",                                           // 6
+                                "invalid number of args received",                              // 7
+                                "unknown arg received",                                         // 8
+                                "the WAIT thread's timeout was reached",                        // 9
+                                "thread creation failed in clone loop",                         // 10
+                                "thread creation loop was terminated for an unknown reason",    // 11
+                                "fork failed",                                                  // 12
+                                "execv failed",                                                 // 13
+                                "the tool failed to terminate the application"                  // 14
+                               };
+
 
 /**************************************************
  * Function declarations                          *

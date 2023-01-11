@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,11 +15,11 @@
 #include "pin.H"
 using std::endl;
 
-VOID* lastInstPtr;
+VOID * lastInstPtr;
 BOOL isPredictedTaken;
-VOID* predictedInstPtr;
-UINT64 icount  = 0;
-UINT64 errors  = 0;
+VOID * predictedInstPtr;
+UINT64 icount = 0;
+UINT64 errors = 0;
 BOOL isSkipped = TRUE; // always skip checking the first inst
 
 // The tool assumes single-threaded application.
@@ -33,11 +33,12 @@ ADDRINT IfMyThread(THREADID threadId)
     return threadId == myThread;
 }
 
-VOID ThreadStart(THREADID tid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID tid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     // Determine single thread to profile.
     if (myThread == INVALID_THREADID) myThread = tid;
 }
+
 
 VOID CountError()
 {
@@ -49,23 +50,23 @@ VOID CountError()
     }
 }
 
-VOID CheckFlow(VOID* instPtr, INT32 isTaken, VOID* fallthroughAddr, VOID* takenAddr, UINT32 stutters)
+VOID CheckFlow(VOID * instPtr, INT32 isTaken, VOID * fallthroughAddr, VOID * takenAddr, UINT32 stutters)
 {
     isPredictedTaken = isTaken;
 
     icount++;
-
+    
     //fprintf(stderr,"Current: %p isTaken %d fallthroughAddr %p takenAddr %p\n", instPtr, isTaken, fallthroughAddr, takenAddr);
 
     if (predictedInstPtr != instPtr && !isSkipped &&
         !(stutters && (instPtr == lastInstPtr))) // An instruction which stutters can stay at the same IP
     {
-        fprintf(stderr, "From: %p predicted InstPtr %p, actual InstPtr %p\n", lastInstPtr, predictedInstPtr, instPtr);
+        fprintf(stderr,"From: %p predicted InstPtr %p, actual InstPtr %p\n", lastInstPtr, predictedInstPtr, instPtr);
         CountError();
     }
-
+    
     isSkipped = FALSE;
-
+    
     if (isTaken)
     {
         predictedInstPtr = takenAddr;
@@ -77,54 +78,68 @@ VOID CheckFlow(VOID* instPtr, INT32 isTaken, VOID* fallthroughAddr, VOID* takenA
 
     lastInstPtr = instPtr;
 }
-
+    
 VOID Taken()
 {
     if (!isPredictedTaken)
     {
-        fprintf(stderr, "%p taken but not predictedInstPtr\n", lastInstPtr);
+        fprintf(stderr,"%p taken but not predictedInstPtr\n", lastInstPtr);
         CountError();
     }
 }
 
-VOID Skip() { isSkipped = TRUE; }
+VOID Skip()
+{
+    isSkipped = TRUE;
+}
 
 TLS_KEY ea_tls_key;
 
-VOID SaveEa(THREADID tid, VOID* ea) { PIN_SetThreadData(ea_tls_key, ea, tid); }
-
+VOID SaveEa(THREADID tid, VOID * ea)
+{
+    PIN_SetThreadData(ea_tls_key, ea, tid);
+}
+    
 VOID CheckXlatAfter(THREADID tid, ADDRINT eax)
 {
-    VOID* ea     = PIN_GetThreadData(ea_tls_key, tid);
-    int actual   = *(char*)&eax;
+    VOID * ea = PIN_GetThreadData(ea_tls_key, tid);
+    int actual = *(char*)&eax;
     int expected = *(char*)ea;
     if (expected != actual)
     {
-        fprintf(stderr, "xlat actual %d expected %d\n", actual, expected);
+        fprintf(stderr, "xlat actual %d expected %d\n",actual,expected);
         errors++;
     }
 }
-
+    
 #if defined(TARGET_IA32)
 VOID CheckXlat(INS ins)
 {
-    if (INS_Opcode(ins) != XED_ICLASS_XLAT) return;
+    if (INS_Opcode(ins) != XED_ICLASS_XLAT)
+        return;
     INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SaveEa), IARG_THREAD_ID, IARG_MEMORYREAD_EA, IARG_END);
     INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(CheckXlatAfter), IARG_THREAD_ID, IARG_REG_VALUE, REG_EAX, IARG_END);
 }
 #else
-VOID CheckXlat(INS ins) {}
+VOID CheckXlat(INS ins)
+{}
 #endif
 
-VOID Instruction(INS ins, VOID* v)
+
+VOID Instruction(INS ins, VOID *v)
 {
     CheckXlat(ins);
 
     if (INS_HasFallThrough(ins) && INS_IsControlFlow(ins))
     {
         INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(IfMyThread), IARG_THREAD_ID, IARG_END);
-        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckFlow, IARG_INST_PTR, IARG_BRANCH_TAKEN, IARG_FALLTHROUGH_ADDR,
-                           IARG_BRANCH_TARGET_ADDR, IARG_UINT32, INS_Stutters(ins), IARG_END);
+        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckFlow,
+            IARG_INST_PTR,
+            IARG_BRANCH_TAKEN,
+            IARG_FALLTHROUGH_ADDR,
+            IARG_BRANCH_TARGET_ADDR,
+            IARG_UINT32, INS_Stutters(ins),
+            IARG_END);
     }
     if (!INS_HasFallThrough(ins) && INS_IsControlFlow(ins))
     {
@@ -134,20 +149,35 @@ VOID Instruction(INS ins, VOID* v)
          * because this control flow instruction is always taken).
          */
         INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(IfMyThread), IARG_THREAD_ID, IARG_END);
-        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckFlow, IARG_INST_PTR, IARG_BRANCH_TAKEN, IARG_ADDRINT, 0,
-                           IARG_BRANCH_TARGET_ADDR, IARG_UINT32, INS_Stutters(ins), IARG_END);
+        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckFlow,
+            IARG_INST_PTR,
+            IARG_BRANCH_TAKEN,
+            IARG_ADDRINT, 0,
+            IARG_BRANCH_TARGET_ADDR,
+            IARG_UINT32, INS_Stutters(ins),
+            IARG_END);
     }
     if (INS_HasFallThrough(ins) && !INS_IsControlFlow(ins))
     {
         INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(IfMyThread), IARG_THREAD_ID, IARG_END);
-        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckFlow, IARG_INST_PTR, IARG_BRANCH_TAKEN, IARG_FALLTHROUGH_ADDR,
-                           IARG_ADDRINT, 0, IARG_UINT32, INS_Stutters(ins), IARG_END);
+        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckFlow,
+            IARG_INST_PTR,
+            IARG_BRANCH_TAKEN,
+            IARG_FALLTHROUGH_ADDR,
+            IARG_ADDRINT, 0,
+            IARG_UINT32, INS_Stutters(ins),
+            IARG_END);
     }
     if (!INS_HasFallThrough(ins) && !INS_IsControlFlow(ins))
     {
         INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(IfMyThread), IARG_THREAD_ID, IARG_END);
-        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckFlow, IARG_INST_PTR, IARG_BRANCH_TAKEN, IARG_ADDRINT, 0,
-                           IARG_ADDRINT, 0, IARG_UINT32, INS_Stutters(ins), IARG_END);
+        INS_InsertThenCall(ins, IPOINT_BEFORE, (AFUNPTR)CheckFlow,
+            IARG_INST_PTR,
+            IARG_BRANCH_TAKEN,
+            IARG_ADDRINT, 0,
+            IARG_ADDRINT, 0,
+            IARG_UINT32, INS_Stutters(ins),
+            IARG_END);
     }
 
     if (INS_IsValidForIpointTakenBranch(ins))
@@ -165,7 +195,7 @@ VOID Instruction(INS ins, VOID* v)
 #endif
 }
 
-VOID SyscallEntry(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
+VOID SyscallEntry(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
 {
     // Profile only single thread
     if (myThread != threadIndex) return;
@@ -173,23 +203,23 @@ VOID SyscallEntry(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOI
     Skip();
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     if (code)
     {
         exit(code);
     }
-
+    
     std::cerr << errors << " errors (" << icount << " instructions checked)" << endl;
     exit(errors);
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
     // Use symbols to test handling of RTN of size 200000
     PIN_InitSymbols();
-
+    
     ea_tls_key = PIN_CreateThreadDataKey(0);
 
     INS_AddInstrumentFunction(Instruction, 0);
@@ -198,9 +228,9 @@ int main(INT32 argc, CHAR** argv)
     // Add callbacks
     PIN_AddThreadStartFunction(ThreadStart, 0);
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,14 +13,17 @@
 #include <fstream>
 #include <string>
 #include "pin.H"
-using std::endl;
 using std::string;
+using std::endl;
+
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobUnicodeExeName(KNOB_MODE_WRITEONCE, "pintool", "uni_param", "Default-Name.exe", "unicode param");
+KNOB<string> KnobUnicodeExeName(KNOB_MODE_WRITEONCE, "pintool",
+    "uni_param", "Default-Name.exe", "unicode param");
+
 
 /* ===================================================================== */
 /* Global Variables and Definitions */
@@ -35,17 +38,17 @@ std::ofstream outfile;
 #endif
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID * v)
 {
     // Looking for main symbol only in main image
     IMG_TYPE imgType = IMG_Type(img);
-    if (imgType == IMG_TYPE_STATIC || imgType == IMG_TYPE_SHARED)
+    if(imgType ==  IMG_TYPE_STATIC || imgType == IMG_TYPE_SHARED)
     {
-        string imagePath         = IMG_Name(img);
+        string imagePath = IMG_Name(img);
         string::size_type index1 = imagePath.find("prefix_");
-        if (index1 != string::npos)
+        if(index1 != string::npos)
         {
-            string image = imagePath.substr(index1);
+            string image =  imagePath.substr(index1);
             outfile << "Image: " << image << endl;
         }
 
@@ -55,15 +58,15 @@ VOID ImageLoad(IMG img, VOID* v)
             {
                 if (RTN_Name(rtn) == MAINNAME)
                 {
-                    string filePath;
+                    string  filePath;
                     PIN_GetSourceLocation(RTN_Address(rtn), NULL, NULL, &filePath);
 
                     if (filePath != "")
                     {
                         string::size_type index = filePath.find("prefix_");
-                        if (index != string::npos)
+                        if(index != string::npos)
                         {
-                            string file = filePath.substr(index);
+                            string file =  filePath.substr(index);
                             outfile << "File: " << file << endl;
                         }
                     }
@@ -73,24 +76,27 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-VOID Fini(INT32 code, VOID*) { outfile.close(); }
+VOID Fini(INT32 code, VOID *)
+{
+    outfile.close();
+}
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
 
     outfile.open("i18n_tool.out");
-
+    
     IMG img = IMG_Open(KnobUnicodeExeName.Value());
     if (IMG_Valid(img) == TRUE)
     {
-        string exeFullName = KnobUnicodeExeName.Value();
-
-        outfile << exeFullName.substr(exeFullName.rfind("/") + 1) << endl;
-        IMG_Close(img);
-    }
-
+    	string exeFullName = KnobUnicodeExeName.Value();
+    	
+        outfile << exeFullName.substr(exeFullName.rfind("/")+1) << endl;
+        IMG_Close(img);     
+    }  
+     
     IMG_AddInstrumentFunction(ImageLoad, 0);
     PIN_AddFiniFunction(Fini, 0);
 

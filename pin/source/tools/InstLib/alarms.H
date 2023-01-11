@@ -1,51 +1,69 @@
-/*
- * Copyright 2002-2020 Intel Corporation.
- * 
- * This software is provided to you as Sample Source Code as defined in the accompanying
- * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
- * section 1.L.
- * 
- * This software and the related documents are provided as is, with no express or implied
- * warranties, other than those that are expressly stated in the License.
- */
+/*BEGIN_LEGAL 
+Intel Open Source License 
 
+Copyright (c) 2002-2019 Intel Corporation. All rights reserved.
+ 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.  Redistributions
+in binary form must reproduce the above copyright notice, this list of
+conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.  Neither the name of
+the Intel Corporation nor the names of its contributors may be used to
+endorse or promote products derived from this software without
+specific prior written permission.
+ 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE INTEL OR
+ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+END_LEGAL */
 #ifndef _ALARMS_H_
 #define _ALARMS_H_
 
 #include "ialarm.H"
 #include "parse_control.H"
-extern "C"
-{
+extern "C" {
 #include "xed-interface.h"
 }
 
 //in this file we define all standard alarms
 //each alarm inherits form IALRM
-namespace CONTROLLER
+namespace CONTROLLER 
 {
 //*****************************************************************************
 class ALARM_ICOUNT : public IALARM
 {
-  public:
-    ALARM_ICOUNT(const string& icount_str, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
-        UINT64 icount = PARSER::StringToUint64(icount_str);
-        //for icount alarm the affective count is the a combination
-        //of the icount value and the count value
-        SetCount(icount * count);
-        Activate();
-    }
+public:
+    ALARM_ICOUNT(const string& icount_str, UINT32 tid, UINT32 count, 
+                 BOOL need_ctxt, ALARM_MANAGER* manager):
+      IALARM(tid, count, need_ctxt, manager){
+          UINT64 icount = PARSER::StringToUint64(icount_str);
+          //for icount alarm the affective count is the a combination
+          //of the icount value and the count value
+          SetCount(icount*count);
+          Activate();
+      }
 
-    // Update another alarm manager with its value
-    VOID UpdateAlarm(ALARM_MANAGER* alarm_manager, const string& icount_str)
-    {
-        _alarm_manager = alarm_manager;
-        UINT64 icount  = PARSER::StringToUint64(icount_str);
-        SetCount(icount);
-    }
+      // Update another alarm manager with its value
+      VOID UpdateAlarm(ALARM_MANAGER * alarm_manager, const string& icount_str)
+      {
+          _alarm_manager = alarm_manager;
+          UINT64 icount = PARSER::StringToUint64(icount_str);
+          SetCount(icount);
+      }
 
-  private:
+private:
     VOID Activate();
     static VOID Trace(TRACE trace, VOID* v);
 };
@@ -54,29 +72,28 @@ class ALARM_ICOUNT : public IALARM
 
 class ALARM_ADDRESS : public IALARM
 {
-  public:
-    ALARM_ADDRESS(const string& address, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
-        _address = PARSER::StringToUint64(address);
-        Activate();
-    }
-
-  private:
+public:
+    ALARM_ADDRESS(const string& address, UINT32 tid, UINT32 count, 
+                 BOOL need_ctxt, ALARM_MANAGER* manager):      
+      IALARM(tid, count, need_ctxt, manager){
+          _address = PARSER::StringToUint64(address);
+          Activate();
+      }
+private:
     VOID Activate();
 };
 
 //*****************************************************************************
 class ALARM_SYMBOL : public IALARM
 {
-  public:
-    ALARM_SYMBOL(const string& symbol, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager), _symbol(symbol)
-    {
+public:
+    ALARM_SYMBOL(const string& symbol, UINT32 tid, UINT32 count, 
+                 BOOL need_ctxt, ALARM_MANAGER* manager):
+      IALARM(tid, count, need_ctxt, manager), _symbol(symbol){
         Activate();
-    }
+      }
 
-  private:
+private:
     VOID Activate();
     static VOID Img(IMG img, VOID* v);
 
@@ -87,15 +104,16 @@ class ALARM_SYMBOL : public IALARM
 
 class ALARM_IMAGE : public IALARM
 {
-  public:
-    ALARM_IMAGE(const string& image, const string& offset, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager), _image(image)
-    {
-        _offset = PARSER::StringToUint64(offset);
+public:
+    ALARM_IMAGE(const string& image, const string& offset , UINT32 tid, 
+                UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager): 
+    IALARM(tid, count, need_ctxt, manager),
+    _image(image){
+        _offset = PARSER::StringToUint64(offset);    
         Activate();
     }
 
-  private:
+private:
     VOID Activate();
     static VOID Img(IMG img, VOID* v);
 
@@ -103,20 +121,21 @@ class ALARM_IMAGE : public IALARM
     UINT64 _offset;
 };
 
+
 //*****************************************************************************
 class ALARM_SSC : public IALARM
 {
-  public:
-    ALARM_SSC(const string& ssc, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager), _ssc(ssc)
-    {
-        Activate();
-    }
+public:
+    ALARM_SSC(const string& ssc, UINT32 tid, UINT32 count, 
+                 BOOL need_ctxt, ALARM_MANAGER* manager):
+      IALARM(tid, count, need_ctxt, manager),_ssc(ssc){
+          Activate();
+      }
 
-  private:
-    string _ssc;
+private:
+    string _ssc;    
     static const UINT32 _pattern_len = 8;
-
+    
     VOID Activate();
     static VOID Trace(TRACE trace, VOID* v);
 };
@@ -124,14 +143,15 @@ class ALARM_SSC : public IALARM
 //*****************************************************************************
 class ALARM_ITEXT : public IALARM
 {
-  public:
-    ALARM_ITEXT(const string& itext, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager), _itext(itext)
-    {
+public:
+    ALARM_ITEXT(const string& itext, UINT32 tid, UINT32 count, 
+        BOOL need_ctxt, ALARM_MANAGER* manager):
+    IALARM(tid, count, need_ctxt, manager),_itext(itext){
         Activate();
     }
 
-  private:
+
+private:
     string _itext;
     VOID Activate();
     static VOID Trace(TRACE trace, VOID* v);
@@ -140,18 +160,19 @@ class ALARM_ITEXT : public IALARM
 //*****************************************************************************
 class ALARM_INT3 : public IALARM
 {
-  public:
-    ALARM_INT3(const string& icount_str, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
-        UINT64 icount = PARSER::StringToUint64(icount_str);
-        //the count is the a combination
-        //of the icount value and the count value
-        SetCount(icount * count);
-        Activate();
+public:
+    ALARM_INT3(const string& icount_str,UINT32 tid, UINT32 count, 
+        BOOL need_ctxt, ALARM_MANAGER* manager): 
+    IALARM(tid, count, need_ctxt, manager){
+            UINT64 icount = PARSER::StringToUint64(icount_str);
+            //the count is the a combination 
+            //of the icount value and the count value
+            SetCount(icount*count);
+            Activate();
     }
 
-  private:
+
+private:
     VOID Activate();
     static VOID Trace(TRACE trace, VOID* v);
 };
@@ -160,16 +181,16 @@ class ALARM_INT3 : public IALARM
 
 class ALARM_ISA_CATEGORY : public IALARM
 {
-  public:
-    ALARM_ISA_CATEGORY(const string& isa_ctg, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
-        _isa_ctg      = isa_ctg;
+public:
+    ALARM_ISA_CATEGORY(const string& isa_ctg, UINT32 tid, UINT32 count, 
+        BOOL need_ctxt, ALARM_MANAGER* manager):
+    IALARM(tid, count, need_ctxt, manager){
+        _isa_ctg = isa_ctg;
         _required_ctg = str2xed_category_enum_t(_isa_ctg.c_str());
         Activate();
     }
 
-  private:
+private:
     string _isa_ctg;
     xed_category_enum_t _required_ctg;
     VOID Activate();
@@ -179,16 +200,17 @@ class ALARM_ISA_CATEGORY : public IALARM
 //*****************************************************************************
 class ALARM_ISA_EXTENSION : public IALARM
 {
-  public:
-    ALARM_ISA_EXTENSION(const string& isa_ext, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
-        _isa_ext      = isa_ext;
-        _required_ext = str2xed_extension_enum_t(_isa_ext.c_str());
-        Activate();
-    }
+public:
+    ALARM_ISA_EXTENSION(const string& isa_ext, UINT32 tid, UINT32 count, 
+                        BOOL need_ctxt, ALARM_MANAGER* manager):
+    IALARM(tid, count, need_ctxt, manager){
+          _isa_ext = isa_ext;
+          _required_ext = str2xed_extension_enum_t(_isa_ext.c_str());
+          Activate();
+      }
 
-  private:
+
+private:
     string _isa_ext;
     xed_extension_enum_t _required_ext;
     VOID Activate();
@@ -198,145 +220,158 @@ class ALARM_ISA_EXTENSION : public IALARM
 //*****************************************************************************
 class ALARM_INTERACTIVE : public IALARM
 {
-  public:
-    ALARM_INTERACTIVE(UINT32 tid, BOOL need_ctxt, ALARM_MANAGER* manager) : IALARM(tid, 1, need_ctxt, manager) { Activate(); }
-    INTERACTIVE_LISTENER* GetListener() { return _listener; }
+public:
+    ALARM_INTERACTIVE(UINT32 tid, BOOL need_ctxt, 
+                      ALARM_MANAGER* manager):
+    IALARM(tid, 1, need_ctxt, manager){
+        Activate();
+      }
+    INTERACTIVE_LISTENER* GetListener() {return _listener;}
 
-  private:
+private:
     INTERACTIVE_LISTENER* _listener;
 
     VOID Activate();
     static VOID Trace(TRACE trace, VOID* v);
-
+        
     //add if analysis function
     static VOID InsertInteractiveIf(ALARM_INTERACTIVE* alarm, INS ins);
 
-    static ADDRINT PIN_FAST_ANALYSIS_CALL InteractiveShouldFire(ALARM_INTERACTIVE* alarm, UINT32 tid);
+    static ADDRINT PIN_FAST_ANALYSIS_CALL 
+        InteractiveShouldFire(ALARM_INTERACTIVE* alarm, UINT32 tid);
 };
 
 //*****************************************************************************
 class ALARM_ENTER_FUNC : public IALARM
 {
-  public:
-    ALARM_ENTER_FUNC(const string& func, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
+public:
+    ALARM_ENTER_FUNC(const string& func, UINT32 tid, UINT32 count, 
+                     BOOL need_ctxt, ALARM_MANAGER* manager):
+    IALARM(tid, count, need_ctxt, manager){
         _func_name = func;
         Activate();
     }
 
-  private:
+
+private:
     string _func_name;
 
     VOID Activate();
-    static VOID OnFunctionStart(CONTEXT* ctxt, ADDRINT ip, THREADID tid, VOID* v);
+    static VOID OnFunctionStart(CONTEXT* ctxt, ADDRINT ip, THREADID tid, VOID *v);
 };
 
 //*****************************************************************************
 
 class ALARM_EXIT_FUNC : public IALARM
 {
-  public:
-    ALARM_EXIT_FUNC(const string& func, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
+public:
+    ALARM_EXIT_FUNC(const string& func, UINT32 tid, UINT32 count, 
+                    BOOL need_ctxt, ALARM_MANAGER* manager):
+    IALARM(tid, count, need_ctxt, manager){
         _func_name = func;
         Activate();
     }
 
-  private:
+private:
     string _func_name;
-
+    
     VOID Activate();
-    static VOID OnFunctionEnd(CONTEXT* ctxt, ADDRINT ip, THREADID tid, VOID* v);
+    static VOID OnFunctionEnd(CONTEXT* ctxt, ADDRINT ip, THREADID tid, VOID *v);
 };
 
 //*****************************************************************************
 
 class ALARM_CPUID : public IALARM
 {
-  public:
-    ALARM_CPUID(const string& val_str, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
-        UINT32 val = PARSER::StringToUint32(val_str);
-        ASSERT((val < 0x10000), "CPUID alarm should be 16 bits value");
-        _val = 0x4711 | (val << 16);
-        Activate();
-    }
+public:
+    ALARM_CPUID(const string& val_str, UINT32 tid, UINT32 count, 
+                 BOOL need_ctxt, ALARM_MANAGER* manager):
+      IALARM(tid, count, need_ctxt, manager) {
+          UINT32 val = PARSER::StringToUint32(val_str);
+          ASSERT((val<0x10000), "CPUID alarm should be 16 bits value");
+          _val = 0x4711|(val<<16);
+          Activate();
+      }
 
-  private:
+private:
     UINT32 _val;
-
+    
     VOID Activate();
     static VOID Trace(TRACE trace, VOID* v);
 
-    static ADDRINT PIN_FAST_ANALYSIS_CALL ShouldFire(IALARM* alarm, ADDRINT eax, UINT32 val, UINT32 tid);
+    static ADDRINT PIN_FAST_ANALYSIS_CALL 
+        ShouldFire(IALARM* alarm, ADDRINT eax, UINT32 val, UINT32 tid);
 };
 
 //*****************************************************************************
 
 class ALARM_MAGIC : public IALARM
 {
-  public:
-    ALARM_MAGIC(const string& val_str, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager);
+public:
+    ALARM_MAGIC(const string& val_str, UINT32 tid, UINT32 count,
+                 BOOL need_ctxt, ALARM_MANAGER* manager);
 
-  private:
+private:
     static const UINT32 SIM_CMD_MARKER = 4;
     UINT32 _a, _b;
 
     VOID Activate();
     static VOID Trace(TRACE trace, VOID* v);
 
-    static ADDRINT PIN_FAST_ANALYSIS_CALL ShouldFire(IALARM* alarm, ADDRINT eax, ADDRINT ebx, ADDRINT ecx, UINT32 a, UINT32 b,
-                                                     UINT32 tid);
+    static ADDRINT PIN_FAST_ANALYSIS_CALL
+        ShouldFire(IALARM* alarm, ADDRINT eax, ADDRINT ebx, ADDRINT ecx,
+                   UINT32 a, UINT32 b, UINT32 tid);
 };
 
 //*****************************************************************************
 
 class ALARM_PCONTROL : public IALARM
 {
-  public:
-    ALARM_PCONTROL(const string& region, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
+public:
+    ALARM_PCONTROL(const string& region, UINT32 tid, UINT32 count,
+                   BOOL need_ctxt, ALARM_MANAGER* manager):
+    IALARM(tid, count, need_ctxt, manager){
         _region = region;
         Activate();
     }
 
-  private:
+private:
     string _region;
 
     VOID Activate();
-    static VOID Rtn(RTN rtn, VOID* v);
+    static VOID Rtn(RTN rtn, VOID *v);
 
-    static VOID OnMpiPcontrol(ALARM_PCONTROL* alarm, CONTEXT* ctxt, ADDRINT ip, ADDRINT region_app, UINT32 tid);
+    static VOID OnMpiPcontrol(ALARM_PCONTROL* alarm, CONTEXT* ctxt, ADDRINT ip,
+                              ADDRINT region_app, UINT32 tid);
 };
 
 //*****************************************************************************
 class ALARM_TIMEOUT : public IALARM
 {
-  public:
-    ALARM_TIMEOUT(const string& timeout_str, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
-        _timeout_passed  = FALSE;
-        _seconds_timeout = PARSER::StringToUint32(timeout_str);
+public:
+    ALARM_TIMEOUT(const string& timeout_str, UINT32 tid, UINT32 count, 
+                 BOOL need_ctxt, ALARM_MANAGER* manager):
+      IALARM(tid, count, need_ctxt, manager) {
 
-        Activate();
-    }
+          _timeout_passed = FALSE;
+          _seconds_timeout = PARSER::StringToUint32(timeout_str);
 
-  private:
+          Activate();
+      }
+
+private:
+ 
     // Private timeout data members
     UINT32 _seconds_timeout;
     volatile BOOL _timeout_passed;
 
+    
     VOID Activate();
 
     // Internal thread routine
     static VOID WaitForTimeout(VOID* v);
 
-    // Instrumentation routines
+    // Instrumentation routines 
     static VOID Trace(TRACE trace, VOID* v);
     static VOID InsertIfCall_CheckTime(ALARM_TIMEOUT* alarm, INS ins);
 
@@ -347,47 +382,58 @@ class ALARM_TIMEOUT : public IALARM
 //*****************************************************************************
 class ALARM_SIGNAL : public IALARM
 {
-  public:
-    ALARM_SIGNAL(const string& signal_str, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
-        _signal_id = PARSER::StringToUint32(signal_str);
-        Activate();
-    }
+public:
+    ALARM_SIGNAL(const string& signal_str, UINT32 tid, UINT32 count, 
+                 BOOL need_ctxt, ALARM_MANAGER* manager):
+      IALARM(tid, count, need_ctxt, manager) {
 
-  private:
+          _signal_id = PARSER::StringToUint32(signal_str);
+          Activate();
+      }
+
+private:
+ 
     // Private signal data members and methods
     INT32 _signal_id;
-
+    
     VOID Activate();
 
 #if (!defined(TARGET_WINDOWS))
-    static VOID ContextChangeCallback(THREADID tid, CONTEXT_CHANGE_REASON reason, const CONTEXT* ctxtFrom, CONTEXT* ctxtTo,
-                                      INT32 sig, VOID* v);
+    static VOID ContextChangeCallback(
+        THREADID tid, 
+        CONTEXT_CHANGE_REASON reason, 
+        const CONTEXT *ctxtFrom,
+        CONTEXT *ctxtTo,
+        INT32 sig, 
+        VOID *v);
 #endif
+
 };
 
 //*****************************************************************************
 class ALARM_IMAGE_LOAD : public IALARM
 {
-  public:
-    ALARM_IMAGE_LOAD(const string& image_name, UINT32 tid, UINT32 count, BOOL need_ctxt, ALARM_MANAGER* manager)
-        : IALARM(tid, count, need_ctxt, manager)
-    {
+public:
+    ALARM_IMAGE_LOAD(const string& image_name, UINT32 tid, UINT32 count,
+        BOOL need_ctxt, ALARM_MANAGER* manager) :
+        IALARM(tid, count, need_ctxt, manager) {
+
         _image_name = ExtractFileName(image_name);
         Activate();
     }
 
-  private:
+private:
+
     // Private data members and methods
     string _image_name;
 
     VOID Activate();
     static VOID ImageLoad(IMG img, VOID* v);
-    static string ExtractFileName(const string& fullpath);
+    static string ExtractFileName(const string & fullpath);
 };
+
 
 //*****************************************************************************
 
-} // namespace CONTROLLER
+} //namespace
 #endif

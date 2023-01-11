@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,7 +25,7 @@
 /*!
  * Global variables
  */
-volatile void* ptr = NULL;
+volatile void *ptr = NULL;
 
 //=================================================================================================
 
@@ -35,7 +35,7 @@ volatile void* ptr = NULL;
 VOID OnIns()
 {
     // Generate exception in inlined analysis routine.
-    *(int*)ptr = 11111;
+    *(int *)ptr = 11111;
 }
 
 /*!
@@ -44,7 +44,7 @@ VOID OnIns()
  * In case of trace re-generation, the original instrumented instruction won't be
  * instrumented again. 
  */
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     static bool isFirst = true;
     if (isFirst)
@@ -58,7 +58,7 @@ VOID Instruction(INS ins, VOID* v)
 /*!
  * The main procedure of the tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_Init(argc, argv);
 

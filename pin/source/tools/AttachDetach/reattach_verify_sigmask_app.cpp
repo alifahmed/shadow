@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -28,14 +28,20 @@
 #include <stdint.h>
 #include "../Utils/threadlib.h"
 
+
+
 volatile unsigned int unblockedUsr1Tid = 0;
 volatile unsigned int unblockedUsr2Tid = 0;
-volatile bool usr1Tested               = false;
-volatile bool usr2Tested               = false;
+volatile bool usr1Tested = false;
+volatile bool usr2Tested = false;
 
 pthread_mutex_t mutex;
 
-extern "C" int AppShouldExit() { return 0; }
+extern "C" int AppShouldExit()
+{
+    return 0;
+}
+
 
 void SigUsrHandler(int sig)
 {
@@ -48,8 +54,9 @@ void SigUsrHandler(int sig)
             usr1Tested = true;
         }
         else
-        {
-            fprintf(stderr, "The signal mask is incorrect, SIGUSR1 is caught by %d, expected %d\n", GetTid(), unblockedUsr1Tid);
+        {            
+            fprintf(stderr, "The signal mask is incorrect, SIGUSR1 is caught by %d, expected %d\n",
+             GetTid(), unblockedUsr1Tid);
             exit(-1);
         }
     }
@@ -61,12 +68,14 @@ void SigUsrHandler(int sig)
         }
         else
         {
-            fprintf(stderr, "The signal mask is incorrect, SIGUSR2 is caught by %d, expected %d\n", GetTid(), unblockedUsr2Tid);
+            fprintf(stderr, "The signal mask is incorrect, SIGUSR2 is caught by %d, expected %d\n",
+             GetTid(), unblockedUsr2Tid);
             exit(-1);
         }
     }
     pthread_mutex_unlock(&mutex);
 }
+
 
 sigset_t sigSet;
 
@@ -74,7 +83,7 @@ void BlockSignal(int sigNo)
 {
     sigset_t mask;
     sigemptyset(&mask);
-    sigaddset(&mask, sigNo);
+    sigaddset(&mask, sigNo);   
     pthread_sigmask(SIG_BLOCK, &mask, 0);
 }
 
@@ -87,15 +96,15 @@ void UnblockSignal(int sigNo)
 }
 void UnblockAllSignals()
 {
-    sigset_t mask;
-    sigemptyset(&mask);
-    pthread_sigmask(SIG_SETMASK, &mask, 0);
+     sigset_t mask;
+     sigemptyset(&mask);
+     pthread_sigmask(SIG_SETMASK, &mask, 0);
 }
 
-void* ThreadFunc(void* arg)
+void * ThreadFunc(void * arg)
 {
-    unsigned int thread_no = *(unsigned int*)&arg;
-
+    unsigned int thread_no = *(unsigned int *)&arg;
+    
     if (thread_no == 1)
     {
         unblockedUsr1Tid = GetTid();
@@ -106,7 +115,7 @@ void* ThreadFunc(void* arg)
         unblockedUsr2Tid = GetTid();
         UnblockSignal(SIGUSR2);
     }
-
+    
     while (!usr1Tested || !usr2Tested)
     {
         sleep(1);
@@ -114,15 +123,17 @@ void* ThreadFunc(void* arg)
     return 0;
 }
 
+
 #define NUM_OF_THREADS 7
 pthread_t threads[NUM_OF_THREADS];
 
-int main(int argc, char* argv[])
+
+int main(int argc, char *argv[])
 {
     // Set the same signal handler for USR1 and USR2 signals
     signal(SIGUSR1, SigUsrHandler);
     signal(SIGUSR2, SigUsrHandler);
-
+    
     // initialize a mutex that will be used by threads
     pthread_mutex_init(&mutex, 0);
 
@@ -130,7 +141,7 @@ int main(int argc, char* argv[])
     BlockSignal(SIGUSR1);
     BlockSignal(SIGUSR2);
     /*****************/
-
+    
     while (!AppShouldExit())
     {
         // launch threads
@@ -138,14 +149,14 @@ int main(int argc, char* argv[])
         usr2Tested = false;
         for (uintptr_t i = 0; i < NUM_OF_THREADS; i++)
         {
-            pthread_create(&threads[i], 0, ThreadFunc, (void*)i);
+            pthread_create(&threads[i], 0, ThreadFunc, (void *)i);
         }
-
+    
         while ((unblockedUsr1Tid == 0) || (unblockedUsr2Tid == 0))
         {
             sched_yield();
         }
-
+        
         while (!usr1Tested || !usr2Tested)
         {
             kill(getpid(), SIGUSR1);
@@ -160,5 +171,7 @@ int main(int argc, char* argv[])
         unblockedUsr2Tid = 0;
     }
 
+
     return 0;
 }
+

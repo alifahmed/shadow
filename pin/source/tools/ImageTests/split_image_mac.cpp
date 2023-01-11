@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,35 +21,39 @@
 #include <cstdlib>
 #include "pin.H"
 
-using std::fprintf;
 using std::string;
+using std::fprintf;
 
-FILE* fp = 0;
+FILE *fp = 0;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "split_image.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "split_image.out", "specify output file name");
+
 
 // check if each image area is really covered by its region
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad (IMG img, VOID *v)
 {
-    for (int i = 0; i < IMG_NumRegions(img); i++)
+    for(int i = 0; i < IMG_NumRegions(img); i++)
     {
         ADDRINT high = IMG_RegionHighAddress(img, i);
-        ADDRINT low  = IMG_RegionLowAddress(img, i);
+        ADDRINT low = IMG_RegionLowAddress(img, i);
         fprintf(fp, "%s, %p-%p\n", IMG_Name(img).c_str(), Addrint2VoidStar(low), Addrint2VoidStar(high));
     }
 }
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v) { fclose(fp); }
+VOID Fini(INT32 code, VOID *v)
+{
+    fclose(fp);
+}
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
 
     fp = fopen(KnobOutputFile.Value().c_str(), "w");
-    if (fp == NULL)
-    {
+    if (fp == NULL) {
         fprintf(stderr, "Couldn't open %s for output\n", KnobOutputFile.Value().c_str());
         exit(1);
     }
@@ -61,6 +65,8 @@ int main(int argc, char* argv[])
 
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
+
+

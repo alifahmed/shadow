@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,9 +19,15 @@
  * to a static function which is not used.
  */
 
-static bool statdyn_app_staticFunction() { return true; }
+static bool statdyn_app_staticFunction()
+{
+    return true;
+}
 
-bool statdyn_app_dynamicFunction() { return true; }
+bool statdyn_app_dynamicFunction()
+{
+    return true;
+}
 
 int main()
 {

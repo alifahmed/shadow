@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -37,10 +37,12 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
+
 static void HandleSegv(int);
 static void HandleAlarm(int);
 static void CheckMask();
 static void MakeSegv();
+
 
 int main()
 {
@@ -69,9 +71,9 @@ int main()
         return 1;
     }
 
-    itval.it_value.tv_sec     = 0;
-    itval.it_value.tv_usec    = 100000;
-    itval.it_interval.tv_sec  = 0;
+    itval.it_value.tv_sec = 0;
+    itval.it_value.tv_usec = 100000;
+    itval.it_interval.tv_sec = 0;
     itval.it_interval.tv_usec = 0;
     if (setitimer(ITIMER_VIRTUAL, &itval, 0) == -1)
     {
@@ -82,6 +84,7 @@ int main()
     MakeSegv();
     return 0;
 }
+
 
 static void HandleSegv(int sig)
 {
@@ -96,6 +99,7 @@ static void HandleAlarm(int sig)
     CheckMask();
 }
 
+
 static void CheckMask()
 {
     sigset_t mask;
@@ -107,7 +111,7 @@ static void CheckMask()
         exit(1);
     }
 
-    for (sig = 1; sig < 32; sig++)
+    for (sig = 1;  sig < 32;  sig++)
     {
         if (sigismember(&mask, sig))
         {
@@ -121,9 +125,10 @@ static void CheckMask()
     }
 }
 
+
 static void MakeSegv()
 {
-    volatile int* p;
+    volatile int * p;
     int i;
 
     /*
@@ -133,7 +138,7 @@ static void MakeSegv()
      * to Pin during the analysis call.  Pin should keep that signal pending
      * until the end of this basic block.
      */
-    p  = &i;
+    p = &i;
     *p = 1;
     *p = 2;
     *p = 3;
@@ -151,6 +156,6 @@ static void MakeSegv()
      * This store causes a SEGV, thus forcing a synchronous signal to be delivered
      * while an asynchronous signal (the VTALRM) is pending inside of Pin.
      */
-    p = (volatile int*)0x9;
+    p = (volatile int *)0x9;
     i = *p;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,25 +21,28 @@
 #include <iostream>
 #include <fcntl.h>
 #include "pin.H"
-using std::endl;
 using std::ofstream;
 using std::string;
+using std::endl;
 
 typedef VOID (*EXITFUNCPTR)(INT code);
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "close_all_files.out", "specify trace file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,        "pintool",
+    "o", "close_all_files.out", "specify trace file name");
 
-KNOB< string > KnobForkedChildOutputFile(KNOB_MODE_WRITEONCE, "pintool", "f", "afterForkInChild_tool.log",
-                                         "forked child tool log");
+KNOB<string> KnobForkedChildOutputFile(KNOB_MODE_WRITEONCE,        "pintool",
+    "f", "afterForkInChild_tool.log", "forked child tool log");
 
-KNOB< BOOL > KnobToolProbeMode(KNOB_MODE_WRITEONCE, "pintool", "probe", "0", "invoke tool in probe mode");
+KNOB<BOOL> KnobToolProbeMode(KNOB_MODE_WRITEONCE, "pintool", "probe", "0",
+        "invoke tool in probe mode");
 
-FILE* outc;
+
+FILE * outc;
 ofstream outcpp;
 int my_pipe[2];
 EXITFUNCPTR origExit;
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     const char* my_str = "MyString";
     char buf[16];
@@ -64,7 +67,8 @@ VOID Fini(INT32 code, VOID* v)
 
 INT32 Usage()
 {
-    PIN_ERROR("This tool practices writing to file descriptors in Fini" + KNOB_BASE::StringKnobSummary() + "\n");
+    PIN_ERROR("This tool practices writing to file descriptors in Fini"
+                + KNOB_BASE::StringKnobSummary() + "\n");
     return 1;
 }
 
@@ -76,19 +80,19 @@ VOID ExitInProbeMode(INT code)
 
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     RTN exitRtn = RTN_FindByName(img, C_MANGLE("_exit"));
     if (RTN_Valid(exitRtn) && RTN_IsSafeForProbedReplacement(exitRtn))
     {
-        origExit = (EXITFUNCPTR)RTN_ReplaceProbed(exitRtn, AFUNPTR(ExitInProbeMode));
+        origExit = (EXITFUNCPTR) RTN_ReplaceProbed(exitRtn, AFUNPTR(ExitInProbeMode));
     }
 }
 
 void AfterForkInChild()
 {
     string forked_child_output = KnobForkedChildOutputFile.Value();
-    ADDRINT flags              = (O_CREAT | O_WRONLY | O_APPEND | O_TRUNC);
+    ADDRINT flags = (O_CREAT|O_WRONLY|O_APPEND|O_TRUNC);
 
     // Closing standard input and output to make sure the next open() will not return one them.
     // If open() return file descriptor which is one of the standard file descriptors this mean that Pin/Tool logs
@@ -108,19 +112,25 @@ void AfterForkInChild()
     close(fd);
 }
 
-void AfterForkInChildJit(THREADID threadid, const CONTEXT* ctxt, VOID* v) { AfterForkInChild(); }
-void AfterForkInChildProbed(UINT32 childPid, void* data) { AfterForkInChild(); }
+void AfterForkInChildJit(THREADID threadid, const CONTEXT * ctxt, VOID * v)
+{
+    AfterForkInChild();
+}
+void AfterForkInChildProbed(UINT32 childPid, void *data)
+{
+    AfterForkInChild();
+}
 
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (PIN_Init(argc, argv)) return Usage();
     PIN_InitSymbols();
 
-    string c_output   = KnobOutputFile.Value() + "_for_c";
+    string c_output = KnobOutputFile.Value() + "_for_c";
     string cpp_output = KnobOutputFile.Value() + "_for_cpp";
 
     outc = fopen(c_output.c_str(), "w");

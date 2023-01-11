@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -38,7 +38,7 @@ void RunApp()
         application_error = true;
         return;
     }
-
+    
     if (child == 0)
     {
         // I am the child - exit immediately
@@ -46,92 +46,96 @@ void RunApp()
         _exit(0);
     }
     else
-    {
+    {        
         // I am the parent - wait for the child with timeout
         int status = 0, res = 0;
         int timer = CHILD_TIMEOUT;
-        do
-        {
-            res = waitpid(child, &status, WNOHANG);
-            // waitpid will return:
-            //   0 : case child is alive but not finished.
-            //   child : case child finished and status is available.
+        do {
+            res = waitpid(child, &status, WNOHANG); 
+            // waitpid will return: 
+            //   0 : case child is alive but not finished. 
+            //   child : case child finished and status is available. 
             //   -1 : case child is dead and no status is available (possibly died from kill -9)
             sleep(1);
-        }
-        while (res == 0 && timer-- > 0);
-
+        } while (res == 0 && timer-- > 0 );
+                
         if (res == child)
         {
-            if (!WIFEXITED(status))
+            if (! WIFEXITED(status))
             {
                 // for some reason (probably because of the PIN attach/detach) the child terminated
                 // after getting a SIGTRAP. We do not want the test to fail in that case.
-                if (SIGTRAP != status)
+                if(SIGTRAP != status)
                 {
-                    fprintf(stderr, "APPLICATION ERROR: The child process %d did not terminate normally. status = 0x%x\n", res,
-                            status);
+                    fprintf(stderr,
+                            "APPLICATION ERROR: The child process %d did not terminate normally. status = 0x%x\n",
+                            res, status);
                     application_error = true;
                 }
             }
             else if (WEXITSTATUS(status) != 0)
             {
-                fprintf(stderr, "APPLICATION ERROR: The child process failed with status 0x%x\n", WEXITSTATUS(status));
+                fprintf(stderr, 
+                "APPLICATION ERROR: The child process failed with status 0x%x\n", 
+                    WEXITSTATUS(status));
                 application_error = true;
             }
-        }
-        else if (res == -1)
+        } 
+        else if (res == -1 )
         {
             //Child is dead (might be killed with kill -9), and status is not available
-            fprintf(stderr, "APPLICATION ERROR: child process exited unexpectedly, status is not available. \n");
+            fprintf(stderr, 
+            "APPLICATION ERROR: child process exited unexpectedly, status is not available. \n");
             application_error = true;
         }
         else if ((res == 0) && (timer < 0))
         {
-            // Something is wrong. The child process should have terminated by now and is most likely deadlocked.
+            // Something is wrong. The child process should have terminated by now and is most likely deadlocked. 
             // If we don't kill it then it will remain in the system.
-            fprintf(stderr, "APPLICATION ERROR: Child process did not terminate after %d seconds. Killing child process. \n",
+            fprintf(stderr, 
+                    "APPLICATION ERROR: Child process did not terminate after %d seconds. Killing child process. \n", 
                     CHILD_TIMEOUT);
             kill(child, SIGKILL);
             application_error = true;
         }
         else
         {
-            fprintf(stderr,
-                    "APPLICATION ERROR: Unknown error; waitpid returned with 0x%x ; child process exited with status 0x%x \n",
-                    res, status);
+            fprintf(stderr, 
+            "APPLICATION ERROR: Unknown error; waitpid returned with 0x%x ; child process exited with status 0x%x \n",
+            res, status);
             application_error = true;
         }
     }
 }
 
-void* ThreadFunc(void* arg)
+void *ThreadFunc(void* arg)
 {
-    while (!AppShouldExit())
+    while (! AppShouldExit())
     {
         RunApp();
         sleep(1);
     }
     int* exit_code = new int;
-    *exit_code     = 1;
+    *exit_code = 1;
     pthread_exit((void*)exit_code);
 }
 
+
 static void TimeoutHandler(int a)
 {
-    printf("Application is running more than %d minutes. It might be hanged. Killing it\n", TIMEOUT / 60);
+    printf("Application is running more than %d minutes. It might be hanged. Killing it\n", TIMEOUT/60);
     kill(0, SIGTERM); // Kill the entire process group
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     pthread_t thHandle[NUM_OF_THREADS];
 
     struct sigaction sigact_timeout;
     sigact_timeout.sa_handler = TimeoutHandler;
-    sigact_timeout.sa_flags   = 0;
+    sigact_timeout.sa_flags = 0;
     sigfillset(&sigact_timeout.sa_mask);
-
+                            
     if (sigaction(SIGALRM, &sigact_timeout, 0) == -1)
     {
         fprintf(stderr, "Unable to set up timeout handler errno=%d.\n", errno);
@@ -140,7 +144,7 @@ int main(int argc, char** argv)
 
     alarm(TIMEOUT);
 
-    for (unsigned int i = 0; i < NUM_OF_THREADS; ++i)
+    for (unsigned int i=0; i < NUM_OF_THREADS; ++i)
     {
         if (pthread_create(&thHandle[i], NULL, ThreadFunc, NULL) != 0)
         {
@@ -149,18 +153,17 @@ int main(int argc, char** argv)
         }
     }
 
-    while (!AppShouldExit())
+    while (! AppShouldExit())
     {
         RunApp();
         sleep(1);
     }
 
-    // If we are here it means there was an application error.
+    // If we are here it means there was an application error. 
     // We are not interested in the exit status of the threads - there is failure anyway.
-    // Allow the threads to exit gracefully.
+    // Allow the threads to exit gracefully. 
     // In case of a deadlock TimeoutHandler will be called and will kill the process group brute force.
-    for (unsigned int i = 0; i < NUM_OF_THREADS; ++i)
-        pthread_join(thHandle[i], NULL);
+    for (unsigned int i=0; i < NUM_OF_THREADS; ++i) pthread_join(thHandle[i], NULL);
 
     if (application_error) kill(0, SIGTERM); // Kill the entire process group
     return 0;

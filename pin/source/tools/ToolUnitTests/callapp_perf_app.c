@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,29 +14,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(TARGET_WINDOWS)
-#define EXPORT_SYM __declspec(dllexport)
+#if defined (TARGET_WINDOWS)
+#define EXPORT_SYM __declspec( dllexport ) 
 #else
 #define EXPORT_SYM extern
 #endif
 
-EXPORT_SYM long Original(long one, long two);
-EXPORT_SYM long PreOriginal(long one, long two);
+EXPORT_SYM long Original( long one, long two );
+EXPORT_SYM long PreOriginal( long one, long two );
+
 
 int main()
 {
     long res;
     int i;
-
+    
     PreOriginal(6, 8);
-    for (i = 0; i < 500000; i++)
+    for (i=0; i<1000000; i++)
     {
         res = Original(6, 8);
     }
-    if (((unsigned int)(res)) != (unsigned int)(1500001))
+    if (((unsigned int)(res)) != (unsigned int)(0x2dc6c1))
     {
-        printf("***ERROR res %ld is unexpected\n", res);
-        exit(-1);
+        printf ("***ERROR res %lx is unexpected\n", res);
+        exit (-1);
     }
     return 0;
 }

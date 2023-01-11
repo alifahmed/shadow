@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,8 +14,7 @@
  the instruction located at KiFastSystemCallRet: rather than the instruction following sysenter.
  Note: The instruction at KiFastSystemCallRet: is ret
  */
-// clang-format does not manage well with assembly style below
-// clang-format off
+
 int main()
 {
     __asm mov eax, 0x0777 // 777 is an invalid syscall number
@@ -34,4 +33,3 @@ int main()
     __asm inst_to_execute_after_sysenter:
     __asm mov eax, 0x0  // instruction that the ret at KiFastSystemCallRet: will return to
 }
-// clang-format on

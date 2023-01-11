@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,6 +13,7 @@
 #define INSFAULT_INTEL64_H
 
 #include "types.h"
+
 
 // The assembly file sets these to the expected values for each register.
 //
@@ -34,6 +35,7 @@ extern "C" UINT64 ExpectedRAX;
 extern "C" UINT64 ExpectedRCX;
 extern "C" UINT64 ExpectedRSP;
 extern "C" UINT64 ExpectedEFLAGS;
+
 
 // Mask of bits to check in EFLAGS:
 //

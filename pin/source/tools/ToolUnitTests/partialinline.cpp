@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,9 +20,13 @@ const UINT32 period = 10000;
 UINT32 acount = 0;
 UINT32 pcount = 0;
 
+
 THREADID myThread = INVALID_THREADID;
 
-ADDRINT IfMyThread(THREADID threadId) { return threadId == myThread; }
+ADDRINT IfMyThread(THREADID threadId)
+{
+    return threadId == myThread;
+}
 
 ADDRINT Always(THREADID threadId)
 {
@@ -31,7 +35,7 @@ ADDRINT Always(THREADID threadId)
         return false;
     }
     ++acount;
-    return acount == period;
+    return acount==period;
 }
 
 VOID Rare()
@@ -51,7 +55,7 @@ ADDRINT AlwaysNoinline(THREADID threadId)
     }
     ++ccount;
     if (ccount == 1000000) printf("Should not get here\n");
-    return ccount == period;
+    return ccount==period;
 }
 
 VOID RareNoinline()
@@ -73,7 +77,7 @@ VOID Noinline(THREADID threadId)
     }
     ++bcount;
 
-    if (bcount == period)
+    if (bcount==period)
     {
         ++qcount;
         bcount = 0;
@@ -105,7 +109,7 @@ VOID ReadRare()
 
 // Pin calls this function every time a new basic block is encountered
 // It inserts a call to docount
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
     // Visit every basic block in the trace
     for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
@@ -120,11 +124,11 @@ VOID Trace(TRACE trace, VOID* v)
         }
 
         // Always()->Rare() are partially inlined
-        BBL_InsertIfCall(bbl, IPOINT_BEFORE, (AFUNPTR)Always, IARG_THREAD_ID, IARG_END);
+        BBL_InsertIfCall(bbl,   IPOINT_BEFORE, (AFUNPTR)Always, IARG_THREAD_ID, IARG_END);
         BBL_InsertThenCall(bbl, IPOINT_BEFORE, (AFUNPTR)Rare, IARG_END);
 
         // Always()->Rare() are partially inlined
-        BBL_InsertIfCall(bbl, IPOINT_BEFORE, (AFUNPTR)AlwaysNoinline, IARG_THREAD_ID, IARG_END);
+        BBL_InsertIfCall(bbl,   IPOINT_BEFORE, (AFUNPTR)AlwaysNoinline, IARG_THREAD_ID, IARG_END);
         BBL_InsertThenCall(bbl, IPOINT_BEFORE, (AFUNPTR)RareNoinline, IARG_END);
 
         // Noinline() is not inlined
@@ -133,22 +137,23 @@ VOID Trace(TRACE trace, VOID* v)
 }
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
-    if (pcount * period + acount != qcount * period + bcount || pcount * period + acount != rcount * period + ccount)
+    if (pcount*period+acount != qcount*period+bcount
+        || pcount*period+acount != rcount*period+ccount)
     {
-        fprintf(stderr,
-                "Counts NOT matched:\n"
+        fprintf(stderr, "Counts NOT matched:\n"
                 "partial-inline   count=%d (pcount=%d acount=%d),\n"
                 "partial-noinline count=%d (rcount=%d ccount=%d),\n"
                 "noninline        count=%d (qcount=%d bcount=%d)\n",
-                pcount * period + acount, pcount, acount, rcount * period + ccount, rcount, ccount, qcount * period + bcount,
-                qcount, bcount);
+                pcount*period+acount, pcount, acount,
+                rcount*period+ccount, rcount, ccount,
+                qcount*period+bcount, qcount, bcount);
         exit(1);
     }
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     if (INVALID_THREADID == myThread)
     {
@@ -157,7 +162,7 @@ VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     PIN_Init(argc, argv);

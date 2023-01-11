@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,21 +21,21 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sched.h>
-using std::endl;
 using std::ofstream;
 using std::string;
+using std::endl;
 
 #define MAX_ITERATION 2
 
 #ifdef TARGET_MAC
-#define DLL_SUFFIX ".dylib"
+# define DLL_SUFFIX ".dylib"
 #else
-#define DLL_SUFFIX ".so"
+# define DLL_SUFFIX ".so"
 #endif
 
-const char* FIRST_DLL_NAME = "my_dll" DLL_SUFFIX;
+const char * FIRST_DLL_NAME = "my_dll" DLL_SUFFIX;
 
-const char* SECOND_DLL_NAME = "my_dll_1" DLL_SUFFIX;
+const char * SECOND_DLL_NAME = "my_dll_1" DLL_SUFFIX;
 
 static int iteration = 1;
 
@@ -44,12 +44,14 @@ using std::cerr;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "reattachImageLoadCallbackAttached.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "reattachImageLoadCallbackAttached.out", "specify file name");
 
 ofstream TraceFile;
 
 PIN_LOCK pinLock;
 /* ===================================================================== */
+
 
 /* Session control checks that there is no callbacks mix between different
  * attach-detach iterations
@@ -57,18 +59,21 @@ PIN_LOCK pinLock;
 class SESSION_CONTROL
 {
   public:
-    SESSION_CONTROL() : _currentIteration(0), _threadCounter(0), _startAttachSession(FALSE), _startDetachSession(FALSE) {}
+    SESSION_CONTROL():_currentIteration(0), 
+        _threadCounter(0),
+        _startAttachSession(FALSE),
+        _startDetachSession(FALSE)
+    {}
 
-    static VOID AttachedThreadStart(VOID* sigmask, VOID* v);
-    static VOID DedicatedThread(VOID* arg);
+    static VOID AttachedThreadStart(VOID *sigmask, VOID *v);
+    static VOID DedicatedThread(VOID *arg);
 
-    VOID StartIteration(UINT32 it)
-    {
-        _currentIteration = it;
-        _threadCounter    = 0;
-    }
+    VOID StartIteration(UINT32 it) { _currentIteration = it; _threadCounter = 0;}
     UINT32 CurrentIteration() { return _currentIteration; }
-    BOOL GotFirstThreadNotification(UINT32 it) { return ((it == _currentIteration) && (_threadCounter > 0)); }
+    BOOL GotFirstThreadNotification(UINT32 it)
+    {
+        return ((it == _currentIteration) && (_threadCounter > 0));
+    }
 
     static SESSION_CONTROL* Instance() { return &m_instance; }
 
@@ -82,17 +87,8 @@ class SESSION_CONTROL
         _startAttachSession = TRUE;
         _startDetachSession = FALSE;
     }
-    VOID WaitForDetach()
-    {
-        while (!_startDetachSession)
-            sched_yield();
-    }
-    VOID WaitForAttach()
-    {
-        while (!_startAttachSession)
-            sched_yield();
-    }
-
+    VOID WaitForDetach() { while (!_startDetachSession) sched_yield(); }
+    VOID WaitForAttach() { while (!_startAttachSession) sched_yield(); }
   private:
     UINT32 _currentIteration;
     UINT32 _threadCounter;
@@ -103,7 +99,7 @@ class SESSION_CONTROL
 
 SESSION_CONTROL SESSION_CONTROL::m_instance;
 
-SESSION_CONTROL* SessionControl() { return SESSION_CONTROL::Instance(); }
+SESSION_CONTROL *SessionControl() { return SESSION_CONTROL::Instance(); }
 
 /* Detach session
  * Callbacks and function replacements
@@ -112,38 +108,41 @@ class DETACH_SESSION
 {
   public:
     // Detach completion notification
-    static VOID DetachCompleted(VOID* v);
-    static VOID DetachThreadStart(VOID* v);
-    static VOID ImageLoad(IMG img, VOID* v);
+    static VOID DetachCompleted(VOID *v);
+    static VOID DetachThreadStart(VOID *v);
+    static VOID ImageLoad(IMG img, VOID *v);
 };
+
 
 /* Reattach session */
 class REATTACH_SESSION
 {
   public:
-    static VOID ImageLoad(IMG img, VOID* v);
-    static VOID AttachedThreadStart(VOID* sigmask, VOID* v);
+    static VOID ImageLoad(IMG img, VOID *v);
+    static VOID AttachedThreadStart(VOID *sigmask, VOID *v);
 };
+
 
 /*
  * Pin-tool detach-completed callback
  * Called from Pin
  */
-VOID DETACH_SESSION::DetachCompleted(VOID* v)
+VOID DETACH_SESSION::DetachCompleted(VOID *v)
 {
     unsigned long detachIteration = (unsigned long)v;
     if (detachIteration != SessionControl()->CurrentIteration())
     {
-        cerr << "Detach iteration error: Expected " << SessionControl()->CurrentIteration() << " Rececived " << detachIteration
-             << " In DetachCompleted" << endl;
-        PIN_ExitProcess(1);
+        cerr << "Detach iteration error: Expected " << SessionControl()->CurrentIteration()
+            << " Rececived " << detachIteration << " In DetachCompleted" << endl;
+        PIN_ExitProcess (1);
     }
 
     PIN_GetLock(&pinLock, PIN_GetTid());
-    TraceFile << "Detach session " << detachIteration << " Detach completed; tid = " << PIN_GetTid() << endl;
+    TraceFile << "Detach session " << detachIteration << " Detach completed; tid = "
+             << PIN_GetTid() << endl;
     if (detachIteration == MAX_ITERATION)
     {
-        TraceFile << "TEST PASSED" << endl;
+        TraceFile <<  "TEST PASSED" << endl;
         TraceFile.close();
         PIN_ExitProcess(0);
     }
@@ -151,11 +150,15 @@ VOID DETACH_SESSION::DetachCompleted(VOID* v)
     SessionControl()->StartAttach();
 }
 
-BOOL afterAttachProbe(void) { return TRUE; }
-
-VOID AttachMain(VOID* arg)
+BOOL afterAttachProbe(void)
 {
-    UINT32 reattachIteration = *(reinterpret_cast< UINT32* >(&arg));
+    return TRUE;
+}
+
+
+VOID AttachMain(VOID *arg)
+{
+    UINT32 reattachIteration = *(reinterpret_cast <UINT32 *> (&arg));
     SessionControl()->StartIteration(reattachIteration);
     IMG_AddInstrumentFunction(REATTACH_SESSION::ImageLoad, arg);
     PIN_AddDetachFunctionProbed(DETACH_SESSION::DetachCompleted, arg);
@@ -163,7 +166,8 @@ VOID AttachMain(VOID* arg)
     PIN_AddThreadDetachProbedFunction(DETACH_SESSION::DetachThreadStart, arg);
 }
 
-VOID SESSION_CONTROL::DedicatedThread(VOID* arg)
+
+VOID SESSION_CONTROL::DedicatedThread(VOID *arg)
 {
     ADDRINT reattachIteration = 2;
     while (1)
@@ -177,48 +181,48 @@ VOID SESSION_CONTROL::DedicatedThread(VOID* arg)
         PIN_GetLock(&pinLock, PIN_GetTid());
         TraceFile << "Pin tool: sending attach request" << endl;
         PIN_ReleaseLock(&pinLock);
-        PIN_AttachProbed(AttachMain, (VOID*)reattachIteration++);
+        PIN_AttachProbed(AttachMain, (VOID *)reattachIteration++);
     }
 }
+
 
 /* Thread start notification in the first session */
-VOID SESSION_CONTROL::AttachedThreadStart(VOID* sigmask, VOID* arg)
+VOID SESSION_CONTROL::AttachedThreadStart(VOID *sigmask, VOID *arg)
 {
     unsigned long iteration = (unsigned long)arg;
     if (iteration != SessionControl()->CurrentIteration())
     {
-        cerr << "Iteration error: Expected " << SessionControl()->CurrentIteration() << " Received " << iteration
-             << " In AttachedThreadStart" << endl;
-        PIN_ExitProcess(1);
+        cerr << "Iteration error: Expected " << SessionControl()->CurrentIteration()
+            << " Received " << iteration << " In AttachedThreadStart" << endl;
+         PIN_ExitProcess (1);
     }
     PIN_GetLock(&pinLock, PIN_GetTid());
-    ++(SessionControl()->_threadCounter);
-    TraceFile << "Thread start "
-              << " notification at session " << iteration << " tid " << PIN_GetTid() << endl;
+    ++(SessionControl()->_threadCounter) ;
+    TraceFile << "Thread start " <<" notification at session " << iteration << " tid " << PIN_GetTid()<< endl;
     PIN_ReleaseLock(&pinLock);
 }
 
-VOID DETACH_SESSION::DetachThreadStart(VOID* arg)
+VOID DETACH_SESSION::DetachThreadStart(VOID *arg)
 {
     unsigned long iteration = (unsigned long)arg;
     if (iteration != SessionControl()->CurrentIteration())
     {
-        cerr << "Iteration error: Expected " << SessionControl()->CurrentIteration() << " Received " << iteration
-             << " In DetachThreadStart" << endl;
-        PIN_ExitProcess(1);
+        cerr << "Iteration error: Expected " << SessionControl()->CurrentIteration()
+            << " Received " << iteration << " In DetachThreadStart" << endl;
+        PIN_ExitProcess (1);
     }
     PIN_GetLock(&pinLock, PIN_GetTid());
-    TraceFile << "Thread detach "
-              << " notification at session " << iteration << " tid " << PIN_GetTid() << endl;
+    TraceFile << "Thread detach "  << " notification at session " << iteration << " tid " << PIN_GetTid() << endl;
     PIN_ReleaseLock(&pinLock);
 }
+
 
 /*
  *Image load callback for the first Pin session
  */
-VOID DETACH_SESSION::ImageLoad(IMG img, VOID* v)
+VOID DETACH_SESSION::ImageLoad(IMG img,  VOID *v)
 {
-    if (IMG_IsMainExecutable(img))
+    if ( IMG_IsMainExecutable(img))
     {
         RTN rtn = RTN_FindByName(img, C_MANGLE("AfterAttach1"));
 
@@ -230,22 +234,22 @@ VOID DETACH_SESSION::ImageLoad(IMG img, VOID* v)
     }
 
     PIN_GetLock(&pinLock, PIN_GetTid());
-    TraceFile << "Load image " << IMG_Name(img) << " in iteration " << iteration << endl;
+    TraceFile <<"Load image " << IMG_Name(img) << " in iteration " << iteration << endl;
     PIN_ReleaseLock(&pinLock);
     size_t found;
-    found = IMG_Name(img).find(FIRST_DLL_NAME);
-    if (found != string::npos)
+    found= IMG_Name(img).find(FIRST_DLL_NAME);
+    if ( found!=string::npos )
     {
-        SessionControl()->StartDetach();
+		SessionControl()->StartDetach();
     }
 }
 
 /*
  *Image load callback for the second Pin session
  */
-VOID REATTACH_SESSION::ImageLoad(IMG img, VOID* v)
+VOID REATTACH_SESSION::ImageLoad(IMG img,  VOID *v)
 {
-    if (IMG_IsMainExecutable(img))
+    if ( IMG_IsMainExecutable(img))
     {
         RTN rtn = RTN_FindByName(img, C_MANGLE("AfterAttach2"));
         if (RTN_Valid(rtn))
@@ -255,12 +259,12 @@ VOID REATTACH_SESSION::ImageLoad(IMG img, VOID* v)
     }
 
     PIN_GetLock(&pinLock, PIN_GetTid());
-    TraceFile << "Load image " << IMG_Name(img) << " in iteration" << iteration << endl;
+    TraceFile <<"Load image " << IMG_Name(img) <<" in iteration" << iteration  <<endl;
     PIN_ReleaseLock(&pinLock);
 
     size_t found;
-    found = IMG_Name(img).find(SECOND_DLL_NAME);
-    if (found != string::npos)
+    found= IMG_Name(img).find(SECOND_DLL_NAME);
+    if ( found!=string::npos )
     {
         SessionControl()->StartDetach();
     }
@@ -268,19 +272,19 @@ VOID REATTACH_SESSION::ImageLoad(IMG img, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    PIN_Init(argc, argv);
+    PIN_Init(argc,argv);
     SessionControl()->StartIteration(1);
     PIN_InitLock(&pinLock);
     TraceFile.open(KnobOutputFile.Value().c_str());
-    IMG_AddInstrumentFunction(DETACH_SESSION::ImageLoad, (VOID*)1);
-    PIN_AddDetachFunctionProbed(DETACH_SESSION::DetachCompleted, (VOID*)1);
-    PIN_AddThreadAttachProbedFunction(SESSION_CONTROL::AttachedThreadStart, (VOID*)1);
-    PIN_AddThreadDetachProbedFunction(DETACH_SESSION::DetachThreadStart, (VOID*)1);
-
+    IMG_AddInstrumentFunction(DETACH_SESSION::ImageLoad,(VOID *) 1);
+    PIN_AddDetachFunctionProbed(DETACH_SESSION::DetachCompleted, (VOID *)1);
+    PIN_AddThreadAttachProbedFunction(SESSION_CONTROL::AttachedThreadStart, (VOID *)1);
+    PIN_AddThreadDetachProbedFunction(DETACH_SESSION::DetachThreadStart, (VOID *)1);
+    
     THREADID tid = PIN_SpawnInternalThread(SESSION_CONTROL::DedicatedThread, NULL, 0x40000, NULL);
     ASSERTX(tid != INVALID_THREADID);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,42 +24,61 @@
 #endif
 
 #include "pin.H"
-using std::cout;
 using std::dec;
-using std::endl;
-using std::hex;
 using std::ofstream;
-using std::string;
+using std::hex;
+using std::endl;
+using std::cout;
+
 
 ofstream trace;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "strace.out", "Output file");
-
 // Print syscall number and arguments
-VOID SysBefore(ADDRINT ip, ADDRINT num, ADDRINT arg0, ADDRINT arg1, ADDRINT arg2, ADDRINT arg3, ADDRINT arg4, ADDRINT arg5)
+VOID SysBefore(ADDRINT ip, ADDRINT num, ADDRINT arg0, ADDRINT arg1, ADDRINT arg2,
+               ADDRINT arg3, ADDRINT arg4, ADDRINT arg5)
 {
+#if defined(TARGET_IA32)
+    // On ia32, there are only 5 registers for passing system call arguments,
+    // but mmap needs 6. For mmap on ia32, the first argument to the system call
+    // is a pointer to an array of the 6 arguments
+    if (num == SYS_mmap)
+    {
+        ADDRINT * mmapArgs = &arg0;
+        arg0 = mmapArgs[0];
+        arg1 = mmapArgs[1];
+        arg2 = mmapArgs[2];
+        arg3 = mmapArgs[3];
+        arg4 = mmapArgs[4];
+        arg5 = mmapArgs[5];
+    }
+#endif
+
     trace << "@ip 0x" << hex << ip << ": sys call " << dec << num;
     trace << "(0x" << hex << arg0 << ", 0x" << arg1 << ", 0x" << arg2;
     trace << hex << ", 0x" << arg3 << ", 0x" << arg4 << ", 0x" << arg5 << ")" << endl;
 }
 
-// Print the return value of the system call
-VOID SysAfter(ADDRINT value, INT32 err, UINT32 gax)
-{
-    int error       = 0;
-    ADDRINT neg_one = (ADDRINT)(0 - 1);
 
-    if (err == 0)
+// Print the return value of the system call
+VOID SysAfter( ADDRINT value, INT32 err, UINT32 gax )
+{
+    int error = 0;
+    ADDRINT neg_one = (ADDRINT)(0-1);
+
+    if ( err == 0 )
     {
-        if (gax != value) error = 1;
+        if ( gax != value )
+            error = 1;
     }
     else
     {
-        if (value != neg_one) error = 3;
-        if (err != -(INT32)gax) error = 4;
+        if ( value != neg_one )
+            error = 3;
+        if ( err != -(INT32)gax )
+            error = 4;
     }
 
-    if (error == 0)
+    if ( error == 0 )
         trace << "Success: value=0x" << hex << value << ", errno=" << dec << err << endl;
     else
     {
@@ -70,20 +89,28 @@ VOID SysAfter(ADDRINT value, INT32 err, UINT32 gax)
     trace << endl;
 }
 
-VOID SyscallEntry(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
+VOID SyscallEntry(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
 {
-    SysBefore(PIN_GetContextReg(ctxt, REG_INST_PTR), PIN_GetSyscallNumber(ctxt, std), PIN_GetSyscallArgument(ctxt, std, 0),
-              PIN_GetSyscallArgument(ctxt, std, 1), PIN_GetSyscallArgument(ctxt, std, 2), PIN_GetSyscallArgument(ctxt, std, 3),
-              PIN_GetSyscallArgument(ctxt, std, 4), PIN_GetSyscallArgument(ctxt, std, 5));
+    SysBefore(PIN_GetContextReg(ctxt, REG_INST_PTR),
+        PIN_GetSyscallNumber(ctxt, std),
+        PIN_GetSyscallArgument(ctxt, std, 0),
+        PIN_GetSyscallArgument(ctxt, std, 1),
+        PIN_GetSyscallArgument(ctxt, std, 2),
+        PIN_GetSyscallArgument(ctxt, std, 3),
+        PIN_GetSyscallArgument(ctxt, std, 4),
+        PIN_GetSyscallArgument(ctxt, std, 5));
 }
 
-VOID SyscallExit(THREADID threadIndex, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
+VOID SyscallExit(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
 {
-    SysAfter(PIN_GetSyscallReturn(ctxt, std), PIN_GetSyscallErrno(ctxt, std), PIN_GetContextReg(ctxt, REG_GAX));
+    SysAfter(PIN_GetSyscallReturn(ctxt, std),
+             PIN_GetSyscallErrno(ctxt, std),
+             PIN_GetContextReg(ctxt, REG_GAX));
 }
+
 
 // Is called for every instruction and instruments syscalls
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     // For O/S's (macOS*) that don't support PIN_AddSyscallEntryFunction(),
     // instrument the system call instruction.
@@ -91,28 +118,35 @@ VOID Instruction(INS ins, VOID* v)
     if (INS_IsSyscall(ins) && INS_IsValidForIpointAfter(ins))
     {
         // Arguments and syscall number is only available before
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SysBefore), IARG_INST_PTR, IARG_SYSCALL_NUMBER, IARG_SYSARG_VALUE, 0,
-                       IARG_SYSARG_VALUE, 1, IARG_SYSARG_VALUE, 2, IARG_SYSARG_VALUE, 3, IARG_SYSARG_VALUE, 4, IARG_SYSARG_VALUE,
-                       5, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SysBefore),
+                       IARG_INST_PTR, IARG_SYSCALL_NUMBER,
+                       IARG_SYSARG_VALUE, 0, IARG_SYSARG_VALUE, 1,
+                       IARG_SYSARG_VALUE, 2, IARG_SYSARG_VALUE, 3,
+                       IARG_SYSARG_VALUE, 4, IARG_SYSARG_VALUE, 5,
+                       IARG_END);
 
         // return value only available after
-        INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(SysAfter), IARG_SYSRET_VALUE, IARG_SYSRET_ERRNO, IARG_REG_VALUE, REG_GAX,
+        INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(SysAfter),
+                       IARG_SYSRET_VALUE, IARG_SYSRET_ERRNO,
+                       IARG_REG_VALUE, REG_GAX,
                        IARG_END);
     }
 }
 
-VOID Fini(INT32 code, VOID* v)
+
+VOID Fini(INT32 code, VOID *v)
 {
     trace << "#eof" << endl;
     trace.close();
 }
 
-int main(int argc, char* argv[])
+
+int main(int argc, char *argv[])
 {
     PIN_Init(argc, argv);
 
-    trace.open(KnobOutputFile.Value().c_str());
-    if (!trace.is_open())
+    trace.open( "strace.out" );
+    if ( ! trace.is_open() )
     {
         cout << "Could not open strace.out" << endl;
         exit(1);

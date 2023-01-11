@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,16 +22,20 @@
 #include <string>
 #include "pin.H"
 
-KNOB< std::string > KnobOut(KNOB_MODE_WRITEONCE, "pintool", "o", "",
-                            "Output file where debugger connection information is written");
-KNOB< UINT32 > KnobTimeout(KNOB_MODE_WRITEONCE, "pintool", "timeout", "", "Timeout period to wait for GDB to connect (seconds)");
-KNOB< BOOL > KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool", "const_context", "0", "use IARG_CONST_CONTEXT");
+KNOB<std::string> KnobOut(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "", "Output file where debugger connection information is written");
+KNOB<UINT32> KnobTimeout(KNOB_MODE_WRITEONCE, "pintool",
+    "timeout", "", "Timeout period to wait for GDB to connect (seconds)");
+KNOB<BOOL> KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool",
+                                   "const_context", "0", "use IARG_CONST_CONTEXT");
 
-static void OnRtn(RTN, VOID*);
-static void DoBreakpoint(CONTEXT*, THREADID);
+
+static void OnRtn(RTN, VOID *);
+static void DoBreakpoint(CONTEXT *, THREADID);
 static bool LaunchGdb();
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -42,27 +46,29 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static void OnRtn(RTN rtn, VOID*)
+
+static void OnRtn(RTN rtn, VOID *)
 {
     // We want to stop at a debugger breakpoint at the "Inner" function.
     //
     if (RTN_Name(rtn) == "Inner")
     {
         RTN_Open(rtn);
-        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoBreakpoint), (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT,
-                       // IARG_CONST_CONTEXT has much lower overhead
-                       // than IARG_CONTEX for passing the CONTEXT*
+        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(DoBreakpoint), 
+                       (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
+                       // IARG_CONST_CONTEXT has much lower overhead 
+                       // than IARG_CONTEX for passing the CONTEXT* 
                        // to the analysis routine. Note that IARG_CONST_CONTEXT
-                       // passes a read-only CONTEXT* to the analysis routine
+                       // passes a read-only CONTEXT* to the analysis routine 
                        IARG_THREAD_ID, IARG_END);
         RTN_Close(rtn);
     }
 }
 
-static void DoBreakpoint(CONTEXT* ctxt, THREADID tid)
+static void DoBreakpoint(CONTEXT *ctxt, THREADID tid)
 {
     static bool IsReplayedInstruction = false;
-    static bool IsDebuggerLaunched    = false;
+    static bool IsDebuggerLaunched = false;
 
     // When resuming from a breakpoint, we re-execute the instruction at
     // the breakpoint.  Skip over the breakpoint in this case.
@@ -118,5 +124,5 @@ static bool LaunchGdb()
     // The "makefile" should launch GDB when we write the output file above.
     // Wait for GDB to launch and connect.
     //
-    return PIN_WaitForDebuggerToConnect(1000 * KnobTimeout.Value());
+    return PIN_WaitForDebuggerToConnect(1000*KnobTimeout.Value());
 }

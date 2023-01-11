@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -28,32 +28,35 @@
 
 #define NTHREADS 20
 
-volatile bool loop1, loop2;
-void* thread_func(void* arg)
+volatile bool loop1, loop2 ;
+void * thread_func (void *arg)
 {
-    do
+    while (loop2)
     {
-        void* space = malloc(300);
+        void *space = malloc(300);
         //sleep(1);
         free(space);
     }
-    while (loop2);
+    return 0;
 
+}
+
+extern "C" int AppShouldExit()
+{
     return 0;
 }
 
-extern "C" int AppShouldExit() { return 0; }
+typedef  double (*DLL_FUNC)(double x);
+typedef  int (*DLL_INT_FUNC)(int x);
 
-typedef double (*DLL_FUNC)(double x);
-typedef int (*DLL_INT_FUNC)(int x);
 
-void* thread_dlopen_func(void* arg)
+void * thread_dlopen_func (void *arg)
 {
-    double number          = 0.2;
+    double number = 0.2;
     double calculatedValue = 0;
-    do
+    while (loop1)
     {
-        void* handle = dlopen("libmy_dll.so", RTLD_LAZY);
+        void *handle = dlopen("libmy_dll.so", RTLD_LAZY);
         if (handle)
         {
             DLL_FUNC fptr = (DLL_FUNC)dlsym(handle, "my_dll_sin");
@@ -69,25 +72,24 @@ void* thread_dlopen_func(void* arg)
         }
         number += 0.01;
     }
-    while (loop1);
 
     return 0;
 }
 
-int main(int argc, char* argv[])
+int main (int argc, char *argv[])
 {
     const unsigned int numOfSeconds = 5 * 60; // allow 5 minutes
-    unsigned int secondsRemaining   = numOfSeconds;
-    for (; secondsRemaining && (!AppShouldExit()); --secondsRemaining)
+    unsigned int secondsRemaining = numOfSeconds;
+    for (; secondsRemaining && (!AppShouldExit()) ; --secondsRemaining)
     {
         loop1 = true;
         loop2 = true;
         pthread_t h[NTHREADS];
 
-        pthread_create(&h[0], 0, thread_dlopen_func, 0);
+        pthread_create (&h[0], 0, thread_dlopen_func, 0);
         for (unsigned long i = 1; i < NTHREADS; i++)
         {
-            pthread_create(&h[i], 0, thread_func, 0);
+            pthread_create (&h[i], 0, thread_func, 0);
         }
         sleep(1);
 
@@ -96,7 +98,7 @@ int main(int argc, char* argv[])
 
         for (unsigned long i = 0; i < NTHREADS; i++)
         {
-            pthread_join(h[i], 0);
+            pthread_join (h[i], 0);
         }
     }
     if (secondsRemaining == 0)
@@ -106,3 +108,4 @@ int main(int argc, char* argv[])
     }
     return 0;
 }
+

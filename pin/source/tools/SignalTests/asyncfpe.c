@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,13 +20,14 @@
 #include <signal.h>
 #include <unistd.h>
 
-static void Handle(int, siginfo_t*, void*);
+static void Handle(int, siginfo_t *, void *);
+
 
 int main()
 {
     struct sigaction act;
     act.sa_sigaction = Handle;
-    act.sa_flags     = SA_SIGINFO;
+    act.sa_flags = SA_SIGINFO;
     sigemptyset(&act.sa_mask);
     if (sigaction(SIGFPE, &act, 0) != 0)
     {
@@ -41,7 +42,7 @@ int main()
     return 1;
 }
 
-static void Handle(int sig, siginfo_t* info, void* ctxt)
+static void Handle(int sig, siginfo_t *info, void *ctxt)
 {
     if (sig != SIGFPE)
     {

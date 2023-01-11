@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <fcntl.h>
+
 
 int main()
 {
@@ -42,7 +43,7 @@ int main()
      * emulated system call can be changed to a non-emulated system call.
      */
     sa.sa_handler = 0;
-    sa.sa_flags   = 0;
+    sa.sa_flags = 0;
     sigemptyset(&sa.sa_mask);
     ret = sigaction(SIGUSR1, &sa, 0);
     if (ret != getpid())

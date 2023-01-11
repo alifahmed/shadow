@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,12 +17,11 @@
 
 int get_num_descr()
 {
-    DIR* dir = opendir("/proc/self/fd");
-    struct dirent* entry;
+    DIR *dir = opendir("/proc/self/fd");
+    struct dirent *entry;
     int num = 0;
 
-    while ((entry = readdir(dir)) != 0)
-    {
+    while ((entry = readdir(dir)) != 0) {
         num++;
     }
 
@@ -31,7 +30,8 @@ int get_num_descr()
     return num;
 }
 
-int main(int argc, char* argv[])
+
+int main(int argc, char *argv[])
 {
     int i;
     char si[5];
@@ -42,13 +42,11 @@ int main(int argc, char* argv[])
 
     if (argc == 1)
     {
-        i       = 1;
+        i = 1;
         origfds = get_num_descr();
-    }
-    else
-    {
-        sscanf(argv[1], "%i", &i);
-        sscanf(argv[2], "%i", &origfds);
+    } else {
+        sscanf(argv[1],"%i",&i);
+        sscanf(argv[2],"%i",&origfds);
     }
 
     if (argv[0][0] != '/')
@@ -57,19 +55,17 @@ int main(int argc, char* argv[])
         strcpy(fullpath, argv[0]);
 
     i++;
-    if (i <= num)
-    {
-        sprintf(si, "%i", i);
+    if (i <= num ) {
+        sprintf(si,"%i",i);
         sprintf(fdstr, "%i", origfds);
-        execlp(fullpath, "selfexec", si, fdstr, (char*)0);
+        execlp(fullpath, "selfexec", si, fdstr, (char *)0);
     }
 
-    printf("Number of recursive calls = %i.\n", --i);
+    printf("Number of recursive calls = %i.\n",--i);
     fds = get_num_descr();
     printf("Number of file descriptors: %d\n", fds);
 
-    if (fds > origfds)
-    {
+    if (fds > origfds) {
         printf("Failed: number of open descriptors was increased\n");
         return 1;
     }

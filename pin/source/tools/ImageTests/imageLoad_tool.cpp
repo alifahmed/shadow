@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,25 +15,29 @@
 
 #include "pin.H"
 #include <fstream>
-using std::endl;
 using std::ofstream;
 using std::string;
+using std::endl;
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "imageLoad.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "imageLoad.out", "specify file name");
 
 ofstream TraceFile;
 /* ===================================================================== */
 
-int afterAttachProbe(void) { return 1; }
-
-static VOID imageLoad(IMG img, VOID* v)
+int afterAttachProbe(void)
 {
-    TraceFile << "in image callback of image: " << IMG_Name(img).c_str() << endl;
-    if (IMG_IsMainExecutable(img))
+    return 1;
+}
+
+static VOID imageLoad(IMG img, VOID *v)
+{
+    TraceFile <<  "in image callback of image: " << IMG_Name(img).c_str() << endl;
+    if ( IMG_IsMainExecutable(img))
     {
         RTN rtn = RTN_FindByName(img, "AfterAttach");
         if (RTN_Valid(rtn))
@@ -42,7 +46,7 @@ static VOID imageLoad(IMG img, VOID* v)
         }
     }
 }
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
 

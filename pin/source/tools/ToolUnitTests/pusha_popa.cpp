@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -56,24 +56,31 @@ struct REGS32
     UINT32 edi;
 };
 
+
 static bool TestPushA16();
 static bool TestPopA16();
 static bool TestPushA32();
 static bool TestPopA32();
 
-extern "C" void DoPushA16(const REGS16*, REGS16*, UINT16*) ASMNAME("DoPushA16");
-extern "C" void DoPopA16(const REGS16*, REGS16*) ASMNAME("DoPopA16");
-extern "C" void DoPushA32(const REGS32*, REGS32*, UINT32*) ASMNAME("DoPushA32");
-extern "C" void DoPopA32(const REGS32*, REGS32*) ASMNAME("DoPopA32");
+extern "C" void DoPushA16(const REGS16 *, REGS16 *, UINT16 *) ASMNAME("DoPushA16");
+extern "C" void DoPopA16(const REGS16 *, REGS16 *) ASMNAME("DoPopA16");
+extern "C" void DoPushA32(const REGS32 *, REGS32 *, UINT32 *) ASMNAME("DoPushA32");
+extern "C" void DoPopA32(const REGS32 *, REGS32 *) ASMNAME("DoPopA32");
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
-    if (!TestPushA16()) return 1;
-    if (!TestPopA16()) return 1;
-    if (!TestPushA32()) return 1;
-    if (!TestPopA32()) return 1;
+    if (!TestPushA16())
+        return 1;
+    if (!TestPopA16())
+        return 1;
+    if (!TestPushA32())
+        return 1;
+    if (!TestPopA32())
+        return 1;
     return 0;
 }
+
 
 static bool TestPushA16()
 {
@@ -136,6 +143,7 @@ static bool TestPushA16()
     return true;
 }
 
+
 static bool TestPopA16()
 {
     REGS16 inRegs;
@@ -190,6 +198,7 @@ static bool TestPopA16()
     }
     return true;
 }
+
 
 static bool TestPushA32()
 {
@@ -251,6 +260,7 @@ static bool TestPushA32()
     }
     return true;
 }
+
 
 static bool TestPopA32()
 {

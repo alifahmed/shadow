@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,15 +25,18 @@ using namespace std;
 // This tool shows how to detach Pin from an
 // application that is under Pin's control.
 
-KNOB< BOOL > KnobChangeBit(KNOB_MODE_WRITEONCE, "pintool", "change_bit", "0", "Change bit.... ");
+KNOB<BOOL>   KnobChangeBit(KNOB_MODE_WRITEONCE, "pintool", "change_bit", "0", "Change bit.... ");
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "instrument.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "instrument.out", "specify output file name");
+
+
 
 UINT64 icount = 0;
 ofstream OutFile;
 static bool addssInstrumented = false;
 
-VOID inject(PIN_REGISTER* val)
+VOID inject(PIN_REGISTER *val)
 {
     icount++;
 
@@ -48,42 +51,45 @@ VOID inject(PIN_REGISTER* val)
         PIN_Detach();
     }
     // We shouln't get here the second time after PIN_Detach() was called
-    ASSERTX(icount < 2);
+    ASSERTX(icount<2);
 }
 
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     // instrument only the main exec, if valid checks go through
     RTN Rtn = INS_Rtn(ins);
-    if (!RTN_Valid(Rtn)) return;
+    if(!RTN_Valid(Rtn))
+        return;
     SEC Sec = RTN_Sec(Rtn);
-    if (!SEC_Valid(Sec)) return;
+    if(!SEC_Valid(Sec))
+        return;
     IMG Img = SEC_Img(Sec);
-    if (!IMG_Valid(Img)) return;
-    if (!IMG_IsMainExecutable(Img)) return;
+    if(!IMG_Valid(Img))
+        return;
+    if( !IMG_IsMainExecutable(Img) )
+        return;
 
     // ADDSS in linux or macOS*
-    if (INS_Mnemonic(ins).find("ADDSS") != std::string::npos)
-    {
+    if(INS_Mnemonic(ins).find("ADDSS") != std::string::npos) {
         addssInstrumented = true;
         OutFile << INS_Disassemble(ins) << "\n";
         INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)inject, IARG_REG_REFERENCE, INS_RegW(ins, 0), IARG_END);
     }
 }
 
-VOID DetachCb(VOID* v)
+VOID DetachCb(VOID *v)
 {
     std::cerr << "PIN DETACHED" << std::endl;
     OutFile.close();
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     OutFile.close();
     ASSERT(!addssInstrumented, "Detach didn't happen\n");
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
 

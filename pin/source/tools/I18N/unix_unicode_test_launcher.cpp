@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,8 +17,8 @@
 #include <sys/wait.h>
 using std::cerr;
 using std::cout;
-using std::endl;
 using std::string;
+using std::endl;
 
 // launch types:
 // 1. make <compiler> <compile flags> <source file name> <exe name>
@@ -30,16 +30,16 @@ using std::string;
 //    - launch Pin
 //    - delete the files it created
 
-int make(int argc, char* argv[]);
-int test(int argc, char* argv[], char* envp[]);
+int make(int argc, char * argv[]);
+int test(int argc, char * argv[], char * envp[]);
 
-int main(int argc, char* argv[], char* envp[])
+int main(int argc, char * argv[], char * envp[])
 {
-    if (strcmp(argv[1], "make") == 0)
+    if(strcmp(argv[1], "make") == 0)
     {
         return make(argc - 2, &argv[2]);
     }
-    if (strcmp(argv[1], "test") == 0)
+    if(strcmp(argv[1], "test") == 0)
     {
         return test(argc - 2, &argv[2], envp);
     }
@@ -49,17 +49,16 @@ int main(int argc, char* argv[], char* envp[])
 }
 
 //internationalization in Japanese (encoded in UTF-8)
-static char i18n[] = {(char)0xE5, (char)0x9B, (char)0xBD, (char)0xE9, (char)0x9A,
-                      (char)0x9B, (char)0xE5, (char)0x8C, (char)0x96, (char)0x00};
+static char i18n[] = {(char)0xE5, (char)0x9B,  (char)0xBD, (char)0xE9, (char)0x9A, (char)0x9B, (char)0xE5, (char)0x8C, (char)0x96, (char)0x00};
 static string i18nStr(i18n);
 
 // <compiler> <compile flags> <source file name>
-int make(int argc, char* argv[])
+int make(int argc, char * argv[])
 {
     string compilerLine = "";
 
     //Build Compiler command line
-    for (int i = 0; i < argc - 1; i++)
+    for(int i = 0; i < argc - 1; i++)
     {
         compilerLine += string(argv[i]) + string(" ");
     }
@@ -68,7 +67,7 @@ int make(int argc, char* argv[])
     string sourceFileName = argv[argc - 1];
 
     string newSourceFileName = string("prefix_") + i18nStr + string("_") + sourceFileName;
-    string copyStr           = string("cp ") + sourceFileName + string(" ") + newSourceFileName;
+    string copyStr = string("cp ") + sourceFileName + string(" ") + newSourceFileName;
     system(copyStr.c_str());
 
     // "<compiler> <compile flags> <Unicode file name>"
@@ -84,57 +83,57 @@ int make(int argc, char* argv[])
 }
 
 // <path>/pin <pin flags + [pin tool]> -- <exe name>
-int test(int argc, char* argv[], char* envp[])
+int test(int argc, char * argv[], char * envp[])
 {
     int unicodeParamIndex = 0;
-    char** exeParams      = new char*[argc + 2];
+    char ** exeParams = new char*[argc + 2];
 
     string newUnicodeParamName;
     string exeName;
     string newExeName;
 
-    string exeFullName  = argv[argc - 1];
-    size_t namePos      = exeFullName.rfind("/") + 1;
-    string exeDir       = exeFullName.substr(0, namePos);
-    exeName             = exeFullName.substr(namePos);
-    newExeName          = exeDir + string("prefix_") + i18nStr + string("_") + exeName;
-    exeParams[argc - 1] = (char*)newExeName.c_str();
-    exeParams[argc]     = (char*)i18nStr.c_str();
+    string exeFullName = argv[argc-1];
+    size_t namePos = exeFullName.rfind("/") + 1;
+    string exeDir = exeFullName.substr(0, namePos);
+    exeName = exeFullName.substr(namePos);
+    newExeName = exeDir + string("prefix_") + i18nStr + string("_") + exeName;
+    exeParams[argc - 1] = (char *)newExeName.c_str();
+    exeParams[argc] = (char *)i18nStr.c_str();
     exeParams[argc + 1] = NULL;
     // "cp <original name> <unicode name>"
     string copyStr = string("cp ") + exeFullName + string(" ") + newExeName;
     system(copyStr.c_str());
 
     // Build command line
-    for (int i = 0; i < argc - 1; i++)
+    for(int i = 0; i < argc - 1; i++)
     {
         exeParams[i] = argv[i];
-        if (strcmp("-uni_param", argv[i]) == 0)
+        if(strcmp("-uni_param", argv[i]) == 0)
         {
-            unicodeParamIndex = i + 1;
+            unicodeParamIndex = i+1;
         }
     }
 
-    if (unicodeParamIndex != 0)
+    if(unicodeParamIndex != 0)
     {
-        newUnicodeParamName          = newExeName;
-        exeParams[unicodeParamIndex] = (char*)newUnicodeParamName.c_str();
+        newUnicodeParamName = newExeName;
+        exeParams[unicodeParamIndex] = (char *)newUnicodeParamName.c_str();
     }
 
     int ret = 0;
 
     pid_t pid = fork();
     //child
-    if (pid == 0)
+    if(pid == 0)
     {
         //invoke pin
         int res = execve(exeParams[0], exeParams, envp);
         cerr << "failed to exec, status = " << res << endl;
         ret = 1;
     }
-    if (pid < 0)
+    if(pid < 0)
     {
-        cout << "failed to fork, status = " << pid << endl;
+        cout << "failed to fork, status = " <<  pid << endl;
         ret = 1;
     }
 
@@ -146,3 +145,5 @@ int test(int argc, char* argv[], char* envp[])
     system(delStr.c_str());
     return ret;
 }
+
+

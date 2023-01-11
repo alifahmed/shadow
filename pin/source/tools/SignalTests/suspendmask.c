@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,8 +22,9 @@
 
 #include <sys/ucontext.h>
 
-static void Handle(int sig, siginfo_t* info, void* vctxt);
-static void CheckSigs(sigset_t* ss, const char* mesg);
+static void Handle(int sig, siginfo_t *info, void *vctxt);
+static void CheckSigs(sigset_t *ss, const char *mesg);
+
 
 int main()
 {
@@ -31,17 +32,17 @@ int main()
     sigset_t ss;
 
     act.sa_sigaction = Handle;
-    act.sa_flags     = SA_SIGINFO;
+    act.sa_flags = SA_SIGINFO;
     sigemptyset(&act.sa_mask);
     if (sigaction(SIGUSR1, &act, 0) != 0)
     {
-        fprintf(stderr, "unable to set SIGUSR1 handler\n");
+        fprintf(stderr,"unable to set SIGUSR1 handler\n");
         return 1;
     }
     sigemptyset(&act.sa_mask);
-    if (sigaction(SIGUSR2, &act, 0) != 0)
+    if (sigaction(SIGUSR2, &act, 0) !=0)
     {
-        fprintf(stderr, "unable to set SIGUSR2 handler\n");
+        fprintf(stderr,"unable to set SIGUSR2 handler\n");
         return 1;
     }
     sigfillset(&ss);
@@ -59,9 +60,9 @@ int main()
     return 0;
 }
 
-static void Handle(int sig, siginfo_t* info, void* vctxt)
+static void Handle(int sig, siginfo_t *info, void *vctxt)
 {
-    ucontext_t* ctxt = vctxt;
+    ucontext_t *ctxt = vctxt;
     sigset_t ss;
 
     printf("Received %s\n", (sig == SIGUSR1) ? "USR1" : "USR2");
@@ -70,7 +71,7 @@ static void Handle(int sig, siginfo_t* info, void* vctxt)
     CheckSigs(&ctxt->uc_sigmask, "Previous mask");
 }
 
-static void CheckSigs(sigset_t* ss, const char* mesg)
+static void CheckSigs(sigset_t *ss, const char *mesg)
 {
     printf("%s:\n", mesg);
     if (sigismember(ss, SIGUSR1))

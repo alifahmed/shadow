@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,29 +18,41 @@
 #include "pin.H"
 using std::string;
 
-static KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "exitapplication.out", "specify file name");
-static KNOB< BOOL > KnobCallback(KNOB_MODE_WRITEONCE, "pintool", "c", "0", "exit from a callback");
+static KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+                                   "o", "exitapplication.out", "specify file name");
+static KNOB<BOOL>   KnobCallback(KNOB_MODE_WRITEONCE, "pintool",
+                                   "c", "0", "exit from a callback");
 
-static FILE* out;
+static FILE * out;
 
-static VOID ThreadStart(THREADID threadIndex, CONTEXT* ctxt, INT32 flags, VOID* v) { PIN_ExitApplication(0); }
-
-static VOID ThreadFini(THREADID tid, CONTEXT const* c, INT32 code, VOID* v)
+static VOID ThreadStart(THREADID threadIndex, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
-    fprintf(out, "Thread Fini callback for thread %d\n", tid);
+    PIN_ExitApplication(0);
 }
 
-static VOID Fini(INT32 code, VOID* v)
+static VOID ThreadFini(THREADID tid, CONTEXT const * c, INT32 code, VOID *v)
+{
+    fprintf (out, "Thread Fini callback for thread %d\n", tid);
+}
+
+static VOID Fini(INT32 code, VOID *v)
 {
     fprintf(out, "Process Fini callback\n");
     fclose(out);
 }
 
-static VOID MakeExitCallback() { PIN_ExitApplication(0); }
+static VOID MakeExitCallback()
+{
+    PIN_ExitApplication(0);
+}
 
-static VOID InstrumentTrace(TRACE t, VOID* v) { TRACE_InsertCall(t, IPOINT_BEFORE, (AFUNPTR)MakeExitCallback, IARG_END); }
+static VOID InstrumentTrace(TRACE t, VOID *v)
+{
+    TRACE_InsertCall(t, IPOINT_BEFORE, (AFUNPTR)MakeExitCallback,
+                     IARG_END);
+}
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);

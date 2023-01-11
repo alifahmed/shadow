@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,15 +23,14 @@
 unsigned long THREAD_POOL::Create(unsigned long numThreads)
 {
     unsigned long count;
-    for (count = 0; (count < numThreads) && (m_numThreads < MAXTHREADS); ++count, ++m_numThreads)
+    for (count = 0; 
+        (count < numThreads) && (m_numThreads < MAXTHREADS);
+        ++count, ++m_numThreads)
     {
-        TLS_ELEMENT* tls = &(m_tls[m_numThreads]);
+        TLS_ELEMENT * tls = &(m_tls[m_numThreads]);
         tls->Init();
         BOOL created = CreateOneThread(&(tls->m_handle), ThreadRoutine, tls);
-        if (!created)
-        {
-            break;
-        }
+        if (!created) {break;}
     }
     return count;
 }
@@ -42,20 +41,17 @@ void THREAD_POOL::TerminateAll()
     for (unsigned long tid = 0; tid < m_numThreads; ++tid)
     {
         Wait(tid);
-        Start(tid, &exitObj); // run EXIT_THREAD_OBJ in the target thread to exit the thread
+        Start(tid, &exitObj); // run EXIT_THREAD_OBJ in the target thread to exit the thread 
         JoinOneThread(m_tls[tid].m_handle);
     }
     m_numThreads = 0;
 }
 
-bool THREAD_POOL::Start(unsigned long tid, RUNNABLE_OBJ* runObj)
+bool THREAD_POOL::Start(unsigned long tid, RUNNABLE_OBJ * runObj)
 {
-    if (tid >= m_numThreads)
-    {
-        return false;
-    }
+    if (tid >= m_numThreads) {return false;}
 
-    TLS_ELEMENT* tls = &(m_tls[tid]);
+    TLS_ELEMENT * tls = &(m_tls[tid]);
     if (tls->CheckSemaphore() == true)
     {
         return false; // can not start a new task until a previous one is not yet completed
@@ -63,25 +59,22 @@ bool THREAD_POOL::Start(unsigned long tid, RUNNABLE_OBJ* runObj)
 
     // switch control to the specified thread in the pool
     tls->m_runObj = runObj;
-    tls->SwitchSemaphore(true);
+    tls->SwitchSemaphore(true); 
     return true;
 }
 
-RUNNABLE_OBJ* THREAD_POOL::Wait(unsigned long tid)
+RUNNABLE_OBJ * THREAD_POOL::Wait(unsigned long tid)
 {
-    if (tid >= m_numThreads)
-    {
-        return 0;
-    }
+    if (tid >= m_numThreads) {return 0;}
 
-    TLS_ELEMENT* tls = &(m_tls[tid]);
+    TLS_ELEMENT * tls = &(m_tls[tid]);
     tls->WaitSemaphore(false);
     return tls->m_runObj;
 }
 
-void* THREAD_POOL::ThreadRoutine(void* tlsArg)
+void * THREAD_POOL::ThreadRoutine(void * tlsArg)
 {
-    TLS_ELEMENT* tls = static_cast< TLS_ELEMENT* >(tlsArg);
+    TLS_ELEMENT * tls = static_cast<TLS_ELEMENT *>(tlsArg);
     while (true)
     {
         tls->WaitSemaphore(true);

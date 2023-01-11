@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -38,15 +38,15 @@ int is_invalid_errno()
 
 void usage(char* cmd)
 {
-    fprintf(stderr,
-            "Usage: %s <unused|used>\n"
+    fprintf(stderr, "Usage: %s <unused|used>\n"
             "\tunused - Return unused random port and exit\n"
-            "\tused - Print a port that is being used, and hang on\n",
-            cmd);
+            "\tused - Print a port that is being used, and hang on\n", cmd);
     exit(3);
 }
 
-void alarm_signal_handler(int sig) {}
+void alarm_signal_handler(int sig)
+{
+}
 
 int main(int argc, char* argv[])
 {
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
     {
         usage(argv[0]);
     }
-    srand((unsigned int)time(NULL));
+    srand ((unsigned int)time(NULL));
     do
     {
         int random_port = 0x400 + (rand() % 0xffff - 0x400); //Picks a random number from 1024 to 65535
@@ -75,9 +75,9 @@ int main(int argc, char* argv[])
         int listenfd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&serv_addr, 0, sizeof(serv_addr));
 
-        serv_addr.sin_family      = AF_INET;
+        serv_addr.sin_family = AF_INET;
         serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        serv_addr.sin_port        = htons(random_port);
+        serv_addr.sin_port = htons(random_port);
         if (0 != bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)))
         {
             close(listenfd);
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
              * continue.
              */
             pid_t ppid = getppid(); //ppid is the process ID of "make"
-            pid_t pid  = fork();
+            pid_t pid = fork();
             if (pid < 0)
             {
                 perror("fork");

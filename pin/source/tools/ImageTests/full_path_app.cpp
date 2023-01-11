@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,11 +12,10 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
-enum ExitType
-{
-    RES_SUCCESS = 0,     // 0
-    RES_LOAD_FAILED,     // 1
-    RES_RES_INVALID_ARGS // 2
+enum ExitType {
+    RES_SUCCESS = 0,      // 0
+    RES_LOAD_FAILED,      // 1
+    RES_RES_INVALID_ARGS  // 2
 };
 
 /*
@@ -25,9 +24,9 @@ enum ExitType
 */
 int main(int argc, char** argv)
 {
-    if (argc != 2)
+    if(argc!=2)
     {
-        fprintf(stderr, "No enough arguments\n");
+        fprintf(stderr, "No enough arguments\n" );
         fflush(stderr);
         return RES_RES_INVALID_ARGS;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,12 +17,16 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
-extern "C" void qux() { cout << "qux" << endl; }
+
+extern "C" void qux()
+{
+    cout << "qux" << endl;
+}
 
 extern "C" void baz()
 {
     void* buf[128];
-    int nptrs = backtrace(buf, sizeof(buf) / sizeof(buf[0]));
+    int nptrs = backtrace(buf, sizeof(buf)/sizeof(buf[0]));
     ASSERTX(nptrs > 0);
     char** bt = backtrace_symbols(buf, nptrs);
     ASSERTX(NULL != bt);
@@ -45,7 +49,7 @@ extern "C" void foo()
     qux();
 }
 
-void InstImage(IMG img, void* v)
+void InstImage(IMG img, void *v)
 {
     if (IMG_IsMainExecutable(img))
     {
@@ -53,7 +57,7 @@ void InstImage(IMG img, void* v)
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     PIN_InitSymbols();
 

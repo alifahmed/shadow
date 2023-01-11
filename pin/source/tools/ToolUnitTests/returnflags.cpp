@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -28,7 +28,7 @@ ADDRINT SetFlags(ADDRINT app_flags)
     //cout << "SetFlags: app_flags = " << hexstr(app_flags) << endl;
     return (app_flags | FLAGSET);
 }
-
+    
 VOID CheckFlags(ADDRINT app_flags)
 {
     if ((app_flags & FLAGSET) != FLAGSET)
@@ -47,9 +47,9 @@ ADDRINT SetFlagsNoInline(ADDRINT app_flags)
     {
         a[i] = i;
     }
-    return (app_flags | FLAGSET);
+    return (app_flags | FLAGSET);    
 }
-
+    
 VOID CheckFlagsNoInline(ADDRINT app_flags)
 {
     if ((app_flags & FLAGSET) != FLAGSET)
@@ -59,45 +59,48 @@ VOID CheckFlagsNoInline(ADDRINT app_flags)
     }
 }
 
-VOID Instruction(INS ins, VOID* v)
+
+VOID Instruction(INS ins, VOID *v)
 {
     static INT32 count = 0;
 
-    switch (count)
+    switch(count)
     {
-        case 0:
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetFlags), IARG_REG_VALUE, REG_GFLAGS, IARG_RETURN_REGS, REG_GFLAGS,
-                           IARG_END);
-            break;
+      case 0:
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetFlags),
+                       IARG_REG_VALUE, REG_GFLAGS,
+                       IARG_RETURN_REGS, REG_GFLAGS, IARG_END);
+        break;
 
-        case 1:
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckFlags), IARG_REG_VALUE, REG_GFLAGS, IARG_END);
-            break;
+      case 1:
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckFlags), IARG_REG_VALUE, REG_GFLAGS, IARG_END);
+        break;
 
-        case 2:
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetFlagsNoInline), IARG_REG_VALUE, REG_GFLAGS, IARG_RETURN_REGS,
-                           REG_GFLAGS, IARG_END);
-            break;
-
-        case 3:
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckFlagsNoInline), IARG_REG_VALUE, REG_GFLAGS, IARG_END);
-            break;
-
-        default:
-            break;
+      case 2:
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetFlagsNoInline),
+                       IARG_REG_VALUE, REG_GFLAGS,
+                       IARG_RETURN_REGS, REG_GFLAGS, IARG_END);
+        break;
+        
+      case 3:
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckFlagsNoInline), IARG_REG_VALUE, REG_GFLAGS, IARG_END);
+        break;
+        
+      default:
+        break;
     }
-
+    
     count++;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
     INS_AddInstrumentFunction(Instruction, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

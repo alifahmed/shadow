@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
+
 static void Handle(int);
 
 int main()
@@ -27,7 +28,7 @@ int main()
     sigset_t ss;
 
     act.sa_handler = Handle;
-    act.sa_flags   = 0;
+    act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
     if (sigaction(SIGSEGV, &act, 0) != 0)
     {
@@ -46,8 +47,8 @@ int main()
     /*
      * We expect this to crash because SEGV is blocked.
      */
-    volatile int* p = (volatile int*)0x9;
-    *p              = 8;
+    volatile int *p = (volatile int *)0x9;
+    *p = 8;
 
     return 0;
 }

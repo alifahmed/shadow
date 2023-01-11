@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -10,7 +10,7 @@
  */
 
 #ifdef NDEBUG
-#undef NDEBUG
+# undef NDEBUG
 #endif
 #include <assert.h>
 #include <string.h>
@@ -26,8 +26,8 @@
 void createFileWithRandomData(const char* filename, size_t desiredFileLength)
 {
     size_t totalWritten = 0;
-    int pgSize          = getpagesize();
-    char* pageBuf       = malloc(pgSize);
+    int pgSize = getpagesize();
+    char* pageBuf = malloc(pgSize);
     int outFd;
     outFd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU | S_IRWXG);
     assert(outFd >= 0);
@@ -58,7 +58,7 @@ void createFileWithRandomData(const char* filename, size_t desiredFileLength)
 void* readOnePage(int fd)
 {
     size_t totalRead = 0;
-    char* buf        = malloc(getpagesize());
+    char* buf = malloc(getpagesize());
     while (totalRead < getpagesize())
     {
         ssize_t readCount = read(fd, buf + totalRead, getpagesize() - totalRead);
@@ -87,7 +87,7 @@ int main(int argc, const char* argv[])
     assert(fd >= 0);
     fd2 = dup(fd);
 
-    addr = mmap(NULL, getpagesize(), PROT_READ, MAP_FILE | MAP_PRIVATE, fd2, 3 * getpagesize());
+    addr = mmap(NULL, getpagesize(), PROT_READ, MAP_FILE | MAP_PRIVATE , fd2, 3 * getpagesize());
     assert(NULL != addr);
 
     lseek(fd, 3 * getpagesize(), SEEK_SET);

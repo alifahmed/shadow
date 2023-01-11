@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,19 +25,21 @@
 #include <iostream>
 #include <string>
 #include "pin.H"
+using std::ofstream;
 using std::cerr;
 using std::endl;
-using std::ofstream;
 
-KNOB< int > KnobAssertionNumber(KNOB_MODE_WRITEONCE, "pintool", "e", "0", "specify assertion number to trigger (0 - 2)");
+KNOB<int> KnobAssertionNumber(KNOB_MODE_WRITEONCE, "pintool",
+    "e", "0", "specify assertion number to trigger (0 - 2)");
 ofstream OutFile;
 
 static UINT64 icount = 0;
 
 VOID docount() { icount++; }
 
+
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     switch (KnobAssertionNumber.Value())
     {
@@ -74,7 +76,7 @@ INT32 Usage()
     return -1;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     if (PIN_Init(argc, argv))
     {

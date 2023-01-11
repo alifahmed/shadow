@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,7 +19,7 @@
 #include <string>
 #include <iostream>
 #if defined(TARGET_LINUX) || defined(TARGET_BSD)
-#include <stdlib.h> /* gcc4.3.x required */
+# include <stdlib.h> /* gcc4.3.x required */
 #endif
 using namespace std;
 
@@ -28,7 +28,7 @@ using namespace std;
  */
 class RUNNABLE_OBJ
 {
-  public:
+public:
     virtual void Run() = 0;
     virtual ~RUNNABLE_OBJ() {}
 };
@@ -38,27 +38,28 @@ class RUNNABLE_OBJ
  */
 class FUNC_OBJ : public RUNNABLE_OBJ
 {
-  public:
+public:
+
     // Execute the function.
     // @return  <this> object that contains result of the function invocation.
-    virtual FUNC_OBJ& Execute() = 0;
+    virtual FUNC_OBJ & Execute() = 0;
 
-    // Execute the function and return to the caller even if the function threw an
-    // exception.
+    // Execute the function and return to the caller even if the function threw an 
+    // exception. 
     // The function is NOT thread-safe.
     // @return  <this> object that contains result of the function invocation.
-    virtual FUNC_OBJ& ExecuteSafe();
+    virtual FUNC_OBJ & ExecuteSafe();
 
     // Implementation of the RUNNABLE_OBJ::Run() function.
-    void Run() { Execute(); }
+    void Run() {Execute();}
 
-    // Return boolean status of the last Execute() invocation.
+    // Return boolean status of the last Execute() invocation. 
     // @return  TRUE - the function succeeded and returned an expected result
     //          FALSE - the function failed or returned an unexpected result
     virtual bool Status() const = 0;
 
-    // Return human-readable string representation of the status of the last
-    // Execute() invocation.
+    // Return human-readable string representation of the status of the last 
+    // Execute() invocation. 
     virtual string ErrorMessage() const
     {
         if (Status())
@@ -71,7 +72,7 @@ class FUNC_OBJ : public RUNNABLE_OBJ
         }
     }
 
-    // Check the status of the last Execute() invocation. Print error message and
+    // Check the status of the last Execute() invocation. Print error message and 
     // exit abnormally if the function failed.
     void AssertStatus()
     {
@@ -86,30 +87,33 @@ class FUNC_OBJ : public RUNNABLE_OBJ
     virtual string Name() const = 0;
 
     // Create a copy of this object.
-    virtual FUNC_OBJ* Clone() const = 0;
+    virtual FUNC_OBJ * Clone() const = 0;
 
     // Virtual destructor
     virtual ~FUNC_OBJ() {}
 
-  protected:
+protected:
+
     // Handle exception.
     // @param[in]  exceptIp    address of the instruction that caused the exception
     // @return  <this> object that contains result of the exception handling.
-    virtual FUNC_OBJ& HandleException(void* exceptIp) { return *this; }
+    virtual FUNC_OBJ &  HandleException(void * exceptIp) {return *this;}
 };
+
 
 /*!
  * Class that represents a position-independent function.
  */
 class PI_FUNC : public FUNC_OBJ
 {
-  public:
-    // Copy the function body into specified buffer.
+public:
+
+    // Copy the function body into specified buffer. 
     // @return  <this> object that represents the function in the new location.
-    virtual PI_FUNC& Copy(void* buffer) = 0;
+    virtual PI_FUNC & Copy(void * buffer) = 0;
 
     // Base address of the function's code range.
-    virtual void* Start() const = 0;
+    virtual void * Start() const = 0;
 
     // Size of the function's code range.
     virtual size_t Size() const = 0;

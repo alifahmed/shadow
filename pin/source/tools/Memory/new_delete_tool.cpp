@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,27 +21,32 @@
 
 #define MAX_NUM_TH 1024
 
-typedef struct
-{
-    UINT64* d;
-    UINT64 pad[7];
+typedef struct {
+   UINT64 *d;
+   UINT64 pad[7];
 } data_t;
 data_t data_array[MAX_NUM_TH];
 
 VOID doMemTest(THREADID threadid)
 {
-    assert(threadid < MAX_NUM_TH);
-    data_array[threadid].d = new UINT64;
-    delete data_array[threadid].d;
-    return;
+   assert(threadid < MAX_NUM_TH);
+   data_array[threadid].d = new UINT64;
+   delete data_array[threadid].d;
+   return;
 }
 
-VOID insCallback(INS ins, void* v) { INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(doMemTest), IARG_THREAD_ID, IARG_END); }
-
-int main(int argc, char** argv)
+VOID insCallback(INS ins, void *v)
 {
-    PIN_Init(argc, argv);
-    INS_AddInstrumentFunction(insCallback, 0);
-    PIN_StartProgram();
-    return 0;
+   INS_InsertCall(ins, IPOINT_BEFORE,
+      AFUNPTR(doMemTest),
+      IARG_THREAD_ID,
+      IARG_END);
+}
+
+int main(int argc, char **argv)
+{
+   PIN_Init(argc,argv);
+   INS_AddInstrumentFunction(insCallback, 0);
+   PIN_StartProgram();
+   return 0;
 }

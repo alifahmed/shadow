@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,13 +25,15 @@
 #include "raise-exception-addrs.h"
 #include "faultcheck-target.h"
 
+
 static sigjmp_buf JumpBuffer;
 static unsigned int TestNumber = 0;
 
-static void Handle(int, siginfo_t*, void*);
+static void Handle(int, siginfo_t *, void *);
 int Initialize();
 
-int main(int argc, char** argv)
+
+int main(int argc, char **argv)
 {
     struct sigaction sigact;
     unsigned int OneTest;
@@ -65,7 +67,8 @@ int main(int argc, char** argv)
         fprintf(stderr, "Unable handle SIGTRAP\n");
         return 1;
     }
-    if (!Initialize()) return 1;
+    if (!Initialize())
+        return 1;
 
     if (argc > 2)
     {
@@ -74,51 +77,55 @@ int main(int argc, char** argv)
     }
     if (argc == 2)
     {
-        errno   = 0;
+        errno = 0;
         OneTest = strtoul(argv[1], 0, 10);
         if (errno)
         {
             fprintf(stderr, "Invalid test number '%s'\n", argv[1]);
             return 1;
         }
-        DoOneTest  = 1;
+        DoOneTest = 1;
         TestNumber = OneTest;
     }
 
     sigsetjmp(JumpBuffer, 1);
-    if (DoOneTest && TestNumber != OneTest) return 0;
+    if (DoOneTest && TestNumber != OneTest)
+        return 0;
 
     for (;;)
     {
         printf("Starting test %d ...\n", TestNumber);
         switch (DoTest(TestNumber))
         {
-            case TSTATUS_DONE:
-                printf("  Last test\n");
-                return 0;
-            case TSTATUS_SKIP:
-                printf("  Skipped\n");
-                break;
-            case TSTATUS_NOFAULT:
-                printf("  ** Failed to raise signal **\n");
-                break;
-            default:
-                assert(0);
-                break;
+        case TSTATUS_DONE:
+            printf("  Last test\n");
+            return 0;
+        case TSTATUS_SKIP:
+            printf("  Skipped\n");
+            break;
+        case TSTATUS_NOFAULT:
+            printf("  ** Failed to raise signal **\n");
+            break;
+        default:
+            assert(0);
+            break;
         }
 
         TestNumber++;
-        if (DoOneTest) return 0;
+        if (DoOneTest)
+            return 0;
     }
 }
 
-void SetLabelsForPinTool(const RAISE_EXCEPTION_ADDRS* addrs)
+
+void SetLabelsForPinTool(const RAISE_EXCEPTION_ADDRS *addrs)
 {
     /*
      * The Pin tool instruments this routine in order to find the addresses
      * of the instructions that raise exceptions.
      */
 }
+
 
 static void Handle(int sig, siginfo_t* info, void* ctxt)
 {

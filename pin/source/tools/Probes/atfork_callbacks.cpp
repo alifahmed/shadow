@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -31,7 +31,7 @@ using std::endl;
 *
 ************************************************/
 
-static void pintool_on_fork_before(UINT32 pid, VOID* param)
+static void pintool_on_fork_before(UINT32 pid, VOID *param)
 {
     fork_callbacks* callbacks = get_shared_object();
     ASSERTX(callbacks);
@@ -44,7 +44,7 @@ static void pintool_on_fork_before(UINT32 pid, VOID* param)
     callbacks->pin_before_fork = 1;
 }
 
-static void pintool_on_fork_after_in_parent(UINT32 pid, VOID* param)
+static void pintool_on_fork_after_in_parent(UINT32 pid, VOID *param)
 {
     fork_callbacks* callbacks = get_shared_object();
     ASSERTX(callbacks);
@@ -57,7 +57,7 @@ static void pintool_on_fork_after_in_parent(UINT32 pid, VOID* param)
     callbacks->pin_after_fork_parent = 1;
 }
 
-static void pintool_on_fork_after_in_child(UINT32 pid, VOID* param)
+static void pintool_on_fork_after_in_child(UINT32 pid, VOID *param)
 {
     fork_callbacks* callbacks = get_shared_object();
     ASSERTX(callbacks);
@@ -70,9 +70,11 @@ static void pintool_on_fork_after_in_child(UINT32 pid, VOID* param)
     callbacks->pin_after_fork_child = 1;
 }
 
-int main(int argc, char* argv[])
+
+
+int main(int argc, char *argv[])
 {
-    if (PIN_Init(argc, argv)) return 1;
+    if( PIN_Init(argc,argv) ) return 1;
 
     PIN_AddForkFunctionProbed(FPOINT_BEFORE, pintool_on_fork_before, 0);
     PIN_AddForkFunctionProbed(FPOINT_AFTER_IN_PARENT, pintool_on_fork_after_in_parent, 0);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,13 +15,14 @@
 #include <fstream>
 #include <string.h>
 
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::hex;
-using std::ios;
+
 using std::ofstream;
 using std::string;
+using std::cerr;
+using std::endl;
+using std::cout;
+using std::ios;
+using std::hex;
 
 /* ===================================================================== */
 /* Global Variables */
@@ -29,32 +30,35 @@ using std::string;
 
 ofstream TraceFile;
 
+
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "symbolnames.outfile", "specify trace file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "symbolnames.outfile", "specify trace file name");
 
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This pin tool collects an instruction trace for debugging\n"
-            "\n";
+    cerr <<
+        "This pin tool collects an instruction trace for debugging\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
 }
 
-VOID ImageLoad(IMG img, VOID* v)
+
+VOID ImageLoad(IMG img, VOID *v)
 {
     if (IMG_IsMainExecutable(img))
     {
         TraceFile << "Processing " << IMG_Name(img) << endl;
         cout << "Processing " << IMG_Name(img) << endl;
 
-        for (SYM sym = IMG_RegsymHead(img); SYM_Valid(sym); sym = SYM_Next(sym))
-        {
+        for (SYM sym = IMG_RegsymHead (img); SYM_Valid(sym); sym = SYM_Next(sym) ) {
             TraceFile << "   " << SYM_Name(sym) << endl;
         }
 
@@ -62,13 +66,14 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
+
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,23 +17,30 @@
 
 int buff[8];
 
-VOID UnalignedReadAndWrite()
+
+VOID UnalignedReadAndWrite ()
 {
-    char* unalignedPtr = (char*)buff;
+    char *unalignedPtr = (char *)buff;
     unalignedPtr++;
-    int unalignedRead = *((int*)(unalignedPtr));
+    int unalignedRead = *((int *)(unalignedPtr));
     unalignedPtr++;
-    *((int*)(unalignedPtr)) = unalignedRead;
+    *((int *)(unalignedPtr)) = unalignedRead;
 }
+
+
+
 
 BOOL instrumentNext = FALSE;
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     //printf ("Instruction at %x\n", INS_address(ins));
-    if (INS_Opcode(ins) == XED_ICLASS_POPF || INS_Opcode(ins) == XED_ICLASS_POPFD || INS_Opcode(ins) == XED_ICLASS_POPFQ ||
-        instrumentNext)
+    if (INS_Opcode(ins)==XED_ICLASS_POPF
+        || INS_Opcode(ins)==XED_ICLASS_POPFD
+        || INS_Opcode(ins)==XED_ICLASS_POPFQ
+        || instrumentNext)
     {
+        
         if (instrumentNext)
         {
             // IPOINT_BEFORE instrumentation on instruction after popf*
@@ -47,13 +54,17 @@ VOID Instruction(INS ins, VOID* v)
         }
         return;
     }
+    
 }
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v) {}
+VOID Fini(INT32 code, VOID *v)
+{
+    
+}
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     PIN_Init(argc, argv);
@@ -63,9 +74,9 @@ int main(int argc, char* argv[])
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

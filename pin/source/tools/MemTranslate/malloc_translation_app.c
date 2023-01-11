@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,23 +24,23 @@
 #define STRIP_PTR(ptr) ((void*)((uintptr_t)ptr & ~HIGHEST_BIT))
 
 // Initial allocator buffer (see below for explnaition).
-static char initial_buf[1024 * 1024];
+static char initial_buf[1024*1024];
 static size_t initial_buf_idx = 0;
 
-static void* (*libc_malloc)(size_t)             = NULL;
-static void* (*libc_calloc)(size_t, size_t)     = NULL;
-static void* (*libc_realloc)(void* ptr, size_t) = NULL;
-static void (*libc_free)(void*)                 = NULL;
+static void* (*libc_malloc)(size_t) = NULL;
+static void* (*libc_calloc)(size_t, size_t) = NULL;
+static void* (*libc_realloc)(void *ptr, size_t) = NULL;
+static void (*libc_free)(void*) = NULL;
 
 /*
  * Initialize all malloc related symbols from libc
  */
 void __attribute__((constructor)) init()
 {
-    libc_malloc  = dlsym(RTLD_NEXT, "malloc");
-    libc_calloc  = dlsym(RTLD_NEXT, "calloc");
+    libc_malloc = dlsym(RTLD_NEXT, "malloc");
+    libc_calloc = dlsym(RTLD_NEXT, "calloc");
     libc_realloc = dlsym(RTLD_NEXT, "realloc");
-    libc_free    = dlsym(RTLD_NEXT, "free");
+    libc_free = dlsym(RTLD_NEXT, "free");
 }
 
 /*********************************************************
@@ -56,7 +56,7 @@ void __attribute__((constructor)) init()
  * that allocates the first bytes of the program from
  * the static buffer initial_buf[].
  *********************************************************/
-void* initial_malloc(size_t size)
+void *initial_malloc(size_t size)
 {
     void* ret;
     if (sizeof(initial_buf) < initial_buf_idx + size + sizeof(size_t))
@@ -64,7 +64,7 @@ void* initial_malloc(size_t size)
         return NULL;
     }
     *((size_t*)&initial_buf[initial_buf_idx]) = size;
-    ret                                       = (void*)&initial_buf[initial_buf_idx + sizeof(size_t)];
+    ret = (void*)&initial_buf[initial_buf_idx + sizeof(size_t)];
     initial_buf_idx += ((size + 2 * sizeof(size_t) - 1) / sizeof(size_t)) * sizeof(size_t);
     return ret;
 }
@@ -84,7 +84,7 @@ size_t initial_free(void* ptr)
  * memory allocation function so the highest bit in the
  * memory address will be turn on.
  *********************************************************/
-void* malloc(size_t size)
+void *malloc(size_t size)
 {
     void* ret;
     if (NULL != (ret = initial_malloc(size)))
@@ -94,29 +94,29 @@ void* malloc(size_t size)
     return MK_PTR(libc_malloc(size));
 }
 
-void* calloc(size_t nmemb, size_t size)
+void *calloc(size_t nmemb, size_t size)
 {
     void* ret;
-    if (NULL != (ret = initial_malloc(nmemb * size)))
+    if (NULL != (ret = initial_malloc(nmemb*size)))
     {
         return MK_PTR(ret);
     }
     return MK_PTR(libc_calloc(nmemb, size));
 }
 
-void* realloc(void* ptr, size_t size)
+void *realloc(void *ptr, size_t size)
 {
     size_t old_size;
     if (0 != (old_size = initial_free(STRIP_PTR(ptr))))
     {
         void* new_ptr = malloc(size);
-        memcpy(STRIP_PTR(new_ptr), STRIP_PTR(ptr), size < old_size ? size : old_size);
+        memcpy(STRIP_PTR(new_ptr), STRIP_PTR(ptr), size<old_size?size:old_size);
         return new_ptr;
     }
     return MK_PTR(libc_realloc(STRIP_PTR(ptr), size));
 }
 
-void free(void* ptr)
+void free(void *ptr)
 {
     if (0 < initial_free(STRIP_PTR(ptr)))
     {
@@ -139,10 +139,10 @@ int main(int argc, char* argv[])
     const char* file = argv[1];
     printf("Loading shared object %s\n", file);
     fflush(stdout);
-    void* handle = dlopen(file, RTLD_NOW | RTLD_LOCAL);
+    void *handle = dlopen(file, RTLD_NOW | RTLD_LOCAL);
     if (NULL == handle)
     {
-        fprintf(stderr, "Failed to load %s - %s\n", file, dlerror());
+        fprintf(stderr,"Failed to load %s - %s\n", file, dlerror());
         exit(1);
     }
     printf("Unloading shared object %s\n", file);

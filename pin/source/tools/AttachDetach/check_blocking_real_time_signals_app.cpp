@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,8 +25,12 @@
 using std::list;
 using std::string;
 
+
+
+
 /* Assuming that 40 is real time signal in both glibc and pincrt */
 #define REALTIMESIGNAL 40
+
 
 /* 
  * The total number of threads that should run in this process
@@ -34,7 +38,7 @@ using std::string;
  */
 unsigned int numOfSecondaryThreads = 4;
 
-void* Do_Nothing(void* input)
+void *Do_Nothing(void *input)
 {
     int x = 0;
     while (1)
@@ -45,59 +49,56 @@ void* Do_Nothing(void* input)
     return 0;
 }
 
-#define DECSTR(buf, num)         \
-    {                            \
-        buf = (char*)malloc(10); \
-        sprintf(buf, "%d", num); \
-    }
+#define DECSTR(buf, num) { buf = (char *)malloc(10); sprintf(buf, "%d", num); }
 
-inline void PrintArguments(char** inArgv)
+inline void PrintArguments(char **inArgv)
 {
     fprintf(stderr, "Going to run: ");
-    for (unsigned int i = 0; inArgv[i] != 0; ++i)
+    for(unsigned int i=0; inArgv[i] != 0; ++i)
     {
         fprintf(stderr, "%s ", inArgv[i]);
     }
     fprintf(stderr, "\n");
 }
 
+
 /* AttachAndInstrument()
  * 
  */
-void AttachAndInstrument(list< string >* pinArgs)
+void AttachAndInstrument(list <string > * pinArgs)
 {
-    list< string >::iterator pinArgIt = pinArgs->begin();
+    list <string >::iterator pinArgIt = pinArgs->begin();
 
     string pinBinary = *pinArgIt;
     pinArgIt++;
 
     pid_t parent_pid = getpid();
-
+    
     pid_t child = fork();
 
-    if (child)
+    if (child) 
     {
         // inside parent
-        return;
+        return;  
     }
     else
     {
         // inside child
 
-        char** inArgv = new char*[pinArgs->size() + 10];
+        char **inArgv = new char*[pinArgs->size()+10];
 
         unsigned int idx = 0;
-        inArgv[idx++]    = (char*)pinBinary.c_str();
-        inArgv[idx++]    = (char*)"-pid";
-        inArgv[idx]      = (char*)malloc(10);
+        inArgv[idx++] = (char *)pinBinary.c_str(); 
+        inArgv[idx++] = (char*)"-pid"; 
+        inArgv[idx] = (char *)malloc(10);
         sprintf(inArgv[idx++], "%d", parent_pid);
 
         for (; pinArgIt != pinArgs->end(); pinArgIt++)
         {
-            inArgv[idx++] = (char*)pinArgIt->c_str();
+            inArgv[idx++]= (char *)pinArgIt->c_str();
         }
         inArgv[idx] = 0;
-
+        
         PrintArguments(inArgv);
 
         execvp(inArgv[0], inArgv);
@@ -106,14 +107,15 @@ void AttachAndInstrument(list< string >* pinArgs)
     }
 }
 
+
 /*
  * Expected command line: <this exe> [-th_num NUM] -pin $PIN -pinarg <pin args > -t tool <tool args>
  */
 
-void ParseCommandLine(int argc, char* argv[], list< string >* pinArgs)
+void ParseCommandLine(int argc, char *argv[], list < string>* pinArgs)
 {
     string pinBinary;
-    for (int i = 1; i < argc; i++)
+    for (int i=1; i<argc; i++)
     {
         string arg = string(argv[i]);
         if (arg == "-th_num")
@@ -137,14 +139,18 @@ void ParseCommandLine(int argc, char* argv[], list< string >* pinArgs)
     pinArgs->push_front(pinBinary);
 }
 
-extern "C" int ThreadsReady(unsigned int numOfThreads) { return 0; }
-
-int main(int argc, char* argv[])
+extern "C" int ThreadsReady(unsigned int numOfThreads)
 {
-    list< string > pinArgs;
+    return 0;
+}
+    
+int main(int argc, char *argv[])
+{
+    list <string> pinArgs;
     ParseCommandLine(argc, argv, &pinArgs);
+    
+    pthread_t *thHandle = new pthread_t[numOfSecondaryThreads+1];
 
-    pthread_t* thHandle = new pthread_t[numOfSecondaryThreads + 1];
 
     sigset_t set;
     if (sigemptyset(&set))
@@ -171,13 +177,15 @@ int main(int argc, char* argv[])
         ++numOfRunningThreads;
     }
 
-    AttachAndInstrument(&pinArgs);
 
-    // Give enough time for all threads to get started
+    AttachAndInstrument(&pinArgs);
+    
+    // Give enough time for all threads to get started 
     while (!ThreadsReady(numOfRunningThreads))
     {
         sched_yield();
-    }
-
+    }        
+    
     return 0;
 }
+

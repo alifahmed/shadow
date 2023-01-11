@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,14 +13,14 @@
 //
 #include <stdio.h>
 
-#if defined(TARGET_WINDOWS)
-#define EXPORT_SYM __declspec(dllexport)
+#if defined (TARGET_WINDOWS)
+#define EXPORT_SYM __declspec( dllexport ) 
 #else
 #define EXPORT_SYM extern
 #endif
 
-EXPORT_SYM char Bar12(int, int, unsigned int, signed char, signed char, unsigned char, int, int, unsigned int, signed char,
-                      signed char, unsigned char);
+EXPORT_SYM char Bar12( int, int, unsigned int, signed char, signed char, unsigned char,
+                       int, int, unsigned int, signed char, signed char, unsigned char );
 
 int main()
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,9 +24,9 @@
 
 volatile size_t numThreads = 0;
 
-void* compute(void* ptr)
+void *compute(void *ptr)
 {
-    size_t newptr = (size_t)ptr;
+    size_t newptr = (size_t) ptr;
     size_t i = 0, start_count = newptr;
 
 #ifdef TARGET_IA32
@@ -35,21 +35,22 @@ void* compute(void* ptr)
     printf("Thread start %lld %lld\n", newptr, start_count);
 #endif
 
-    ATOMIC::OPS::Increment< size_t >(&numThreads, 1);
+    ATOMIC::OPS::Increment<size_t>(&numThreads, 1);
 
     for (i = 0; i < start_count; i++)
         newptr += (i + newptr);
 
     printf("Thread end %lld\n", newptr);
-    return (void*)newptr;
+    return (void*) newptr;
 }
 
 THREAD_HANDLE threads[MAXTHREADS];
 
 int main()
 {
+
     for (int i = 0; i < NUM_TH; i++)
-        CreateOneThread(&threads[i], compute, (void*)(LOOPS + i));
+        CreateOneThread(&threads[i], compute, (void*) (LOOPS + i));
 
     while (numThreads != NUM_TH)
     {
@@ -63,3 +64,4 @@ int main()
 
     exit(0);
 }
+

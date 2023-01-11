@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -29,21 +29,22 @@
 // If __USE_GNU is defined, we don't need to do anything.
 // If we defined it ourselves, we need to undefine it later.
 #ifndef __USE_GNU
-#define __USE_GNU
-#define APP_UNDEF_USE_GNU
+# define __USE_GNU
+# define APP_UNDEF_USE_GNU
 #endif
 
 #if defined(TARGET_MAC)
-#include <sys/ucontext.h>
+# include <sys/ucontext.h>
 #else
-#include <ucontext.h>
+# include <ucontext.h>
 #endif
 
 // If we defined __USE_GNU ourselves, we need to undefine it here.
 #ifdef APP_UNDEF_USE_GNU
-#undef __USE_GNU
-#undef APP_UNDEF_USE_GNU
+# undef __USE_GNU
+# undef APP_UNDEF_USE_GNU
 #endif
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,18 +52,21 @@
 #include <errno.h>
 #include <string.h>
 
+
 static void Usage();
-static void Handle(int, siginfo_t*, void*);
+static void Handle(int, siginfo_t *, void *);
 extern void DoILLOnBadStack();
 extern int DoSigreturnOnBadStack();
 
-int DoSigill   = 0;
+int DoSigill = 0;
 int DoAltStack = 0;
 
-int main(int argc, char** argv)
+
+int main(int argc, char **argv)
 {
     struct sigaction act;
     stack_t ss;
+
 
     if (argc != 3)
     {
@@ -98,9 +102,9 @@ int main(int argc, char** argv)
 
     if (DoAltStack)
     {
-        ss.ss_sp    = malloc(SIGSTKSZ);
+        ss.ss_sp = malloc(SIGSTKSZ);
         ss.ss_flags = 0;
-        ss.ss_size  = SIGSTKSZ;
+        ss.ss_size = SIGSTKSZ;
         if (sigaltstack(&ss, 0) != 0)
         {
             printf("Failed to set alternate stack\n");
@@ -109,7 +113,7 @@ int main(int argc, char** argv)
     }
 
     act.sa_sigaction = Handle;
-    act.sa_flags     = (DoAltStack) ? (SA_ONSTACK | SA_SIGINFO) : (SA_SIGINFO);
+    act.sa_flags = (DoAltStack) ? (SA_ONSTACK | SA_SIGINFO) : (SA_SIGINFO);
     sigemptyset(&act.sa_mask);
     if (sigaction(SIGSEGV, &act, 0) != 0)
     {
@@ -139,12 +143,12 @@ int main(int argc, char** argv)
         int err = DoSigreturnOnBadStack();
         switch (err)
         {
-            case EFAULT:
-                printf("Sigreturn returned EFAULT\n");
-                break;
-            default:
-                printf("Sigreturn returned <error %d>\n", err);
-                break;
+        case EFAULT:
+            printf("Sigreturn returned EFAULT\n");
+            break;
+        default:
+            printf("Sigreturn returned <error %d>\n", err);
+            break;
         }
     }
 
@@ -152,23 +156,28 @@ int main(int argc, char** argv)
     return 0;
 }
 
-static void Usage() { printf("Usage: bad-stack {sigill | sigreturn} {altstack | noaltstack}\n"); }
 
-static void Handle(int sig, siginfo_t* info, void* v)
+static void Usage()
 {
-    ucontext_t* ctxt = v;
+    printf("Usage: bad-stack {sigill | sigreturn} {altstack | noaltstack}\n");
+}
+
+
+static void Handle(int sig, siginfo_t *info, void *v)
+{
+    ucontext_t *ctxt = v;
 
     switch (sig)
     {
-        case SIGSEGV:
-            printf("Got signal SEGV\n");
-            break;
-        case SIGILL:
-            printf("Got signal ILL\n");
-            break;
-        default:
-            printf("Got signal <%d>\n", sig);
-            break;
+    case SIGSEGV:
+        printf("Got signal SEGV\n");
+        break;
+    case SIGILL:
+        printf("Got signal ILL\n");
+        break;
+    default:
+        printf("Got signal <%d>\n", sig);
+        break;
     }
 
     if (DoSigill)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,10 +14,10 @@
 #include <sys/syscall.h>
 #include "pin.H"
 using std::cerr;
-using std::endl;
-using std::hex;
 using std::ofstream;
+using std::hex;
 using std::string;
+using std::endl;
 
 // The highest bit value in a pointer
 #define HIGHEST_BIT ((ADDRINT)1 << (8 * sizeof(void*) - 1))
@@ -28,19 +28,24 @@ ofstream OutFile;
 // Temporary registers used to rewrite memory operands
 REG rewrite_reg[2];
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "malloc_translation.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "malloc_translation.out", "specify output file name");
+
 
 /*
  * Translates a memory address.
  * malloc() related functions return address with the higest
  * bit on. so, we'll turn this bit off if we get such address.
  */
-static ADDRINT TranslateMemRef(ADDRINT ea) { return ea & ~HIGHEST_BIT; }
+static ADDRINT TranslateMemRef(ADDRINT ea)
+{
+    return ea & ~HIGHEST_BIT;
+}
 
 /*
  * Pin calls this function everytime it needs to translate a memory address
  */
-ADDRINT PIN_FAST_ANALYSIS_CALL memoryCallback(PIN_MEM_TRANS_INFO* memTransInfo, VOID* v)
+ADDRINT PIN_FAST_ANALYSIS_CALL memoryCallback(PIN_MEM_TRANS_INFO* memTransInfo, VOID *v)
 {
     return TranslateMemRef(memTransInfo->addr);
 }
@@ -50,7 +55,7 @@ ADDRINT PIN_FAST_ANALYSIS_CALL memoryCallback(PIN_MEM_TRANS_INFO* memTransInfo, 
  * Currently, we know of only one syscall that are called and requires
  * this translation - which is SYS_open.
  */
-VOID SysBefore(ADDRINT num, ADDRINT* arg0, ADDRINT* arg1, ADDRINT* arg2, ADDRINT* arg3, ADDRINT* arg4, ADDRINT* arg5)
+VOID SysBefore(ADDRINT num, ADDRINT *arg0, ADDRINT *arg1, ADDRINT *arg2, ADDRINT *arg3, ADDRINT *arg4, ADDRINT *arg5)
 {
     switch (num)
     {
@@ -70,31 +75,36 @@ VOID SysBefore(ADDRINT num, ADDRINT* arg0, ADDRINT* arg1, ADDRINT* arg2, ADDRINT
 }
 
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     if (INS_IsSyscall(ins))
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SysBefore), IARG_SYSCALL_NUMBER, IARG_SYSARG_REFERENCE, 0,
-                       IARG_SYSARG_REFERENCE, 1, IARG_SYSARG_REFERENCE, 2, IARG_SYSARG_REFERENCE, 3, IARG_SYSARG_REFERENCE, 4,
-                       IARG_SYSARG_REFERENCE, 5, IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SysBefore),
+                       IARG_SYSCALL_NUMBER,
+                       IARG_SYSARG_REFERENCE, 0, IARG_SYSARG_REFERENCE, 1,
+                       IARG_SYSARG_REFERENCE, 2, IARG_SYSARG_REFERENCE, 3,
+                       IARG_SYSARG_REFERENCE, 4, IARG_SYSARG_REFERENCE, 5,
+                       IARG_END);
     }
     else
     {
         const UINT32 memOps = INS_MemoryOperandCount(ins);
         ASSERTX(memOps <= 2);
-        for (UINT32 i = 0; i < memOps; i++)
+        for (UINT32 i = 0 ; i < memOps; i++)
         {
-            OutFile << "Instrumenting at " << hex << INS_Address(ins) << " " << INS_Disassemble(ins).c_str() << " operand #" << i
-                    << std::endl;
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)TranslateMemRef, IARG_MEMORYOP_EA, (ADDRINT)i, IARG_RETURN_REGS,
-                           rewrite_reg[i], IARG_END);
+            OutFile << "Instrumenting at " << hex << INS_Address(ins) << " " << INS_Disassemble(ins).c_str() << " operand #" << i << std::endl;
+            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)TranslateMemRef,
+                    IARG_MEMORYOP_EA, (ADDRINT)i,
+                    IARG_RETURN_REGS, rewrite_reg[i],
+                    IARG_END);
             INS_RewriteMemoryOperand(ins, i, rewrite_reg[i]);
         }
     }
 }
 
+
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     OutFile << "Done!" << endl;
     OutFile.close();
@@ -115,7 +125,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();

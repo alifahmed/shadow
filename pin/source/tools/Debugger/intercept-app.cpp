@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,15 +23,16 @@ extern "C" int Checkpoint();
 extern "C" void Breakpoint1();
 extern "C" int Breakpoint2();
 
+
 int main()
 {
     // Call these functions through volatile pointers to prevent the compiler from
     // in-lining them.  The tool places instrumentation points in them, and we want
     // to make sure the application calls the out-of-line versions.
     //
-    volatile FPTR_INTRET checkpoint   = Checkpoint;
+    volatile FPTR_INTRET checkpoint = Checkpoint;
     volatile FPTR_VOIDRET breakpoint1 = Breakpoint1;
-    volatile FPTR_INTRET breakpoint2  = Breakpoint2;
+    volatile FPTR_INTRET breakpoint2 = Breakpoint2;
 
     // The Pin tool takes a snapshot in the Checkpoint() function and causes the
     // application to restart from this snapshot, however Checkpoint() returns
@@ -82,6 +83,11 @@ int main()
     return 1;
 }
 
-extern "C" int Checkpoint() { return 0; }
+extern "C" int Checkpoint()
+{
+    return 0;
+}
 
-extern "C" void Breakpoint1() {}
+extern "C" void Breakpoint1()
+{
+}

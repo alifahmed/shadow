@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,13 +23,15 @@
 int main()
 {
     const int func = 0x3000;
-    long arg       = 0;
-    void* ptr      = &arg;
-    int res        = syscall(__NR_arch_prctl, func, ptr);
+    long arg = 0;
+    void *ptr = &arg;
+    int res = syscall(__NR_arch_prctl, func, ptr);
 
     printf("Syscall return: %d\n", res);
 
-    if (res != -1) return 1;
+    if (res != -1)
+        return 1;
 
     return 0;
 }
+

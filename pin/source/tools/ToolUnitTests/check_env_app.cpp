@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,11 +16,12 @@
 #include <unistd.h>
 using std::string;
 
-void run_again(char** argv);
 
-int main(int argc, char** argv)
+void run_again(char **argv);
+
+int main(int argc, char **argv)
 {
-    if (argc < 2)
+    if (argc < 2 )
     {
         printf("Expected at least 1 input parameter\n");
         return -1;
@@ -34,7 +35,7 @@ int main(int argc, char** argv)
         second_run = true;
     }
 
-    char* ld_preload_val = getenv("LD_PRELOAD");
+    char *ld_preload_val = getenv("LD_PRELOAD");
     if (!ld_preload_val)
     {
         printf("check_env ERROR: Unexpected or missing LD_PRELOAD\n");
@@ -54,18 +55,20 @@ int main(int argc, char** argv)
     }
 }
 
-void run_again(char** argv)
+void run_again(char **argv)
 {
-    char* ld_preload_val      = getenv("LD_PRELOAD");
+    char *ld_preload_val = getenv("LD_PRELOAD");
     char ld_preload_new_val[] = "libm.so.6";
 
-    setenv("LD_PRELOAD", ld_preload_new_val, 1);
+    setenv ("LD_PRELOAD", ld_preload_new_val,1);
 
-    char* execv_argv[4];
+    char *execv_argv[4];
     execv_argv[0] = argv[0];
-    execv_argv[1] = (char*)"libm.so.6";
-    execv_argv[2] = (char*)"1";
+    execv_argv[1] = (char *)"libm.so.6";
+    execv_argv[2] = (char *)"1";
     execv_argv[3] = NULL;
 
+
     execv(execv_argv[0], execv_argv);
+
 }

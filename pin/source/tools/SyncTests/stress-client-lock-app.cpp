@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,49 +18,58 @@
 #include <cstdlib>
 #include "atomic.hpp"
 
-using std::cerr;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::flush;
 
-volatile unsigned int threadCount  = 0;
-volatile bool go                   = false;
-volatile unsigned int stillRunning = 0;
-volatile bool done                 = false;
 
-pid_t GetTid() { return syscall(__NR_gettid); }
+volatile unsigned int threadCount = 0;
+volatile bool go = false;
+volatile unsigned int stillRunning = 0;
+volatile bool done = false;
+
+
+pid_t GetTid()
+{
+     return syscall(__NR_gettid);
+}
+
 
 extern "C"
 {
-    void SecondaryThreadInit(unsigned int threadNum, pid_t tid)
-    {
-        ATOMIC::OPS::Store(&stillRunning, (unsigned int)tid);
-        cout << "APP: Thread #" << threadNum << " (" << tid << ") started." << endl << flush;
-    }
 
-    static void SecondaryThreadWork()
-    {
-        ATOMIC::OPS::Store(&stillRunning, (unsigned int)GetTid());
-        sched_yield();
-    }
+void SecondaryThreadInit(unsigned int threadNum, pid_t tid)
+{
+    ATOMIC::OPS::Store(&stillRunning, (unsigned int)tid);
+    cout << "APP: Thread #" << threadNum << " (" << tid << ") started." << endl << flush;
+}
 
-    void SecondaryThreadFini(unsigned int threadNum, pid_t tid)
-    {
-        ATOMIC::OPS::Store(&stillRunning, (unsigned int)tid);
-        cout << "APP: Thread #" << threadNum << " (" << tid << ") finished." << endl << flush;
-    }
+
+static void SecondaryThreadWork()
+{
+    ATOMIC::OPS::Store(&stillRunning, (unsigned int)GetTid());
+    sched_yield();
+}
+
+
+void SecondaryThreadFini(unsigned int threadNum, pid_t tid)
+{
+    ATOMIC::OPS::Store(&stillRunning, (unsigned int)tid);
+    cout << "APP: Thread #" << threadNum << " (" << tid << ") finished." << endl << flush;
+}
 
 } // extern "C"
 
+
 static void* SecondaryThreadMain(void* v)
 {
-    unsigned int threadNum = ATOMIC::OPS::Increment< unsigned int >(&threadCount, 1);
-    pid_t tid              = GetTid();
+    unsigned int threadNum = ATOMIC::OPS::Increment<unsigned int>(&threadCount, 1);
+    pid_t tid = GetTid();
 
     // Per-thread init
     SecondaryThreadInit(threadNum, tid);
-    while (!go)
-        sched_yield();
+    while (!go) sched_yield();
 
     // Stress test
     for (unsigned int i = 0; i < 1000; ++i)
@@ -72,6 +81,7 @@ static void* SecondaryThreadMain(void* v)
     SecondaryThreadFini(threadNum, tid);
     return NULL;
 }
+
 
 static void* MonitorThreadMain(void* v)
 {
@@ -101,17 +111,19 @@ static void* MonitorThreadMain(void* v)
     return NULL;
 }
 
+
 extern "C"
 {
-    void ReleaseThreads(volatile bool* doRelease)
+void ReleaseThreads(volatile bool* doRelease)
+{
+    if (false == go)
     {
-        if (false == go)
-        {
-            cerr << "APP ERROR: The tool should have instrumented ReleaseThreads and released the threads" << endl;
-            exit(3);
-        }
+        cerr << "APP ERROR: The tool should have instrumented ReleaseThreads and released the threads" << endl;
+        exit(3);
     }
+}
 } // extern "C"
+
 
 static void CreateThreads()
 {
@@ -127,21 +139,21 @@ static void CreateThreads()
         ATOMIC::OPS::Store(&stillRunning, (unsigned int)tids[i]);
     }
     cout << "APP: All threads created successfully, waiting for them to be ready." << endl;
-    while (threadCount < numOfThreads)
-        sched_yield();
+    while (threadCount < numOfThreads) sched_yield();
     ReleaseThreads(&go);
     cout << "APP: All threads are ready, waiting for them to exit." << endl;
     for (unsigned int i = 0; i < numOfThreads; ++i)
     {
         if (0 != pthread_join(tids[i], NULL))
         {
-            cerr << "APP ERROR: Secondary thread #" << i << " failed to join" << endl;
+            cerr << "APP ERROR: Secondary thread #" << i << " failed to join"<< endl;
             exit(4);
         }
         ATOMIC::OPS::Store(&stillRunning, (unsigned int)tids[i]);
     }
     done = true;
 }
+
 
 int main()
 {

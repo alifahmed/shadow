@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,25 +22,26 @@ using std::endl;
 static UINT64 icount = 0;
 
 // This function is called before every instruction is executed
-VOID ConstContextAnalysisRoutine(ADDRINT ip, CONTEXT* ctxt, ADDRINT addr)
-{
-    icount++;
+VOID ConstContextAnalysisRoutine(ADDRINT ip, CONTEXT *ctxt, ADDRINT addr) 
+{ 
+	icount++;
     if ((icount % 10000000) == 0)
     {
         cout << "ConstContextAnalysisRoutine called ConstContextAnalysisRoutine " << icount << " times" << endl;
     }
 }
-
+    
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     // Insert a call to docount before every instruction, no arguments are passed
-    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ConstContextAnalysisRoutine, IARG_INST_PTR, IARG_CONST_CONTEXT, IARG_ADDRINT,
-                   INS_Address(ins), IARG_END);
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ConstContextAnalysisRoutine, IARG_INST_PTR, IARG_CONST_CONTEXT, IARG_ADDRINT, INS_Address(ins), IARG_END);
 }
 
+
+
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     cout << "ConstContextAnalysisRoutine called ConstContextAnalysisRoutine " << icount << " times" << endl;
 }
@@ -62,7 +63,7 @@ INT32 Usage()
 /*   argc, argv are the entire command line: pin -t <toolname> -- ...    */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();
@@ -72,9 +73,9 @@ int main(int argc, char* argv[])
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
-
+    
     // Start the program, never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

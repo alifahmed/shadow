@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,7 +22,7 @@ using std::cerr;
 using std::flush;
 
 // Linker requires definition of target forwarded function
-extern "C" int bar() { return 0; }
+extern "C" int bar() {return 0;}
 
 // Specify export directive for linker to define forwarder.
 // Forwarder DLL does not exist.
@@ -37,15 +37,16 @@ extern "C" int bar() { return 0; }
 // Its target will be forwarder.
 extern "C" __declspec(dllimport) int foo();
 
+
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if (PIN_Init(argc,argv))
     {
         return 1;
     }
@@ -56,7 +57,7 @@ int main(int argc, char* argv[])
 
     // Never returns
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

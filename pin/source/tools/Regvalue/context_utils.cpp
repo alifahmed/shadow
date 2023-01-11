@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -11,14 +11,15 @@
 
 #include "context_utils.h"
 
+
 /////////////////////
 // API FUNCTIONS IMPLEMENTATION
 /////////////////////
 
-void StoreContext(const CONTEXT* ctxt)
+void StoreContext(const CONTEXT * ctxt)
 {
-    vector< REG > regs = GetTestRegs();
-    int numOfRegs      = regs.size();
+    vector<REG> regs = GetTestRegs();
+    int numOfRegs = regs.size();
     for (int r = 0; r < numOfRegs; ++r)
     {
         REG reg = regs[r];
@@ -26,10 +27,10 @@ void StoreContext(const CONTEXT* ctxt)
     }
 }
 
-void ModifyContext(CONTEXT* ctxt)
+void ModifyContext(CONTEXT * ctxt)
 {
-    vector< REG > regs = GetTestRegs();
-    int numOfRegs      = regs.size();
+    vector<REG> regs = GetTestRegs();
+    int numOfRegs = regs.size();
     for (int r = 0; r < numOfRegs; ++r)
     {
         REG reg = regs[r];

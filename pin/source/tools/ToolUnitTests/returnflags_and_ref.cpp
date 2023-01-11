@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,12 +16,15 @@
 
 THREADID myThread = INVALID_THREADID;
 
-ADDRINT IfMyThread(THREADID threadId) { return threadId == myThread; }
+ADDRINT IfMyThread(THREADID threadId)
+{
+    return threadId == myThread;
+}
 
 // Test that using (IARG_REG_REFERENCE, REG_GAX) and (IARG_RETURN_REGS, REG_GFLAGS) to an anlysis function does not
-// result in unexpected values in either register
+// result in unexpected values in either register 
 
-ADDRINT SetGaxAndReturnGFlags(ADDRINT app_flags, ADDRINT gaxVal, ADDRINT* gaxRef)
+ADDRINT SetGaxAndReturnGFlags(ADDRINT app_flags, ADDRINT gaxVal, ADDRINT *gaxRef)
 {
     *gaxRef = gaxVal;
     return (app_flags);
@@ -31,37 +34,38 @@ int a[10];
 int n = 10;
 
 ADDRINT savedGaxVal, savedGFlagsVal;
-ADDRINT SetGaxAndReturnGFlagsNoInline(ADDRINT app_flags, ADDRINT gaxVal, ADDRINT* gaxRef)
+ADDRINT SetGaxAndReturnGFlagsNoInline(ADDRINT app_flags, ADDRINT gaxVal, ADDRINT *gaxRef)
 {
     for (int i = 0; i < n; i++)
     {
         a[i] = i;
     }
-    *gaxRef        = gaxVal;
+    *gaxRef = gaxVal;
     savedGFlagsVal = app_flags;
-    savedGaxVal    = gaxVal;
-    return (app_flags);
+    savedGaxVal = gaxVal;
+    return (app_flags);    
 }
 
-ADDRINT SetGaxAndReturnGFlagsInline(ADDRINT app_flags, ADDRINT gaxVal, ADDRINT* gaxRef)
+ADDRINT SetGaxAndReturnGFlagsInline(ADDRINT app_flags, ADDRINT gaxVal, ADDRINT *gaxRef)
 {
-    *gaxRef        = gaxVal;
+    *gaxRef = gaxVal;
     savedGFlagsVal = app_flags;
-    savedGaxVal    = gaxVal;
-    return (app_flags);
+    savedGaxVal = gaxVal;
+    return (app_flags);    
 }
+
 
 void CompareGaxAndGFlags(ADDRINT app_flags, ADDRINT gaxVal)
 {
     BOOL haveError = FALSE;
     if (savedGaxVal != gaxVal)
     {
-        printf("Error in gax val\n");
+        printf ("Error in gax val\n");
         haveError = TRUE;
     }
     if (savedGFlagsVal != app_flags)
     {
-        printf("Error in flags val\n");
+        printf ("Error in flags val\n");
         haveError = TRUE;
     }
     if (haveError)
@@ -69,32 +73,39 @@ void CompareGaxAndGFlags(ADDRINT app_flags, ADDRINT gaxVal)
         exit(1);
     }
 }
+    
 
-int instrumentationNum = 1;
+int instrumentationNum=1;
 
-VOID Instruction(INS ins, VOID* v)
-{
-    if (instrumentationNum & 0x1)
+VOID Instruction(INS ins, VOID *v)
+{   
+    if (instrumentationNum&0x1)
     {
         INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(IfMyThread), IARG_THREAD_ID, IARG_END);
-        INS_InsertThenCall(ins, IPOINT_BEFORE, AFUNPTR(SetGaxAndReturnGFlagsNoInline), IARG_REG_VALUE, REG_GFLAGS, IARG_REG_VALUE,
-                           REG_GAX, IARG_REG_REFERENCE, REG_GAX, IARG_RETURN_REGS, REG_GFLAGS, IARG_END);
+        INS_InsertThenCall(ins, IPOINT_BEFORE, AFUNPTR(SetGaxAndReturnGFlagsNoInline),
+                       IARG_REG_VALUE, REG_GFLAGS,
+                       IARG_REG_VALUE, REG_GAX,
+                       IARG_REG_REFERENCE, REG_GAX,
+                       IARG_RETURN_REGS, REG_GFLAGS, IARG_END);
     }
 
-    else
+    else  
     {
         INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(IfMyThread), IARG_THREAD_ID, IARG_END);
-        INS_InsertThenCall(ins, IPOINT_BEFORE, AFUNPTR(SetGaxAndReturnGFlagsInline), IARG_REG_VALUE, REG_GFLAGS, IARG_REG_VALUE,
-                           REG_GAX, IARG_REG_REFERENCE, REG_GAX, IARG_RETURN_REGS, REG_GFLAGS, IARG_END);
+        INS_InsertThenCall(ins, IPOINT_BEFORE, AFUNPTR(SetGaxAndReturnGFlagsInline),
+                       IARG_REG_VALUE, REG_GFLAGS,
+                       IARG_REG_VALUE, REG_GAX,
+                       IARG_REG_REFERENCE, REG_GAX,
+                       IARG_RETURN_REGS, REG_GFLAGS, IARG_END);
     }
-
+    
     INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(IfMyThread), IARG_THREAD_ID, IARG_END);
-    INS_InsertThenCall(ins, IPOINT_BEFORE, AFUNPTR(CompareGaxAndGFlags), IARG_REG_VALUE, REG_GFLAGS, IARG_REG_VALUE, REG_GAX,
-                       IARG_END);
-    instrumentationNum++;
+    INS_InsertThenCall(ins, IPOINT_BEFORE, AFUNPTR(CompareGaxAndGFlags), IARG_REG_VALUE, REG_GFLAGS,
+                        IARG_REG_VALUE, REG_GAX,IARG_END);                   
+    instrumentationNum++;      
 }
 
-VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
 {
     if (myThread == INVALID_THREADID)
     {
@@ -102,7 +113,7 @@ VOID ThreadStart(THREADID threadid, CONTEXT* ctxt, INT32 flags, VOID* v)
     }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

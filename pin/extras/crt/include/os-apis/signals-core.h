@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -22,6 +22,7 @@
 #ifndef OS_APIS_SIGNALS_CORE_H
 #define OS_APIS_SIGNALS_CORE_H
 
+
 #ifdef TARGET_MAC
 typedef UINT32 SIGSET_T;
 #else
@@ -37,14 +38,20 @@ typedef UINT64 SIGSET_T;
 *
 *  @param[in] set     The Set
 */
-static inline void OS_SigSetEmpty(SIGSET_T* set) { *set = 0; }
+static inline void OS_SigSetEmpty(SIGSET_T* set)
+{
+    *set = 0;
+}
 
 /*!
 * Return true if the specified signal set doesn't contain any signals, false otherwise.
 *
 *  @param[in] set     The Set
 */
-static inline int OS_SigIsEmpty(SIGSET_T* set) { return (*set == 0); }
+static inline int OS_SigIsEmpty(SIGSET_T* set)
+{
+    return (*set == 0);
+}
 
 /*!
 * Add Signal to the set
@@ -79,7 +86,11 @@ static inline int OS_SigSetIsMember(const SIGSET_T* set, int signal)
 *
 *  @param[in] other Another signals set
 */
-static inline int OS_SigSetAnyMember(const SIGSET_T* set, const SIGSET_T* other) { return ((*set & *other) != 0); }
+static inline int OS_SigSetAnyMember(const SIGSET_T* set, const SIGSET_T* other)
+{
+    return ((*set & *other) != 0);
+}
+
 
 /*!
 * Add all signals from \a other to this set.
@@ -88,7 +99,10 @@ static inline int OS_SigSetAnyMember(const SIGSET_T* set, const SIGSET_T* other)
 *
 *  @param[in] other    The signal set.
 */
-static inline void OS_SigSetAddSet(SIGSET_T* set, const SIGSET_T* other) { *set |= *other; }
+static inline void OS_SigSetAddSet(SIGSET_T* set, const SIGSET_T* other)
+{
+    *set |= *other;
+}
 
 /*!
 * Remove all signals from \a other from this set.
@@ -97,7 +111,10 @@ static inline void OS_SigSetAddSet(SIGSET_T* set, const SIGSET_T* other) { *set 
 *
 *  @param[in] other    The signal set.
 */
-static inline void OS_SigSetRemoveSet(SIGSET_T* set, const SIGSET_T* other) { *set &= ~*other; }
+static inline void OS_SigSetRemoveSet(SIGSET_T* set, const SIGSET_T* other)
+{
+    *set &= ~*other;
+}
 
 /*!
 * Remove signals from \a set which don't exist in \a other (Intersection of \a set and \a other into set)
@@ -106,7 +123,10 @@ static inline void OS_SigSetRemoveSet(SIGSET_T* set, const SIGSET_T* other) { *s
 *
 *  @param[in] other    The signal set.
 */
-static inline void OS_SigIntersect(SIGSET_T* set, const SIGSET_T* other) { *set &= *other; }
+static inline void OS_SigIntersect(SIGSET_T* set, const SIGSET_T* other)
+{
+    *set &= *other;
+}
 
 /*!
 * Return one word of the mask (representing 32 signals).
@@ -146,7 +166,10 @@ static inline void OS_SigSetSetMaskWord(SIGSET_T* set, unsigned i, UINT32 word)
 * Add all the signals to the set.
 *
 */
-static inline void OS_SigSetFill(SIGSET_T* set) { *set = (8 == sizeof(SIGSET_T)) ? ~(UINT64)0 : ~(UINT32)0; }
+static inline void OS_SigSetFill(SIGSET_T* set)
+{
+    *set = (8 == sizeof(SIGSET_T)) ? ~(UINT64)0 : ~(UINT32)0;
+}
 
 /*!
 * Remove signal from the set.
@@ -193,6 +216,7 @@ SIG_SETMASK: The set of blocked signals is set to the argument set.
 *   @b O/S:   Linux & macOS*\n
 *   @b CPU:   All\n
 */
-OS_RETURN_CODE OS_SigProcMask(INT how, const SIGSET_T* set, SIGSET_T* oldset);
+OS_RETURN_CODE OS_SigProcMask(INT how, const SIGSET_T *set, SIGSET_T *oldset);
+
 
 #endif // OS_APIS_SIGNALS_EXT_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,15 +20,17 @@ It does PIN_InitSymbols
 using std::cout;
 using std::endl;
 
-int main(INT32 argc, CHAR** argv)
+
+int main(INT32 argc, CHAR **argv)
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
+    
 
     cout << "In follow_child with_sym PinTool is probed " << decstr(PIN_IsProbeMode()) << endl;
 
     // Never returns
-    if (PIN_IsProbeMode())
+    if ( PIN_IsProbeMode() )
     {
         PIN_StartProgramProbed();
     }
@@ -39,3 +41,4 @@ int main(INT32 argc, CHAR** argv)
 
     return 0;
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -37,6 +37,7 @@ struct kernel_sigset
 #endif
 };
 
+
 int main()
 {
     struct
@@ -48,7 +49,7 @@ int main()
     /* This sentinal checks whether Pin overwrites beyond the end of 'current'. */
     foo.dummy = 0xdeadbeef;
 
-    sigprocmask(SIG_SETMASK, 0, reinterpret_cast< sigset_t* >(&foo.current));
+    sigprocmask(SIG_SETMASK, 0, reinterpret_cast<sigset_t *>(&foo.current));
 
     if (foo.dummy != 0xdeadbeef)
     {

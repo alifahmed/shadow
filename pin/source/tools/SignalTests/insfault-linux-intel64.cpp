@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,11 +12,13 @@
 #include <iostream>
 
 #if !defined(__USE_GNU)
-#define __USE_GNU
+#   define __USE_GNU
 #endif
 #include <sys/ucontext.h>
 
 #include "insfault-intel64.h"
+
+
 
 // Check that the fault context contains the expected register values
 // after running a test.
@@ -25,10 +27,10 @@
 //
 // returns TRUE if the context has expected values.
 //
-bool CheckUContextRegisters(void* ctxt)
+bool CheckUContextRegisters(void *ctxt)
 {
-    ucontext_t* uctxt = static_cast< ucontext_t* >(ctxt);
-    bool ok           = true;
+    ucontext_t *uctxt = static_cast<ucontext_t *>(ctxt);
+    bool ok = true;
 
     greg_t pc = uctxt->uc_mcontext.gregs[REG_RIP];
     if (pc != ExpectedPC)

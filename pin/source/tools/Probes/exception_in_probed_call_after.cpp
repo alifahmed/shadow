@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -37,7 +37,7 @@ static VOID foo_before(int a0, int a1, int a2, int a3, int a4, int a5, int a6)
 
 static VOID foo_after(ADDRINT returnIp)
 {
-    printf("foo after called\n");
+	printf("foo after called\n");
     fflush(stdout);
 
     // May not be executed if exception occurs in previous statement
@@ -55,7 +55,7 @@ static VOID foo_after(ADDRINT returnIp)
 #endif
 #endif
 
-static VOID on_module_loading(IMG img, VOID* data)
+static VOID on_module_loading(IMG img, VOID *data)
 {
     if (IMG_IsMainExecutable(img))
     {
@@ -67,17 +67,30 @@ static VOID on_module_loading(IMG img, VOID* data)
 
         if (RTN_Valid(routine))
         {
-            PROTO foo_proto = PROTO_Allocate(PIN_PARG(int), CALL_TYPE, "foo", PIN_PARG(int), PIN_PARG(int), PIN_PARG(int),
-                                             PIN_PARG(int), PIN_PARG(int), PIN_PARG(int), PIN_PARG(int), PIN_PARG_END());
+            PROTO foo_proto = PROTO_Allocate( PIN_PARG(int), CALL_TYPE,
+                                              "foo",
+                                              PIN_PARG(int), PIN_PARG(int),
+                                              PIN_PARG(int), PIN_PARG(int),
+                                              PIN_PARG(int), PIN_PARG(int),
+                                              PIN_PARG(int), PIN_PARG_END() );
 
-            RTN_InsertCallProbed(
-                routine, IPOINT_BEFORE, AFUNPTR(foo_before), IARG_PROTOTYPE, foo_proto, IARG_FUNCARG_ENTRYPOINT_VALUE, 6,
-                IARG_FUNCARG_ENTRYPOINT_VALUE, 5, IARG_FUNCARG_ENTRYPOINT_VALUE, 4, IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
-                IARG_FUNCARG_ENTRYPOINT_VALUE, 2, IARG_FUNCARG_ENTRYPOINT_VALUE, 1, IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
+            RTN_InsertCallProbed(routine, IPOINT_BEFORE, AFUNPTR( foo_before ),
+                IARG_PROTOTYPE, foo_proto,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 6,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 5,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 4,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+                IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_END);
 
-            RTN_InsertCallProbed(routine, IPOINT_AFTER, AFUNPTR(foo_after), IARG_PROTOTYPE, foo_proto, IARG_RETURN_IP, IARG_END);
-        }
-    }
+            RTN_InsertCallProbed(routine, IPOINT_AFTER, AFUNPTR( foo_after ),
+                IARG_PROTOTYPE, foo_proto,
+                IARG_RETURN_IP,
+                IARG_END);
+		}
+	}
 }
 
 int main(int argc, char** argv)
@@ -86,7 +99,7 @@ int main(int argc, char** argv)
 
     if (!PIN_Init(argc, argv))
     {
-        IMG_AddInstrumentFunction(on_module_loading, 0);
+        IMG_AddInstrumentFunction(on_module_loading,  0);        
 
         PIN_StartProgramProbed();
     }

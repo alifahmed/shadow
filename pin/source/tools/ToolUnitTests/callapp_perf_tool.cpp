@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,96 +24,131 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fstream>
-using std::cerr;
-using std::endl;
 using std::ofstream;
+using std::cerr;
 using std::string;
+using std::endl;
 
-static KNOB< string > KnobOutput(KNOB_MODE_WRITEONCE, "pintool", "o", "countreps.out", "output file");
+
+static KNOB<string> KnobOutput(KNOB_MODE_WRITEONCE, "pintool", "o", "countreps.out", "output file");
 static ofstream out;
 int numTimesPreOriginalReplaced = 0;
-int numTimesOriginalReplaced    = 0;
+int numTimesOriginalReplaced = 0;
 /* ===================================================================== */
 
+
 /* ===================================================================== */
-long PreOriginalReplacement(CONTEXT* ctxt, AFUNPTR origFunc, long one, long two)
+long PreOriginalReplacement(  CONTEXT * ctxt, AFUNPTR origFunc, long one, long two )
 {
-    long res;
+    
 
+    long res;
+    
     numTimesPreOriginalReplaced++;
-    PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT, origFunc, NULL, PIN_PARG(long), &res, PIN_PARG(long),
-                                one, PIN_PARG(long), two, PIN_PARG_END());
+    PIN_CallApplicationFunction( ctxt, PIN_ThreadId(),
+                                 CALLINGSTD_DEFAULT, origFunc, NULL,
+                                 PIN_PARG(long), &res,
+                                 PIN_PARG(long), one,
+                                 PIN_PARG(long), two,
+                                 PIN_PARG_END() );
+    
 
     return res;
 }
 
-long OriginalReplacement(CONTEXT* ctxt, AFUNPTR origFunc, long one, long two)
+long OriginalReplacement(  CONTEXT * ctxt, AFUNPTR origFunc, long one, long two )
 {
-    long res;
+    
 
+    long res;
+    
     numTimesOriginalReplaced++;
-    PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT, origFunc, NULL, PIN_PARG(long), &res, PIN_PARG(long),
-                                one, PIN_PARG(long), two, PIN_PARG_END());
+    PIN_CallApplicationFunction( ctxt, PIN_ThreadId(),
+                                 CALLINGSTD_DEFAULT, origFunc, NULL,
+                                 PIN_PARG(long), &res,
+                                 PIN_PARG(long), one,
+                                 PIN_PARG(long), two,
+                                 PIN_PARG_END() );
+    
 
     return res;
 }
+
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    if (IMG_IsMainExecutable(img))
+    if ( IMG_IsMainExecutable( img ))
     {
 #if !defined(TARGET_MAC)
-        const char* origName    = "Original";
+        const char* origName = "Original";
         const char* preOrigName = "PreOriginal";
 #else
-        const char* origName    = "_Original";
+        const char* origName = "_Original";
         const char* preOrigName = "_PreOriginal";
 #endif
-        PROTO proto =
-            PROTO_Allocate(PIN_PARG(long), CALLINGSTD_DEFAULT, "OriginalProto", PIN_PARG(long), PIN_PARG(long), PIN_PARG_END());
-
-        VOID* pf_Original;
+        PROTO proto = PROTO_Allocate( PIN_PARG(long), CALLINGSTD_DEFAULT,
+                                      "OriginalProto", PIN_PARG(long), PIN_PARG(long),
+                                      PIN_PARG_END() );
+        
+        VOID * pf_Original;
         RTN rtn = RTN_FindByName(img, origName);
         if (RTN_Valid(rtn))
         {
-            pf_Original = reinterpret_cast< VOID* >(RTN_Address(rtn));
+            pf_Original = reinterpret_cast<VOID *>(RTN_Address(rtn));
             out << "Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
-            RTN_ReplaceSignature(rtn, AFUNPTR(OriginalReplacement), IARG_PROTOTYPE, proto, IARG_CONTEXT, IARG_PTR, pf_Original,
-                                 IARG_ADDRINT, 1, IARG_ADDRINT, 2, IARG_END);
+            RTN_ReplaceSignature(
+                rtn, AFUNPTR(OriginalReplacement),
+                IARG_PROTOTYPE, proto,
+                IARG_CONTEXT,
+                IARG_PTR, pf_Original,
+                IARG_ADDRINT, 1,
+                IARG_ADDRINT, 2,
+                IARG_END);
         }
         else
         {
             out << "Original cannot be found." << endl;
             exit(1);
         }
+ 
+        PROTO_Free( proto );
 
-        PROTO_Free(proto);
 
-        proto = PROTO_Allocate(PIN_PARG(long), CALLINGSTD_DEFAULT, "PreOriginalProto", PIN_PARG(long), PIN_PARG(long),
-                               PIN_PARG_END());
+        
+        proto = PROTO_Allocate( PIN_PARG(long), CALLINGSTD_DEFAULT,
+                                      "PreOriginalProto", PIN_PARG(long), PIN_PARG(long),
+                                      PIN_PARG_END() );
+        
 
         rtn = RTN_FindByName(img, preOrigName);
         if (RTN_Valid(rtn))
         {
-            pf_Original = reinterpret_cast< VOID* >(RTN_Address(rtn));
+            pf_Original = reinterpret_cast<VOID *>(RTN_Address(rtn));
             out << "Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
-            RTN_ReplaceSignature(rtn, AFUNPTR(PreOriginalReplacement), IARG_PROTOTYPE, proto, IARG_CONTEXT, IARG_PTR, pf_Original,
-                                 IARG_ADDRINT, 1, IARG_ADDRINT, 2, IARG_END);
+            RTN_ReplaceSignature(
+                rtn, AFUNPTR(PreOriginalReplacement),
+                IARG_PROTOTYPE, proto,
+                IARG_CONTEXT,
+                IARG_PTR, pf_Original,
+                IARG_ADDRINT, 1,
+                IARG_ADDRINT, 2,
+                IARG_END);
         }
         else
         {
             out << "PreOriginal cannot be found." << endl;
             exit(1);
         }
-
-        PROTO_Free(proto);
+ 
+        PROTO_Free( proto );
     }
 }
 
-VOID Fini(INT32 code, VOID* v)
+
+VOID Fini(INT32 code, VOID *v)
 {
-    if (500000 != numTimesOriginalReplaced)
+    if (1000000 != numTimesOriginalReplaced)
     {
         out << "***ERROR numTimesOriginalReplaced " << numTimesOriginalReplaced << " is unexpected\n";
         exit(-1);
@@ -137,7 +172,7 @@ INT32 Usage()
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR* argv[])
+int main(INT32 argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
@@ -148,7 +183,7 @@ int main(INT32 argc, CHAR* argv[])
     IMG_AddInstrumentFunction(ImageLoad, 0);
 
     PIN_AddFiniFunction(Fini, 0);
-
+    
     PIN_StartProgram();
 
     return 0;
@@ -157,3 +192,4 @@ int main(INT32 argc, CHAR* argv[])
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
+

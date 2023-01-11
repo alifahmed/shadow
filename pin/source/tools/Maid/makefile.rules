@@ -55,11 +55,7 @@ ifeq ($(TARGET),ia32)
     OBJECT_ROOTS += CallStack syscall_names Maid argv_readparam
 endif
 
-###### Handle exceptions here (OS/arch related) ######
-
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
+###### Handle exceptions here ######
 
 # The Maid test is disabled on macOS*.
 # See Mantis 3184

@@ -11,6 +11,7 @@ class InsHashedRoot;
 class InsRoot{
 public:
   UINT64 id;
+  InsBlock* parentBlock;
   INT32 srcLine;
   std::string srcFile;
   std::string dis;

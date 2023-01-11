@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,12 +17,13 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-using std::cerr;
-using std::endl;
-using std::hex;
-using std::ios;
-using std::ofstream;
 using std::string;
+using std::ios;
+using std::hex;
+using std::cerr;
+using std::ofstream;
+using std::endl;
+
 
 /* ===================================================================== */
 /* Global Variables */
@@ -38,18 +39,21 @@ static VOIDFUNC origFptrNotify2;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "probe_on_probe1.outfile", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+                            "o", "probe_on_probe1.outfile", "specify file name");
 
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This pin tool tests probe replacement.\n"
-            "\n";
+    cerr <<
+        "This pin tool tests probe replacement.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
 }
+
 
 void Notify1()
 {
@@ -71,14 +75,14 @@ void Notify2()
     }
 }
 
-void Notify1Sig(VOIDFUNC origFunc)
+void Notify1Sig(VOIDFUNC origFunc )
 {
     TraceFile << "NotifySig 1 before" << endl;
     (*origFunc)();
     TraceFile << "NotifySig 1 after." << endl;
 }
 
-void Notify2Sig(VOIDFUNC origFunc)
+void Notify2Sig(VOIDFUNC origFunc )
 {
     TraceFile << "NotifySig 2 before" << endl;
     (*origFunc)();
@@ -88,11 +92,12 @@ void Notify2Sig(VOIDFUNC origFunc)
 BOOL FindAndCheckRtn(IMG img, string rtnName, RTN& rtn)
 {
     rtn = RTN_FindByName(img, rtnName.c_str());
-    if (!RTN_Valid(rtn)) rtn = RTN_FindByName(img, (string("_") + rtnName).c_str());
+    if (!RTN_Valid(rtn))
+        rtn = RTN_FindByName(img, (string("_")+ rtnName).c_str());
 
     if (RTN_Valid(rtn))
     {
-        if (!RTN_IsSafeForProbedReplacement(rtn))
+        if ( ! RTN_IsSafeForProbedReplacement( rtn ) )
         {
             TraceFile << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
             exit(1);
@@ -105,10 +110,11 @@ BOOL FindAndCheckRtn(IMG img, string rtnName, RTN& rtn)
 BOOL ReplaceProbed(IMG img, string rtnName)
 {
     RTN rtn;
-    if (!FindAndCheckRtn(img, rtnName, rtn)) return FALSE;
+    if (!FindAndCheckRtn(img, rtnName, rtn))
+        return FALSE;
 
-    origFptrNotify1 = (void (*)())RTN_ReplaceProbed(rtn, AFUNPTR(Notify1));
-    origFptrNotify2 = (void (*)())RTN_ReplaceProbed(rtn, AFUNPTR(Notify2));
+    origFptrNotify1 = (void (*)())RTN_ReplaceProbed( rtn, AFUNPTR( Notify1 ) );
+    origFptrNotify2 = (void (*)())RTN_ReplaceProbed( rtn, AFUNPTR( Notify2 ) );
 
     TraceFile << "Inserted probe for " << rtnName << endl;
     return TRUE;
@@ -117,15 +123,22 @@ BOOL ReplaceProbed(IMG img, string rtnName)
 BOOL ReplaceSignatureProbed(IMG img, string rtnName)
 {
     RTN rtn;
-    if (!FindAndCheckRtn(img, rtnName, rtn)) return FALSE;
+    if (!FindAndCheckRtn(img, rtnName, rtn))
+        return FALSE;
 
-    PROTO proto1 = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT, "Notify1Sig", PIN_PARG(AFUNPTR), PIN_PARG_END());
+    PROTO proto1 = PROTO_Allocate( PIN_PARG(void), CALLINGSTD_DEFAULT,
+        "Notify1Sig", PIN_PARG(AFUNPTR), PIN_PARG_END() );
 
-    RTN_ReplaceSignatureProbed(rtn, AFUNPTR(Notify1Sig), IARG_PROTOTYPE, proto1, IARG_ORIG_FUNCPTR, IARG_END);
+    RTN_ReplaceSignatureProbed(rtn, AFUNPTR(Notify1Sig),
+        IARG_PROTOTYPE, proto1, IARG_ORIG_FUNCPTR,
+        IARG_END);
 
-    PROTO proto2 = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT, "Notify2Sig", PIN_PARG(AFUNPTR), PIN_PARG_END());
+    PROTO proto2 = PROTO_Allocate( PIN_PARG(void), CALLINGSTD_DEFAULT,
+        "Notify2Sig", PIN_PARG(AFUNPTR), PIN_PARG_END() );
 
-    RTN_ReplaceSignatureProbed(rtn, AFUNPTR(Notify2Sig), IARG_PROTOTYPE, proto2, IARG_ORIG_FUNCPTR, IARG_END);
+    RTN_ReplaceSignatureProbed(rtn, AFUNPTR(Notify2Sig),
+        IARG_PROTOTYPE, proto2, IARG_ORIG_FUNCPTR,
+        IARG_END);
 
     TraceFile << "Inserted probe for " << rtnName << endl;
     return TRUE;
@@ -134,14 +147,14 @@ BOOL ReplaceSignatureProbed(IMG img, string rtnName)
 /* ===================================================================== */
 // Called every time a new image is loaded
 // Look for routines that we want to probe
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
     static BOOL replaceProbedDone = FALSE;
     if (!replaceProbedDone)
     {
         replaceProbedDone = ReplaceProbed(img, "do_nothing");
     }
-
+    
     static BOOL replaceSigProbedDone = FALSE;
     if (!replaceSigProbedDone)
     {
@@ -151,11 +164,11 @@ VOID ImageLoad(IMG img, VOID* v)
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }

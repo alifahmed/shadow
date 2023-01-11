@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,43 +16,46 @@
 #include <string>
 #include <linux/limits.h>
 #include "pin.H"
-using std::endl;
-using std::hex;
 using std::ofstream;
+using std::hex;
 using std::string;
+using std::endl;
 
 // On new Linux systems realpath is replaced with a safer version realpath_chk,
 // this function is implemented only in GLIBC_2.4 and therefore is not supported
 // with Pin-probes runtime. The replacement of realpath is implemented in <stdlib.h>
 // This definition replaces the include of stdlib.h and preserve the "old" function.
-extern "C" char* realpath(__const char* __restrict __name, char* __restrict __resolved);
+extern "C" char *realpath (__const char *__restrict __name, char *__restrict __resolved);
+
 
 ofstream out("soloadrange.out");
 
-BOOL CheckImageContiguous(const char* name, ADDRINT low, ADDRINT high)
+BOOL CheckImageContiguous(const char *name, ADDRINT low, ADDRINT high)
 {
-    FILE* fp = fopen("/proc/self/maps", "r");
+    FILE *fp = fopen("/proc/self/maps", "r");
     char buff[1024];
     ADDRINT glow = 0, ghigh = 0;
     // Try to make an educated guess about the image low and high address
     // According to file mapping created by the loader.
     // We're also prepared for the case where the last pages of the image
     // are anonymous file mapping.
-    while (fgets(buff, 1024, fp) != NULL)
+    while(fgets(buff, 1024, fp) != NULL)
     {
         ADDRINT mapl, maph;
-        if (sscanf(buff, "%lx-%lx", (unsigned long*)&mapl, (unsigned long*)&maph) != 2) continue;
+        if(sscanf(buff, "%lx-%lx", (unsigned long *)&mapl, (unsigned long *)&maph) != 2)
+            continue;
         if (ghigh == mapl || strstr(buff, name) != 0)
         {
-            if (glow == 0) glow = mapl;
-            if (ghigh == 0) ghigh = maph;
-            if (mapl < glow) glow = mapl;
-            if (maph > ghigh) ghigh = maph;
-        }
+            if(glow == 0) glow = mapl;
+            if(ghigh == 0) ghigh = maph;
+            if(mapl < glow) glow = mapl;
+            if(maph > ghigh) ghigh = maph;
+        }    
     }
     fclose(fp);
 
-    if (glow == 0 || ghigh == 0) return TRUE;
+    if (glow == 0 || ghigh == 0)
+        return TRUE;
 
     if (low < glow || high > ghigh)
     {
@@ -61,49 +64,54 @@ BOOL CheckImageContiguous(const char* name, ADDRINT low, ADDRINT high)
 
     return TRUE;
 }
-
-BOOL CheckImageRegions(const char* name, IMG img)
+    
+BOOL CheckImageRegions(const char *name, IMG img)
 {
-    FILE* fp = fopen("/proc/self/maps", "r");
+    FILE *fp = fopen("/proc/self/maps", "r");
     char buff[1024];
-    while (fgets(buff, 1024, fp) != NULL)
+    while(fgets(buff, 1024, fp) != NULL)
     {
         ADDRINT mapl, maph;
         if (strstr(buff, name) != 0)
         {
-            if (sscanf(buff, "%lx-%lx", (unsigned long*)&mapl, (unsigned long*)&maph) != 2) continue;
+            if(sscanf(buff, "%lx-%lx", (unsigned long *)&mapl, (unsigned long *)&maph) != 2)
+                continue;
 
             // For every segment, check if it is contained in a region
             // If not, we missed it...
-            //
+            // 
             BOOL found_region = FALSE;
             for (UINT i = 0; i < IMG_NumRegions(img); ++i)
             {
-                found_region = (IMG_RegionLowAddress(img, i) <= mapl) && (IMG_RegionHighAddress(img, i) >= maph);
+                found_region = (IMG_RegionLowAddress(img, i) <= mapl) &&
+                               (IMG_RegionHighAddress(img, i) >= maph);
             }
             if (!found_region)
             {
                 fclose(fp);
                 return FALSE;
             }
-        }
+        }    
     }
     fclose(fp);
 
     return TRUE;
 }
+    
 
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID * v)
 {
     string name = IMG_Name(img);
 
     char realname[PATH_MAX];
-    if (realpath(name.c_str(), realname) == NULL) return;
+    if(realpath(name.c_str(), realname) == NULL)
+        return;
 
-    name                  = string(realname);
+    name = string(realname);
     string::size_type pos = name.rfind('/');
-    if (pos != string::npos) name = name.substr(pos + 1);
-
+    if (pos != string::npos)
+        name = name.substr(pos + 1);
+    
     static BOOL stat = TRUE;
     if (name.find("libc-") != string::npos)
     {
@@ -111,17 +119,17 @@ VOID ImageLoad(IMG img, VOID* v)
         return;
     }
 
-    if (stat) return;
+    if (stat)
+        return;
 
-    ADDRINT low  = IMG_LowAddress(img);
+    ADDRINT low = IMG_LowAddress(img);
     ADDRINT high = IMG_HighAddress(img);
 
-    if (IMG_NumRegions(img) == 1)
+    if (IMG_NumRegions(img) == 1) 
     {
         if (!CheckImageContiguous(realname, low, high))
         {
-            out << "IMG name: " << name << " Low: " << low << " High: " << high << " "
-                << "FAILED" << endl;
+            out << "IMG name: " << name <<  " Low: " << low << " High: " << high << " " << "FAILED" << endl;
         }
     }
     else
@@ -133,16 +141,16 @@ VOID ImageLoad(IMG img, VOID* v)
     }
 }
 
-int main(INT32 argc, CHAR** argv)
+int main(INT32 argc, CHAR **argv)
 {
     PIN_Init(argc, argv);
 
     out << hex;
-
+    
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

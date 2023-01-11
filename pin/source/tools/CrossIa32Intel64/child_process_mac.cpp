@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,15 +17,15 @@
 #include <iostream>
 #include <string>
 
+using std::string;
 using std::cout;
 using std::endl;
-using std::string;
 //Wait for a process completion
 //Verify it returned the expected exit code
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
-    char* childArgvArray[5];
+    char *childArgvArray[5];
     childArgvArray[0] = argv[1];
     childArgvArray[1] = argv[2];
     childArgvArray[2] = argv[3];
@@ -37,14 +37,14 @@ int main(int argc, char* argv[])
     {
         // child process
         execv(childArgvArray[0], childArgvArray);
-        cout << "Execve failed " << argv[1] << " " << argv[2] << " " << argv[3] << endl;
+        cout << "Execve failed "<< argv[1] << " " << argv[2] << " " << argv[3] << endl;
     }
     else
     {
         int status;
         waitpid(pid, &status, 0);
-        if (status != 0)
-            cout << "Child report: Grand child process failed with status " << WEXITSTATUS(status) << endl;
+        if (status !=0)
+            cout << "Child report: Grand child process failed with status "<< WEXITSTATUS(status) << endl;
         else
             cout << "Child report: Grand child process exited successfully" << endl;
     }

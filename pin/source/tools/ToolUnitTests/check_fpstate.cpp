@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,9 +14,9 @@
 #include <cstring>
 #include "pin.H"
 #include "../Utils/regvalue_utils.h"
+using std::hex;
 using std::cerr;
 using std::endl;
-using std::hex;
 using std::ios;
 
 /* ===================================================================== */
@@ -38,32 +38,35 @@ std::ofstream out;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "check_fpstate.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "check_fpstate.out", "specify output file name");
 
 /* ===================================================================== */
 
 static CONTEXT saveCtxt;
 static BOOL enable = FALSE;
 
+
 /* ===================================================================== */
 /* Analysis routines                                                     */
 /* ===================================================================== */
-
-VOID CompreContext(CONTEXT* c1, CONTEXT* c2)
+ 
+VOID CompreContext(CONTEXT *c1, CONTEXT *c2)
 {
-    struct
-    {
+    struct {
         REG reg;
-        const char* name;
-    } fields[] = {{REG_FPIP_OFF, "ipoff"},
-                  {REG_FPIP_SEL, "ipsel"},
-                  {REG_FPOPCODE, "opcod"},
-                  {REG_FPDP_OFF, "dpoff"},
-                  {REG_FPDP_SEL, "dpsel"}};
+        const char *name;
+    } fields[] = {
+        { REG_FPIP_OFF, "ipoff" },
+        { REG_FPIP_SEL, "ipsel" },
+        { REG_FPOPCODE, "opcod" },
+        { REG_FPDP_OFF, "dpoff" },
+        { REG_FPDP_SEL, "dpsel" }
+    };
 
-    for (unsigned int i = 0; i < sizeof(fields) / sizeof(fields[0]); i++)
+    for (unsigned int i = 0; i < sizeof(fields)/sizeof(fields[0]); i++)
     {
-        REG reg   = fields[i].reg;
+        REG reg = fields[i].reg;
         UINT size = REG_Size(reg);
         UINT8* v1 = new UINT8[size];
         UINT8* v2 = new UINT8[size];
@@ -82,18 +85,23 @@ VOID CompreContext(CONTEXT* c1, CONTEXT* c2)
     }
 }
 
-VOID Enable() { enable = TRUE; }
-
-VOID SaveContext(CONTEXT* ctxt)
+VOID Enable()
 {
-    if (!enable) return;
+    enable = TRUE;
+}
+
+VOID SaveContext(CONTEXT *ctxt)
+{
+    if(!enable)
+        return;
 
     PIN_SaveContext(ctxt, &saveCtxt);
 }
 
-VOID SyscallEntry(THREADID tid, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
+VOID SyscallEntry(THREADID tid, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v)
 {
-    if (!enable) return;
+    if (!enable)
+        return;
 
     CompreContext(ctxt, &saveCtxt);
 
@@ -103,8 +111,8 @@ VOID SyscallEntry(THREADID tid, CONTEXT* ctxt, SYSCALL_STANDARD std, VOID* v)
 /* ===================================================================== */
 /* Instrumentation routines                                              */
 /* ===================================================================== */
-
-VOID Image(IMG img, VOID* v)
+   
+VOID Image(IMG img, VOID *v)
 {
     // Instrument the trapme function to activate the analysis.
     RTN rtn = RTN_FindByName(img, FN);
@@ -118,15 +126,16 @@ VOID Image(IMG img, VOID* v)
     }
 }
 
-VOID Trace(TRACE trace, VOID* v)
+VOID Trace(TRACE trace, VOID *v)
 {
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
+    for (BBL bbl=TRACE_BblHead(trace); BBL_Valid(bbl); bbl=BBL_Next(bbl))
     {
-        for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
+        for (INS ins=BBL_InsHead(bbl); INS_Valid(ins); ins=INS_Next(ins))
         {
             if (INS_IsSyscall(ins))
             {
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)SaveContext, IARG_CONTEXT, IARG_END);
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)SaveContext,
+                               IARG_CONTEXT, IARG_END);
             }
         }
     }
@@ -134,12 +143,15 @@ VOID Trace(TRACE trace, VOID* v)
 
 /* ===================================================================== */
 
-VOID Fini(INT32 code, VOID* v) { out.close(); }
+VOID Fini(INT32 code, VOID *v)
+{
+    out.close();
+}
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
 /* ===================================================================== */
-
+   
 INT32 Usage()
 {
     cerr << "This tool produces a trace of calls to malloc." << endl;
@@ -151,20 +163,20 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialize pin & symbol manager
     PIN_InitSymbols();
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
-
+    
     // Write to a file since cout and cerr maybe closed by the application
     out.open(KnobOutputFile.Value().c_str());
     out << hex;
     out.setf(ios::showbase);
-
+    
     IMG_AddInstrumentFunction(Image, 0);
     TRACE_AddInstrumentFunction(Trace, 0);
     PIN_AddSyscallEntryFunction(SyscallEntry, 0);
@@ -172,7 +184,7 @@ int main(int argc, char* argv[])
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }
 

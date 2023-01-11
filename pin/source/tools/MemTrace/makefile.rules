@@ -64,17 +64,14 @@ ifeq ($(TARGET_OS),windows)
     OBJECT_ROOTS += atomic_increment_$(TARGET)
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
+# TODO: These tests fail - fix and remove the following:
 
-###### Handle exceptions here (bugs related) ######
-
-###### Define the serial subset ######
-
-# Defines which tests need to be run serially as may cause issues when running in parallel 
+# See mantis #3715 for why these tests are disabled.
 ifeq ($(TARGET_OS),windows)
-    SERIAL_SUBSET := memtrace_simple memtrace memtrace_simple_mt
+    TEST_TOOL_ROOTS := $(filter-out memtrace_threadpool membuffer_threadpool, $(TEST_TOOL_ROOTS))
+    TEST_ROOTS := $(filter-out memtrace_threadpool_mt membuffer_threadpool_mt, $(TEST_ROOTS))
 endif
 
 ###### Define the sanity subset ######
@@ -82,11 +79,6 @@ endif
 # This defines the list of tests that should run in sanity. It should include all the tests listed in
 # TEST_TOOL_ROOTS and TEST_ROOTS excluding only unstable tests.
 SANITY_SUBSET := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-ifeq ($(TARGET_OS),linux)
-    # See mantis 4896
-    SANITY_SUBSET := $(filter-out membuffer_simple_tid, $(SANITY_SUBSET))
-endif
 
 ##############################################################
 #

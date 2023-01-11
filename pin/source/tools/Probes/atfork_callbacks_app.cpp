@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -18,8 +18,8 @@
 
 #include "atfork_callbacks.h"
 using std::cerr;
-using std::cout;
 using std::endl;
+using std::cout;
 /***********************************************
 *
 *   This app prints a number for each of the pthreads callbacks.
@@ -79,11 +79,11 @@ int main()
 {
     fork_callbacks* callbacks = create_shared_object();
     assert(callbacks);
-    callbacks->atfork_before         = 0;
-    callbacks->atfork_after_child    = 0;
-    callbacks->atfork_after_parent   = 0;
-    callbacks->pin_before_fork       = 0;
-    callbacks->pin_after_fork_child  = 0;
+    callbacks->atfork_before = 0;
+    callbacks->atfork_after_child = 0;
+    callbacks->atfork_after_parent = 0;
+    callbacks->pin_before_fork = 0;
+    callbacks->pin_after_fork_child = 0;
     callbacks->pin_after_fork_parent = 0;
 
     pthread_atfork(atfork_prepare, atfork_parent, atfork_child);
@@ -94,8 +94,8 @@ int main()
     {
         assert(child > 0);
 
-        int status   = 0;
-        pid_t client = wait(&status);
+        int status = 0;
+        pid_t client =  wait(&status);
         assert(client == child);
 
         callbacks = get_shared_object();
@@ -111,6 +111,7 @@ int main()
         assert(callbacks_copy.pin_before_fork);
         assert(callbacks_copy.pin_after_fork_child);
         assert(callbacks_copy.pin_after_fork_parent);
+
     }
 
     return 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -27,26 +27,24 @@ static void Abort(string msg)
     exit(1);
 }
 
+
 /*!
  * The main procedure of the application.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     cerr << "SMC in the image of the application" << endl;
 
     // buffer to move foo/bar routines into and execute
     static char staticBuffer[PI_FUNC::MAX_SIZE];
-    // Set read-write-execute protection for the buffer
+    // Set read-write-execute protection for the buffer 
     size_t pageSize = GetPageSize();
-    char* firstPage = (char*)(((size_t)staticBuffer) & ~(pageSize - 1));
-    char* endPage   = (char*)(((size_t)staticBuffer + sizeof(staticBuffer) + pageSize - 1) & ~(pageSize - 1));
-    if (!MemProtect(firstPage, endPage - firstPage, MEM_READ_WRITE_EXEC))
-    {
-        Abort("MemProtect failed");
-    }
-    FILE* fp = fopen("smcapp.out", "w");
-    fprintf(fp, "%p %p\n", firstPage, endPage);
-    printf("App: firstPage %p endPage %p\n", firstPage, endPage);
+    char * firstPage = (char *)(((size_t)staticBuffer) & ~(pageSize - 1));
+    char * endPage = (char *)(((size_t)staticBuffer + sizeof(staticBuffer) + pageSize - 1) & ~(pageSize - 1));
+    if (!MemProtect(firstPage, endPage - firstPage, MEM_READ_WRITE_EXEC)) {Abort("MemProtect failed");}
+    FILE *fp = fopen ("smcapp.out", "w");
+    fprintf (fp, "%p %p\n", firstPage, endPage);
+    printf ("App: firstPage %p endPage %p\n", firstPage, endPage);
     fclose(fp);
     for (int i = 0; i < 3; ++i)
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -18,20 +18,19 @@
 #define OS_APIS_LINUX_INTEL64_BARESYSCALL_H__
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include "types.h"
 
-    /*!
+/*!
  * Set of raw return values from a system call.
  */
-    typedef struct /*<POD>*/
-    {
-        ADDRINT _rax;
-        BOOL_T _success;
-    } OS_SYSCALLRETURN;
+typedef struct /*<POD>*/
+{
+    ADDRINT _rax;
+    BOOL_T _success;
+} OS_SYSCALLRETURN;
 
 #ifdef __cplusplus
 }

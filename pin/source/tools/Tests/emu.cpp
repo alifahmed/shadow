@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -15,20 +15,30 @@
 
 UINT32 icount = 0;
 
-static KNOB< UINT32 > KnobCount(KNOB_MODE_WRITEONCE, "pintool", "count", "100000000",
-                                "Explicitly save and restore the flags in inlined analysis routines");
-VOID Emulate2Address(OPCODE opcode, INS ins, ADDRINT (*OpRM)(ADDRINT, ADDRINT*), ADDRINT (*OpRV)(ADDRINT, ADDRINT),
-                     VOID (*OpMV)(ADDRINT*, ADDRINT))
+LOCALVAR KNOB<UINT32> KnobCount(KNOB_MODE_WRITEONCE, "pintool", "count", "100000000",
+                                                  "Explicitly save and restore the flags in inlined analysis routines");
+VOID Emulate2Address(OPCODE opcode,
+                     INS ins,
+                     ADDRINT (*OpRM)(ADDRINT,ADDRINT*),
+                     ADDRINT (*OpRV)(ADDRINT,ADDRINT),
+                     VOID (*OpMV)(ADDRINT*,ADDRINT))
 {
-    if (INS_Opcode(ins) != opcode) return;
+    if (INS_Opcode(ins) != opcode)
+        return;
     if (INS_OperandIsMemory(ins, 0)
         // This will filter out segment overrides
         && INS_IsMemoryWrite(ins))
     {
-        if (INS_OperandIsReg(ins, 1) && REG_is_gr(INS_OperandReg(ins, 1)))
+        if (INS_OperandIsReg(ins, 1)
+            && REG_is_gr(INS_OperandReg(ins, 1)))
         {
             // Source register, dst memory
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(OpMV), IARG_MEMORYWRITE_EA, IARG_REG_VALUE, INS_OperandReg(ins, 1),
+            INS_InsertCall(ins,
+                           IPOINT_BEFORE,
+                           AFUNPTR(OpMV),
+                           IARG_MEMORYWRITE_EA,
+                           IARG_REG_VALUE,
+                           INS_OperandReg(ins, 1),
                            IARG_END);
             INS_Delete(ins);
         }
@@ -39,13 +49,22 @@ VOID Emulate2Address(OPCODE opcode, INS ins, ADDRINT (*OpRM)(ADDRINT, ADDRINT*),
     }
     else if (INS_OperandIsReg(ins, 0))
     {
-        REG dst = INS_OperandReg(ins, 0);
-        if ((dst == REG_SEG_GS) || (dst == REG_SEG_FS)) return;
+    	REG dst = INS_OperandReg(ins, 0);
+    	if ((dst == REG_SEG_GS) || (dst == REG_SEG_FS))
+    		return;
         if (INS_OperandIsReg(ins, 1))
         {
             // Source register, dst register
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(OpRV), IARG_REG_VALUE, INS_OperandReg(ins, 0), IARG_REG_VALUE,
-                           INS_OperandReg(ins, 1), IARG_RETURN_REGS, INS_OperandReg(ins, 0), IARG_END);
+            INS_InsertCall(ins,
+                           IPOINT_BEFORE,
+                           AFUNPTR(OpRV),
+                           IARG_REG_VALUE,
+                           INS_OperandReg(ins, 0),
+                           IARG_REG_VALUE,
+                           INS_OperandReg(ins, 1),
+                           IARG_RETURN_REGS,
+                           INS_OperandReg(ins, 0),
+                           IARG_END);
             INS_Delete(ins);
         }
         else if (INS_OperandIsMemory(ins, 1)
@@ -53,9 +72,16 @@ VOID Emulate2Address(OPCODE opcode, INS ins, ADDRINT (*OpRM)(ADDRINT, ADDRINT*),
                  && INS_IsMemoryRead(ins))
         {
             // Source register, dst register
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(OpRM), IARG_REG_VALUE, INS_OperandReg(ins, 0), IARG_MEMORYREAD_EA,
-                           IARG_RETURN_REGS, INS_OperandReg(ins, 0), IARG_END);
-            INS_Delete(ins);
+            INS_InsertCall(ins,
+                           IPOINT_BEFORE,
+                           AFUNPTR(OpRM),
+                           IARG_REG_VALUE,
+                           INS_OperandReg(ins, 0),
+                           IARG_MEMORYREAD_EA,
+                           IARG_RETURN_REGS,
+                           INS_OperandReg(ins, 0),
+                           IARG_END);
+           INS_Delete(ins);
         }
     }
 
@@ -66,25 +92,35 @@ VOID Emulate2Address(OPCODE opcode, INS ins, ADDRINT (*OpRM)(ADDRINT, ADDRINT*),
         return;
     icount++;
 #endif
+
 }
 
 // Move a register or literal to memory
-VOID MovMV(ADDRINT* op0, ADDRINT op1) { PIN_SafeCopy(op0, &op1, sizeof(ADDRINT)); }
+VOID MovMV(ADDRINT * op0, ADDRINT op1)
+{
+    PIN_SafeCopy(op0, &op1, sizeof(ADDRINT));
+}
 
 // Move a literal or register to a register
-ADDRINT MovRV(ADDRINT op0, ADDRINT op1) { return op1; }
+ADDRINT MovRV(ADDRINT op0, ADDRINT op1)
+{
+    return op1;
+}
 
 // Move from memory to register
-ADDRINT MovRM(ADDRINT op0, ADDRINT* op1)
+ADDRINT MovRM(ADDRINT op0, ADDRINT * op1)
 {
     ADDRINT value;
     PIN_SafeCopy(&value, op1, sizeof(ADDRINT));
     return value;
 }
 
-VOID Instruction(INS ins, VOID* v) { Emulate2Address(XED_ICLASS_MOV, ins, MovRM, MovRV, MovMV); }
+VOID Instruction(INS ins, VOID *v)
+{
+    Emulate2Address(XED_ICLASS_MOV, ins, MovRM, MovRV, MovMV);
+}
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

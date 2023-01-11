@@ -57,6 +57,9 @@ endif
 # Windows
 ifeq ($(TARGET_OS),windows)
     TEST_ROOTS += smc_except
+    TEST_ROOTS := $(filter-out smc_sse, $(TEST_ROOTS))
+    APP_ROOTS := $(filter-out sse, $(APP_ROOTS))
+    TOOL_ROOTS := $(filter-out sse-ref, $(TOOL_ROOTS))
     APP_ROOTS += smcapp_except
     ifeq ($(TARGET),ia32)
         TEST_ROOTS += smc_bbl
@@ -64,17 +67,8 @@ ifeq ($(TARGET_OS),windows)
     endif
 endif
 
-###### Handle exceptions here (OS/arch related) ######
+###### Handle exceptions here ######
 
-RUNNABLE_TESTS := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)
-
-###### Handle exceptions here (bugs related) ######
-
-ifeq ($(TARGET_OS),windows)
-    TEST_ROOTS := $(filter-out smc_sse, $(TEST_ROOTS))
-    APP_ROOTS := $(filter-out sse, $(APP_ROOTS))
-    TOOL_ROOTS := $(filter-out sse-ref, $(TOOL_ROOTS))
-endif
 
 ###### Define the sanity subset ######
 
@@ -147,28 +141,28 @@ $(OBJDIR)flag_ac_app$(EXE_SUFFIX): flag_ac_app.c  $(OBJDIR)flag_ac_app_asm$(OBJ_
 	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS)
   
 $(OBJDIR)smcapp_ia32$(EXE_SUFFIX): smcapp_ia32.cpp $(RUNNABLE) $(THREADPOOL) $(SYSMEMORY) $(THREADLIB) $(OBJDIR)smc_util$(OBJ_SUFFIX)
-	$(APP_CXX) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
+	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
 
 $(OBJDIR)smcapp_except$(EXE_SUFFIX): smcapp_except.cpp $(RUNNABLE) $(THREADPOOL) $(SYSMEMORY) $(THREADLIB) $(OBJDIR)smc_util$(OBJ_SUFFIX)
-	$(APP_CXX) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
+	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
 
 $(OBJDIR)smcapp_mt$(EXE_SUFFIX): smcapp_mt.cpp $(RUNNABLE) $(THREADPOOL) $(SYSMEMORY) $(THREADLIB) $(OBJDIR)smc_util$(OBJ_SUFFIX)
-	$(APP_CXX) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
+	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
 
 $(OBJDIR)smcapp_bbl$(EXE_SUFFIX): smcapp_bbl.cpp $(RUNNABLE) $(THREADPOOL) $(SYSMEMORY) $(THREADLIB) $(OBJDIR)smc_util$(OBJ_SUFFIX)
-	$(APP_CXX) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS)
+	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT) $(APP_LIBS)
   
 $(OBJDIR)sse$(EXE_SUFFIX): sse.cpp $(OBJDIR)sse-ref_asm$(OBJ_SUFFIX)
-	$(APP_CXX) $(APP_CXXFLAGS) $(SSE2) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
+	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(SSE2) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
   
 $(OBJDIR)smcapp1$(EXE_SUFFIX): smcapp1.cpp $(RUNNABLE) $(THREADPOOL) $(SYSMEMORY) $(THREADLIB) $(OBJDIR)smc_util$(OBJ_SUFFIX)
-	$(APP_CXX) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
+	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
   
 $(OBJDIR)smcapp2$(EXE_SUFFIX): smcapp2.cpp $(RUNNABLE) $(THREADPOOL) $(SYSMEMORY) $(THREADLIB) $(OBJDIR)smc_util$(OBJ_SUFFIX)
-	$(APP_CXX) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
+	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
   
 $(OBJDIR)smcapp3$(EXE_SUFFIX): smcapp3.cpp $(RUNNABLE) $(THREADPOOL) $(SYSMEMORY) $(THREADLIB) $(OBJDIR)smc_util$(OBJ_SUFFIX)
-	$(APP_CXX) $(APP_CXXFLAGS) $(COMP_EXE)$@ $^ $(APP_LDFLAGS) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
+	$(APP_CXX) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $^ $(APP_LDFLAGS_NOOPT) $(APP_LIBS) $(CXX_LPATHS) $(CXX_LIBS)
   
 ###### Special objects' build rules ######
 

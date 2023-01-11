@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,6 +21,7 @@
 
 #define NTHREADS 20
 
+
 volatile bool loop;
 
 EXPORT_SYM bool AfterAttach2();
@@ -31,18 +32,19 @@ bool AfterAttach2()
     return false;
 }
 
-enum ExitType
-{
-    RES_SUCCESS = 0, // 0
-    RES_LOAD_FAILED, // 1
-    RES_INVALID_ARGS // 2
+enum ExitType {
+    RES_SUCCESS = 0,      // 0
+    RES_LOAD_FAILED,      // 1
+    RES_INVALID_ARGS      // 2    
 };
 
-void* thread_func(void* arg)
-{
+
+
+void * thread_func (void *arg)
+{    
     while (loop)
     {
-        sched_yield();
+         sched_yield();
     }
     return 0;
 }
@@ -52,42 +54,42 @@ void* thread_func(void* arg)
     [1]	First image to load	
     [2]	Second image to load
 */
-int main(int argc, char* argv[])
+int main (int argc, char *argv[])
 {
-    if (argc != 3)
+    if(argc!=3)
     {
-        fprintf(stderr, "Not enough arguments\n");
-        fflush(stderr);
-        exit(RES_INVALID_ARGS);
+       fprintf(stderr, "Not enough arguments\n" );
+       fflush(stderr);
+       exit(RES_INVALID_ARGS);
     }
 
     loop = true;
-
+	
     pthread_t h[NTHREADS];
     int ret_val;
     for (unsigned long i = 0; i < NTHREADS; i++)
     {
-        ret_val = pthread_create(&h[i], 0, thread_func, 0);
-        if (ret_val)
+        ret_val= pthread_create (&h[i], 0, thread_func, 0);
+        if(ret_val) 
         {
             perror("ERROR, pthread_create failed");
             exit(1);
         }
     }
 
-    void* handle = dlopen(argv[1], RTLD_LAZY);
+	void *handle = dlopen(argv[1], RTLD_LAZY);
     if (!handle)
     {
         fprintf(stderr, " Failed to load: %s because: %s\n", argv[1], dlerror());
         fflush(stderr);
         exit(RES_LOAD_FAILED);
     }
-
-    while (!AfterAttach2())
+    
+	while(!AfterAttach2())
     {
         sleep(1);
     }
-
+    
     handle = dlopen(argv[2], RTLD_LAZY);
     if (!handle)
     {
@@ -98,8 +100,10 @@ int main(int argc, char* argv[])
 
     for (unsigned long i = 0; i < NTHREADS; i++)
     {
-        pthread_join(h[i], 0);
+        pthread_join (h[i], 0);
     }
 
     return RES_SUCCESS;
 }
+
+

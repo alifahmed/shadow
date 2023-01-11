@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,23 +16,32 @@
 #include <iostream>
 #include <fstream>
 
-using std::endl;
-using std::hex;
 using std::ofstream;
+using std::hex;
+using std::endl;
 using std::showbase;
 
 ofstream outfile;
 
-extern "C" __declspec(dllexport) void Init1(const char* out_filename)
+extern "C" __declspec( dllexport ) void Init1()
 {
-    outfile.open(out_filename);
+    outfile.open("static_secondary_dll.out");
     outfile << hex << showbase;
 }
 
-extern "C" __declspec(dllexport) void BeforeBBL1(void* ip) { outfile << "Before BBL, ip " << ip << endl; }
+extern "C" __declspec( dllexport ) void BeforeBBL1(void * ip)
+{
+    outfile << "Before BBL, ip " << ip << endl;
+}
 
-extern "C" __declspec(dllexport) void Fini1() { outfile.close(); }
+extern "C" __declspec( dllexport ) void Fini1()
+{
+    outfile.close();
+}
 
 // Define main - will never be called
 // can be avoided by removing /EXPORT:main from link flags
-int main(int argc, char* argv[]) { return 0; }
+int main(int argc, char * argv[])
+{
+    return 0;
+}

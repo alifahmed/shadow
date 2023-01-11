@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -43,7 +43,7 @@ typedef enum
     SIGACTION_NOCLDSTOP,
     SIGACTION_RESTART,
     SIGACTION_RESTORER
-} SigactionDefines;
+}SigactionDefines ;
 
 /*
 * This function is used to convert the defines into the right
@@ -52,44 +52,44 @@ typedef enum
 UINT64 OS_PinSigactionToKernelSigaction(SigactionDefines input);
 
 #ifdef TARGET_MAC
-typedef void (*OS_SIGTRAP_PTR)(void*, unsigned int, int, void*, void*);
+typedef void(*OS_SIGTRAP_PTR)(void *, unsigned int, int, void *, void *);
 
-void OS_SigReturn(void* uctx, int infostyle);
+void OS_SigReturn(void *uctx, int infostyle);
 
 #endif
 
 /*! @ingroup OS_APIS_SIGNALS
  * Specifies an action to OS_SigAction()
  */
-struct SIGACTION
-{
-    union
-    {
-        void (*_sa_handler)(int);                 //! Signal handle function (old way)
-        void (*_sa_sigaction)(int, void*, void*); //! Signal handle function (new way)
-        void* _sa_handler_ptr;                    //! Convenience void* pointer to the signal handler.
-    } _u;
-    SIGSET_T sa_mask;       //! Mask of signals to block during the handling of the signal
-    unsigned long sa_flags; //! Additional flags (OS specific).
+struct SIGACTION {
+ union {
+     void (*_sa_handler)(int);                   //! Signal handle function (old way)
+     void (*_sa_sigaction)(int, void *, void *); //! Signal handle function (new way)
+     void *_sa_handler_ptr;                      //! Convenience void* pointer to the signal handler.
+ } _u;
+ SIGSET_T sa_mask;                               //! Mask of signals to block during the handling of the signal
+ unsigned long sa_flags;                         //! Additional flags (OS specific).
 
-    void (*sa_restorer)(void); //! Signal restorer.
+ void (*sa_restorer)(void);                      //! Signal restorer.
 };
 
 #ifdef TARGET_MAC
-struct SIGACTION_WITH_TRAMP
-{
+struct SIGACTION_WITH_TRAMP {
     struct SIGACTION act;
-    void (*sa_tramp)(void*, unsigned int, int, void*, void*);
-};
+    void(*sa_tramp)(void *, unsigned int, int, void *, void *);
+ };
 #endif
+
+
 
 #ifdef TARGET_MAC
 /**
  *  Same as OS_SigAction but the specified act contains a trampoline (meaning don't use the default Pin trampoline
  *  but the the one that is exists in act)
  */
-OS_RETURN_CODE OS_SigActionWithTrampoline(INT signum, const struct SIGACTION_WITH_TRAMP* actWithTramp, struct SIGACTION* oldact);
+OS_RETURN_CODE OS_SigActionWithTrampoline(INT signum, const struct SIGACTION_WITH_TRAMP *actWithTramp, struct SIGACTION *oldact);
 #endif
+
 
 /*! @ingroup OS_APIS_SIGNALS
  * Change the action taken by a process on receipt of a specific signal.
@@ -105,7 +105,8 @@ OS_RETURN_CODE OS_SigActionWithTrampoline(INT signum, const struct SIGACTION_WIT
  *   @b O/S:   Linux & macOS*\n
  *   @b CPU:   All\n
  */
-OS_RETURN_CODE OS_SigAction(INT signum, const struct SIGACTION* act, struct SIGACTION* oldact);
+OS_RETURN_CODE OS_SigAction(INT signum, const struct SIGACTION *act, struct SIGACTION *oldact);
+
 
 /*! @ingroup OS_APIS_SIGNALS
  * Temporarily  replaces  the  signal  mask of the calling process with the mask given
@@ -120,7 +121,7 @@ OS_RETURN_CODE OS_SigAction(INT signum, const struct SIGACTION* act, struct SIGA
  *   @b O/S:   Linux & macOS*\n
  *   @b CPU:   All\n
  */
-OS_RETURN_CODE OS_SigSuspend(const SIGSET_T* mask);
+OS_RETURN_CODE OS_SigSuspend(const SIGSET_T *mask);
 
 /*! @ingroup OS_APIS_SIGNALS
  * Returns the set of signals that are pending for delivery to the calling thread
@@ -135,7 +136,8 @@ OS_RETURN_CODE OS_SigSuspend(const SIGSET_T* mask);
  *   @b O/S:   Linux & macOS*\n
  *   @b CPU:   All\n
  */
-OS_RETURN_CODE OS_SigPending(const SIGSET_T* set);
+OS_RETURN_CODE OS_SigPending(const SIGSET_T *set);
+
 
 /*! @ingroup OS_APIS_SIGNALS
 * Send signal to a particular thread inside a process.

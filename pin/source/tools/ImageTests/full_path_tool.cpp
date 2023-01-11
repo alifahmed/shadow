@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -14,17 +14,21 @@
 #include <fstream>
 #include <stdio.h>
 #include <assert.h>
-using std::endl;
 using std::ofstream;
 using std::string;
+using std::endl;
 
 using std::cerr;
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "full_path.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "full_path.out", "specify file name");
 
 ofstream TraceFile;
 
-static VOID ImageLoad(IMG img, VOID* data) { TraceFile << "%s is loaded\n" << IMG_Name(img) << endl; }
+static VOID ImageLoad(IMG img, VOID *data)
+{
+    TraceFile << "%s is loaded\n" << IMG_Name(img) << endl;
+}
 
 int main(int argc, char** argv)
 {
@@ -33,8 +37,8 @@ int main(int argc, char** argv)
         TraceFile.open(KnobOutputFile.Value().c_str());
 
         PIN_InitSymbols();
-
-        IMG_AddInstrumentFunction(ImageLoad, 0);
+        
+        IMG_AddInstrumentFunction(ImageLoad,  0);
 
         PIN_StartProgramProbed();
     }

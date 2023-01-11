@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -22,8 +22,10 @@
 #include "atomic/nullstats.hpp"
 #include "atomic/exponential-backoff.hpp"
 
-namespace ATOMIC
-{
+
+namespace ATOMIC {
+
+
 /*! @brief  Last-in-first-out queue.
  *
  * A non-blocking atomic LIFO queue (stack) of elements.  The client manages the allocation, deallocation, and content
@@ -72,9 +74,9 @@ namespace ATOMIC
  *  }
  *                                                                                          \endcode
  */
-template< typename ELEMENT, typename HEAP, unsigned int IndexBits, unsigned int CounterBits, typename WORD,
-          typename STATS = NULLSTATS >
-class /*<UTILITY>*/ LIFO_CTR
+template<typename ELEMENT, typename HEAP, unsigned int IndexBits, unsigned int CounterBits, typename WORD,
+    typename STATS=NULLSTATS>
+ class /*<UTILITY>*/ LIFO_CTR
 {
   public:
     /*!
@@ -83,7 +85,7 @@ class /*<UTILITY>*/ LIFO_CTR
      *  @param[in] heap     An object which converts between element indices and pointers.
      *  @param[in] stats    The statistics collection object, or NULL if no statistics should be collected.
      */
-    LIFO_CTR(HEAP* heap, STATS* stats = 0) : _heap(heap), _stats(stats)
+    LIFO_CTR(HEAP *heap, STATS *stats=0) : _heap(heap), _stats(stats)
     {
         ATOMIC_CHECK_ASSERT(sizeof(_head) == sizeof(_head._word));
 
@@ -95,26 +97,29 @@ class /*<UTILITY>*/ LIFO_CTR
      *
      *  @param[in] stats    The new statistics collection object.
      */
-    void SetStatsNonAtomic(STATS* stats) { _stats = stats; }
+    void SetStatsNonAtomic(STATS *stats)
+    {
+        _stats = stats;
+    }
 
     /*!
      * Push an element onto the head of the lifo queue.
      *
      *  @param[in] element  The element to push.
      */
-    void Push(ELEMENT* element)
+    void Push(ELEMENT *element)
     {
         HEAD oldHead;
         HEAD newHead;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
         do
         {
             backoff.Delay();
 
-            oldHead._word             = OPS::Load(&_head._word);
-            element->_next            = _heap->Pointer(oldHead._fields._iElement);
+            oldHead._word = OPS::Load(&_head._word);
+            element->_next = _heap->Pointer(oldHead._fields._iElement);
             newHead._fields._iElement = _heap->Index(element);
-            newHead._fields._counter  = oldHead._fields._counter + 1;
+            newHead._fields._counter = oldHead._fields._counter+1;
 
             // BARRIER_CS_PREV below ensures that all processors will see the write to _next
             // before the element is inserted into the queue.
@@ -129,19 +134,19 @@ class /*<UTILITY>*/ LIFO_CTR
      *                           last element's _next pointer must be NULL.
      *  @param[in] listTail     The last element in the list.
      */
-    void PushList(ELEMENT* listHead, ELEMENT* listTail)
+    void PushList(ELEMENT *listHead, ELEMENT *listTail)
     {
         HEAD oldHead;
         HEAD newHead;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
         do
         {
             backoff.Delay();
 
-            oldHead._word             = OPS::Load(&_head._word);
-            listTail->_next           = _heap->Pointer(oldHead._fields._iElement);
+            oldHead._word = OPS::Load(&_head._word);
+            listTail->_next = _heap->Pointer(oldHead._fields._iElement);
             newHead._fields._iElement = _heap->Index(listHead);
-            newHead._fields._counter  = oldHead._fields._counter + 1;
+            newHead._fields._counter = oldHead._fields._counter+1;
 
             // BARRIER_CS_PREV below ensures that all processors will see the write to _next
             // before the element is inserted into the queue.
@@ -161,12 +166,12 @@ class /*<UTILITY>*/ LIFO_CTR
      *
      * @return  Returns the popped element on success, or NULL if the queue is empty.
      */
-    ELEMENT* Pop(bool* isEmpty = 0, unsigned maxRetries = 0)
+    ELEMENT *Pop(bool *isEmpty=0, unsigned maxRetries=0)
     {
         HEAD oldHead;
         HEAD newHead;
-        ELEMENT* element;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        ELEMENT *element;
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
 
         do
         {
@@ -175,13 +180,14 @@ class /*<UTILITY>*/ LIFO_CTR
             oldHead._word = OPS::Load(&_head._word);
             if (oldHead._fields._iElement == 0)
             {
-                if (isEmpty) *isEmpty = true;
+                if (isEmpty)
+                    *isEmpty = true;
                 return 0;
             }
 
-            element                   = _heap->Pointer(oldHead._fields._iElement);
+            element = _heap->Pointer(oldHead._fields._iElement);
             newHead._fields._iElement = _heap->Index(element->_next);
-            newHead._fields._counter  = oldHead._fields._counter + 1;
+            newHead._fields._counter = oldHead._fields._counter+1;
         }
         while (!OPS::CompareAndDidSwap(&_head._word, oldHead._word, newHead._word, BARRIER_CS_NEXT));
 
@@ -194,7 +200,7 @@ class /*<UTILITY>*/ LIFO_CTR
     /*!
      * @return  Returns the first element on the queue, or NULL if it is empty.
      */
-    ELEMENT* Head()
+    ELEMENT *Head()
     {
         HEAD head;
         head._word = OPS::Load(&_head._word);
@@ -204,7 +210,10 @@ class /*<UTILITY>*/ LIFO_CTR
     /*!
      * @return  Returns the first element on the queue, or NULL if it is empty.
      */
-    const ELEMENT* Head() const { return const_cast< LIFO_CTR* >(this)->Head(); }
+    const ELEMENT *Head() const
+    {
+        return const_cast<LIFO_CTR*>(this)->Head();
+    }
 
     /*!
      * Atomically clears the lifo queue and returns a pointer to the previous contents.
@@ -212,18 +221,18 @@ class /*<UTILITY>*/ LIFO_CTR
      * @return  Returns a pointer to a linked list with the previous elements in
      *           in the queue, or NULL if the queue was already empty.
      */
-    ELEMENT* Clear()
+    ELEMENT *Clear()
     {
         HEAD oldHead;
         HEAD newHead;
-        EXPONENTIAL_BACKOFF< STATS > backoff(1, _stats);
+        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
 
         newHead._fields._iElement = 0;
         do
         {
             backoff.Delay();
-            oldHead._word            = OPS::Load(&_head._word);
-            newHead._fields._counter = oldHead._fields._counter + 1;
+            oldHead._word = OPS::Load(&_head._word);
+            newHead._fields._counter = oldHead._fields._counter+1;
         }
         while (!OPS::CompareAndDidSwap(&_head._word, oldHead._word, newHead._word, BARRIER_CS_NEXT));
 
@@ -240,15 +249,16 @@ class /*<UTILITY>*/ LIFO_CTR
      *  @param[in] list     A list of ELEMENTs linked through their _next pointers.  The
      *                       last element's _next pointer must be NULL.
      */
-    void AssignNonAtomic(ELEMENT* list)
+    void AssignNonAtomic(ELEMENT *list)
     {
         HEAD newHead;
-        newHead._word             = 0;
+        newHead._word = 0;
         newHead._fields._iElement = _heap->Index(list);
-        _head._word               = newHead._word;
+        _head._word = newHead._word;
     }
 
   private:
+
     // This is the head of the lifo queue.
     //
     // NOTE: This is defined as a union with _word to avoid a compiler bug.
@@ -259,15 +269,15 @@ class /*<UTILITY>*/ LIFO_CTR
         WORD _word;
         struct
         {
-            WORD _iElement : IndexBits;  // Index of first ELEMENT in queue
-            WORD _counter : CounterBits; // Modification counter (solves A-B-A problem)
+            WORD _iElement : IndexBits;     // Index of first ELEMENT in queue
+            WORD _counter : CounterBits;    // Modification counter (solves A-B-A problem)
         } _fields;
     };
     volatile HEAD _head;
 
-    HEAP* _heap;   // Heap containing objects which are in the queue
-    STATS* _stats; // Object which collects statistics, or NULL
+    HEAP *_heap;    // Heap containing objects which are in the queue
+    STATS *_stats;  // Object which collects statistics, or NULL
 };
 
-} // namespace ATOMIC
+} // namespace
 #endif // file guard

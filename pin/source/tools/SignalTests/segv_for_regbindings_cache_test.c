@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,6 +24,7 @@
 void handle(int, siginfo_t*, void*);
 void make_segv();
 
+
 int main()
 {
     int i;
@@ -38,33 +39,36 @@ int main()
         return 1;
     }
 
-    for (i = 0; i < NUM_SEGVS; i++)
+    for (i=0; i<NUM_SEGVS; i++)
     {
         make_segv();
     }
     return 0;
 }
 
+
+
 void make_segv()
 {
-    volatile int* p;
+    volatile int * p;
     int i;
     size_t pagesize = getpagesize();
-    void* ptr       = mmap(0, 2 * pagesize, (PROT_READ | PROT_WRITE), (MAP_PRIVATE | MAP_ANONYMOUS), -1, 0);
-    char* unmap     = ((char*)ptr) + pagesize + 0x20;
-    munmap((char*)ptr + pagesize, pagesize);
+    void *ptr = mmap(0, 2*pagesize, (PROT_READ | PROT_WRITE), (MAP_PRIVATE | MAP_ANONYMOUS), -1, 0);
+    char *unmap = ((char *)ptr) + pagesize + 0x20;
+    munmap((char *)ptr+pagesize, pagesize);
 
-    p = (volatile int*)unmap;
+    p = (volatile int *)unmap;
     i = *p;
 }
 
-int numSegvsHandled = 0;
+int numSegvsHandled=0;
 void handle(int sig, siginfo_t* info, void* vctxt)
 {
     numSegvsHandled++;
     printf("Got signal %d #sginals %d\n", sig, numSegvsHandled);
     if (numSegvsHandled >= NUM_SEGVS)
     {
-        exit(0);
+       exit (0);
     }
+
 }

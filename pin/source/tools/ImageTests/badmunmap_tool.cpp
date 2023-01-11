@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -24,9 +24,10 @@ using std::flush;
 // GLOBAL VARIABLES
 /////////////////////
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "badmunmap.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "badmunmap.out",
+        "specify output file name");
 ofstream OutFile;
-bool markerHit   = false;
+bool markerHit = false;
 bool testSuccess = false;
 
 INT32 Usage()
@@ -81,7 +82,7 @@ VOID Fini(int, VOID* v)
     }
 }
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 

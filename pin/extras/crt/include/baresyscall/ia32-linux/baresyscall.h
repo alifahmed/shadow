@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -18,29 +18,28 @@
 #define OS_APIS_LINUX_IA32_BARESYSCALL_H__
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include "types.h"
 
-    /*!
+/*!
  * Set of raw return values from a system call.
  */
-    typedef struct /*<POD>*/
-    {
-        ADDRINT _eax;
-        BOOL_T _success;
-    } OS_SYSCALLRETURN;
+typedef struct /*<POD>*/
+{
+    ADDRINT _eax;
+    BOOL_T _success;
+} OS_SYSCALLRETURN;
 
-    /*
+/*
  * This is the signal restorer which is called after a signal handler
  * had returned.
  * This is basically a system call to restore the original application's
  * stack.
  * This syscall never returns
  */
-    void OS_SigReturn();
+void OS_SigReturn();
 
 #ifdef __cplusplus
 }

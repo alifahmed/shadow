@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -44,7 +44,7 @@ ADDRINT GetModulePreferredBase(ADDRINT moduleBase)
     {
         return 0;
     }
-    WIND::PIMAGE_DOS_HEADER pDos = reinterpret_cast< WIND::PIMAGE_DOS_HEADER >(moduleBase);
+    WIND::PIMAGE_DOS_HEADER pDos = reinterpret_cast<WIND::PIMAGE_DOS_HEADER>(moduleBase);
 
     // Returns FALSE when not DOS MZ header
     if (pDos->e_magic != IMAGE_DOS_SIGNATURE)
@@ -52,8 +52,8 @@ ADDRINT GetModulePreferredBase(ADDRINT moduleBase)
         return 0;
     }
 
-    const WIND::PIMAGE_NT_HEADERS pHeaders =
-        reinterpret_cast< WIND::PIMAGE_NT_HEADERS >(reinterpret_cast< WIND::ULONG_PTR >(pDos) + pDos->e_lfanew);
+    const WIND::PIMAGE_NT_HEADERS pHeaders = reinterpret_cast<WIND::PIMAGE_NT_HEADERS>
+        (reinterpret_cast<WIND::ULONG_PTR>(pDos) + pDos->e_lfanew);
 
     // check that this is PE/COFF image
     if (pHeaders->Signature != IMAGE_NT_SIGNATURE)
@@ -64,12 +64,13 @@ ADDRINT GetModulePreferredBase(ADDRINT moduleBase)
     return pHeaders->OptionalHeader.ImageBase;
 }
 
+
 /*
  * Return TRUE if baseName matches tail of imageName. Comparison is case-insensitive.
  * @param[in]  imageName  image file name in either form with extension
  * @param[in]  baseName   image base name with extension (e.g. kernel32.dll)
  */
-static BOOL CmpBaseImageName(const string& imageName, const string& baseName)
+static BOOL CmpBaseImageName(const string & imageName, const string & baseName)
 {
     if (imageName.size() >= baseName.size())
     {
@@ -78,11 +79,12 @@ static BOOL CmpBaseImageName(const string& imageName, const string& baseName)
     return FALSE;
 }
 
-static VOID on_module_loading(IMG img, VOID* data)
+
+static VOID on_module_loading(IMG img, VOID *data)
 {
     // Image rebase detection.
     // Only mismatch between actual and preferred base address is considered as detectable rebase.
-    BOOL rebase_detected = (IMG_LowAddress(img) != GetModulePreferredBase(IMG_LowAddress(img)));
+    BOOL rebase_detected = ( IMG_LowAddress(img) != GetModulePreferredBase(IMG_LowAddress(img)) );
 
     RTN routine = RTN_FindByName(img, "baserel_in_probe");
     if (!RTN_Valid(routine))
@@ -98,7 +100,7 @@ static VOID on_module_loading(IMG img, VOID* data)
     {
         // Fixup is located at offset 3 from function entry point.
         // Value of the fixup is address of the function entry point.
-        ADDRINT* fixup_addr = reinterpret_cast< ADDRINT* >(RTN_Address(routine) + 3);
+        ADDRINT * fixup_addr = reinterpret_cast<ADDRINT *>(RTN_Address(routine) + 3);
 
         if (rebase_detected)
         {
@@ -186,13 +188,14 @@ static VOID on_module_loading(IMG img, VOID* data)
     // The tool is expected to print the message 4 times.
 }
 
+
 int main(int argc, char** argv)
 {
     PIN_InitSymbols();
 
     if (!PIN_Init(argc, argv))
     {
-        IMG_AddInstrumentFunction(on_module_loading, 0);
+        IMG_AddInstrumentFunction(on_module_loading,  0);        
 
         PIN_StartProgramProbed();
     }

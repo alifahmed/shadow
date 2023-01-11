@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,12 +20,12 @@ using namespace std;
 class ARGUMENTS_LIST
 {
   public:
-    ARGUMENTS_LIST() : m_argv(0) {}
-    ARGUMENTS_LIST(int argc, const char* const* argv);
+    ARGUMENTS_LIST():m_argv(0) {}
+    ARGUMENTS_LIST(int argc, const char* const*argv);
     ~ARGUMENTS_LIST();
 
-    void Add(const string& arg);
-    int Argc() const;
+    void   Add(const string& arg);
+    int    Argc() const;
     char** Argv();
     string String() const;
 
@@ -33,8 +33,8 @@ class ARGUMENTS_LIST
     void CleanArray();
     void BuildArray();
 
-    list< string > m_argvStrList;
-    char** m_argv;
+    list <string> m_argvStrList;
+    char **m_argv;
 };
 
 #endif

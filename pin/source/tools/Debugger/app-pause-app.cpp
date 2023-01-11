@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -26,15 +26,15 @@ volatile size_t numThreads = 0;
 size_t retval[NUM_TH + 1];
 THREAD_HANDLE threads[NUM_TH + 1];
 
-void* compute(void* ptr)
+void *compute(void *ptr)
 {
-    size_t th_id = (size_t)ptr;
+    size_t th_id = (size_t) ptr;
     size_t i = 0, newnum = 0;
 
     printf("Thread start %u\n", (unsigned int)th_id);
     fflush(stdout);
 
-    ATOMIC::OPS::Increment< size_t >(&numThreads, 1);
+    ATOMIC::OPS::Increment<size_t>(&numThreads, 1);
     while (numThreads < NUM_TH)
     {
         DelayCurrentThread(1);
@@ -48,11 +48,12 @@ void* compute(void* ptr)
     printf("Thread end %u\n", (unsigned int)th_id);
     fflush(stdout);
     retval[th_id] = i;
-    return (void*)newnum;
+    return (void*) newnum;
 }
 
 int main()
 {
+
     for (size_t i = 1; i <= NUM_TH; i++)
     {
         CreateOneThread(&threads[i], compute, (void*)i);

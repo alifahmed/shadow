@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -34,11 +34,11 @@
  acts like a microsoft compiler on windows and like a gnu compiler on linux.
 */
 #if defined(_MSC_VER)
-#define PIN_MS_COMPATIBLE
+# define PIN_MS_COMPATIBLE
 #elif defined(__GNUC__)
-#define PIN_GNU_COMPATIBLE
+# define PIN_GNU_COMPATIBLE
 #else
-#error "Could not find suitable compiler (MS or GNU)"
+# error "Could not find suitable compiler (MS or GNU)"
 #endif
 
 /*
@@ -53,7 +53,7 @@
 #if defined(TARGET_MAC)
 #define SECTION(name)
 #else
-#define SECTION(name) __attribute__((section(name)))
+#define SECTION(name) __attribute__ ((section (name)))
 #endif
 
 #elif defined(PIN_MS_COMPATIBLE)
@@ -77,11 +77,11 @@
 
  Usage:
  DATA_SECTION("mydata")
- static int myInt = 0;
+ LOCALVAR int myInt = 0;
  SECTION_END
 
  CODE_SECTION("mycode")
- extern void MyFunc ()
+ GLOBALFUN void MyFunc ()
  {
     ......
  }
@@ -96,26 +96,26 @@
 #if defined(PIN_GNU_COMPATIBLE)
 
 #if defined(TARGET_MAC)
-#define CODE_SECTION(name) __attribute__((section("__TEXT, " name)))
-#define DATA_SECTION(name) __attribute__((section("__DATA, " name)))
-#define DATA_CONST_SECTION(name) __attribute__((section("__TEXT, " name)))
+#define CODE_SECTION(name)          __attribute__ ((section ("__TEXT, " name)))
+#define DATA_SECTION(name)          __attribute__ ((section ("__DATA, " name)))
+#define DATA_CONST_SECTION(name)    __attribute__ ((section ("__TEXT, " name)))
 #else
-#define CODE_SECTION(name) __attribute__((section(name)))
-#define DATA_SECTION(name) __attribute__((section(name)))
-#define DATA_CONST_SECTION(name) __attribute__((section(name)))
+#define CODE_SECTION(name)          __attribute__ ((section (name)))
+#define DATA_SECTION(name)          __attribute__ ((section (name)))
+#define DATA_CONST_SECTION(name)    __attribute__ ((section (name)))
 #endif
 #define SECTION_END
 
 #elif defined(PIN_MS_COMPATIBLE)
 
-#define PUSH_SECTIONS__ __pragma(code_seg(push)) __pragma(data_seg(push)) __pragma(const_seg(push)) __pragma(bss_seg(push))
-#define POP_SECTIONS__ __pragma(code_seg(pop)) __pragma(data_seg(pop)) __pragma(const_seg(pop)) __pragma(bss_seg(pop))
+#define PUSH_SECTIONS__ __pragma(code_seg(push)) __pragma(data_seg(push)) __pragma(const_seg(push))  __pragma(bss_seg(push))
+#define POP_SECTIONS__  __pragma(code_seg(pop))  __pragma(data_seg(pop))  __pragma(const_seg(pop))  __pragma(bss_seg(pop))
 
-#define CODE_SECTION(name) PUSH_SECTIONS__ __pragma(code_seg(name))
-#define DATA_SECTION(name) PUSH_SECTIONS__ __pragma(data_seg(name))
-#define DATA_CONST_SECTION(name) PUSH_SECTIONS__ __pragma(const_seg(name))
-#define BSS_SECTION(name) PUSH_SECTIONS__ __pragma(bss_seg(name))
-#define SECTION_END POP_SECTIONS__
+#define CODE_SECTION(name)          PUSH_SECTIONS__  __pragma(code_seg(name))
+#define DATA_SECTION(name)          PUSH_SECTIONS__  __pragma(data_seg(name))
+#define DATA_CONST_SECTION(name)    PUSH_SECTIONS__  __pragma(const_seg(name))
+#define BSS_SECTION(name)           PUSH_SECTIONS__  __pragma(bss_seg(name))
+#define SECTION_END                 POP_SECTIONS__
 
 #endif
 
@@ -135,11 +135,11 @@
 */
 #if defined(PIN_GNU_COMPATIBLE)
 
-#define UNUSED __attribute__((__unused__))
+#define UNUSED __attribute__ ((__unused__))
 #define PRE_ALIGNTO(c)
-#define POST_ALIGNTO(c) __attribute__((aligned(c)))
-#define NORETURN __attribute__((noreturn))
-#define REGPARM __attribute__((regparm(3)))
+#define POST_ALIGNTO(c) __attribute__ ((aligned(c)))
+#define NORETURN __attribute__ ((noreturn))
+#define REGPARM __attribute__ ((regparm (3)))
 #define NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
 
 #elif defined(PIN_MS_COMPATIBLE)
@@ -154,46 +154,50 @@
 #endif
 
 #ifndef PIN_DEPRECATED_WARNINGS
-#if (PIN_NO_DEPRECATED_WARNINGS)
-#define PIN_DEPRECATED_WARNINGS 0
-#else
-/*! @ingroup DEPRECATED
+# if (PIN_NO_DEPRECATED_WARNINGS)
+#  define PIN_DEPRECATED_WARNINGS 0
+# else
+/*! @ingroup DEPRECATED_PIN_API
    By default Pin will annotate deprecated parts of the API so that their use in tools will generate
    compiler warnings.
    If you want to suppress these warnings during the compilation of your tool, you can do so by
    defining the macro PIN_DEPRECATED_WARNINGS with the value zero.
 */
-#define PIN_DEPRECATED_WARNINGS 1
-#endif
+#  define PIN_DEPRECATED_WARNINGS 1
+# endif
 #endif
 
-/*! @ingroup DEPRECATED
+/*! @ingroup MISC
    Apply this macro to deprecated interface definitions to cause warnings when users refer to them.
    When using this macro, also do the following:\n
-   [1] change the interface group to DEPRECATED.\n
+   [1] change the interface group to DEPRECATED_PIN_API.\n
    [2] add a comment with the new interface that will get propagated into the generated PH files. \n
    [3] add a note DEPRECATED with the new interface at the end of the old interface documentation.\n
 */
 #if (PIN_DEPRECATED_WARNINGS == 0)
-/* User asked us to ignore these. */
-#define PIN_DEPRECATED_API
+  /* User asked us to ignore these. */
+# define PIN_DEPRECATED_API
 #else
-#if defined(PIN_GNU_COMPATIBLE)
-#define PIN_DEPRECATED_API __attribute__((deprecated))
-#elif defined(PIN_MS_COMPATIBLE)
-#define PIN_DEPRECATED_API __declspec(deprecated)
-#else
-/* Unknown compiler */
-#define PIN_DEPRECATED_API
-#endif
+# if defined(PIN_GNU_COMPATIBLE)
+#  define PIN_DEPRECATED_API __attribute__((deprecated))
+# elif defined(PIN_MS_COMPATIBLE)
+#  define PIN_DEPRECATED_API __declspec(deprecated)
+# else
+   /* Unknown compiler */
+#  define PIN_DEPRECATED_API
+# endif
 #endif
 
 /*
  Type qualifiers.
  Serve as keywords in generating headers and code conventions checks.
 */
+#define GLOBALFUN extern
+#define LOCALFUN static
+/* LOCALNSFUN is a non-static local function */
+#define LOCALNSFUN
 
-#ifdef __cplusplus
+#ifdef  __cplusplus
 #define GLOBALCFUN extern "C"
 /* SPECIALCFUN is not auto-exported */
 #define SPECIALCFUN extern "C"
@@ -203,76 +207,66 @@
 #endif
 
 #if defined(TARGET_WINDOWS)
-#pragma section(".CRT$XIU", read)
-#define GLOBALDLLFUN extern __declspec(dllexport)
-#define GLOBALDLLCFUN GLOBALCFUN __declspec(dllexport)
-#define IMPORTVAR extern __declspec(dllimport)
-#define CONSTRUCTOR_FUN(fun)                                            \
-    int __cdecl fun(void);                                              \
-    __declspec(allocate(".CRT$XIU")) int(__cdecl * fun##_)(void) = fun; \
-    static int __cdecl fun(void)
-#define CONST_COMDATVAR(type, name, val) extern const __declspec(selectany) type name = val
+#pragma section(".CRT$XIU",read)
+#define GLOBALDLLFUN GLOBALFUN __declspec( dllexport )
+#define GLOBALDLLCFUN GLOBALCFUN __declspec( dllexport )
+#define IMPORTVAR extern __declspec( dllimport )
+#define CONSTRUCTOR_FUN(fun) int __cdecl fun(void); \
+                             __declspec(allocate(".CRT$XIU")) int (__cdecl*fun##_)(void) = fun; \
+                             static int __cdecl fun(void)
+#define CONST_COMDATVAR(type,name,val) extern const __declspec( selectany ) type name = val
 #else
-#define GLOBALDLLFUN extern
+#define GLOBALDLLFUN GLOBALFUN
 #define GLOBALDLLCFUN GLOBALCFUN
 #define IMPORTVAR extern
-#define CONSTRUCTOR_FUN(fun)                    \
-    int fun(void) __attribute__((constructor)); \
-    static int fun(void)
+#define CONSTRUCTOR_FUN(fun) int fun(void) __attribute__((constructor)); \
+                             static int fun(void)
 #define WEAK_CFUN_DECL(fun_signature) GLOBALCFUN fun_signature __attribute__((weak))
 
-#define CONST_COMDATVAR(type, name, val)          \
-    extern const __attribute__((weak)) type name; \
-    const type name = val
+#define CONST_COMDATVAR(type,name,val) extern const __attribute__((weak)) type name; \
+                                       const type name = val
 #endif
 
-#ifdef __cplusplus
+#ifdef  __cplusplus
 #define LOCALCFUN extern "C"
 #else
 #define LOCALCFUN extern
 #endif
 
-#ifdef __cplusplus
+#ifdef  __cplusplus
 #define GLOBALCVAR extern "C"
 #else
 #define GLOBALCVAR extern
 #endif
 
 #if defined(TARGET_WINDOWS)
-/* Defines global pointer to an object of specified type.
-     The pointer is considered either exported as data object or imported depending on VAR_EXPORTED.
-     The name of pointer is created with prefix of Import Address Table entry.
-     This way all references to the pointer in all kit images use the same name
-     regardless of export / import status.
-     When exported, the pointer is statically initialized with specified value.
-     Note: to become exported a separate linker directive should be provided.
-     It is expected (but not validated) only one exported pointer is defined in whole kit.
-  */
-#if defined(VAR_EXPORTED)
-#if defined(TARGET_IA32)
-#define GLOBALDLLCVAR(type, name, val)                         \
-    GLOBALCVAR type name                                = val; \
-    GLOBALCVAR __declspec(selectany) type* _imp__##name = &name
+#define GLOBALDLLCVAR(type,name,val) GLOBALCVAR __declspec( dllexport ) type name = val
 #else
-#define GLOBALDLLCVAR(type, name, val)                         \
-    GLOBALCVAR type name                                = val; \
-    GLOBALCVAR __declspec(selectany) type* __imp_##name = &name
-#endif
-#else
-#define GLOBALDLLCVAR(type, name, val) GLOBALCVAR __declspec(dllimport) type name
-#endif
-#if defined(EXPORT_CLASS)
-#define EXPORT_CLASS_DECL __declspec(dllexport)
-#else
-#define EXPORT_CLASS_DECL
-#endif
-#else
-#define GLOBALDLLCVAR(type, name, val) \
-    GLOBALCVAR type name;              \
-    type name = val
+#define GLOBALDLLCVAR(type,name,val) GLOBALCVAR type name; \
+                                     type name = val
 #endif
 
+#define GLOBALINLINE inline
+#define LOCALINLINE static inline
+
+#define MEMBERFUN
+
+#define MEMBERVAR
+#define GLOBALVAR
+#define LOCALVAR static
+
+#define LOCALTYPE
+#define GLOBALTYPE
+
+#define GLOBALCONST const
+#define LOCALCONST static const
+
 #define STATIC static
+
+#define LOCALOPERATOR static
+
+#define GLOBALTEMPLATEFUN
+#define LOCALTEMPLATEFUN
 
 #endif // ASM_ONLY
 

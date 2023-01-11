@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -17,13 +17,14 @@
 #include <fstream>
 #include <stdlib.h>
 #include "tool_macros.h"
-using std::cerr;
 using std::cout;
-using std::endl;
-using std::hex;
 using std::ios;
+using std::hex;
+using std::cerr;
 using std::ofstream;
+using std::endl;
 using std::string;
+
 
 /* ===================================================================== */
 /* Global Variables */
@@ -37,25 +38,28 @@ static void (*pf_nd)();
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "probe3.outfile", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "probe3.outfile", "specify file name");
 
 /* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This pin tool tests probe replacement.\n"
-            "\n";
+    cerr <<
+        "This pin tool tests probe replacement.\n"
+        "\n";
     cerr << KNOB_BASE::StringKnobSummary();
     cerr << endl;
     return -1;
 }
+
 
 void Call_Function()
 {
     if (pf_dn)
     {
         (*pf_dn)();
-
+        
         TraceFile << "Doing nothing." << endl;
     }
 }
@@ -65,7 +69,7 @@ void Nothing_Doing()
     if (pf_nd)
     {
         (*pf_nd)();
-
+        
         TraceFile << "Nothing doing." << endl;
     }
 }
@@ -73,20 +77,20 @@ void Nothing_Doing()
 /* ===================================================================== */
 // Called every time a new image is loaded
 // Look for routines that we want to probe
-VOID ImageLoad(IMG img, VOID* v)
+VOID ImageLoad(IMG img, VOID *v)
 {
-    cout << "Processing " << IMG_Name(img) << endl;
-
+    cout << "Processing " << IMG_Name( img ) << endl;
+    
     RTN rtn = RTN_FindByName(img, C_MANGLE("call_function"));
     if (RTN_Valid(rtn))
     {
-        if (!RTN_IsSafeForProbedReplacement(rtn))
+        if ( ! RTN_IsSafeForProbedReplacement( rtn ) )
         {
             TraceFile << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
             exit(1);
         }
 
-        pf_dn = (void (*)())RTN_ReplaceProbed(rtn, AFUNPTR(Call_Function));
+        pf_dn = (void (*)())RTN_ReplaceProbed( rtn, AFUNPTR( Call_Function ) );
 
         TraceFile << "Inserted probe for call_function:" << IMG_Name(img) << endl;
     }
@@ -94,27 +98,27 @@ VOID ImageLoad(IMG img, VOID* v)
     rtn = RTN_FindByName(img, C_MANGLE("nothing_doing"));
     if (RTN_Valid(rtn))
     {
-        if (!RTN_IsSafeForProbedReplacement(rtn))
+        if ( ! RTN_IsSafeForProbedReplacement( rtn ) )
         {
             TraceFile << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
             exit(1);
         }
 
-        pf_nd = (void (*)())RTN_ReplaceProbed(rtn, AFUNPTR(Nothing_Doing));
+        pf_nd = (void (*)())RTN_ReplaceProbed( rtn, AFUNPTR( Nothing_Doing ) );
 
         TraceFile << "Inserted probe for nothing_doing:" << IMG_Name(img) << endl;
     }
 
-    cout << "Completed " << IMG_Name(img) << endl;
+    cout << "Completed " << IMG_Name( img ) << endl;
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR* argv[])
+int main(int argc, CHAR *argv[])
 {
     PIN_InitSymbols();
 
-    if (PIN_Init(argc, argv))
+    if( PIN_Init(argc,argv) )
     {
         return Usage();
     }
@@ -124,9 +128,9 @@ int main(int argc, CHAR* argv[])
     TraceFile.setf(ios::showbase);
 
     IMG_AddInstrumentFunction(ImageLoad, 0);
-
+    
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
 

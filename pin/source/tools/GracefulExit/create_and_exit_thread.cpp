@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,31 +19,32 @@
 
 using std::cerr;
 using std::endl;
-using std::ofstream;
 using std::ostream;
+using std::ofstream;
 using std::string;
 using std::vector;
+
 
 /**************************************************
  * Global variables                               *
  **************************************************/
 
 const unsigned int fiveMinutesInMilliseconds = 5 * 60 * 1000;
-const unsigned int maxNumTests               = 500;
+const unsigned int maxNumTests = 500;
 
-volatile unsigned int numThreads  = 0;
+volatile unsigned int numThreads = 0;
 volatile unsigned int testCounter = 0;
-volatile bool finiCalled          = false;
-volatile THREADID currTid         = INVALID_THREADID;
-volatile THREADID nextTid         = INVALID_THREADID;
+volatile bool finiCalled = false;
+volatile THREADID currTid = INVALID_THREADID;
+volatile THREADID nextTid = INVALID_THREADID;
 
 PIN_SEMAPHORE noActiveThreads;
 
 ostream* outFile = NULL;
 
-KNOB< string > KnobOutputFile(
-    KNOB_MODE_WRITEONCE, "pintool", "o", "",
-    "Specify file name for the tool's output. If no filename is specified, the output will be directed to stderr.");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,  "pintool",
+    "o", "", "Specify file name for the tool's output. If no filename is specified, the output will be directed to stderr.");
+
 
 /**************************************************
  * Analysis routines                              *
@@ -59,20 +60,18 @@ void DoTest(const THREADID tid, CONTEXT* ctxt)
     }
     PIN_SemaphoreClear(&noActiveThreads);
 
-    if (maxNumTests > testCounter)
+    BOOL ret = PIN_SpawnApplicationThread(ctxt);
+    if (!ret)
     {
-        BOOL ret = PIN_SpawnApplicationThread(ctxt);
-        if (!ret)
-        {
-            *outFile << "TOOL ERROR: Failed to spawn new application thread." << endl;
-            PIN_ExitProcess(RETVAL_FAILURE_TOOL_FAILED_TO_SPAWN);
-        }
+        *outFile << "TOOL ERROR: Failed to spawn new application thread." << endl;
+        PIN_ExitProcess(RETVAL_FAILURE_TOOL_FAILED_TO_SPAWN);
     }
     PIN_ExitThread(RETVAL_SUCCESS);
 
     *outFile << "TOOL ERROR: Should not reach this point in DoTest." << endl;
     PIN_ExitProcess(RETVAL_FAILURE_TOOL_FAILED_TO_EXIT);
 }
+
 
 /**************************************************
  * Instrumentation routines                       *
@@ -82,6 +81,7 @@ VOID Instruction(INS ins, VOID* v)
 {
     INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(DoTest), IARG_THREAD_ID, IARG_CONTEXT, IARG_END);
 }
+
 
 /**************************************************
  * Callback functions                             *
@@ -97,7 +97,7 @@ VOID ThreadStart(const THREADID tid, CONTEXT* ctxt, INT32 flags, VOID* v)
         PIN_ExitProcess(RETVAL_FAILURE_START_AFTER_FINI);
     }
 
-    if (maxNumTests < testCounter)
+    if (maxNumTests == testCounter)
     {
         PIN_ExitProcess(RETVAL_FAILURE_MAX_TRIALS);
     }
@@ -123,6 +123,7 @@ VOID ThreadStart(const THREADID tid, CONTEXT* ctxt, INT32 flags, VOID* v)
     }
 }
 
+
 VOID ThreadFini(const THREADID tid, const CONTEXT* ctxt, INT32 code, VOID* v)
 {
     ASSERTX(tid == currTid);
@@ -133,6 +134,7 @@ VOID ThreadFini(const THREADID tid, const CONTEXT* ctxt, INT32 code, VOID* v)
     nextTid = INVALID_THREADID;
     PIN_SemaphoreSet(&noActiveThreads);
 }
+
 
 VOID Fini(INT32 code, VOID* v)
 {
@@ -146,13 +148,14 @@ VOID Fini(INT32 code, VOID* v)
     PIN_SemaphoreFini(&noActiveThreads);
 }
 
+
 /**************************************************
  * Main function                                  *
  **************************************************/
 
 int main(int argc, char* argv[])
 {
-    if (PIN_Init(argc, argv)) return RETVAL_FAILURE_PIN_INIT_FAILED;
+    if(PIN_Init(argc, argv)) return RETVAL_FAILURE_PIN_INIT_FAILED;
 
     if (!PIN_SemaphoreInit(&noActiveThreads)) return RETVAL_FAILURE_SEMAPHORE_INIT_FAILED;
     PIN_SemaphoreSet(&noActiveThreads);

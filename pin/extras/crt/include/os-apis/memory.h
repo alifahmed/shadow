@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software and the related documents are Intel copyrighted materials, and your
  * use of them is governed by the express license under which they were provided to
@@ -27,34 +27,36 @@
  */
 typedef enum
 {
-    OS_PAGE_PROTECTION_TYPE_NOACCESS = 0,
-    OS_PAGE_PROTECTION_TYPE_READ     = (1 << 0),
-    OS_PAGE_PROTECTION_TYPE_WRITE    = (1 << 1),
-    OS_PAGE_PROTECTION_TYPE_EXECUTE  = (1 << 2),
-    OS_PAGE_PROTECTION_TYPE_GUARD    = (1 << 3)
+    OS_PAGE_PROTECTION_TYPE_NOACCESS            = 0,
+    OS_PAGE_PROTECTION_TYPE_READ                = (1<<0),
+    OS_PAGE_PROTECTION_TYPE_WRITE               = (1<<1),
+    OS_PAGE_PROTECTION_TYPE_EXECUTE             = (1<<2),
+    OS_PAGE_PROTECTION_TYPE_GUARD               = (1<<3)
 } OS_PAGE_PROTECTION_TYPE;
+
 
 /*! @ingroup OS_APIS_MEMORY
  * Contains a memory region information
  */
 typedef struct
 {
-    VOID* BaseAddress;                  //!< The base address of the mapped region
+    VOID *BaseAddress;                  //!< The base address of the mapped region
     USIZE MapSize;                      //!< The size of the mapped region
     UINT Shared;                        //!< Shared or private region
     OS_PAGE_PROTECTION_TYPE Protection; //!< The protection of this region
     UINT Type;                          //!< Unknown...
 } OS_MEMORY_AT_ADDR_INFORMATION;
 
+
 /*! @ingroup OS_APIS_MEMORY
  * Flags for memory mapping.
  */
 typedef enum
 {
-    OS_MEMORY_FLAGS_PRIVATE       = 0,        //!< The memory should be private to the process
-    OS_MEMORY_FLAGS_FIXED_ADDRESS = (1 << 0), //!< The memory should be mapped exactly at the specified address
-    OS_MEMORY_FLAGS_STACK         = (1 << 1), //!< The memory should be mapped as stack (grows down).
-    OS_MEMORY_FLAGS_SHARED        = (1 << 3)  //!< The memory might be shared among processes
+    OS_MEMORY_FLAGS_PRIVATE                     = 0,      //!< The memory should be private to the process
+    OS_MEMORY_FLAGS_FIXED_ADDRESS               = (1<<0), //!< The memory should be mapped exactly at the specified address
+    OS_MEMORY_FLAGS_STACK                       = (1<<1), //!< The memory should be mapped as stack (grows down).
+    OS_MEMORY_FLAGS_SHARED                      = (1<<3)  //!< The memory might be shared among processes
 } OS_MEMORY_FLAGS;
 
 /*! @ingroup OS_APIS_MEMORY
@@ -89,7 +91,8 @@ typedef enum
  *   @b O/S:   Windows, Linux & macOS*\n
  *   @b CPU:   All\n
  */
-OS_RETURN_CODE OS_AllocateMemory(NATIVE_PID processId, UINT protectionType, USIZE size, OS_MEMORY_FLAGS flags, VOID** base);
+OS_RETURN_CODE OS_AllocateMemory(NATIVE_PID processId, UINT protectionType,
+                                 USIZE size, OS_MEMORY_FLAGS flags, VOID **base);
 
 /*! @ingroup OS_APIS_MEMORY
  * Maps a file into memory, similar to mmap (see man page of mmap(2)).
@@ -126,8 +129,8 @@ OS_RETURN_CODE OS_AllocateMemory(NATIVE_PID processId, UINT protectionType, USIZ
  *   @b O/S:   Windows, Linux & macOS*\n
  *   @b CPU:   All\n
  */
-OS_RETURN_CODE OS_MapFileToMemory(NATIVE_PID processId, UINT protectionType, USIZE size, OS_MEMORY_FLAGS flags, NATIVE_FD fd,
-                                  UINT64 offset, VOID** base);
+OS_RETURN_CODE OS_MapFileToMemory(NATIVE_PID processId, UINT protectionType,
+        USIZE size, OS_MEMORY_FLAGS flags, NATIVE_FD fd, UINT64 offset, VOID **base);
 
 /*! @ingroup OS_APIS_MEMORY
  * Free's @b size bytes of memory at @b base address in the process identified by @b processId.
@@ -153,7 +156,8 @@ OS_RETURN_CODE OS_MapFileToMemory(NATIVE_PID processId, UINT protectionType, USI
  *   @b O/S:   Windows, Linux & macOS* \n
  *   @b CPU:   All \n
  */
-OS_RETURN_CODE OS_FreeMemory(NATIVE_PID processId, VOID* base, USIZE size);
+OS_RETURN_CODE OS_FreeMemory(NATIVE_PID processId, VOID *base, USIZE size);
+
 
 /*! @ingroup OS_APIS_MEMORY
  * Query the system page size.
@@ -167,7 +171,8 @@ OS_RETURN_CODE OS_FreeMemory(NATIVE_PID processId, VOID* base, USIZE size);
  *   @b O/S:   Windows, Linux & macOS* \n
  *   @b CPU:   All \n
  */
-OS_RETURN_CODE OS_GetPageSize(USIZE* size);
+OS_RETURN_CODE OS_GetPageSize(USIZE *size);
+
 
 /*! @ingroup OS_APIS_MEMORY
  * Retrieves the information on the memory block containing  @b memoryAddr.
@@ -198,7 +203,8 @@ OS_RETURN_CODE OS_GetPageSize(USIZE* size);
  *   @b O/S:   Windows, Linux & macOS* \n
  *   @b CPU:   All \n
  */
-OS_RETURN_CODE OS_QueryMemory(NATIVE_PID processId, VOID* memoryAddr, OS_MEMORY_AT_ADDR_INFORMATION* info);
+OS_RETURN_CODE OS_QueryMemory(NATIVE_PID processId, VOID *memoryAddr, OS_MEMORY_AT_ADDR_INFORMATION *info);
+
 
 /*! @ingroup OS_APIS_MEMORY
  * Changes protection for the target process's memory page(s) containing
@@ -226,6 +232,6 @@ OS_RETURN_CODE OS_QueryMemory(NATIVE_PID processId, VOID* memoryAddr, OS_MEMORY_
  *   - @b O/S:   Windows, Linux & macOS*
  *   - @b CPU:   All
  */
-OS_RETURN_CODE OS_ProtectMemory(NATIVE_PID processId, VOID* base, USIZE size, UINT newProtectionType);
+OS_RETURN_CODE OS_ProtectMemory(NATIVE_PID processId, VOID *base, USIZE size, UINT newProtectionType);
 
 #endif // file guard

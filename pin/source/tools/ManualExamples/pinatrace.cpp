@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,21 +16,28 @@
 #include <stdio.h>
 #include "pin.H"
 
-FILE* trace;
+
+FILE * trace;
 
 // Print a memory read record
-VOID RecordMemRead(VOID* ip, VOID* addr) { fprintf(trace, "%p: R %p\n", ip, addr); }
+VOID RecordMemRead(VOID * ip, VOID * addr)
+{
+    fprintf(trace,"%p: R %p\n", ip, addr);
+}
 
 // Print a memory write record
-VOID RecordMemWrite(VOID* ip, VOID* addr) { fprintf(trace, "%p: W %p\n", ip, addr); }
+VOID RecordMemWrite(VOID * ip, VOID * addr)
+{
+    fprintf(trace,"%p: W %p\n", ip, addr);
+}
 
 // Is called for every instruction and instruments reads and writes
-VOID Instruction(INS ins, VOID* v)
+VOID Instruction(INS ins, VOID *v)
 {
     // Instruments memory accesses using a predicated call, i.e.
     // the instrumentation is called iff the instruction will actually be executed.
     //
-    // On the IA-32 and Intel(R) 64 architectures conditional moves and REP
+    // On the IA-32 and Intel(R) 64 architectures conditional moves and REP 
     // prefixed instructions appear as predicated instructions in Pin.
     UINT32 memOperands = INS_MemoryOperandCount(ins);
 
@@ -39,21 +46,27 @@ VOID Instruction(INS ins, VOID* v)
     {
         if (INS_MemoryOperandIsRead(ins, memOp))
         {
-            INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)RecordMemRead, IARG_INST_PTR, IARG_MEMORYOP_EA, memOp,
-                                     IARG_END);
+            INS_InsertPredicatedCall(
+                ins, IPOINT_BEFORE, (AFUNPTR)RecordMemRead,
+                IARG_INST_PTR,
+                IARG_MEMORYOP_EA, memOp,
+                IARG_END);
         }
-        // Note that in some architectures a single memory operand can be
+        // Note that in some architectures a single memory operand can be 
         // both read and written (for instance incl (%eax) on IA-32)
         // In that case we instrument it once for read and once for write.
         if (INS_MemoryOperandIsWritten(ins, memOp))
         {
-            INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)RecordMemWrite, IARG_INST_PTR, IARG_MEMORYOP_EA, memOp,
-                                     IARG_END);
+            INS_InsertPredicatedCall(
+                ins, IPOINT_BEFORE, (AFUNPTR)RecordMemWrite,
+                IARG_INST_PTR,
+                IARG_MEMORYOP_EA, memOp,
+                IARG_END);
         }
     }
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID Fini(INT32 code, VOID *v)
 {
     fprintf(trace, "#eof\n");
     fclose(trace);
@@ -62,10 +75,11 @@ VOID Fini(INT32 code, VOID* v)
 /* ===================================================================== */
 /* Print Help Message                                                    */
 /* ===================================================================== */
-
+   
 INT32 Usage()
 {
-    PIN_ERROR("This Pintool prints a trace of memory addresses\n" + KNOB_BASE::StringKnobSummary() + "\n");
+    PIN_ERROR( "This Pintool prints a trace of memory addresses\n" 
+              + KNOB_BASE::StringKnobSummary() + "\n");
     return -1;
 }
 
@@ -73,7 +87,7 @@ INT32 Usage()
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (PIN_Init(argc, argv)) return Usage();
 
@@ -84,6 +98,6 @@ int main(int argc, char* argv[])
 
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

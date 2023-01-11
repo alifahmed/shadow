@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -12,13 +12,14 @@
 #include <fstream>
 #include "pin.H"
 
-KNOB< std::string > KnobOut(KNOB_MODE_WRITEONCE, "pintool", "o", "start-fini-callback.out", "Output file");
+KNOB<std::string> KnobOut(KNOB_MODE_WRITEONCE, "pintool", "o",
+    "start-fini-callback.out", "Output file");
 
 std::ofstream Out;
 
 THREADID myThread = INVALID_THREADID;
 
-static void OnThreadStart(THREADID tid, CONTEXT*, INT32, VOID*)
+static void OnThreadStart(THREADID tid, CONTEXT *, INT32, VOID *)
 {
     if (INVALID_THREADID == myThread)
     {
@@ -27,7 +28,7 @@ static void OnThreadStart(THREADID tid, CONTEXT*, INT32, VOID*)
     }
 }
 
-static void OnThreadFini(THREADID tid, const CONTEXT*, INT32, VOID*)
+static void OnThreadFini(THREADID tid, const CONTEXT *, INT32, VOID *)
 {
     if (tid == myThread)
     {
@@ -35,9 +36,13 @@ static void OnThreadFini(THREADID tid, const CONTEXT*, INT32, VOID*)
     }
 }
 
-static void OnExit(INT32, VOID*) { Out << "OnExit" << std::endl; }
+static void OnExit(INT32, VOID *)
+{
+    Out << "OnExit" << std::endl;
+}
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 

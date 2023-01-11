@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -21,16 +21,16 @@
  * Execute clones of the specified function object in all threads of the thread pool.
  * @return number of threads in which the object was executed successfully 
  */
-static unsigned long ExecuteInAllThreads(THREAD_POOL* tPool, const FUNC_OBJ& funcObj)
+static unsigned long ExecuteInAllThreads(THREAD_POOL * tPool, const FUNC_OBJ & funcObj)
 {
     const unsigned long numThreads = tPool->NumThreads();
-    unsigned long startedThreads   = 0;
+    unsigned long startedThreads = 0;
     unsigned long succeededThreads = 0;
 
     for (unsigned long tid = 0; tid < numThreads; ++tid, ++startedThreads)
     {
-        FUNC_OBJ* runObj = funcObj.Clone();
-        if (!tPool->Start(tid, runObj))
+        FUNC_OBJ * runObj = funcObj.Clone();
+        if (!tPool->Start(tid, runObj)) 
         {
             cerr << "Thread " << tid << ": " << runObj->Name() << ": start failed" << endl;
             break;
@@ -39,18 +39,15 @@ static unsigned long ExecuteInAllThreads(THREAD_POOL* tPool, const FUNC_OBJ& fun
 
     for (unsigned long tid = 0; tid < startedThreads; ++tid)
     {
-        FUNC_OBJ* runObj = static_cast< FUNC_OBJ* >(tPool->Wait(tid));
-        if (runObj == 0)
+        FUNC_OBJ * runObj = static_cast<FUNC_OBJ *>(tPool->Wait(tid));
+        if (runObj == 0) 
         {
             cerr << "Thread " << tid << ": " << funcObj.Name() << ": wait failed" << endl;
             continue;
         }
 
         cerr << "Thread " << tid << ": " << runObj->Name() << ": " << runObj->ErrorMessage() << endl;
-        if (runObj->Status())
-        {
-            ++succeededThreads;
-        }
+        if (runObj->Status()) {++succeededThreads;}
         delete runObj;
     }
 
@@ -60,11 +57,11 @@ static unsigned long ExecuteInAllThreads(THREAD_POOL* tPool, const FUNC_OBJ& fun
 /*!
  * The main procedure of the application.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    void* dynamicBuffer;
+    void * dynamicBuffer;
     dynamicBuffer = MemAlloc(PI_FUNC::MAX_SIZE, MEM_READ_WRITE_EXEC);
-    if (dynamicBuffer == 0)
+    if (dynamicBuffer == 0) 
     {
         cerr << "MemAlloc failed" << endl;
         return 1;

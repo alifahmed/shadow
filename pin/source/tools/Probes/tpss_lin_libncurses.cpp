@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -19,12 +19,12 @@
 #include "pin.H"
 #include <iostream>
 #include <fstream>
-using std::cerr;
-using std::endl;
-using std::hex;
-using std::ios;
-using std::ofstream;
 using std::string;
+using std::ios;
+using std::hex;
+using std::cerr;
+using std::ofstream;
+using std::endl;
 
 ofstream OutFile;
 
@@ -32,7 +32,8 @@ ofstream OutFile;
 /* Commandline Switches                                                  */
 /* ===================================================================== */
 
-KNOB< string > KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "tpss_lin_libcurses.txt", "specify tool log file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "tpss_lin_libcurses.txt", "specify tool log file name");
 
 /* ===================================================================== */
 /* Utility functions                                                     */
@@ -70,20 +71,20 @@ int (*fptrmvgetch)(int y, int x);
 
 int mygetch(void)
 {
-    OutFile << CurrentTime() << "mygetch called " << endl;
-    OutFile.flush();
-    int res = fptrgetch();
+   OutFile << CurrentTime() << "mygetch called " << endl;
+   OutFile.flush();
+   int res = fptrgetch();
 
-    return res;
+   return res;
 }
 
 int mymvgetch(int y, int x)
 {
-    OutFile << CurrentTime() << "mymvgetch called " << endl;
-    OutFile.flush();
-    int res = fptrmvgetch(y, x);
+   OutFile << CurrentTime() << "mymvgetch called " << endl;
+   OutFile.flush();
+   int res = fptrmvgetch(y, x);
 
-    return res;
+   return res;
 }
 
 /* ===================================================================== */
@@ -91,12 +92,13 @@ int mymvgetch(int y, int x)
 /* ===================================================================== */
 
 // Image load callback - inserts the probes.
-void ImgLoad(IMG img, void* v)
+void ImgLoad(IMG img, void *v)
 {
     // Called every time a new image is loaded
 
-    if ((IMG_Name(img).find("libncurses.so") != string::npos) || (IMG_Name(img).find("LIBNCURSES.SO") != string::npos) ||
-        (IMG_Name(img).find("LIBNCURSES.so") != string::npos))
+    if ( (IMG_Name(img).find("libncurses.so") != string::npos) ||
+         (IMG_Name(img).find("LIBNCURSES.SO") != string::npos) ||
+         (IMG_Name(img).find("LIBNCURSES.so") != string::npos) )
     {
         RTN rtngetch = RTN_FindByName(img, "getch");
         if (RTN_Valid(rtngetch) && RTN_IsSafeForProbedReplacement(rtngetch))
@@ -104,7 +106,7 @@ void ImgLoad(IMG img, void* v)
             OutFile << CurrentTime() << "Inserting probe for getch at " << RTN_Address(rtngetch) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtngetch, AFUNPTR(mygetch)));
-            fptrgetch    = (int (*)())fptr;
+            fptrgetch = (int (*)())fptr;
         }
 
         RTN rtnmvgetch = RTN_FindByName(img, "mvgetch");
@@ -113,7 +115,7 @@ void ImgLoad(IMG img, void* v)
             OutFile << CurrentTime() << "Inserting probe for mvgetch at " << RTN_Address(rtnmvgetch) << endl;
             OutFile.flush();
             AFUNPTR fptr = (RTN_ReplaceProbed(rtnmvgetch, AFUNPTR(mymvgetch)));
-            fptrmvgetch  = (int (*)(int, int))fptr;
+            fptrmvgetch = (int (*)(int, int))fptr;
         }
     }
     // finished instrumentation
@@ -123,11 +125,11 @@ void ImgLoad(IMG img, void* v)
 /* Main function                                                         */
 /* ===================================================================== */
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Initialize Pin
     PIN_InitSymbols();
-    if (PIN_Init(argc, argv))
+    if (PIN_Init(argc,argv))
     {
         return Usage();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -25,17 +25,19 @@
 #include <stdlib.h>
 #include "tool_macros.h"
 
+
+
 /* ===================================================================== */
 /* Replacement routines */
 /* ===================================================================== */
 
-VOID One_IA32(AFUNPTR orgFuncptr)
+VOID One_IA32( AFUNPTR orgFuncptr )
 {
     orgFuncptr();
     return;
 }
 
-VOID One_IA32_2(AFUNPTR orgFuncptr)
+VOID One_IA32_2( AFUNPTR orgFuncptr )
 {
     orgFuncptr();
     return;
@@ -47,61 +49,77 @@ VOID One_IA32_2(AFUNPTR orgFuncptr)
 
 VOID Sanity(IMG img, RTN rtn)
 {
-    if (PIN_IsProbeMode() && !RTN_IsSafeForProbedReplacement(rtn))
+    if ( PIN_IsProbeMode() && ! RTN_IsSafeForProbedReplacement( rtn ) )
     {
-        LOG("Cannot replace " + RTN_Name(rtn) + " in " + IMG_Name(img) + "\n");
+        LOG( "Cannot replace " + RTN_Name(rtn) + " in " + IMG_Name(img) + "\n" );
         exit(1);
     }
 }
 
+
 /* ===================================================================== */
 
-VOID ReplaceProbed(RTN rtn, PROTO proto)
+VOID ReplaceProbed( RTN rtn, PROTO proto)
 {
-    RTN_ReplaceSignatureProbed(rtn, AFUNPTR(One_IA32), IARG_PROTOTYPE, proto, IARG_ORIG_FUNCPTR, IARG_END);
-    RTN_ReplaceSignatureProbed(rtn, AFUNPTR(One_IA32_2), IARG_PROTOTYPE, proto, IARG_ORIG_FUNCPTR, IARG_END);
+    RTN_ReplaceSignatureProbed(
+        rtn, AFUNPTR( One_IA32 ),
+        IARG_PROTOTYPE, proto,
+        IARG_ORIG_FUNCPTR,
+        IARG_END);
+    RTN_ReplaceSignatureProbed(
+        rtn, AFUNPTR( One_IA32_2 ),
+        IARG_PROTOTYPE, proto,
+        IARG_ORIG_FUNCPTR,
+        IARG_END);
 }
 
+
 /* ===================================================================== */
-
-VOID ImageLoad(IMG img, VOID* v)
+    
+VOID ImageLoad(IMG img, VOID *v)
 {
-    CONSOLE("Loading " + IMG_Name(img) + "\n");
-    PROTO proto = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT, "one", PIN_PARG_END());
-
+    CONSOLE( "Loading " + IMG_Name(img) + "\n" );
+    PROTO proto = PROTO_Allocate( PIN_PARG(void), CALLINGSTD_DEFAULT,
+                                  "one", PIN_PARG_END() );
+    
     RTN rtn = RTN_FindByName(img, C_MANGLE("one"));
     if (RTN_Valid(rtn))
     {
         Sanity(img, rtn);
-
-        LOG("Replacing one in " + IMG_Name(img) + "\n");
-        LOG("Address = " + hexstr(RTN_Address(rtn)) + "\n");
-
+        
+        LOG( "Replacing one in " + IMG_Name(img) + "\n" );
+        LOG( "Address = " + hexstr( RTN_Address(rtn)) + "\n" );
+        
         ReplaceProbed(rtn, proto);
     }
-
-    PROTO_Free(proto);
+    
+    PROTO_Free( proto );
 }
 
 /* ===================================================================== */
 
-VOID ImageUnload(IMG img, VOID* v) { LOG("Unloading " + IMG_Name(img) + "\n"); }
+VOID ImageUnload(IMG img, VOID *v)
+{
+    LOG( "Unloading " + IMG_Name(img) + "\n" ); 
+}
+
 
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR* argv[])
+int main(INT32 argc, CHAR *argv[])
 {
     PIN_InitSymbols();
-
+    
     PIN_Init(argc, argv);
-
+    
     IMG_AddInstrumentFunction(ImageLoad, 0);
     IMG_AddUnloadFunction(ImageUnload, 0);
-
+    
     PIN_StartProgramProbed();
-
+    
     return 0;
 }
+
 
 /* ===================================================================== */
 /* eof */

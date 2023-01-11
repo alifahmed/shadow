@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -20,35 +20,37 @@ double fl;
 VOID sn()
 {
     char a[100];
-
+    
     // snprintf does a movaps, which needs the stack aligned correctly
 #if defined(PIN_GNU_COMPATIBLE) || defined(PIN_CRT)
-    snprintf(a, sizeof(a) / sizeof(a[0]), "a %f\n", fl);
+    snprintf(a, sizeof(a)/sizeof(a[0]), "a %f\n", fl);
 #elif defined(PIN_MS_COMPATIBLE)
-    _snprintf(a, sizeof(a) / sizeof(a[0]), "a %f\n", fl);
-#endif
+    _snprintf(a, sizeof(a)/sizeof(a[0]), "a %f\n", fl);
+#endif    
+ 
 }
-
-VOID Instruction(INS ins, VOID* v)
+    
+VOID Instruction(INS ins, VOID *v)
 {
     static BOOL first = true;
 
-    if (!first) return;
+    if (!first)
+        return;
     first = false;
-
+    
     // test once with a context and once without
     INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(sn), IARG_CONTEXT, IARG_END);
     INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(sn), IARG_END);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
 
     INS_AddInstrumentFunction(Instruction, 0);
-
+    
     // Never returns
     PIN_StartProgram();
-
+    
     return 0;
 }

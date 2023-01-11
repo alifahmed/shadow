@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -40,57 +40,52 @@ extern "C" EXPORT_SYM volatile void* DoNewThread(void* scenarioPtr);
  * Secondary thread's main functions              *
  **************************************************/
 // The secondary thread simply exits, the tool will do the rest.
-volatile void* DoNewThread(void* scenarioPtr)
-{
+volatile void* DoNewThread(void* scenarioPtr) {
     IncThreads();
 
     int scenario = *((int*)scenarioPtr);
-    switch (scenario)
-    {
-        case 1:
-        case 4:
-            return NULL;
-        case 2:
-        case 3:
-        case 5:
-        case 6:
-            exit(0);
-        default:                           // invalid scenario
-            ErrorExit(RES_UNKNOWN_OPTION); // never returns
-            break;
+    switch (scenario) {
+    case 1:
+    case 4:
+    	return NULL;
+    case 2:
+    case 3:
+    case 5:
+    case 6:
+        exit(0);
+    default: // invalid scenario
+    	ErrorExit(RES_UNKNOWN_OPTION); // never returns
+    	break;
     }
 
     // This can't be reached, simply for successful compilation.
     return NULL;
 }
 
+
 /**************************************************
  * Main function	                              *
  **************************************************/
-int main(int argc, char* argv[])
-{
-    if (argc != 2)
-    {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
         ErrorExit(RES_INVALID_ARGS);
     }
 
     stringstream scenariostream(argv[1]);
     int scenario = 0;
     scenariostream >> scenario;
-    if (scenariostream.fail())
-    {
-        ErrorExit(RES_INVALID_ARGS);
+    if (scenariostream.fail()) {
+    	ErrorExit(RES_INVALID_ARGS);
     }
 
     InitLocks();
 
     TidType tid;
-    if (!CreateNewThread(&tid, (void*)DoNewThread, &scenario))
-    {
-        ErrorExit(RES_CREATE_FAILED);
+    if (!CreateNewThread(&tid, (void*)DoNewThread, &scenario)) {
+    	ErrorExit(RES_CREATE_FAILED);
     }
 
-    DoSleep(300); // wait here to be terminated
+    DoSleep(300);	// wait here to be terminated
 
     // Failsafe - this should not be reached but we want to avoid a hung test.
     ErrorExit(RES_EXIT_TIMEOUT); // never returns

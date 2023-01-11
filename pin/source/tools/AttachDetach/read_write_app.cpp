@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -13,7 +13,7 @@
  *  Test detaching - reattach Pin on Linux
  *  The application tests Pin correctness in interrupted system calls 
  */
-
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
-#define READ_WRITE_APP_TIMEOUT 300 // seconds to timeout in case Pin's attach/detach is stuck.
+#define READ_WRITE_APP_TIMEOUT 300  // seconds to timeout in case Pin's attach/detach is stuck.
 
 /* Signal Handler. Pin doesn't kill the process if it failed to attach, exit on SIGALRM */
 void ExitOnAlarm(int sig)
@@ -31,20 +31,24 @@ void ExitOnAlarm(int sig)
     exit(0);
 }
 
-extern "C" int AppShouldExit() { return 0; }
+extern "C" int AppShouldExit()
+{
+    return 0;
+}
+
 
 int main()
 {
     char filename[PATH_MAX];
     sprintf(filename, "rw_test.%d.txt", getpid());
-
+    
     /* perform exit after READ_WRITE_APP_TIMEOUT seconds */
     signal(SIGALRM, ExitOnAlarm);
     alarm(READ_WRITE_APP_TIMEOUT);
 
     while (!AppShouldExit())
     {
-        FILE* out = fopen(filename, "w+");
+        FILE *out = fopen(filename, "w+");
         if (NULL == out)
         {
             int err = errno;
@@ -52,17 +56,17 @@ int main()
             return -1;
         }
 
-        size_t longStrSize = sizeof("aaaaabbbbccccddddd_") * 100;
-        char* orgBuf       = (char*)malloc(longStrSize + 2);
-        orgBuf[0]          = '\0';
+        size_t longStrSize = sizeof("aaaaabbbbccccddddd_")*100;
+        char* orgBuf = (char*)malloc(longStrSize+2);
+        orgBuf[0] ='\0';
 
-        for (int i = 0; i < 100; i++)
+        for(int i=0; i<100; i++)
         {
             sprintf(orgBuf, "%saaaaabbbbccccddddd_", orgBuf);
         }
-        char* buf = (char*)malloc(longStrSize + 2);
+        char *buf = (char*)malloc(longStrSize+2);
 
-        for (int i = 0; i < 10; i++)
+        for(int i=0; i<10; i++)
         {
             if (fseek(out, 0, SEEK_SET) != 0)
             {
@@ -92,7 +96,7 @@ int main()
                 return -1;
             }
         }
-        fclose(out);
+        fclose(out);      
         free(orgBuf);
         free(buf);
     }

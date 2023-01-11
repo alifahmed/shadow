@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -23,13 +23,14 @@
 #include <unistd.h>
 #define USLEEP_TIME 50000
 
-static VOID OnImage(IMG, VOID*);
-static VOID OnSyscall(THREADID, CONTEXT*, SYSCALL_STANDARD, VOID*);
+static VOID OnImage(IMG, VOID *);
+static VOID OnSyscall(THREADID, CONTEXT *, SYSCALL_STANDARD, VOID *);
 static VOID GetToolLock(THREADID);
 
 PIN_LOCK ToolLock;
 
-int main(int argc, char* argv[])
+
+int main(int argc, char * argv[])
 {
     PIN_Init(argc, argv);
     PIN_InitSymbols();
@@ -42,7 +43,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-static VOID OnImage(IMG img, VOID*)
+static VOID OnImage(IMG img, VOID *)
 {
     RTN rtn = RTN_FindByName(img, "DoToolAnalysis");
     if (RTN_Valid(rtn))
@@ -53,18 +54,17 @@ static VOID OnImage(IMG img, VOID*)
     }
 }
 
-static VOID OnSyscall(THREADID tid, CONTEXT*, SYSCALL_STANDARD, VOID*)
+static VOID OnSyscall(THREADID tid, CONTEXT *, SYSCALL_STANDARD, VOID *)
 {
-    PIN_GetLock(&ToolLock, tid + 1);
+    PIN_GetLock(&ToolLock, tid+1);
     PIN_ReleaseLock(&ToolLock);
 }
 
 static VOID GetToolLock(THREADID tid)
 {
-    PIN_GetLock(&ToolLock, tid + 1);
+    PIN_GetLock(&ToolLock, tid+1);
 
     // The loop opens the timing hole, making the deadlock more likely.
-    for (int i = 0; i < 10000000; i++)
-        ;
+    for(int i=0;i<10000000;i++);
     PIN_ReleaseLock(&ToolLock);
 }

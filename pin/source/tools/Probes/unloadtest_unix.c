@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -16,32 +16,33 @@
 #include <stdio.h>
 #include "tool_macros.h"
 
-void Load(char* name, int expect)
+void Load(char * name, int expect)
 {
     int val;
-
-    void* handle;
+    
+    void * handle;
     int (*sym)();
-
+    
     handle = dlopen(name, RTLD_LAZY);
     if (handle == 0)
     {
-        fprintf(stderr, "Load of %s failed\n", name);
+        fprintf(stderr,"Load of %s failed\n",name);
         exit(1);
     }
-
-    sym = (int (*)())dlsym(handle, "one");
-    fprintf(stderr, "Address of sym is %p\n", sym);
-
+    
+    sym = (int(*)())dlsym(handle, "one");
+    fprintf(stderr, "Address of sym is %p\n",sym);
+    
     if (sym == 0)
     {
-        fprintf(stderr, "Dlsym of %s failed\n", name);
+        fprintf(stderr,"Dlsym of %s failed\n",name);
         exit(1);
     }
-
+    
     val = sym();
-    if (val != expect) exit(1);
-
+    if (val != expect)
+        exit(1);
+    
     dlclose(handle);
 }
 
@@ -52,3 +53,4 @@ int main()
 
     return 0;
 }
+

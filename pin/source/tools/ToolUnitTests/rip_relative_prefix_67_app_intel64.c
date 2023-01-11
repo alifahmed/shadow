@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -41,10 +41,9 @@ extern int func_is_5_size;
  */
 extern int func_is_5(int val);
 
-typedef union
-{
+typedef union {
     int (*fptr)(int);
-    void* ptr;
+    void *ptr;
 } fptr_t;
 
 // Get address of func_is_5()
@@ -58,24 +57,23 @@ void* get_func_is_5()
 int main()
 {
     fptr_t nfp;
-    void* addr = get_func_is_5();
+    void *addr = get_func_is_5();
 
     // Map a page in high address larger then a 32 bit address (above 0x600000000)
-    unsigned long long aaddr = ((unsigned long long)addr) & ~(4095ULL); // aligned to page
+    unsigned long long aaddr = ((unsigned long long)addr) & ~(4095ULL);  // aligned to page
     // new address must have the same low 32 bits as the original function in order to make the test work
-    unsigned long long naddr = aaddr | 0x600000000;                      // move to high addr
+    unsigned long long naddr =  aaddr | 0x600000000;                     // move to high addr
     unsigned long long faddr = ((unsigned long long)addr) | 0x600000000; // new address of func_is_5
-    void* area = mmap((void*)naddr, 4096, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    void *area = mmap((void*)naddr, 4096, PROT_READ|PROT_WRITE|PROT_EXEC,
+                      MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0);
 
-    if (area == MAP_FAILED)
-    {
+    if (area == MAP_FAILED) {
         perror("mmap");
         return 1;
     }
 
     // Sanity check
-    if (func_is_5(5) != 1)
-    {
+    if (func_is_5(5) != 1) {
         fprintf(stderr, "func_is_5 failed\n");
         return 1;
     }
@@ -97,11 +95,11 @@ int main()
     // will return the address of the data which is located in the original page of the original func_is_5()
     // function. Which means the right data will be used and the test will work. (Unless Pin doesn't calculate
     // the correct address for rip-relative addressing instruction with 67H prefix)
-    if ((*nfp.fptr)(5) != 1)
-    {
+    if ((*nfp.fptr)(5) != 1) {
         fprintf(stderr, "new func_is_5 failed\n");
         return 1;
     }
+
 
     return 0;
 }

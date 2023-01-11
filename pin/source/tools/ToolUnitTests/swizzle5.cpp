@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 Intel Corporation.
+ * Copyright 2002-2019 Intel Corporation.
  * 
  * This software is provided to you as Sample Source Code as defined in the accompanying
  * End User License Agreement for the Intel(R) Software Development Products ("Agreement")
@@ -22,7 +22,7 @@ UINT64 icount = 0;
 using std::set;
 
 // When an image is loaded, check for a MyAlloc function
-VOID Image(IMG img, VOID* v)
+VOID Image(IMG img, VOID *v)
 {
     //fprintf(stderr, "Loading %s\n",IMG_name(img));
 
@@ -59,19 +59,21 @@ VOID RewriteIns(INS ins)
 {
     //fprintf(stderr,"Rewriting %p\n",(void*)INS_Address(ins));
 
-    for (UINT32 memopIdx = 0; memopIdx < INS_MemoryOperandCount(ins); memopIdx++)
+    for (UINT32 memopIdx=0; memopIdx < INS_MemoryOperandCount(ins); memopIdx++)
     {
-        REG scratchReg = REG(int(REG_INST_G0) + memopIdx);
+        REG scratchReg = REG(int(REG_INST_G0)+memopIdx);
 
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(Unswizzle), IARG_MEMORYOP_EA, memopIdx, IARG_RETURN_REGS, scratchReg,
-                       IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE,
+                       AFUNPTR(Unswizzle),
+                       IARG_MEMORYOP_EA, memopIdx,
+                       IARG_RETURN_REGS, scratchReg, IARG_END);
         INS_RewriteMemoryOperand(ins, memopIdx, scratchReg);
     }
 }
 
-set< ADDRINT > SwizzleRefs;
+set<ADDRINT> SwizzleRefs;
 
-BOOL SegvHandler(THREADID, INT32, CONTEXT* ctxt, BOOL, const EXCEPTION_INFO*, void*)
+BOOL SegvHandler(THREADID, INT32, CONTEXT *ctxt, BOOL, const EXCEPTION_INFO *, void *)
 {
     ADDRINT address = PIN_GetContextReg(ctxt, REG_INST_PTR);
 
@@ -93,7 +95,8 @@ BOOL SegvHandler(THREADID, INT32, CONTEXT* ctxt, BOOL, const EXCEPTION_INFO*, vo
     return false;
 }
 
-VOID Trace(TRACE trace, VOID* v)
+
+VOID Trace(TRACE trace, VOID *v)
 {
     BOOL rewrite = false;
 
@@ -102,7 +105,8 @@ VOID Trace(TRACE trace, VOID* v)
         for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
         {
             // If we see an instruction that needs rewriting, then rewrite all
-            if (SwizzleRefs.find(INS_Address(ins)) != SwizzleRefs.end()) rewrite = true;
+            if (SwizzleRefs.find(INS_Address(ins)) != SwizzleRefs.end())
+                rewrite = true;
 
             if (rewrite)
             {
@@ -113,7 +117,7 @@ VOID Trace(TRACE trace, VOID* v)
     }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
     PIN_InitSymbols();
     PIN_Init(argc, argv);
@@ -122,10 +126,10 @@ int main(int argc, char* argv[])
     IMG_AddInstrumentFunction(Image, 0);
 
     if (!PIN_InterceptSignal(SIGSEGV, SegvHandler, 0))
-    {
-        fprintf(stderr, "InterceptSignal failed\n");
-        exit(1);
-    }
+	{
+		fprintf (stderr, "InterceptSignal failed\n");
+		exit (1);
+	}
 
     // Never returns
     PIN_StartProgram();
