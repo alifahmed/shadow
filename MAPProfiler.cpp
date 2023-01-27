@@ -684,6 +684,7 @@ void generateCodeHeader(ofstream &out) {
 	out << "#include <cstdio>\n";
 # ifdef DEBUG
 	out << "#include <vector>\n";
+	out << "#include <signal.h>\n";
 # endif
 	out << "#include \"immintrin.h\"\n";
 	out << "\n";
@@ -752,6 +753,31 @@ void generateCodeHeader(ofstream &out) {
 	out << "#ifdef __AVX512F__\n";
 	out << _tab(1) << "volatile __m512i tmp64;\n";
 	out << "#endif\n\n";
+
+#ifdef DEBUG
+	out << "uint32_t exec_cnt[50000] = {0};\n";
+	out << "uint32_t path_taken[50000][30] = {0};\n";
+
+	out << "void int_handler(int s) {\n";
+	out << _tab(1) << "FILE *fptr = fopen(\"output2.csv\", \"w\");\n";
+	out << _tab(1) << "fprintf(fptr, \"blockid,clone_exec_count\\n\");\n";
+	out << _tab(1) << "for (int i = 0; i < 50000; i++)\n";
+	out << _tab(2) << "fprintf(fptr, \"%d,%d\\n\", i, exec_cnt[i]);\n";
+	out << _tab(1) << "fclose(fptr);\n";
+
+	out << _tab(1) << "fptr = fopen(\"output3.csv\", \"w\");\n";
+	out << _tab(1) << "fprintf(fptr, \"blockid,\\n\");\n";
+	out << _tab(1) << "for (int i = 0; i < 50000; i++) {\n";
+	out << _tab(2) << "fprintf(fptr, \"%d,\", i);\n";
+	out << _tab(2) << "for (int j = 0; j < 30; j++)\n";
+	out << _tab(3) << "fprintf(fptr, \"%d,\", path_taken[i][j]);\n";
+	out << _tab(2) << "fprintf(fptr, \"\\n\");\n";
+	out << _tab(1) << "}\n";
+	out << _tab(1) << "fclose(fptr);\n";
+	out << _tab(1) << "exit(s);\n";
+	out << "}\n";
+#endif
+
 	out << "int main(){\n";
 	//out << _tab(1) << "volatile uint8_t* addr = NULL;\n";
 	out << _tab(1) << "int64_t addr;\n";
@@ -769,8 +795,7 @@ void generateCodeHeader(ofstream &out) {
 	//out << _tab(2) << "exit(-1);\n";
 	//out << _tab(1) << "}\n";
 #ifdef DEBUG
-	out << _tab(1) << "uint32_t exec_cnt[50000] = {0};\n";
-	out << _tab(1) << "uint32_t path_taken[50000][30] = {0};\n";
+	out << _tab(1) << "signal(SIGINT, int_handler);\n";
 #endif
 	out << "\n";
 
@@ -808,21 +833,7 @@ string generateCodeHeaderFragment(int indent, const vector<InsMem*> &insList){
 void generateCodeFooter(ofstream &out) {
 	//out << "block1:\n";
 #ifdef DEBUG
-	out << _tab(1) << "FILE *fptr = fopen(\"output2.csv\", \"w\");\n";
-	out << _tab(1) << "fprintf(fptr, \"blockid,clone_exec_count\\n\");\n";
-	out << _tab(1) << "for (int i = 0; i < 50000; i++)\n";
-	out << _tab(2) << "fprintf(fptr, \"%d,%d\\n\", i, exec_cnt[i]);\n";
-	out << _tab(1) << "fclose(fptr);\n";
-
-	out << _tab(1) << "fptr = fopen(\"output3.csv\", \"w\");\n";
-	out << _tab(1) << "fprintf(fptr, \"blockid,\\n\");\n";
-	out << _tab(1) << "for (int i = 0; i < 50000; i++) {\n";
-	out << _tab(2) << "fprintf(fptr, \"%d,\", i);\n";
-	out << _tab(2) << "for (int j = 0; j < 30; j++)\n";
-	out << _tab(3) << "fprintf(fptr, \"%d,\", path_taken[i][j]);\n";
-	out << _tab(2) << "fprintf(fptr, \"\\n\");\n";
-	out << _tab(1) << "}\n";
-	out << _tab(1) << "fclose(fptr);\n";
+	out << _tab(1) << "int_handler(0);\n";
 #endif
 	out << _tab(1) << "free((void*)gm);\n";
 	out << _tab(1) << "return 0;\n";
@@ -1976,7 +1987,6 @@ void inst_mix_count(InsMix::InsMixType ty) {
 
 VOID Trace(TRACE trace, VOID *v) {
 	// acquire BBL ID in DCFG, then mark each instruction with that ID
-	InsBlock *prev_blk = nullptr;
 	for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
 		InsBlock *blk = dcfg->getInsBlockByBBLAddress(BBL_Address(bbl));
 		
@@ -1985,20 +1995,10 @@ VOID Trace(TRACE trace, VOID *v) {
 			continue;
 		}
 
-		// TODO: record all traces for now
-		if (prev_blk != nullptr) {
-			if (prev_blk->outEdgesTrace.empty()) {
-				//no out edge yet. add.
-				prev_blk->outEdgesTrace.push_back( { blk, 1 });
-			} else if (prev_blk->outEdgesTrace.back().first == blk) {
-				//same as last one. increment count.
-				prev_blk->outEdgesTrace.back().second++;
-			} else {
-				//not same as last one. add.
-				prev_blk->outEdgesTrace.push_back( { blk, 1 });
-			}
-		}
-		prev_blk = blk;
+		BBL_InsertCall(bbl, IPOINT_BEFORE, (AFUNPTR) DCFG::recordBBL,
+		IARG_PTR, dcfg,
+		IARG_PTR, blk,
+		IARG_END);
 
 		for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) {
 			INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) inst_count, IARG_END);

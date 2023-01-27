@@ -59,7 +59,7 @@ void DCFG::initDCFGMap(InsBlock *&beginBlock, InsBlock *&endBlock) {
 		DCFG_EDGE_CPTR e = dcfgProcInfo->get_edge_info(id);
 		DCFG_ID src = e->get_source_node_id();
 		DCFG_ID dst = e->get_target_node_id();
-		
+
 		UINT64 cnt = e->get_exec_count();
 		// std::cout << src << " " << dst << " " << cnt << std::endl;
 		InsBlock *src_block = (src == begin_id ? beginBlock : DCFGMap[src]);
@@ -70,10 +70,24 @@ void DCFG::initDCFGMap(InsBlock *&beginBlock, InsBlock *&endBlock) {
 	}
 }
 
-void DCFG::write(const std::string &file) {
-    DCFG_DATA_CPTR data = dcfgMgr->get_dcfg_data();
-	string msg;
-	data->write(file, msg);
+void DCFG::recordBBL(DCFG *self, InsBlock *cur) {
+	// InsBlock *prev = self->prevBlockinTrace;
+	// cout << "cur = " << (void *) cur << endl;
+	// TODO: record all traces for now
+	if (self->prevBlockinTrace != nullptr) {
+		// cout << (void *) prev << endl;
+		if (self->prevBlockinTrace->outEdgesTrace.empty()) {
+			//no out edge yet. add.
+			self->prevBlockinTrace->outEdgesTrace.push_back( { cur, 1 });
+		} else if (self->prevBlockinTrace->outEdgesTrace.back().first == cur) {
+			//same as last one. increment count.
+			self->prevBlockinTrace->outEdgesTrace.back().second++;
+		} else {
+			//not same as last one. add.
+			self->prevBlockinTrace->outEdgesTrace.push_back( { cur, 1 });
+		}
+	}
+	self->prevBlockinTrace = cur;
 }
 
 InsBlock *DCFG::getInsBlockByBBLAddress(ADDRINT addr) {
@@ -87,6 +101,12 @@ InsBlock *DCFG::getInsBlockByBBLAddress(ADDRINT addr) {
 
     if (it == DCFGMap.end()) return nullptr;
     return it->second;
+}
+
+void DCFG::write(const std::string &file) {
+    DCFG_DATA_CPTR data = dcfgMgr->get_dcfg_data();
+	string msg;
+	data->write(file, msg);
 }
 
 // void DCFG::compressDCFG(std::set<InsBlock *> &cfg) {

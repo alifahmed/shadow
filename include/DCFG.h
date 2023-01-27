@@ -35,6 +35,8 @@ public:
   InsBlock *beginBlock, *endBlock;
   std::unordered_map<UINT64, InsBlock*> DCFGMap;
 
+  InsBlock *prevBlockinTrace = nullptr;
+
   // if cfg file not supplied then we are just generating cfg file as the first pass
   DCFG(InsBlock *&beginBlock, InsBlock *&endBlock, const std::string &dcfg_cfg_file="");
 
@@ -42,9 +44,11 @@ public:
     return dcfgProcInfo != nullptr;
   }
 
-  void write(const std::string &file);
   void initDCFGMap(InsBlock *&beginBlock, InsBlock *&endBlock);
   InsBlock *getInsBlockByBBLAddress(ADDRINT addr);
+  void write(const std::string &file);
   void compressDCFG(std::set<InsBlock *> &cfg);
+
+  static void recordBBL(DCFG *self, InsBlock *blk);
 
 };
