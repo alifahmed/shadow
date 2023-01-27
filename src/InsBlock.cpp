@@ -35,22 +35,34 @@ void InsBlock::calcOutEdgesOrder(std::vector<InsBlock*> &order) const {
     visited[edge] = false;
   UINT64 visited_cnt = 0;
 
-  cout << "outEdgesTraace" << outEdgesTrace.size() << endl;
+  // auto sum = [](std::vector<std::pair<InsBlock *, UINT64>> s)
+  // {
+  //   int result = 0;
+  //   for (auto it : s) {
+  //     result += it.second;
+  //   }
+  //   return result;
+  // };
+
+  // if (sum(outEdgesStack) != sum(outEdgesTrace))
+  //   cout << sum(outEdgesStack) << " " << sum(outEdgesTrace) << endl;
+
   for (auto it : outEdgesTrace) {
     if (!visited[it.first]) {
       visited[it.first] = true;
       order.push_back(it.first);
-      cout << "visitea" << endl;
+      // cout << "visited" << endl;
       visited_cnt++;
     }
     if (visited_cnt >= outEdges.size())
       break;
   }
 
-  // // This is the default behavior for testing
-  // for (auto it : outEdgesStack) {
-  //   order.push_back(it.first);
-  // }
+  // otherwise push all unvisited edges in the stack
+  for (auto it : outEdgesStack) {
+    if (!visited[it.first])
+      order.push_back(it.first);
+  }
 
 }
 
@@ -179,6 +191,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
   stringstream out;
   out << "block" << id << ":\n";
 #ifdef DEBUG
+  // out << _tab(indent) << "printf(\"" << id << " \");\n";
   out << _tab(indent) << "exec_cnt[" << id << "]++;\n";
   int pathcnt = 0;
 #endif
@@ -217,7 +230,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
     UINT64 total = 0;
 
 
-    // sort outEdges by their cnt
+    // sort outEdges
     vector<InsBlock*> outEdgesOrder;
     calcOutEdgesOrder(outEdgesOrder);
     UINT64 sz = outEdgesOrder.size();
@@ -238,9 +251,9 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
         out << "if (out_" << id << " <= " << total << "LL) ";
       }
 #ifdef DEBUG
-    out << _tab(indent) << "{ path_taken[" << id << "][" 
-          << pathcnt << "]++; goto block" << edge->id
-          << "; }\n";
+    out << "{ path_taken[" << id << "][" 
+        << pathcnt << "]++; goto block" << edge->id
+        << "; }\n";
       pathcnt++;
 #else
     out << "goto block" << edge->id << ";\n";
@@ -299,7 +312,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
         out << "if (out_" << id << " <= " << tot_cnt << "LL) ";
       }
 #ifdef DEBUG
-      out << _tab(indent) << "{ path_taken[" << id << "][" 
+      out << "{ path_taken[" << id << "][" 
           << pathcnt << "]++; goto block" << nb->id
           << "; }\n";
       pathcnt++;
@@ -344,7 +357,7 @@ std::string InsBlock::printCodeBody(UINT32 indent) const {
           out << "if (out_" << id << " <= " << tot_cnt << "LL) ";
         }
 #ifdef DEBUG
-        out << _tab(indent) << "{ path_taken[" << id << "][" 
+        out << "{ path_taken[" << id << "][" 
           << pathcnt << "]++; goto block" << nb->id
           << "; }\n";
       pathcnt++;
